@@ -13,10 +13,10 @@ import pandas as pd
 import os
 import logging
 import oemof.tools.logger as logger
-import reegis_tools.geometries as geo
+import reegis_tools.geometries
 import reegis_tools.config as cfg
 import reegis_tools.powerplants
-import de21.geometries as geometries
+import de21.geometries
 
 
 def add_model_region_pp(df):
@@ -25,14 +25,14 @@ def add_model_region_pp(df):
     set is big, the hdf5 format is used.
     """
     # Load de21 geometries
-    de21 = geometries.de21_regions()
+    de21_regions = de21.geometries.de21_regions()
 
     # Load power plant geometries
     pp = geo.Geometry(name='power plants', df=df)
     pp.create_geo_df()
 
     # Add region names to power plant table
-    pp.gdf = geo.spatial_join_with_buffer(pp, de21)
+    pp.gdf = reegis_tools.geometries.spatial_join_with_buffer(pp, de21_regions)
     pp.gdf2df()
 
     # Delete real geometries because they are not needed anymore.
@@ -100,29 +100,39 @@ def get_de21_pp_by_year(year, overwrite_capacity=False):
         filename = pp_reegis2de21()
     pp = pd.read_hdf(filename, 'pp', mode='r')
 
-    filter_cap_col = 'capacity_{0}'.format(year)
+    filter_columns = ['capacity_{0}', 'capacity_in_{0}']
 
     # Get all powerplants for the given year.
     # If com_month exist the power plants will be considered month-wise.
     # Otherwise the commission/decommission within the given year is not
     # considered.
-    c1 = (pp['com_year'] < year) & (pp['decom_year'] > year)
-    pp.loc[c1, filter_cap_col] = pp.loc[c1, 'capacity']
+    for fcol in filter_columns:
+        filter_column = fcol.format(year)
+        orig_column = fcol[:-4]
+        c1 = (pp['com_year'] < year) & (pp['decom_year'] > year)
+        pp.loc[c1, filter_column] = pp.loc[c1, orig_column]
 
-    c2 = pp['com_year'] == year
-    pp.loc[c2, filter_cap_col] = (pp.loc[c2, 'capacity'] *
-                                  (12 - pp.loc[c2, 'com_month']) / 12)
-    c3 = pp['decom_year'] == year
-    pp.loc[c3, filter_cap_col] = (pp.loc[c3, 'capacity'] *
-                                  pp.loc[c3, 'com_month'] / 12)
+        c2 = pp['com_year'] == year
+        pp.loc[c2, filter_column] = (pp.loc[c2, orig_column] *
+                                     (12 - pp.loc[c2, 'com_month']) / 12)
+        c3 = pp['decom_year'] == year
+        pp.loc[c3, filter_column] = (pp.loc[c3, orig_column] *
+                                     pp.loc[c3, 'com_month'] / 12)
 
-    if overwrite_capacity:
-        pp['capacity'] = 0
-        pp['capacity'] = pp[filter_cap_col]
+        if overwrite_capacity:
+            pp[orig_column] = 0
+            pp[orig_column] = pp[filter_column]
+            del pp[filter_column]
     return pp
 
 
 if __name__ == "__main__":
     logger.define_logging()
-    my_df = get_de21_pp_by_year(2012)
-    print(my_df[['capacity', 'capacity_2012']].sum(axis=0))
+    pp_reegis2de21()
+    my_df = get_de21_pp_by_year(2012, overwrite_capacity=False)
+    logging.info('Done!')
+    # exit(0)
+    print(my_df[['capacity_2012', 'capacity_in_2012']].sum())
+    print(my_df.groupby(['de21_regions', 'energy_source_level_2']).sum()[[
+        'capacity_2012', 'capacity_in_2012']])
+    # print(my_df[['capacity', 'capacity_2012']].sum(axis=0))

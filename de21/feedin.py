@@ -151,6 +151,20 @@ def aggregate_by_region(year, pp=None):
         aggregate_by_region_hydro(outfile_name, regions, pp, year)
 
 
+def get_de21_feedin(year, feedin_type):
+    feedin_de21_file_name = os.path.join(
+        cfg.get('paths_pattern', 'de21_feedin'),
+        cfg.get('feedin', 'feedin_de21_pattern')).format(
+            year=year, type=feedin_type)
+    if feedin_type in ['solar', 'wind']:
+        return pd.read_csv(feedin_de21_file_name, index_col=[0],
+                           header=[0, 1, 2])
+    elif feedin_type in ['hydro', 'geothermal']:
+        return pd.read_csv(feedin_de21_file_name, index_col=[0], header=[0])
+    else:
+        return None
+
+
 if __name__ == "__main__":
     logger.define_logging()
     aggregate_by_region(2013)
