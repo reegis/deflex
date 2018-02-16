@@ -28,7 +28,7 @@ def add_model_region_pp(df):
     de21_regions = de21.geometries.de21_regions()
 
     # Load power plant geometries
-    pp = geo.Geometry(name='power plants', df=df)
+    pp = reegis_tools.geometries.Geometry(name='power plants', df=df)
     pp.create_geo_df()
 
     # Add region names to power plant table

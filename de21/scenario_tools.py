@@ -4,16 +4,17 @@ import pandas as pd
 import os
 import logging
 import de21.basic_scenario
+import oemof.tools.logger
 
 
 class Scenario:
-    def __init__(self, year):
-        self.table_collection = None
-        self.year = year
-        self.ignore_errors = False
-        self.round_values = 0
-        self.filename = '/home/uwe/PythonExport.xlsx'
-        self.path = None
+    def __init__(self, **kwargs):
+        self.table_collection = kwargs.get('table_collection', None)
+        self.year = kwargs.get('year', None)
+        self.ignore_errors = kwargs.get('ignore_errors', False)
+        self.round_values = kwargs.get('round_values', 0)
+        self.filename = kwargs.get('filename', None)
+        self.path = kwargs.get('path', None)
 
     def create_basic_scenario(self, year=None, round_values=None):
         if year is not None:
@@ -42,3 +43,11 @@ class Scenario:
             name = name.replace(' ', '_') + '.csv'
             filename = os.path.join(self.path, name)
             df.to_csv(filename)
+
+
+if __name__ == "__main__":
+    oemof.tools.logger.define_logging()
+    sc = Scenario()
+    sc.create_basic_scenario(2012)
+    sc.to_excel('/home/uwe/PythonExport.xlsx')
+    sc.to_csv('/home/uwe/csv_test')
