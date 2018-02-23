@@ -1,5 +1,6 @@
-"""
-Adapting the general reegis power plants to the de21 model.
+# -*- coding: utf-8 -*-
+
+"""Adapting the general reegis power plants to the de21 model.
 
 Copyright (c) 2016-2018 Uwe Krien <uwe.krien@rl-institut.de>
 

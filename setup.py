@@ -11,5 +11,9 @@ setup(name='de21',
       install_requires=['oemof >= 0.1.0',
                         'pandas >= 0.17.0',
                         'reegis_tools',
-                        'demandlib', 'workalendar', 'networkx']
+                        'demandlib',
+                        'workalendar',
+                        'networkx',
+                        'numpy',
+                        'shapely']
       )

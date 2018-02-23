@@ -1,8 +1,29 @@
+# -*- coding: utf-8 -*-
+
+"""Processing a list of power plants in Germany.
+
+Copyright (c) 2016-2018 Uwe Krien <uwe.krien@rl-institut.de>
+
+SPDX-License-Identifier: GPL-3.0-or-later
+"""
+__copyright__ = "Uwe Krien <uwe.krien@rl-institut.de>"
+__license__ = "GPLv3"
+
+
+# Python libraries
 import os
 import logging
+
+# External libraries
 import pandas as pd
-import datetime
+from workalendar.europe import Germany
+
+# oemof libraries
 from oemof.tools import logger
+import demandlib.bdew as bdew
+import demandlib.particular_profiles as profiles
+
+# internal modules
 import reegis_tools.config as cfg
 import reegis_tools.entsoe
 import reegis_tools.bmwi
@@ -12,10 +33,6 @@ import reegis_tools.coastdat
 
 import de21.geometries
 import de21.inhabitants
-
-import demandlib.bdew as bdew
-import demandlib.particular_profiles as profiles
-from workalendar.europe import Germany
 
 
 def renpass_demand_share():

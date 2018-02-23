@@ -1,14 +1,31 @@
 # -*- coding: utf-8 -*-
 
-import pandas as pd
+"""Work with the scenario data.
+
+Copyright (c) 2016-2018 Uwe Krien <uwe.krien@rl-institut.de>
+
+SPDX-License-Identifier: GPL-3.0-or-later
+"""
+__copyright__ = "Uwe Krien <uwe.krien@rl-institut.de>"
+__license__ = "GPLv3"
+
+
+# Python libraries
 import os
 import logging
-import de21.basic_scenario
+
+# External libraries
+import pandas as pd
+import networkx as nx
+from matplotlib import pyplot as plt
+
+# oemof libraries
 import oemof.tools.logger as logger
 import oemof.solph as solph
 import oemof.graph as graph
-import networkx as nx
-from matplotlib import pyplot as plt
+
+# internal modules
+import de21.basic_scenario
 
 
 class NodeDict(dict):

@@ -1,5 +1,6 @@
-"""
-Aggregate the number of inhabitants for each de21 region.
+# -*- coding: utf-8 -*-
+
+"""Aggregate the number of inhabitants for each de21 region.
 
 Copyright (c) 2016-2018 Uwe Krien <uwe.krien@rl-institut.de>
 

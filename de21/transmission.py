@@ -1,6 +1,23 @@
-import pandas as pd
+# -*- coding: utf-8 -*-
+
+"""Processing a list of power plants in Germany.
+
+Copyright (c) 2016-2018 Uwe Krien <uwe.krien@rl-institut.de>
+
+SPDX-License-Identifier: GPL-3.0-or-later
+"""
+__copyright__ = "Uwe Krien <uwe.krien@rl-institut.de>"
+__license__ = "GPLv3"
+
+
+# Python libraries
 import os
+
+# External libraries
+import pandas as pd
 import math
+
+# internal modules
 import reegis_tools.config as cfg
 
 

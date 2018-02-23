@@ -1,5 +1,21 @@
-import pandas as pd
+# -*- coding: utf-8 -*-
+
+"""Create a basic scenario from the internal data structure.
+
+Copyright (c) 2016-2018 Uwe Krien <uwe.krien@rl-institut.de>
+
+SPDX-License-Identifier: GPL-3.0-or-later
+"""
+__copyright__ = "Uwe Krien <uwe.krien@rl-institut.de>"
+__license__ = "GPLv3"
+
+# Python libraries
 import logging
+
+# External libraries
+import pandas as pd
+
+# internal modules
 import reegis_tools.config as cfg
 import reegis_tools.commodity_sources
 import reegis_tools.bmwi

@@ -1,12 +1,26 @@
-__copyright__ = "Uwe Krien"
+# -*- coding: utf-8 -*-
+
+"""Aggregating feed-in time series for the model regions.
+
+Copyright (c) 2016-2018 Uwe Krien <uwe.krien@rl-institut.de>
+
+SPDX-License-Identifier: GPL-3.0-or-later
+"""
+__copyright__ = "Uwe Krien <uwe.krien@rl-institut.de>"
 __license__ = "GPLv3"
 
-import pandas as pd
-# from datetime import datetime as time
+
+# Python libraries
 import os
 import logging
+
+# External libraries
+import pandas as pd
+
+# oemof packages
 from oemof.tools import logger
-# import de21.geometries as geo21
+
+# internal modules
 import reegis_tools.config as cfg
 import de21.powerplants as powerplants
 

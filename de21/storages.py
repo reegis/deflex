@@ -1,7 +1,24 @@
+# -*- coding: utf-8 -*-
+
+"""Processing a list of power plants in Germany.
+
+Copyright (c) 2016-2018 Uwe Krien <uwe.krien@rl-institut.de>
+
+SPDX-License-Identifier: GPL-3.0-or-later
+"""
+__copyright__ = "Uwe Krien <uwe.krien@rl-institut.de>"
+__license__ = "GPLv3"
+
+
+# Python libraries
 import os
+
+# External libraries
 import pandas as pd
-from shapely.geometry import Point
 import numpy as np
+from shapely.geometry import Point
+
+# internal modules
 import reegis_tools.config as cfg
 import reegis_tools.geometries
 import de21.geometries

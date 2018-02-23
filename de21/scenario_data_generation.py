@@ -1,11 +1,25 @@
+# -*- coding: utf-8 -*-
 
+"""Data
+
+Copyright (c) 2016-2018 Uwe Krien <uwe.krien@rl-institut.de>
+
+SPDX-License-Identifier: GPL-3.0-or-later
+"""
+__copyright__ = "Uwe Krien <uwe.krien@rl-institut.de>"
+__license__ = "GPLv3"
+
+
+# Python libraries
 import os
+import logging
 import pprint
+
+# External libraries
 import pandas as pd
 import numpy as np
-import logging
-import configuration as config
-import demand
+
+# oemof libraries
 from oemof.tools import logger
 
 
@@ -272,7 +286,6 @@ if __name__ == "__main__":
     prepare_commodity_sources(cfg)
 
     # fossil_sources(cfg)
-    # TODO suche nach Wert falls Wert nan
     # year = 2000
     # ary = src.loc[src.index >= year, ('biomass', 'costs')]
     # mask = np.isnan(ary)
