@@ -18,7 +18,7 @@ def get_grid_capacity(grid, plus, minus):
     return capacity, distance
 
 
-def get_electrical_transmission_de21():
+def get_electrical_transmission_de21(duplicate=False):
     f_security = cfg.get('transmission', 'security_factor')
     current_max = cfg.get('transmission', 'current_max')
 
@@ -55,15 +55,17 @@ def get_electrical_transmission_de21():
             print("Error in {0}".format(l))
 
     # plot_grid(pwr_lines)
-    tmp = pwr_lines[['capacity', 'distance']]
-    values = tmp.copy()
+    df = pwr_lines[['capacity', 'distance']]
 
-    def id_inverter(name):
-        return '-'.join([name.split('-')[1], name.split('-')[0]])
+    if duplicate:
+        values = df.copy()
 
-    tmp.index = tmp.index.map(id_inverter)
+        def id_inverter(name):
+            return '-'.join([name.split('-')[1], name.split('-')[0]])
 
-    df = pd.DataFrame(pd.concat([values, tmp]))
+        df.index = df.index.map(id_inverter)
+
+        df = pd.DataFrame(pd.concat([values, df]))
 
     return df
 
@@ -74,5 +76,6 @@ def get_grid():
 
 
 if __name__ == "__main__":
-    lines = get_electrical_transmission_de21()
+    lines = get_electrical_transmission_de21(duplicate=False)
     print(lines)
+    print(len(lines))

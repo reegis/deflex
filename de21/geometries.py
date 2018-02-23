@@ -21,6 +21,6 @@ def de21_regions(suffix='vg'):
     name = os.path.join(cfg.get('paths', 'geo_de21'),
                         cfg.get('geometry', 'de21_polygon').format(
                             suffix=suffix))
-    regions = geo.Geometry(name='de21 region')
+    regions = geo.Geometry(name='de21_region')
     regions.load(fullname=name)
     return regions

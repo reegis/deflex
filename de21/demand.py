@@ -7,8 +7,11 @@ import reegis_tools.config as cfg
 import reegis_tools.entsoe
 import reegis_tools.bmwi
 import reegis_tools.geometries
+import reegis_tools.energy_balance
+import reegis_tools.coastdat
 
 import de21.geometries
+import de21.inhabitants
 
 import demandlib.bdew as bdew
 import demandlib.particular_profiles as profiles
@@ -215,11 +218,11 @@ def elec_demand_tester(year):
 
 
 def heat_demand(year):
-    eb = energy_balance.get_states_balance(year)
+    eb = reegis_tools.energy_balance.get_states_balance(year)
     eb.sort_index(inplace=True)
 
     # get fraction of domestic and retail from the german energy balance
-    share = energy_balance.get_domestic_retail_share(year)
+    share = reegis_tools.energy_balance.get_domestic_retail_share(year)
 
     # Use 0.5 for both sectors if no value is given
     share.fillna(0.5, inplace=True)
@@ -281,14 +284,14 @@ def heat_demand(year):
 
 def share_of_mechanical_energy_bmwi(year):
     mech = pd.DataFrame()
-    fs = tools.read_bmwi_sheet_7()
+    fs = reegis_tools.bmwi.read_bmwi_sheet_7()
     fs.sort_index(inplace=True)
     sector = 'Industrie'
     total = float(fs.loc[(sector, 'gesamt'), year])
     mech[sector] = fs.loc[(sector, 'mechanische Energie'), year].div(
         total).round(3)
 
-    fs = tools.read_bmwi_sheet_7(a=True)
+    fs = reegis_tools.bmwi.read_bmwi_sheet_7(a=True)
     fs.sort_index(inplace=True)
     for sector in fs.index.get_level_values(0).unique():
         total = float(fs.loc[(sector, 'gesamt'), year])
@@ -325,7 +328,7 @@ def share_houses_flats(key=None):
     """
     size = pd.Series([1, 25, 50, 70, 90, 110, 130, 150, 170, 190, 210])
     infile = os.path.join(
-        cfg.get('paths', 'static'),
+        cfg.get('paths', 'data_de21'),
         cfg.get('general_sources', 'zensus_flats'))
     whg = pd.read_csv(infile, delimiter=';', index_col=[0], header=[0, 1],
                       skiprows=5)
@@ -347,7 +350,8 @@ def share_houses_flats(key=None):
     flat['total_area']['1 + 2 Wohnungen'] = (
         flat['total_area']['1 Wohnung'] + flat['total_area']['2 Wohnungen'])
     flat['total_number']['1 + 2 Wohnungen'] = (
-        flat['total_number']['1 Wohnung'] + flat['total_number']['2 Wohnungen'])
+        flat['total_number']['1 Wohnung'] +
+        flat['total_number']['2 Wohnungen'])
 
     flat['avg_area'] = flat['total_area'].div(flat['total_number'])
     flat['share_area'] = (flat['total_area'].transpose().div(
@@ -415,13 +419,9 @@ def get_heat_profiles_by_state(year, to_csv=False, divide_domestic=False):
         demand_state.sort_index(inplace=True)
         demand_state.drop('domestic', level=1, inplace=True)
 
-    temperature_file = os.path.join(
-        cfg.get('paths', 'weather'),
-        cfg.get('weather', 'avg_temperature_state').format(year=year))
-    if not os.path.isfile(temperature_file):
-        temperature_file = weather.calculate_average_temperature_by_region(year)
-    temperatures = pd.read_csv(temperature_file, index_col=[0],
-                               parse_dates=True)
+    temperatures = reegis_tools.coastdat.federal_state_average_weather(
+        year, 'temp_air')
+
     temperatures = temperatures.tz_localize('UTC').tz_convert('Europe/Berlin')
 
     my_columns = pd.MultiIndex(levels=[[], [], []], labels=[[], [], []])
@@ -447,54 +447,72 @@ def get_heat_profiles_by_state(year, to_csv=False, divide_domestic=False):
     return heat_profiles
 
 
-def get_heat_profiles_by_region(year):
+def get_heat_profiles_de21(year, time_index=None):
     heat_demand_state_file = os.path.join(
             cfg.get('paths', 'demand'),
             cfg.get('demand', 'heat_profile_state').format(year=year))
     if os.path.isfile(heat_demand_state_file):
         logging.info("Demand profiles by state exist. Reading file.")
-        demand_state = pd.read_csv('/home/uwe/heat.csv', index_col=[0],
+        demand_state = pd.read_csv(heat_demand_state_file, index_col=[0],
                                    parse_dates=True, header=[0, 1, 2])
         demand_state = demand_state.tz_localize('UTC').tz_convert(
             'Europe/Berlin')
     else:
         demand_state = get_heat_profiles_by_state(year, to_csv=True)
 
-    my_columns = pd.MultiIndex(levels=[[], [], [], []], labels=[[], [], [], []])
-    demand_region = pd.DataFrame(index=demand_state.index, columns=my_columns)
+    my_index = demand_state.index
+    my_columns1 = pd.MultiIndex(levels=[[], []], labels=[[], []])
+    demand_region = pd.DataFrame(index=my_index, columns=my_columns1)
+
+    my_columns2 = pd.MultiIndex(levels=[[], [], [], []],
+                                labels=[[], [], [], []])
+    district_heat_region = pd.DataFrame(index=my_index, columns=my_columns2)
 
     logging.info("Fetching inhabitants table.")
-    my_ew = ew.get_ew_de21(year)
-    state_ew = my_ew.groupby('sid').sum()
+    my_ew = de21.inhabitants.get_ew_by_de21_subregions(year)
+    my_ew = my_ew.replace({'state': cfg.get_dict('STATES')})
+
+    state_ew = my_ew.groupby('state').sum()
     for region in my_ew.index:
         my_ew.loc[region, 'share_state'] = float(
-            my_ew.loc[region, 'ew'] / state_ew.loc[my_ew.loc[region, 'sid']])
+            my_ew.loc[region, 'ew'] / state_ew.loc[my_ew.loc[region, 'state']])
 
     logging.info("Convert demand profile...")
-    sectors = demand_state.columns.get_level_values(1).unique()
+
     fuels = demand_state.columns.get_level_values(2).unique()
+    sectors = demand_state.columns.get_level_values(1).unique()
+    demand_state = demand_state.swaplevel(2, 0, axis=1)
+    district_heat_state = None
+    for fuel in fuels:
+        if fuel != 'district heating':
+            demand_region['DE_demand', fuel] = demand_state[fuel].sum(axis=1)
+        else:
+            district_heat_state = demand_state[fuel]
 
     for subregion in my_ew.index:
-        state = my_ew.loc[subregion, 'sid']
+        state = my_ew.loc[subregion, 'state']
         region = my_ew.loc[subregion, 'region']
         share = my_ew.loc[subregion, 'share_state']
         for sector in sectors:
-            for fuel in fuels:
-                demand_region[region, sector, fuel, subregion] = (
-                    demand_state[state, sector, fuel] * share)
-    demand_region.sort_index(1, inplace=True)
-    demand_region = demand_region.groupby(level=[0, 1, 2], axis=1).sum()
+            district_heat_region[
+                region, 'district_heating', sector, subregion] = (
+                    district_heat_state[sector, state] * share)
+    district_heat_region.sort_index(1, inplace=True)
+    # print(district_heat_region)
+    district_heat_region = district_heat_region.groupby(
+        level=[0, 1], axis=1).sum()
+    de21_demand = pd.concat([district_heat_region, demand_region], axis=1)
 
-    demand_region.to_csv(os.path.join(
-        cfg.get('paths', 'demand'),
-        cfg.get('demand', 'heat_profile_region').format(year=year)))
-    return demand_region
+    if time_index is not None:
+        de21_demand.index = time_index
+
+    return de21_demand
 
 
 if __name__ == "__main__":
     logger.define_logging()
-    elec_demand_tester(2013)
-    # for y in [2012, 2013]:
-        # get_heat_profiles_by_region(y)
-        # print(heat_demand(y).loc['BE'].sum().sum() / 3.6)
+    # elec_demand_tester(2013)
+    for y in [2012, 2013]:
+        get_heat_profiles_de21(y)
+        print(heat_demand(y).loc['BE'].sum().sum() / 3.6)
     logging.info("Done!")
