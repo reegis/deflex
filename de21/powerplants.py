@@ -129,11 +129,13 @@ def get_de21_pp_by_year(year, overwrite_capacity=False):
 
 if __name__ == "__main__":
     logger.define_logging()
-    pp_reegis2de21()
+    # pp_reegis2de21()
+    print(get_de21_pp_by_year(2014, overwrite_capacity=False))
+    exit(0)
     my_df = get_de21_pp_by_year(2012, overwrite_capacity=False)
     logging.info('Done!')
     # exit(0)
     print(my_df[['capacity_2012', 'capacity_in_2012']].sum())
-    print(my_df.groupby(['de21_regions', 'energy_source_level_2']).sum()[[
+    print(my_df.groupby(['de21_region', 'energy_source_level_2']).sum()[[
         'capacity_2012', 'capacity_in_2012']])
     # print(my_df[['capacity', 'capacity_2012']].sum(axis=0))

@@ -96,17 +96,18 @@ def prepare_ego_demand(overwrite=False):
         ego_demand.gdf = reegis_tools.geometries.spatial_join_with_buffer(
             ego_demand, de21_regions)
 
-        # Copy results form geoDataFrame to DataFrame
-        ego_demand.gdf2df()
+        # Overwrite Geometry object with its DataFrame, because it is not
+        # needed anymore.
+        ego_demand = pd.DataFrame(ego_demand.gdf)
 
         # Delete the geometry column, because spatial grouping will be done
         # only with the region column.
-        del ego_demand.df['geometry']
+        del ego_demand['geometry']
 
         # Write out file (hdf-format).
-        ego_demand.df.to_hdf(egofile, 'demand')
-        ego_demand = ego_demand.df
-    return ego_demand.groupby('de21_regions').sum()
+        ego_demand.to_hdf(egofile, 'demand')
+
+    return ego_demand.groupby('de21_region').sum()
 
 
 def create_de21_slp_profile(year, outfile):
@@ -529,6 +530,8 @@ def get_heat_profiles_de21(year, time_index=None):
 if __name__ == "__main__":
     logger.define_logging()
     # elec_demand_tester(2013)
+    prepare_ego_demand()
+    exit(0)
     for y in [2012, 2013]:
         get_heat_profiles_de21(y)
         print(heat_demand(y).loc['BE'].sum().sum() / 3.6)

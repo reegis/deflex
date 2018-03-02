@@ -13,6 +13,7 @@ __license__ = "GPLv3"
 # Python libraries
 import os
 import logging
+import calendar
 
 # External libraries
 import pandas as pd
@@ -22,9 +23,11 @@ from matplotlib import pyplot as plt
 # oemof libraries
 import oemof.tools.logger as logger
 import oemof.solph as solph
+import oemof.outputlib as outputlib
 import oemof.graph as graph
 
 # internal modules
+import reegis_tools.config as cfg
 import de21.basic_scenario
 
 
@@ -42,28 +45,29 @@ class NodeDict(dict):
 
 class Scenario:
     def __init__(self, **kwargs):
+        self.name = kwargs.get('name', 'unnamed_scenario')
         self.table_collection = kwargs.get('table_collection', {})
         self.year = kwargs.get('year', None)
         self.ignore_errors = kwargs.get('ignore_errors', False)
         self.round_values = kwargs.get('round_values', 0)
         self.filename = kwargs.get('filename', None)
         self.path = kwargs.get('path', None)
-        self.es = kwargs.get('es', solph.EnergySystem())
+        self.es = kwargs.get('es', self.initialise_energy_system())
 
-    def create_basic_scenario(self, year=None, round_values=None):
-        if year is not None:
-            self.year = year
-        if round_values is not None:
-            self.round_values = round_values
-        self.table_collection = de21.basic_scenario.create_scenario(
-            self.year, self.round_values)
+    def initialise_energy_system(self):
+        if calendar.isleap(self.year):
+            number_of_time_steps = 8784
+        else:
+            number_of_time_steps = 8760
+        date_time_index = pd.date_range('1/1/{0}'.format(self.year),
+                                        periods=number_of_time_steps, freq='H')
+        return solph.EnergySystem(timeindex=date_time_index)
 
     def load_excel(self, filename=None):
         if filename is not None:
             self.filename = filename
         xls = pd.ExcelFile(filename)
         for sheet in xls.sheet_names:
-            print(sheet)
             self.table_collection[sheet] = xls.parse(
                 sheet, index_col=[0], header=[0, 1])
 
@@ -80,7 +84,7 @@ class Scenario:
         if filename is not None:
             self.filename = filename
         writer = pd.ExcelWriter(self.filename)
-        for name, df in self.table_collection.items():
+        for name, df in sorted(self.table_collection.items()):
             df.to_excel(writer, name)
         writer.save()
 
@@ -105,36 +109,47 @@ class Scenario:
     def add_nodes2solph(self, es=None):
         if es is not None:
             self.es = es
-        if len(self.es.timeindex) < 2:
-            self.es.timeindex = self.table_collection['time_series'].index
         self.es.add(*self.create_nodes().values())
 
+    def solve(self, with_duals=False):
+        logging.info("Create model.")
+        model = solph.Model(self.es)
+
+        solver = cfg.get('general', 'solver')
+
+        logging.info("Optimising using {0}.".format(solver))
+
+        if with_duals:
+            model.receive_duals()
+
+        model.solve(solver='gurobi', solve_kwargs={'tee': True})
+
+        logging.info('Optimisation done. Storing results.')
+        self.es.results['main'] = outputlib.processing.results(model)
+        self.es.results['meta'] = outputlib.processing.meta_results(model)
+
+        self.es.dump(dpath=self.path, filename=self.name+'.de21')
+
     def plot_nodes(self, show=None, filename=None, **kwargs):
-        g = graph.create_nx_graph(self.es, filename=filename)
+        g = graph.create_nx_graph(self.es, filename=filename,
+                                  remove_nodes_with_substrings=['bus_cs'])
         if show is True:
             draw_graph(g, **kwargs)
         return g
 
 
 def nodes_from_table_collection(table_collection):
-    # xls = pd.ExcelFile(filename)
-    # commodity_sources = xls.parse('commodity_sources', index_col=[0])
-    # transformers = xls.parse('transformers')
-    # renewables = xls.parse('re_sources', index_col=[0])
-    # demand = xls.parse('demand', index_col=[0])
-    # timeseries = xls.parse('time series')
-
-    # Create demand objects and their buses from demand table
+    # Create  a special dictionary that will raise an error if a key is
+    # updated. This avoids the
     nodes = NodeDict()
-    # print(table_collection)
 
     # Global commodity sources
     cs = table_collection['commodity_source']['DE']
     for fuel in cs.columns:
-        bus_label = 'bus_{0}'.format(fuel.replace(' ', '_'))
+        bus_label = 'bus_cs_{0}'.format(fuel.replace(' ', '_'))
         nodes[bus_label] = solph.Bus(label=bus_label)
 
-        cs_label = 'source_{0}'.format(fuel.replace(' ', '_'))
+        cs_label = 'source_cs_{0}'.format(fuel.replace(' ', '_'))
         nodes[cs_label] = solph.Source(
             label=cs_label, outputs={nodes[bus_label]: solph.Flow(
                 variable_costs=cs.loc['costs', fuel],
@@ -163,29 +178,11 @@ def nodes_from_table_collection(table_collection):
                         actual_value=feedin, nominal_value=capacity,
                         fixed=True, emission=0)})
 
-    # Local controllable sources
-    ctrs = table_collection['controllable_source']
-    for region in ctrs.columns.get_level_values(0).unique():
-        bus_label = 'bus_elec_{0}'.format(region)
-        if bus_label not in nodes:
-            nodes[bus_label] = solph.Bus(label=bus_label)
-        for ctrs_type in ctrs[region].columns:
-            ctrs_label = 'source_c_{0}_{1}'.format(ctrs_type, region)
-            attr = ctrs[region, ctrs_type]
-            nodes[ctrs_label] = solph.Source(
-                label=ctrs_label,
-                outputs={nodes[bus_label]: solph.Flow(
-                    summed_max=attr['limit'] * attr['efficiency'],
-                    variable_costs=attr['costs'],
-                    nominal_value=attr['capacity'],
-                    emission=attr['emission'],
-                    )})
-
     # Decentralised heating systems
     dh = table_collection['decentralised_heating']
     for fuel in dh['DE_demand'].columns:
         src = dh.loc['source', ('DE_demand', fuel)]
-        bus_label = 'bus_{0}'.format(src.replace(' ', '_'))
+        bus_label = 'bus_cs_{0}'.format(src.replace(' ', '_'))
 
         # Check if source bus exists
         if bus_label not in nodes:
@@ -198,7 +195,7 @@ def nodes_from_table_collection(table_collection):
 
         # Create heating system as Transformer
         trsf_label = 'trsf_dectrl_heating_{0}'.format(fuel.replace(' ', '_'))
-        efficiency = dh.loc['efficiency', ('DE_demand', fuel)]
+        efficiency = float(dh.loc['efficiency', ('DE_demand', fuel)])
         nodes[trsf_label] = solph.Transformer(
             label=trsf_label,
             inputs={nodes[bus_label]: solph.Flow()},
@@ -240,8 +237,6 @@ def nodes_from_table_collection(table_collection):
                 inputs={nodes[bus_label]: solph.Flow(
                     actual_value=ts['district_heating', region],
                     nominal_value=1, fixed=True)})
-            chp_trsf_label = 'chp_extr_{0}'.format(region)
-            print(chp_trsf_label)
 
     # Connect electricity buses with transmission
     power_lines = table_collection['transmission']['electrical']
@@ -268,20 +263,90 @@ def nodes_from_table_collection(table_collection):
                 conversion_factors={nodes[bus_label_out]: values.efficiency})
 
     # Local power plants as Transformer and ExtractionTurbineCHP (chp)
+    trsf = table_collection['transformer']
+    for region in trsf.columns.get_level_values(0).unique():
+        bus_heat = 'bus_distr_heat_{0}'.format(region)
+        bus_elec = 'bus_elec_{0}'.format(region)
+        for fuel in trsf[region].columns:
+            bus_fuel = 'bus_cs_{0}'.format(fuel.replace(' ', '_'))
+            params = trsf[region, fuel]
 
-    # for i, s in storages.iterrows():
-    #     nodes[i] = solph.components.GenericStorage(
-    #         label=i,
-    #         inputs={nodes[s['bus']]: solph.Flow(
-    #             nominal_value=s['capacity pump'], max=s['max'])},
-    #         outputs={nodes[s['bus']]: solph.Flow(
-    #             nominal_value=s['capacity turbine'], max=s['max'])},
-    #         nominal_capacity=s['capacity storage'],
-    #         capacity_loss=s['capacity loss'],
-    #         initial_capacity=s['initial capacity'],
-    #         capacity_max=s['cmax'], capacity_min=s['cmin'],
-    #         inflow_conversion_factor=s['efficiency pump'],
-    #         outflow_conversion_factor=s['efficiency turbine'])
+            # Create power plants as 1x1 Transformer
+            if params.capacity > 0:
+                # Define output flow with or without sum_max attribute
+                if params.limit_elec_pp == float('inf'):
+                    outflow = solph.Flow(nominal_value=params.capacity)
+                else:
+                    outflow = solph.Flow(nominal_value=params.capacity,
+                                         sum_max=params.limit_elec_pp)
+
+                trsf_label = 'trsf_pp_{0}_{1}'.format(
+                    region, fuel.replace(' ', '_'))
+                nodes[trsf_label] = solph.Transformer(
+                    label=trsf_label,
+                    inputs={nodes[bus_fuel]: solph.Flow()},
+                    outputs={nodes[bus_elec]: outflow},
+                    conversion_factors={nodes[bus_elec]: params.efficiency})
+
+            # Create chp plants as 1x2 Transformer
+            if params.capacity_heat_chp > 0:
+                trsf_label = 'trsf_chp_{0}_{1}'.format(
+                    region, fuel.replace(' ', '_'))
+                nodes[trsf_label] = solph.Transformer(
+                    label=trsf_label,
+                    inputs={nodes[bus_fuel]: solph.Flow()},
+                    outputs={
+                        nodes[bus_elec]: solph.Flow(),
+                        nodes[bus_heat]: solph.Flow(
+                            nominal_value=params.capacity_heat_chp,
+                            sum_max=params.limit_heat_chp)},
+                    conversion_factors={
+                        nodes[bus_elec]: params.efficiency_elec_chp,
+                        nodes[bus_elec]: params.efficiency_heat_chp})
+
+            # Create heat plants as 1x1 Transformer
+            if params.capacity_hp > 0:
+                trsf_label = 'trsf_hp_{0}_{1}'.format(
+                    region, fuel.replace(' ', '_'))
+                nodes[trsf_label] = solph.Transformer(
+                    label=trsf_label,
+                    inputs={nodes[bus_fuel]: solph.Flow()},
+                    outputs={nodes[bus_heat]: solph.Flow(
+                        nominal_value=params.capacity_hp,
+                        sum_max=params.limit_hp)},
+                    conversion_factors={nodes[bus_heat]: params.efficiency_hp})
+
+    # Storages
+    storages = table_collection['storages']
+    storages.columns = storages.columns.swaplevel()
+    for region in storages['phes'].columns:
+        storage_label = 'phe_storage_{0}'.format(region)
+        bus_label = 'bus_elec_{0}'.format(region)
+        params = storages['phes'][region]
+        nodes[storage_label] = solph.components.GenericStorage(
+            label=storage_label,
+            inputs={nodes[bus_label]: solph.Flow(
+                nominal_value=params.pump)},
+            outputs={nodes[bus_label]: solph.Flow(
+                nominal_value=params.turbine)},
+            nominal_capacity=params.energy,
+            capacity_loss=0,
+            initial_capacity=None,
+            inflow_conversion_factor=params.pump_eff,
+            outflow_conversion_factor=params.turbine_eff)
+
+    # Add shortage excess to every bus
+    bus_keys = [key for key in nodes.keys() if 'bus' in key]
+    for key in bus_keys:
+        excess_label = 'excess_{0}'.format(key)
+        nodes[excess_label] = solph.Sink(
+            label=excess_label,
+            inputs={nodes[key]: solph.Flow()})
+        shortage_label = 'shortage_{0}'.format(key)
+        nodes[shortage_label] = solph.Source(
+            label=shortage_label,
+            outputs={nodes[key]: solph.Flow(variable_costs=9000)})
+
     return nodes
 
 
@@ -347,17 +412,26 @@ def draw_graph(grph, edge_labels=True, node_color='#AFAFAF',
         plt.show()
 
 
+def create_basic_scenario(year, round_values=None):
+    table_collection = de21.basic_scenario.create_scenario(year, round_values)
+    sce = Scenario(table_collection=table_collection)
+    sce.to_excel('/home/uwe/PythonExport{0}.xls'.format(year))
+    sce.to_csv('/home/uwe/csv_test_{0}'.format(year))
+
+
 if __name__ == "__main__":
     logger.define_logging()
-    esys = solph.EnergySystem()
-    sc = Scenario()
+    y = 2014
+    # create_scenario(y)
+    # esys = solph.EnergySystem()
+    sc = Scenario(year=y)
     logging.info('Read excel.')
     # sc.load_excel('/home/uwe/PythonExport2.xls')
-    sc.load_csv('/home/uwe/csv_test')
+    sc.load_csv('/home/uwe/csv_test_{0}'.format(y))
+    # print(sc.table_collection['time_series'].index.hour)
+    # exit(0)
     logging.info("Add nodes")
-    sc.add_nodes2solph(es=esys)
-    sc.plot_nodes(filename='/home/uwe/de21')
-    # sc.create_basic_scenario(2012)
-    # sc.to_excel('/home/uwe/PythonExport2.xls')
-    # sc.to_csv('/home/uwe/csv_test')
+    sc.add_nodes2solph()
+    # sc.plot_nodes(filename='/home/uwe/de21')
+    sc.solve()
     logging.info('Done.')

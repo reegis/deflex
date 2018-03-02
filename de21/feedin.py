@@ -22,6 +22,7 @@ from oemof.tools import logger
 
 # internal modules
 import reegis_tools.config as cfg
+import reegis_tools.bmwi
 import de21.powerplants as powerplants
 
 
@@ -96,15 +97,11 @@ def aggregate_by_region_coastdat_feedin(pp, year, category, outfile):
         pwr[name_of_set].close()
 
 
-def aggregate_by_region_hydro(feedin_de21, regions, pp, year):
-    hydro_energy = pd.read_csv(
-        os.path.join(cfg.get('paths', 'data_de21'),
-                     'energy_capacity_bmwi.csv'),
-        header=[0, 1], index_col=[0])['Wasserkraft']['energy']
-    capacity_column = 'capacity_{0}'.format(year)
-    hydro_capacity = pp.loc['Hydro'].groupby(level=[0]).sum()[capacity_column]
+def aggregate_by_region_hydro(feedin_de21, regions, year):
+    hydro = reegis_tools.bmwi.bmwi_re_energy_capacity()['water']
 
-    full_load_hours = hydro_energy.loc[year] / hydro_capacity.sum() * 1000
+    full_load_hours = (hydro.loc[year, 'energy'] /
+                       hydro.loc[year, 'capacity'] * 1000)
 
     hydro_path = os.path.abspath(os.path.join(
         *feedin_de21.format(year=0, type='hydro').split('/')[:-1]))
@@ -129,7 +126,7 @@ def get_grouped_power_plants(year):
     """Filter the capacity of the powerplants for the given year.
     """
     return powerplants.get_de21_pp_by_year(year).groupby(
-        ['energy_source_level_2', 'de21_regions', 'coastdat2']).sum()
+        ['energy_source_level_2', 'de21_region', 'coastdat2']).sum()
 
 
 def aggregate_by_region(year, pp=None):
@@ -147,7 +144,7 @@ def aggregate_by_region(year, pp=None):
     # Filter the capacity of the powerplants for the given year.
     if pp is not None:
         pp = pp.groupby(
-            ['energy_source_level_2', 'de21_regions', 'coastdat2']).sum()
+            ['energy_source_level_2', 'de21_region', 'coastdat2']).sum()
 
     # Loop over weather depending feed-in categories.
     for cat in ['Wind', 'Solar']:
@@ -162,7 +159,7 @@ def aggregate_by_region(year, pp=None):
         if pp is None:
             pp = get_grouped_power_plants(year)
         regions = pp.index.get_level_values(1).unique().sort_values()
-        aggregate_by_region_hydro(outfile_name, regions, pp, year)
+        aggregate_by_region_hydro(outfile_name, regions, year)
 
 
 def get_de21_feedin(year, feedin_type):
@@ -181,4 +178,4 @@ def get_de21_feedin(year, feedin_type):
 
 if __name__ == "__main__":
     logger.define_logging()
-    aggregate_by_region(2013)
+    aggregate_by_region(2014)
