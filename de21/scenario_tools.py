@@ -59,6 +59,8 @@ class Scenario:
             number_of_time_steps = 8784
         else:
             number_of_time_steps = 8760
+        number_of_time_steps = 20
+        logging.warning("***** Number of Timesteps=20!!! ***************")
         date_time_index = pd.date_range('1/1/{0}'.format(self.year),
                                         periods=number_of_time_steps, freq='H')
         return solph.EnergySystem(timeindex=date_time_index)
@@ -101,9 +103,7 @@ class Scenario:
             df.to_csv(filename)
 
     def create_nodes(self):
-        import pprint
         nodes = nodes_from_table_collection(self.table_collection)
-        pprint.pprint(nodes)
         return nodes
 
     def add_nodes2solph(self, es=None):
@@ -414,24 +414,34 @@ def draw_graph(grph, edge_labels=True, node_color='#AFAFAF',
 
 def create_basic_scenario(year, round_values=None):
     table_collection = de21.basic_scenario.create_scenario(year, round_values)
-    sce = Scenario(table_collection=table_collection)
-    sce.to_excel('/home/uwe/PythonExport{0}.xls'.format(year))
-    sce.to_csv('/home/uwe/csv_test_{0}'.format(year))
+    sce = Scenario(table_collection=table_collection, name='basic',
+                   year=2014)
+    path = os.path.join(cfg.get('paths', 'scenario'), 'basic', str(year))
+    sce.to_excel(os.path.join(path, '_'.join([sce.name, str(year)]) + '.xls'))
+    sce.to_csv(os.path.join(path, 'csv'))
 
 
 if __name__ == "__main__":
     logger.define_logging()
     y = 2014
-    # create_scenario(y)
+    create_basic_scenario(y)
     # esys = solph.EnergySystem()
-    sc = Scenario(year=y)
-    logging.info('Read excel.')
-    # sc.load_excel('/home/uwe/PythonExport2.xls')
-    sc.load_csv('/home/uwe/csv_test_{0}'.format(y))
-    # print(sc.table_collection['time_series'].index.hour)
-    # exit(0)
-    logging.info("Add nodes")
-    sc.add_nodes2solph()
-    # sc.plot_nodes(filename='/home/uwe/de21')
-    sc.solve()
-    logging.info('Done.')
+    # esys.restore(dpath='/home/uwe/csv_test_2014',
+    #              filename='unnamed_scenario.de21')
+    # results = esys.results['main']
+    # electricity_bus = outputlib.views.node(results, 'bus_elec_DE01')
+    # from matplotlib import pyplot as plt
+    # electricity_bus['sequences'].plot()
+    # plt.show()
+    # sc = Scenario(year=y)
+    # logging.info('Read excel.')
+    # # sc.load_excel('/home/uwe/PythonExport2.xls')
+    # sc.load_csv('/home/uwe/csv_test_{0}'.format(y))
+    # # print(sc.table_collection['time_series'].index.hour)
+    # # exit(0)
+    # logging.info("Add nodes")
+    # sc.add_nodes2solph()
+    # # sc.plot_nodes(filename='/home/uwe/de21')
+    # sc.solve()
+    # logging.info('Done.')
+
