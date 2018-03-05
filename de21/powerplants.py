@@ -71,6 +71,8 @@ def pp_reegis2de21():
     filename_out = os.path.join(cfg.get('paths', 'powerplants'),
                                 cfg.get('powerplants', 'de21_pp'))
     if not os.path.isfile(filename_in):
+        msg = "File '{0}' does not exist. Will create it from opsd file."
+        logging.debug(msg.format(filename_in))
         filename_in = reegis_tools.powerplants.pp_opsd2reegis()
     pp = pd.read_hdf(filename_in, 'pp', mode='r')
     pp = add_model_region_pp(pp)
@@ -98,6 +100,8 @@ def get_de21_pp_by_year(year, overwrite_capacity=False):
                             cfg.get('powerplants', 'de21_pp'))
     logging.info("Get de21 power plants for {0}.".format(year))
     if not os.path.isfile(filename):
+        msg = "File '{0}' does not exist. Will create it from reegis file."
+        logging.debug(msg.format(filename))
         filename = pp_reegis2de21()
     pp = pd.read_hdf(filename, 'pp', mode='r')
 
