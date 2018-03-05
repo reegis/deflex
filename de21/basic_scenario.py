@@ -194,11 +194,8 @@ def scenario_feedin_wind(year, feedin_ts):
 def scenario_feedin_pv(year, my_index):
     pv_types = cfg.get_dict('pv_types')
     pv_orientation = cfg.get_dict('pv_orientation')
-    try:
-        pv = de21.feedin.get_de21_feedin(year, 'solar')
-    except FileNotFoundError:
-        logging.error("Cannot prepare solar feedin for {0}".format(year))
-        return None
+    pv = de21.feedin.get_de21_feedin(year, 'solar')
+
     # combine different pv-sets to one feedin time series
     feedin_ts = pd.DataFrame(columns=my_index, index=pv.index)
     orientation_fraction = pd.Series(pv_orientation)

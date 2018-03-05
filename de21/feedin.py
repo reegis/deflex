@@ -23,6 +23,8 @@ from oemof.tools import logger
 # internal modules
 import reegis_tools.config as cfg
 import reegis_tools.bmwi
+import reegis_tools.coastdat
+
 import de21.powerplants as powerplants
 
 
@@ -34,13 +36,14 @@ def aggregate_by_region_coastdat_feedin(pp, year, category, outfile):
     # Define the path for the input files.
     coastdat_path = os.path.join(cfg.get('paths_pattern', 'coastdat')).format(
         year=year, type=cat)
-
+    if not os.path.isdir(coastdat_path):
+        reegis_tools.coastdat.normalised_feedin_for_each_data_set(year)
     # Prepare the lists for the loops
     set_names = []
     set_name = None
     pwr = dict()
     columns = dict()
-    replace_str = 'coastdat_{0}_solar_'.format(year)
+    replace_str = 'coastdat_{0}_{1}_'.format(year, category)
     for file in os.listdir(coastdat_path):
         if file[-2:] == 'h5':
             set_name = file[:-3].replace(replace_str, '')
@@ -122,6 +125,24 @@ def aggregate_by_region_hydro(feedin_de21, regions, year):
     # S. 110ff
 
 
+def aggregate_by_region_geothermal(feedin_de21, regions, year):
+    full_load_hours = cfg.get('feedin', 'geothermal_full_load_hours')
+
+    hydro_path = os.path.abspath(os.path.join(
+        *feedin_de21.format(year=0, type='geothermal').split('/')[:-1]))
+
+    if not os.path.isdir(hydro_path):
+        os.makedirs(hydro_path)
+
+    filename = feedin_de21.format(year=year, type='geothermal')
+    idx = pd.date_range(start="{0}-01-01 00:00".format(year),
+                        end="{0}-12-31 23:00".format(year),
+                        freq='H', tz='Europe/Berlin')
+    feedin = pd.DataFrame(columns=regions, index=idx)
+    feedin[feedin.columns] = full_load_hours / len(feedin)
+    feedin.to_csv(filename)
+
+
 def get_grouped_power_plants(year):
     """Filter the capacity of the powerplants for the given year.
     """
@@ -147,6 +168,7 @@ def aggregate_by_region(year, pp=None):
             ['energy_source_level_2', 'de21_region', 'coastdat2']).sum()
 
     # Loop over weather depending feed-in categories.
+    # WIND and PV
     for cat in ['Wind', 'Solar']:
         outfile_name = feedin_de21_outfile_name.format(type=cat.lower())
         if not os.path.isfile(outfile_name):
@@ -154,12 +176,21 @@ def aggregate_by_region(year, pp=None):
                 pp = get_grouped_power_plants(year)
             aggregate_by_region_coastdat_feedin(pp, year, cat, outfile_name)
 
+    # HYDRO
     outfile_name = feedin_de21_outfile_name.format(type='hydro')
     if not os.path.isfile(outfile_name):
         if pp is None:
             pp = get_grouped_power_plants(year)
         regions = pp.index.get_level_values(1).unique().sort_values()
         aggregate_by_region_hydro(outfile_name, regions, year)
+
+    # GEOTHERMAL
+    outfile_name = feedin_de21_outfile_name.format(type='geothermal')
+    if not os.path.isfile(outfile_name):
+        if pp is None:
+            pp = get_grouped_power_plants(year)
+        regions = pp.index.get_level_values(1).unique().sort_values()
+        aggregate_by_region_geothermal(outfile_name, regions, year)
 
 
 def get_de21_feedin(year, feedin_type):
@@ -173,6 +204,8 @@ def get_de21_feedin(year, feedin_type):
         return pd.read_csv(feedin_de21_file_name, index_col=[0],
                            header=[0, 1, 2])
     elif feedin_type in ['hydro', 'geothermal']:
+        if not os.path.isfile(feedin_de21_file_name):
+            aggregate_by_region(year)
         return pd.read_csv(feedin_de21_file_name, index_col=[0], header=[0])
     else:
         return None
