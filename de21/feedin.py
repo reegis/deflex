@@ -168,6 +168,8 @@ def get_de21_feedin(year, feedin_type):
         cfg.get('feedin', 'feedin_de21_pattern')).format(
             year=year, type=feedin_type)
     if feedin_type in ['solar', 'wind']:
+        if not os.path.isfile(feedin_de21_file_name):
+            aggregate_by_region(year)
         return pd.read_csv(feedin_de21_file_name, index_col=[0],
                            header=[0, 1, 2])
     elif feedin_type in ['hydro', 'geothermal']:
