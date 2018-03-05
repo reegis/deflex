@@ -302,14 +302,15 @@ def heat_demand(year):
 
 def share_of_mechanical_energy_bmwi(year):
     mech = pd.DataFrame()
-    fs = reegis_tools.bmwi.read_bmwi_sheet_7()
+    fs = reegis_tools.bmwi.read_bmwi_sheet_7('a')
     fs.sort_index(inplace=True)
     sector = 'Industrie'
+
     total = float(fs.loc[(sector, 'gesamt'), year])
     mech[sector] = fs.loc[(sector, 'mechanische Energie'), year].div(
         total).round(3)
 
-    fs = reegis_tools.bmwi.read_bmwi_sheet_7(a=True)
+    fs = reegis_tools.bmwi.read_bmwi_sheet_7('b')
     fs.sort_index(inplace=True)
     for sector in fs.index.get_level_values(0).unique():
         total = float(fs.loc[(sector, 'gesamt'), year])
