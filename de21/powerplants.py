@@ -34,13 +34,13 @@ def add_model_region_pp(df):
 
     # Add region names to power plant table
     pp.gdf = reegis_tools.geometries.spatial_join_with_buffer(pp, de21_regions)
-    pp.gdf2df()
+    df = pp.get_df()
 
     # Delete real geometries because they are not needed anymore.
-    del pp.df['geometry']
+    del df['geometry']
 
     logging.info("de21 regions added to power plant table.")
-    return pp.df
+    return df
 
 
 def add_capacity_in(pp):

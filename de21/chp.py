@@ -78,6 +78,7 @@ def calculate_efficiency(eb):
     eta = {}
     rows = ['Heizkraftwerke der allgemeinen Versorgung (nur KWK)',
             'Heizwerke']
+
     for region in regions:
         eta[region] = {}
         in_chp = eb.loc[region, 'input', row_chp]
@@ -104,13 +105,10 @@ def calculate_efficiency(eb):
 
 
 def get_efficiency(year):
-    return calculate_efficiency(pd.read_csv('/home/uwe/eb_tmp.csv',
-                                index_col=[0, 1, 2, 3]).loc[year])
+    return calculate_efficiency(reshape_conversion_balance(year).loc[year])
 
 
 if __name__ == "__main__":
     logger.define_logging()
-    import pprint
-    reshape_conversion_balance(2014).to_csv('/home/uwe/eb_tmp.csv')
-    pprint.pprint(calculate_efficiency(pd.read_csv('/home/uwe/eb_tmp.csv',
-                                       index_col=[0, 1, 2, 3]).loc[2014]))
+    import pprint as pp
+    pp.pprint(get_efficiency(2014))
