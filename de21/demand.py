@@ -420,10 +420,10 @@ def get_heat_profiles_by_state(year, to_csv=False, divide_domestic=False):
         for s in v.split(', '):
             building_class[s] = int(k)
 
-    house_flats = share_houses_flats('share_area')
     demand_state = heat_demand(year).sort_index()
 
     if divide_domestic:
+        house_flats = share_houses_flats('share_area')
         for state in demand_state.index.get_level_values(0).unique():
             dom = demand_state.loc[state, 'domestic']
             demand_state.loc[(state, 'domestic_efh'), ] = (
