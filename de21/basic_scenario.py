@@ -106,13 +106,26 @@ def commodity_sources(year, table_collection):
     commodity_src = scenario_commodity_sources(year)
     commodity_src = commodity_src.swaplevel().unstack()
 
+    msg = ("The unit for {0} of the source is '{1}'. "
+           "Will multiply it with {2} to get '{3}'.")
+
+    converter = {'costs': ['costs', 'EUR/J', 1e+9 * 3.6, 'EUR/MWh'],
+                 'emission': ['emission', 'g/J', 1e+6 * 3.6, 'kg/MWh']}
+
     transformer_list = (
         table_collection['transformer'].columns.get_level_values(
             level=1).unique())
 
+    # Delete unused sources
     for col in commodity_src.columns:
         if col not in transformer_list:
             del commodity_src[col]
+
+    # convert units
+    for key in converter.keys():
+        commodity_src.loc[key] = commodity_src.loc[key].multiply(
+            converter[key][2])
+        logging.warning(msg.format(*converter[key]))
 
     # Add region level to be consistent to other tables
     commodity_src.columns = pd.MultiIndex.from_product(
@@ -152,14 +165,16 @@ def scenario_heat_demand(year, table):
 
 
 def scenario_elec_demand(year, table):
-    # Todo: config: scaled?, method
-    scaled_by_bmwi = True
-    demand_method = 'openego_entsoe'
+    annual_demand = cfg.get('electricity_demand', 'annual_demand')
+    demand_method = cfg.get('electricity_demand', 'demand_method')
 
-    if scaled_by_bmwi:
+    if annual_demand == 'bmwi':
         annual_demand = de21.demand.get_annual_demand_bmwi(year)
-    else:
-        annual_demand = None
+        msg = ("Unit of BMWI electricity demand is 'TWh'. "
+               "Will multiply it with {0} to get 'MWh'")
+        converter = 1e+6
+        annual_demand = annual_demand * 1e+6
+        logging.warning(msg.format(converter))
 
     df = de21.demand.get_de21_profile(
         year, demand_method, annual_demand=annual_demand)
@@ -202,11 +217,12 @@ def scenario_feedin_pv(year, my_index):
 
     pv.sort_index(1, inplace=True)
     orientation_fraction.sort_index(inplace=True)
-
+    base_set_column = 'coastdat_{0}_solar_{1}'.format(year, '{0}')
     for reg in pv.columns.levels[0]:
         feedin_ts[reg, 'solar'] = 0
         for mset in pv_types.keys():
-            feedin_ts[reg, 'solar'] += pv[reg, mset].multiply(
+            set_col = base_set_column.format(mset)
+            feedin_ts[reg, 'solar'] += pv[reg, set_col].multiply(
                 orientation_fraction).sum(1).multiply(
                     pv_types[mset])
             # feedin_ts[reg, 'solar'] = rt
@@ -343,4 +359,4 @@ def powerplants(table_collection, year, round_values=None):
 
 if __name__ == "__main__":
     logger.define_logging()
-    pass
+    print(scenario_commodity_sources(2014, use_znes_2014=True))

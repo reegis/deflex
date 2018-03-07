@@ -219,7 +219,7 @@ def elec_demand_tester(year):
     rp = get_de21_profile(year, 'renpass') * 1000000
     ege = get_de21_profile(year, 'openego_entsoe') * 1000000
 
-    netto = get_annual_demand_bmwi(year)
+    netto = reegis_tools.bmwi.get_annual_electricity_demand_bmwi(year)
 
     oe_s = get_de21_profile(year, 'openego', annual_demand=netto)
     rp_s = get_de21_profile(year, 'renpass', annual_demand=netto)
@@ -227,11 +227,11 @@ def elec_demand_tester(year):
 
     print('[TWh] original    scaled (BMWI)')
     print(' oe:  ', int(oe.sum().sum() / 1e+12), '       ',
-          int(oe_s.sum().sum() / 1e+12))
+          int(oe_s.sum().sum()))
     print(' rp:  ', int(rp.sum().sum() / 1e+12), '       ',
-          int(rp_s.sum().sum() / 1e+12))
+          int(rp_s.sum().sum()))
     print('ege:  ', int(ege.sum().sum() / 1e+12), '       ',
-          int(ege_s.sum().sum() / 1e+12))
+          int(ege_s.sum().sum()))
     print(ege_s)
 
 
@@ -466,7 +466,7 @@ def get_heat_profiles_by_state(year, to_csv=False, divide_domestic=False):
     return heat_profiles
 
 
-def get_heat_profiles_de21(year, time_index=None):
+def get_heat_profiles_de21(year, time_index=None, keep_unit=False):
     heat_demand_state_file = os.path.join(
             cfg.get('paths', 'demand'),
             cfg.get('demand', 'heat_profile_state').format(year=year))
@@ -525,13 +525,20 @@ def get_heat_profiles_de21(year, time_index=None):
     if time_index is not None:
         de21_demand.index = time_index
 
+    if not keep_unit:
+        msg = ("The unit of the source is 'TJ'. "
+               "Will be divided by {0} to get 'MWh'.")
+        converter = 0.0036
+        de21_demand.div(converter)
+        logging.warning(msg.format(converter))
+
     return de21_demand
 
 
 if __name__ == "__main__":
     logger.define_logging()
-    # elec_demand_tester(2013)
-    prepare_ego_demand()
+    elec_demand_tester(2013)
+    # prepare_ego_demand()
     exit(0)
     for y in [2012, 2013]:
         get_heat_profiles_de21(y)
