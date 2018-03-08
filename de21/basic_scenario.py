@@ -169,7 +169,8 @@ def scenario_elec_demand(year, table):
     demand_method = cfg.get('electricity_demand', 'demand_method')
 
     if annual_demand == 'bmwi':
-        annual_demand = de21.demand.get_annual_demand_bmwi(year)
+        annual_demand = reegis_tools.bmwi.get_annual_electricity_demand_bmwi(
+            year)
         msg = ("Unit of BMWI electricity demand is 'TWh'. "
                "Will multiply it with {0} to get 'MWh'")
         converter = 1e+6
@@ -179,7 +180,7 @@ def scenario_elec_demand(year, table):
     df = de21.demand.get_de21_profile(
         year, demand_method, annual_demand=annual_demand)
     df = pd.concat([df], axis=1, keys=['electrical_load']).swaplevel(0, 1, 1)
-    df = df.reset_index().set_index(table.index)
+    df = df.reset_index(drop=True).set_index(table.index)
     return pd.concat([table, df], axis=1).sort_index(1)
 
 
@@ -359,4 +360,5 @@ def powerplants(table_collection, year, round_values=None):
 
 if __name__ == "__main__":
     logger.define_logging()
-    print(scenario_commodity_sources(2014, use_znes_2014=True))
+    # print(scenario_commodity_sources(2014, use_znes_2014=True))
+    print(scenario_elec_demand(2014, {}))

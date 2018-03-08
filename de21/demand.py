@@ -160,20 +160,6 @@ def get_de21_slp_profile(year, annual_demand=None, overwrite=False):
     return de21_profile
 
 
-def get_annual_demand_bmwi(year):
-    """Returns the annual demand for the given year from the BMWI Energiedaten
-    in Wh (Watthours). Will return None if data for the given year is not
-    available.
-    """
-    infile = reegis_tools.bmwi.get_bmwi_energiedaten_file()
-
-    table = pd.read_excel(infile, '21', skiprows=7, index_col=[0])
-    try:
-        return table.loc['   zusammen', year] * 1e+12
-    except KeyError:
-        return None
-
-
 def get_de21_profile(year, kind, annual_demand=None, overwrite=False):
     """
 
@@ -531,7 +517,7 @@ def get_heat_profiles_de21(year, time_index=None, keep_unit=False):
         msg = ("The unit of the source is 'TJ'. "
                "Will be divided by {0} to get 'MWh'.")
         converter = 0.0036
-        de21_demand.div(converter)
+        de21_demand = de21_demand.div(converter)
         logging.warning(msg.format(converter))
 
     return de21_demand

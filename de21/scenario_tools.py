@@ -52,6 +52,7 @@ class Scenario:
         self.round_values = kwargs.get('round_values', 0)
         self.filename = kwargs.get('filename', None)
         self.path = kwargs.get('path', None)
+        self.model = kwargs.get('model', None)
         self.es = kwargs.get('es', self.initialise_energy_system())
 
     def initialise_energy_system(self):
@@ -72,7 +73,7 @@ class Scenario:
             self.table_collection[sheet] = xls.parse(
                 sheet, index_col=[0], header=[0, 1])
 
-    def load_csv(self, path):
+    def load_csv(self, path=None):
         if path is not None:
             self.path = path
         for file in os.listdir(path):
@@ -114,24 +115,23 @@ class Scenario:
             self.es = es
         self.es.add(*self.create_nodes().values())
 
-    def solve(self, with_duals=False):
-        logging.info("Create model.")
-        model = solph.Model(self.es)
+    def create_model(self):
+        self.model = solph.Model(self.es)
 
+    def dump_results_to_es(self):
+        self.es.results['main'] = outputlib.processing.results(self.model)
+        self.es.results['meta'] = outputlib.processing.meta_results(self.model)
+        self.es.dump(dpath=self.path, filename=self.name+'.de21')
+
+    def solve(self, with_duals=False):
         solver = cfg.get('general', 'solver')
 
         logging.info("Optimising using {0}.".format(solver))
 
         if with_duals:
-            model.receive_duals()
+            self.model.receive_duals()
 
-        model.solve(solver='gurobi', solve_kwargs={'tee': True})
-
-        logging.info('Optimisation done. Storing results.')
-        self.es.results['main'] = outputlib.processing.results(model)
-        self.es.results['meta'] = outputlib.processing.meta_results(model)
-
-        self.es.dump(dpath=self.path, filename=self.name+'.de21')
+        self.model.solve(solver='gurobi', solve_kwargs={'tee': True})
 
     def plot_nodes(self, show=None, filename=None, **kwargs):
         g = graph.create_nx_graph(self.es, filename=filename,
@@ -425,6 +425,8 @@ def create_basic_scenario(year, round_values=None):
 
 
 if __name__ == "__main__":
-    logger.define_logging(screen_level=logging.WARNING)
+    logger.define_logging()
+    # logger.define_logging(screen_level=logging.WARNING)
+    # logging.warning("Only warnings will be displayed!")
     for y in [2014, 2013, 2012]:
         create_basic_scenario(y)

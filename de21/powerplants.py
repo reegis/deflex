@@ -78,6 +78,14 @@ def pp_reegis2de21():
     pp = add_model_region_pp(pp)
     pp = add_capacity_in(pp)
 
+    # Remove powerplants outside Germany
+    if cfg.get('powerplants', 'remove_phes'):
+        pp = pp.loc[pp.technology != 'Pumped storage']
+
+    # Remove powerplants outside Germany
+    for state in cfg.get_list('powerplants', 'remove_states'):
+        pp = pp.loc[pp.federal_states != state]
+
     pp.to_hdf(filename_out, 'pp')
     return filename_out
 
@@ -128,14 +136,13 @@ def get_de21_pp_by_year(year, overwrite_capacity=False):
             pp[orig_column] = 0
             pp[orig_column] = pp[filter_column]
             del pp[filter_column]
+
     return pp
 
 
 if __name__ == "__main__":
     logger.define_logging()
     # pp_reegis2de21()
-    print(get_de21_pp_by_year(2014, overwrite_capacity=False))
-    exit(0)
     my_df = get_de21_pp_by_year(2012, overwrite_capacity=False)
     logging.info('Done!')
     # exit(0)

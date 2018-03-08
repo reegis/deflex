@@ -100,11 +100,13 @@ def aggregate_by_region_coastdat_feedin(pp, year, category, outfile):
         pwr[name_of_set].close()
 
 
-def aggregate_by_region_hydro(feedin_de21, regions, year):
+def aggregate_by_region_hydro(feedin_de21, regions, year, pp):
     hydro = reegis_tools.bmwi.bmwi_re_energy_capacity()['water']
 
+    hydro_capacity = (pp.loc['Hydro', 'capacity'].sum())
+
     full_load_hours = (hydro.loc[year, 'energy'] /
-                       hydro.loc[year, 'capacity'] * 1000)
+                       hydro_capacity * 1000)
 
     hydro_path = os.path.abspath(os.path.join(
         *feedin_de21.format(year=0, type='hydro').split('/')[:-1]))
@@ -182,7 +184,7 @@ def aggregate_by_region(year, pp=None):
         if pp is None:
             pp = get_grouped_power_plants(year)
         regions = pp.index.get_level_values(1).unique().sort_values()
-        aggregate_by_region_hydro(outfile_name, regions, year)
+        aggregate_by_region_hydro(outfile_name, regions, year, pp)
 
     # GEOTHERMAL
     outfile_name = feedin_de21_outfile_name.format(type='geothermal')
