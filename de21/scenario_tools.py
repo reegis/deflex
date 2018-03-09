@@ -124,14 +124,14 @@ class Scenario:
         self.es.dump(dpath=self.path, filename=self.name+'.de21')
 
     def solve(self, with_duals=False):
-        solver = cfg.get('general', 'solver')
+        solver_name = cfg.get('general', 'solver')
 
-        logging.info("Optimising using {0}.".format(solver))
+        logging.info("Optimising using {0}.".format(solver_name))
 
         if with_duals:
             self.model.receive_duals()
 
-        self.model.solve(solver='gurobi', solve_kwargs={'tee': True})
+        self.model.solve(solver=solver_name, solve_kwargs={'tee': True})
 
     def plot_nodes(self, show=None, filename=None, **kwargs):
         g = graph.create_nx_graph(self.es, filename=filename,

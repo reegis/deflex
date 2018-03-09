@@ -26,12 +26,10 @@ import de21
 
 
 def stopwatch():
-    if not hasattr(stopwatch, 'now'):
-        stopwatch.now = datetime.now()
-        return None
-    last = stopwatch.now
-    stopwatch.now = datetime.now()
-    return str(stopwatch.now-last)[0:-4]
+    if not hasattr(stopwatch, 'start'):
+        print('renew')
+        stopwatch.start = datetime.now()
+    return str(datetime.now() - stopwatch.start)[:-7]
 
 
 def main(year):
