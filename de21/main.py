@@ -27,7 +27,6 @@ import de21
 
 def stopwatch():
     if not hasattr(stopwatch, 'start'):
-        print('renew')
         stopwatch.start = datetime.now()
     return str(datetime.now() - stopwatch.start)[:-7]
 
