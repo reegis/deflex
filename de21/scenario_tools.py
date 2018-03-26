@@ -12,139 +12,35 @@ __license__ = "GPLv3"
 
 # Python libraries
 import os
-import logging
-import calendar
 
 # External libraries
-import pandas as pd
 import networkx as nx
 from matplotlib import pyplot as plt
 
 # oemof libraries
 import oemof.tools.logger as logger
 import oemof.solph as solph
-import oemof.outputlib as outputlib
-import oemof.graph as graph
 
 # internal modules
 import reegis_tools.config as cfg
+import reegis_tools.scenario_tools
+
 import de21.basic_scenario
 
 
-class NodeDict(dict):
-    __slots__ = ()
-
-    def __setitem__(self, key, item):
-        if super().get(key) is None:
-            super().__setitem__(key, item)
-        else:
-            msg = ("Key '{0}' already exists. ".format(key) +
-                   "Duplicate keys are not allowed in a node dictionary.")
-            raise KeyError(msg)
-
-
-class Scenario:
+class Scenario(reegis_tools.scenario_tools.Scenario):
     def __init__(self, **kwargs):
-        self.name = kwargs.get('name', 'unnamed_scenario')
-        self.table_collection = kwargs.get('table_collection', {})
-        self.year = kwargs.get('year', None)
-        self.ignore_errors = kwargs.get('ignore_errors', False)
-        self.round_values = kwargs.get('round_values', 0)
-        self.filename = kwargs.get('filename', None)
-        self.path = kwargs.get('path', None)
-        self.model = kwargs.get('model', None)
-        self.es = kwargs.get('es', self.initialise_energy_system())
-
-    def initialise_energy_system(self):
-        if calendar.isleap(self.year):
-            number_of_time_steps = 8784
-        else:
-            number_of_time_steps = 8760
-
-        date_time_index = pd.date_range('1/1/{0}'.format(self.year),
-                                        periods=number_of_time_steps, freq='H')
-        return solph.EnergySystem(timeindex=date_time_index)
-
-    def load_excel(self, filename=None):
-        if filename is not None:
-            self.filename = filename
-        xls = pd.ExcelFile(filename)
-        for sheet in xls.sheet_names:
-            self.table_collection[sheet] = xls.parse(
-                sheet, index_col=[0], header=[0, 1])
-
-    def load_csv(self, path=None):
-        if path is not None:
-            self.path = path
-        for file in os.listdir(path):
-            if file[-4:] == '.csv':
-                filename = os.path.join(self.path, file)
-                self.table_collection[file[:-4]] = pd.read_csv(
-                    filename, index_col=[0], header=[0, 1])
-
-    def to_excel(self, filename=None):
-        if filename is not None:
-            self.filename = filename
-        if not os.path.isdir(os.path.dirname(self.filename)):
-            os.makedirs(os.path.dirname(self.filename))
-        writer = pd.ExcelWriter(self.filename)
-        for name, df in sorted(self.table_collection.items()):
-            df.to_excel(writer, name)
-        writer.save()
-        logging.info("Scenario saved as excel file to {0}".format(
-            self.filename))
-
-    def to_csv(self, path):
-        if path is not None:
-            self.path = path
-        if not os.path.isdir(self.path):
-            os.makedirs(self.path)
-        for name, df in self.table_collection.items():
-            name = name.replace(' ', '_') + '.csv'
-            filename = os.path.join(self.path, name)
-            df.to_csv(filename)
-        logging.info("Scenario saved as csv-collection to {0}".format(
-            self.path))
+        super().__init__(**kwargs)
 
     def create_nodes(self):
         nodes = nodes_from_table_collection(self.table_collection)
         return nodes
 
-    def add_nodes2solph(self, es=None):
-        if es is not None:
-            self.es = es
-        self.es.add(*self.create_nodes().values())
-
-    def create_model(self):
-        self.model = solph.Model(self.es)
-
-    def dump_results_to_es(self):
-        self.es.results['main'] = outputlib.processing.results(self.model)
-        self.es.results['meta'] = outputlib.processing.meta_results(self.model)
-        self.es.dump(dpath=self.path, filename=self.name+'.de21')
-
-    def solve(self, with_duals=False):
-        solver_name = cfg.get('general', 'solver')
-
-        logging.info("Optimising using {0}.".format(solver_name))
-
-        if with_duals:
-            self.model.receive_duals()
-
-        self.model.solve(solver=solver_name, solve_kwargs={'tee': True})
-
-    def plot_nodes(self, show=None, filename=None, **kwargs):
-        g = graph.create_nx_graph(self.es, filename=filename,
-                                  remove_nodes_with_substrings=['bus_cs'])
-        if show is True:
-            draw_graph(g, **kwargs)
-        return g
-
 
 def nodes_from_table_collection(table_collection):
     # Create  a special dictionary that will raise an error if a key is
     # updated. This avoids the
-    nodes = NodeDict()
+    nodes = reegis_tools.scenario_tools.NodeDict()
 
     # Global commodity sources
     cs = table_collection['commodity_source']['DE']
