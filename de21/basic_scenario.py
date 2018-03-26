@@ -361,4 +361,4 @@ def powerplants(table_collection, year, round_values=None):
 if __name__ == "__main__":
     logger.define_logging()
     # print(scenario_commodity_sources(2014, use_znes_2014=True))
-    print(scenario_elec_demand(2014, {}))
+    print(scenario_elec_demand(2014, pd.DataFrame()))
