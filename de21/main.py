@@ -35,8 +35,9 @@ def main(year):
     stopwatch()
 
     sc = de21.Scenario(name='basic', year=2014)
-    csv_path = os.path.join(cfg.get('paths', 'scenario'), 'basic',
-                            '{year}', 'csv')
+    scenario_path = os.path.join(cfg.get('paths', 'scenario'), 'basic',
+                                 '{year}').format(year=year)
+    csv_path = os.path.join(scenario_path, 'csv')
 
     logging.info("Read scenario from csv collection: {0}".format(stopwatch()))
     sc.load_csv(csv_path.format(year=str(year)))
@@ -45,7 +46,8 @@ def main(year):
     sc.add_nodes2solph()
 
     # Save energySystem to '.graphml' file.
-    sc.plot_nodes(filename='/home/uwe/de21',
+    fn = 'de21_{0}'.format(year)
+    sc.plot_nodes(filename=os.path.join(scenario_path, fn),
                   remove_nodes_with_substrings=['bus_cs'])
 
     logging.info("Create the concrete model: {0}".format(stopwatch()))
@@ -55,7 +57,7 @@ def main(year):
     sc.solve()
 
     logging.info("Solved. Dump results: {0}".format(stopwatch()))
-    sc.dump_results_to_es()
+    sc.dump_es(os.path.join(fn + '.esys'))
 
     logging.info("All done. de21 finished without errors: {0}".format(
         stopwatch()))
