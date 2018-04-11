@@ -57,6 +57,7 @@ def nodes_from_table_collection(table_collection):
     # Local volatile sources
     vs = table_collection['volatile_source']
     ts = table_collection['time_series']
+
     for region in vs.columns.get_level_values(0).unique():
         for vs_type in vs[region].columns:
             vs_label = 'source_{0}_{1}'.format(vs_type, region)
