@@ -31,7 +31,7 @@ def reshape_conversion_balance(year):
     eb = reegis_tools.energy_balance.get_conversion_balance(year)
 
     # create empty DataFrame to take the conversion balance for the regions
-    my_index = pd.MultiIndex(levels=[[], [], [], []], labels=[[], [], [], []])
+    my_index = pd.MultiIndex(levels=[[], [], []], labels=[[], [], []])
     eb21 = pd.DataFrame(index=my_index, columns=eb.columns)
 
     # Use the number of inhabitants to reshape the balance to the new regions
@@ -56,14 +56,14 @@ def reshape_conversion_balance(year):
         states = inhabitants.loc[inhabitants.region == de21_region].state
 
         # Sum up the fraction of each state-table to get the new region table
-        for idx in eb.loc[year, states[0]].index:
-            eb21.loc[year, de21_region, idx[0], idx[1]] = 0
+        for idx in eb.loc[states[0]].index:
+            eb21.loc[de21_region, idx[0], idx[1]] = 0
             for state in states:
                 share = inhabitants.loc[
                     (inhabitants['region'] == de21_region) &
                     (inhabitants['state'] == state)]['share_state']
-                eb21.loc[year, de21_region, idx[0], idx[1]] += (
-                    eb.loc[year, state, idx[0], idx[1]] * float(share))
+                eb21.loc[de21_region, idx[0], idx[1]] += (
+                    eb.loc[state, idx[0], idx[1]] * float(share))
     eb21.rename(columns={'re': cfg.get('chp', 'renewable_source')},
                 inplace=True)
     return eb21
