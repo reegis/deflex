@@ -22,6 +22,7 @@ import oemof.tools.logger as logger
 # Internal libraries
 import reegis_tools.config as cfg
 import reegis_tools.energy_balance
+import reegis_tools.powerplants
 
 import de21.inhabitants
 
@@ -69,46 +70,15 @@ def reshape_conversion_balance(year):
     return eb21
 
 
-def calculate_efficiency(eb):
-    row_chp = 'Heizkraftwerke der allgemeinen Versorgung (nur KWK)'
-    row_hp = 'Heizwerke'
-    row_total = 'Umwandlungsausstoß insgesamt'
-
-    regions = ['DE{num:02d}'.format(num=n+1) for n in range(18)]
-    eta = {}
-    rows = ['Heizkraftwerke der allgemeinen Versorgung (nur KWK)',
-            'Heizwerke']
-
-    for region in regions:
-        eta[region] = {}
-        in_chp = eb.loc[region, 'input', row_chp]
-        in_hp = eb.loc[region, 'input', row_hp]
-        elec_chp = eb.loc[(region, 'output', row_chp), 'electricity']
-        heat_chp = eb.loc[(region, 'output', row_chp),
-                          'district heating']
-        heat_hp = eb.loc[(region, 'output', row_hp),
-                         'district heating']
-        heat_total = eb.loc[(region, 'output', row_total),
-                            'district heating']
-        end_total_heat = eb.loc[(region, 'usage', 'Endenergieverbrauch'),
-                                'district heating']
-        eta[region]['sys_heat'] = end_total_heat / heat_total
-
-        eta[region]['hp'] = float(heat_hp / in_hp.total)
-        eta[region]['heat_chp'] = heat_chp / in_chp.total
-        eta[region]['elec_chp'] = elec_chp / in_chp.total
-
-        eta[region]['fuel_share'] = eb.loc[region, 'input', rows].div(
-            eb.loc[region, 'input', rows].total.sum(), axis=0)
-
-    return eta
-
-
-def get_efficiency(year):
-    return calculate_efficiency(reshape_conversion_balance(year).loc[year])
+def get_chp_share_and_efficiency(year):
+    conversion_blnc = reshape_conversion_balance(year)
+    return reegis_tools.powerplants.calculate_chp_share_and_efficiency(
+        conversion_blnc)
 
 
 if __name__ == "__main__":
     logger.define_logging()
     import pprint as pp
-    pp.pprint(get_efficiency(2014))
+    pp.pprint(get_chp_share_and_efficiency(2014))
+    # pp.pprint(reegis_tools.powerplants.get_chp_share_and_efficiency_states(
+    #     2014)['BE'])
