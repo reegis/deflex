@@ -39,7 +39,7 @@ def create_scenario(year, round_values):
     table_collection['storages'] = scenario_storages()
 
     logging.info('BASIC SCENARIO - POWER PLANTS')
-    table_collection = powerplants(
+    table_collection = powerplants_scenario(
         table_collection, year, round_values)
 
     logging.info('BASIC SCENARIO - CHP PLANTS')
@@ -242,30 +242,35 @@ def decentralised_heating():
 
 
 def chp_scenario(table_collection, year):
-    trsf = table_collection['transformer']
 
-    eta = de21.chp.get_efficiency(year)
-    # trsf = pd.read_excel('/home/uwe/PythonExport2.xls', header=[0, 1],
-    #                   sheet_name='transformer')
-    trsf = trsf.fillna(0)
+    # values from heat balance
+    heat_b = de21.chp.get_chp_share_and_efficiency(year)
+
     heat_demand = de21.demand.get_heat_profiles_de21(year)
-    heat_demand.columns = heat_demand.columns.swaplevel()
+    return chp_table(heat_b, heat_demand, table_collection)
+
+
+def chp_table(heat_b, heat_demand, table_collection, regions=None):
+    trsf = table_collection['transformer']
+    trsf = trsf.fillna(0)
 
     rows = ['Heizkraftwerke der allgemeinen Versorgung (nur KWK)',
             'Heizwerke']
+    if regions is None:
+        regions = sorted(heat_b.keys())
 
     logging.info('start')
-    for region in sorted(eta.keys()):
-        eta_hp = round(eta[region]['sys_heat'] * eta[region]['hp'], 2)
+    for region in regions:
+        eta_hp = round(heat_b[region]['sys_heat'] * heat_b[region]['hp'], 2)
         eta_heat_chp = round(
-            eta[region]['sys_heat'] * eta[region]['heat_chp'], 2)
-        eta_elec_chp = round(eta[region]['elec_chp'], 2)
+            heat_b[region]['sys_heat'] * heat_b[region]['heat_chp'], 2)
+        eta_elec_chp = round(heat_b[region]['elec_chp'], 2)
 
         # Remove 'district heating' and 'electricity' and spread the share
         # to the remaining columns.
-        share = pd.DataFrame(columns=eta[region]['fuel_share'].columns)
+        share = pd.DataFrame(columns=heat_b[region]['fuel_share'].columns)
         for row in rows:
-            tmp = eta[region]['fuel_share'].loc[region, :, row]
+            tmp = heat_b[region]['fuel_share'].loc[region, :, row]
             tot = float(tmp['total'])
 
             d = float(tmp['district heating'] + tmp['electricity'])
@@ -278,8 +283,8 @@ def chp_scenario(table_collection, year):
         # Remove the total share
         del share['total']
 
-        max_val = float(heat_demand['district_heating'][region].max())
-        sum_val = float(heat_demand['district_heating'][region].sum())
+        max_val = float(heat_demand[region]['district_heating'].max())
+        sum_val = float(heat_demand[region]['district_heating'].sum())
 
         for fuel in share.columns:
             if fuel == 'gas':
@@ -322,11 +327,17 @@ def chp_scenario(table_collection, year):
     return table_collection
 
 
-def powerplants(table_collection, year, round_values=None):
+def powerplants_scenario(table_collection, year, round_values=None):
     """Get power plants for the scenario year
     """
-
     pp = de21.powerplants.get_de21_pp_by_year(year, overwrite_capacity=True)
+    return powerplants(pp, table_collection, year, 'de21_region', round_values)
+
+
+def powerplants(pp, table_collection, year, region_column='de21_region',
+                round_values=None):
+    """This function works for all power plant tables with an equivalent
+    structure e.g. power plants by state or other regions."""
     logging.info("Adding power plants to your scenario.")
 
     replace_names = cfg.get_dict('source_names')
@@ -338,7 +349,7 @@ def powerplants(table_collection, year, round_values=None):
         cfg.get_dict('model_classes'))
 
     pp = pp.groupby(
-        ['model_classes', 'de21_region', 'energy_source_level_2']).sum()[
+        ['model_classes', region_column, 'energy_source_level_2']).sum()[
         ['capacity', 'capacity_in']]
 
     for model_class in pp.index.get_level_values(level=0).unique():
@@ -360,5 +371,5 @@ def powerplants(table_collection, year, round_values=None):
 
 if __name__ == "__main__":
     logger.define_logging()
-    # print(scenario_commodity_sources(2014, use_znes_2014=True))
-    print(scenario_elec_demand(2014, pd.DataFrame()))
+    print(scenario_commodity_sources(2014, use_znes_2014=True))
+    # print(scenario_elec_demand(2014, pd.DataFrame()))
