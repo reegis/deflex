@@ -43,28 +43,6 @@ def add_model_region_pp(df):
     return df
 
 
-def add_capacity_in(pp):
-    """Add a column to the conventional power plants to make it possible to
-    calculate an average efficiency for the summed up groups.
-    """
-    # Calculate the inflow capacity for power plants with an efficiency value.
-    pp['capacity_in'] = pp['capacity'].div(pp['efficiency'])
-
-    # Sum up the valid in/out capacities to calculate an average efficiency
-    cap_valid = pp.loc[pp['efficiency'].notnull(), 'capacity'].sum()
-    cap_in = pp.loc[pp['efficiency'].notnull(), 'capacity_in'].sum()
-
-    # Set the average efficiency for missing efficiency values
-    pp['efficiency'] = pp['efficiency'].fillna(
-        cap_valid / cap_in)
-
-    # Calculate the inflow for all power plants
-    pp['capacity_in'] = pp['capacity'].div(pp['efficiency'])
-    
-    logging.info("'capacity_in' column added to power plant table.")
-    return pp
-
-
 def pp_reegis2de21():
     filename_in = os.path.join(cfg.get('paths', 'powerplants'),
                                cfg.get('powerplants', 'reegis_pp'))
@@ -76,7 +54,7 @@ def pp_reegis2de21():
         filename_in = reegis_tools.powerplants.pp_opsd2reegis()
     pp = pd.read_hdf(filename_in, 'pp', mode='r')
     pp = add_model_region_pp(pp)
-    pp = add_capacity_in(pp)
+    pp = reegis_tools.powerplants.add_capacity_in(pp)
 
     # Remove powerplants outside Germany
     if cfg.get('powerplants', 'remove_phes'):
@@ -119,6 +97,7 @@ def get_de21_pp_by_year(year, overwrite_capacity=False):
     # If com_month exist the power plants will be considered month-wise.
     # Otherwise the commission/decommission within the given year is not
     # considered.
+    print(pp.columns)
     for fcol in filter_columns:
         filter_column = fcol.format(year)
         orig_column = fcol[:-4]
