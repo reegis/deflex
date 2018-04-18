@@ -26,7 +26,7 @@ import de21.demand
 import de21.storages
 import de21.transmission
 import de21.chp
-import de21.scenario_tools as scenario_tools
+import de21.scenario_tools
 
 import oemof.tools.logger as logger
 
@@ -373,7 +373,7 @@ def powerplants(pp, table_collection, year, region_column='de21_region',
 
 def create_basic_scenario(year, round_values=None):
     table_collection = de21.basic_scenario.create_scenario(year, round_values)
-    sce = scenario_tools.Scenario(table_collection=table_collection,
+    sce = de21.scenario_tools.Scenario(table_collection=table_collection,
                                   name='basic', year=2014)
     path = os.path.join(cfg.get('paths', 'scenario'), 'basic', str(year))
     sce.to_excel(os.path.join(path, '_'.join([sce.name, str(year)]) + '.xls'))

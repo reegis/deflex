@@ -38,7 +38,7 @@ def main(year):
     scenario_path = os.path.join(cfg.get('paths', 'scenario'), 'basic',
                                  '{year}').format(year=year)
     csv_path = os.path.join(scenario_path, 'csv')
-       
+
     if not os.path.isdir(csv_path):
         de21.basic_scenario.create_basic_scenario(y)
 
