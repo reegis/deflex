@@ -312,18 +312,8 @@ def draw_graph(grph, edge_labels=True, node_color='#AFAFAF',
         plt.show()
 
 
-def create_basic_scenario(year, round_values=None):
-    table_collection = de21.basic_scenario.create_scenario(year, round_values)
-    sce = Scenario(table_collection=table_collection, name='basic',
-                   year=2014)
-    path = os.path.join(cfg.get('paths', 'scenario'), 'basic', str(year))
-    sce.to_excel(os.path.join(path, '_'.join([sce.name, str(year)]) + '.xls'))
-    sce.to_csv(os.path.join(path, 'csv'))
-
-
 if __name__ == "__main__":
     logger.define_logging()
     # logger.define_logging(screen_level=logging.WARNING)
     # logging.warning("Only warnings will be displayed!")
-    for y in [2014, 2013, 2012]:
-        create_basic_scenario(y)
+
