@@ -48,7 +48,7 @@ def get_electrical_transmission_de21(duplicate=False):
                              f_security * math.sqrt(3) / 1000)
 
     pwr_lines = pd.read_csv(os.path.join(
-        cfg.get('paths', 'geo_de21'),
+        cfg.get('paths', 'geometry'),
         cfg.get('transmission', 'powerlines_line')), index_col='name')
 
     for l in pwr_lines.index:
