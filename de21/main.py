@@ -60,7 +60,7 @@ def main(year):
     sc.solve()
 
     logging.info("Solved. Dump results: {0}".format(stopwatch()))
-    sc.dump_es(os.path.join(fn + '.esys'))
+    sc.dump_es(os.path.join(scenario_path, fn + '.esys'))
 
     logging.info("All done. de21 finished without errors: {0}".format(
         stopwatch()))
