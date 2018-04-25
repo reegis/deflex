@@ -43,7 +43,7 @@ def add_model_region_pp(df):
     return df
 
 
-def pp_reegis2de21():
+def pp_reegis2de21(clean_offshore=True):
     filename_in = os.path.join(cfg.get('paths', 'powerplants'),
                                cfg.get('powerplants', 'reegis_pp'))
     filename_out = os.path.join(cfg.get('paths', 'powerplants'),
@@ -56,7 +56,7 @@ def pp_reegis2de21():
     pp = add_model_region_pp(pp)
     pp = reegis_tools.powerplants.add_capacity_in(pp)
 
-    # Remove powerplants outside Germany
+    # Remove PHES (storages)
     if cfg.get('powerplants', 'remove_phes'):
         pp = pp.loc[pp.technology != 'Pumped storage']
 
@@ -64,8 +64,37 @@ def pp_reegis2de21():
     for state in cfg.get_list('powerplants', 'remove_states'):
         pp = pp.loc[pp.federal_states != state]
 
+    if clean_offshore:
+        pp = remove_onshore_technology_from_offshore_regions(pp)
+
     pp.to_hdf(filename_out, 'pp')
     return filename_out
+
+
+def remove_onshore_technology_from_offshore_regions(df):
+    logging.info("Removing onshore technology from offshore regions.")
+    logging.info("The code is not efficient. So it may take a while.")
+
+    dc = {'MV': 'DE01',
+          'SH': 'DE13',
+          'NI': 'DE14'}
+
+    for ttype in ['Solar', 'Bioenergy', 'Wind']:
+        for region in ['DE19', 'DE20', 'DE21']:
+            logging.debug("Clean {1} from {0}.".format(region, ttype))
+
+            c1 = df['energy_source_level_2'] == ttype
+            c2 = df['de21_region'] == region
+
+            condition = c1 & c2
+
+            if ttype == 'Wind':
+                condition = c1 & c2 & (df['technology'] == 'Onshore')
+
+            for i, v in df.loc[condition].iterrows():
+                df.loc[i, 'de21_region'] = (
+                    dc[df.loc[i, 'federal_states']])
+    return df
 
 
 def get_de21_pp_by_year(year, overwrite_capacity=False):
