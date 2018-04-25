@@ -126,7 +126,7 @@ def get_de21_pp_by_year(year, overwrite_capacity=False):
     # If com_month exist the power plants will be considered month-wise.
     # Otherwise the commission/decommission within the given year is not
     # considered.
-    print(pp.columns)
+
     for fcol in filter_columns:
         filter_column = fcol.format(year)
         orig_column = fcol[:-4]
@@ -149,12 +149,16 @@ def get_de21_pp_by_year(year, overwrite_capacity=False):
 
 
 if __name__ == "__main__":
-    logger.define_logging()
-    # pp_reegis2de21()
-    my_df = get_de21_pp_by_year(2012, overwrite_capacity=False)
-    logging.info('Done!')
+    logger.define_logging(file_level=logging.INFO)
+    # print(pp_reegis2de21())
+    # fn = '/home/uwe/express/reegis/data/powerplants/de21_pp.h5'
+    # df = pd.read_hdf(fn, 'pp')
+    # pp = reegis_tools.geometries.Geometry(name='power plants', df=df)
+    # pp.create_geo_df()
+    # pp.gdf.to_file('/home/uwe/pp_tmp.shp')
     # exit(0)
-    print(my_df[['capacity_2012', 'capacity_in_2012']].sum())
-    print(my_df.groupby(['de21_region', 'energy_source_level_2']).sum()[[
-        'capacity_2012', 'capacity_in_2012']])
-    # print(my_df[['capacity', 'capacity_2012']].sum(axis=0))
+    my_df = get_de21_pp_by_year(2014, overwrite_capacity=True)
+    print(my_df.groupby(['de21_region', 'energy_source_level_2']).sum()[
+        'capacity'])
+    # exit(0)
+    logging.info('Done!')
