@@ -381,10 +381,34 @@ def powerplants(pp, table_collection, year, region_column='de21_region',
     return table_collection
 
 
+def clean_time_series(table_collection):
+    ts = table_collection['time_series']
+    vs = table_collection['volatile_source']
+
+    regions = list(ts.columns.get_level_values(0).unique())
+    regions.remove('DE_demand')
+    for reg in regions:
+        for load in ['district_heating', 'electrical_load']:
+            if ts[reg].get(load) is not None:
+                if ts[reg, load].sum() == 0:
+                    del ts[reg, load]
+        for t in ['hydro', 'solar', 'wind', 'geothermal']:
+            rm = False
+            # if the column does not exist or is 0 the corresponding column
+            # of the time_series table can be removed.
+            if vs[reg].get(t) is None or vs[reg].get(t).sum() == 0:
+                rm = True
+            if (ts[reg].get(t) is not None) & rm:
+                del ts[reg, t]
+
+    return table_collection
+
+
 def create_basic_scenario(year, round_values=None):
     table_collection = de21.basic_scenario.create_scenario(year, round_values)
+    table_collection = clean_time_series(table_collection)
     sce = de21.scenario_tools.Scenario(table_collection=table_collection,
-                                  name='basic', year=2014)
+                                       name='basic', year=2014)
     path = os.path.join(cfg.get('paths', 'scenario'), 'basic', str(year))
     sce.to_excel(os.path.join(path, '_'.join([sce.name, str(year)]) + '.xls'))
     sce.to_csv(os.path.join(path, 'csv'))
