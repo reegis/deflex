@@ -34,15 +34,15 @@ import oemof.tools.logger as logger
 def create_scenario(year, round_values):
     table_collection = {}
 
-    logging.info('BASIC SCENARIO - TRANSMISSION')
-    table_collection['transmission'] = scenario_transmission()
-
     logging.info('BASIC SCENARIO - STORAGES')
     table_collection['storages'] = scenario_storages()
 
     logging.info('BASIC SCENARIO - POWER PLANTS')
     table_collection = powerplants_scenario(
         table_collection, year, round_values)
+
+    logging.info('BASIC SCENARIO - TRANSMISSION')
+    table_collection['transmission'] = scenario_transmission(table_collection)
 
     logging.info('BASIC SCENARIO - CHP PLANTS')
     table_collection = chp_scenario(table_collection, year)
@@ -60,8 +60,18 @@ def create_scenario(year, round_values):
     return table_collection
 
 
-def scenario_transmission():
+def scenario_transmission(table_collection):
+    vs = table_collection['volatile_source']
+    offshore_regions = ['DE19', 'DE20', 'DE21']
+
     elec_trans = de21.transmission.get_electrical_transmission_de21()
+
+    # Set transmission capacity of offshore power lines to installed capacity
+    # Multiply the installed capacity with 1.1 to get a buffer of 10%.
+    for offreg in offshore_regions:
+        elec_trans.loc[elec_trans.index.str.contains(offreg), 'capacity'] = (
+            vs[offreg].sum().sum() * 1.1)
+
     elec_trans = (
         pd.concat([elec_trans], axis=1, keys=['electrical']).sort_index(1))
     general_efficiency = cfg.get('transmission', 'general_efficiency')
