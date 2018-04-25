@@ -40,7 +40,7 @@ def main(year):
     csv_path = os.path.join(scenario_path, 'csv')
 
     if not os.path.isdir(csv_path):
-        de21.basic_scenario.create_basic_scenario(y)
+        de21.basic_scenario.create_basic_scenario(year)
 
     logging.info("Read scenario from csv collection: {0}".format(stopwatch()))
     sc.load_csv(csv_path.format(year=str(year)))
