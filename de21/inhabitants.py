@@ -40,7 +40,8 @@ def get_ew_by_de21_subregions(year):
     geopandas.geoDataFrame
     """
     de21_sub = reegis_tools.geometries.Geometry(name='de21_subregions')
-    de21_sub.load(cfg.get('paths', 'geometry'), 'overlap_region_polygon.csv')
+    de21_sub.load(cfg.get('paths', 'geo_de21'),
+                  cfg.get('geometry', 'overlap_federal_states_de_21_polygon'))
     de21_sub.gdf['ew'] = reegis_tools.inhabitants.get_ew_by_region(year,
                                                                    de21_sub)
     return de21_sub.gdf
@@ -49,5 +50,5 @@ def get_ew_by_de21_subregions(year):
 if __name__ == "__main__":
     oemof.tools.logger.define_logging()
     logging.info("Getting inhabitants by region for de21.")
-    get_ew_by_de21_subregions(2012)
+    print(get_ew_by_de21_subregions(2012)['ew'])
     # print(get_ew_by_de21(2012))

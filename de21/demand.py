@@ -295,19 +295,20 @@ def get_heat_profiles_de21(year, time_index=None, keep_unit=False):
 
 if __name__ == "__main__":
     logger.define_logging()
-    print(openego_demand_share())
-    exit(0)
+    # print(openego_demand_share())
+    # exit(0)
     # elec_demand_tester(2013)
     # prepare_ego_demand()
     # exit(0)
-    for y in [2014, 2013]:
+    for y in [2014]:
         df = reegis_tools.heat_demand.get_heat_profiles_by_state(
             y, state=['BE'])['BE']
-        df = df.swaplevel(axis=1)
-        df = df['district heating'].sum(axis=1)
-        print(df)
-        df.copy().to_csv('/home/uwe/test.csv')
-        exit(0)
-        get_heat_profiles_de21(y)
+        print(df.groupby(level=1, axis=1).sum())
+        # df = df.swaplevel(axis=1)
+        # df = df['district heating'].sum(axis=1)
+        # print(df)
+        # df.copy().to_csv('/home/uwe/test.csv')
+        # exit(0)
+        print(get_heat_profiles_de21(y))
         # print(heat_demand(y).loc['BE'].sum().sum() / 3.6)
     logging.info("Done!")

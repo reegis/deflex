@@ -20,13 +20,13 @@ import pandas as pd
 import reegis_tools.config as cfg
 import reegis_tools.commodity_sources
 import reegis_tools.bmwi
-import de21.powerplants
-import de21.feedin
-import de21.demand
-import de21.storages
-import de21.transmission
-import de21.chp
-import de21.scenario_tools
+import deflex.powerplants
+import deflex.feedin
+import deflex.demand
+import deflex.storages
+import deflex.transmission
+import deflex.chp
+import deflex.scenario_tools
 
 import oemof.tools.logger as logger
 
@@ -64,7 +64,7 @@ def scenario_transmission(table_collection):
     vs = table_collection['volatile_source']
     offshore_regions = ['DE19', 'DE20', 'DE21']
 
-    elec_trans = de21.transmission.get_electrical_transmission_de21()
+    elec_trans = deflex.transmission.get_electrical_transmission_deflex()
 
     # Set transmission capacity of offshore power lines to installed capacity
     # Multiply the installed capacity with 1.1 to get a buffer of 10%.
@@ -85,7 +85,7 @@ def scenario_transmission(table_collection):
 
 
 def scenario_storages():
-    stor = de21.storages.pumped_hydroelectric_storage().transpose()
+    stor = deflex.storages.pumped_hydroelectric_storage().transpose()
     return pd.concat([stor], axis=1, keys=['phes']).swaplevel(0, 1, 1)
 
 
@@ -171,7 +171,7 @@ def scenario_demand(year, time_series):
 
 def scenario_heat_demand(year, table):
     idx = table.index  # Use the index of the existing time series
-    table = pd.concat([table, de21.demand.get_heat_profiles_de21(year, idx)],
+    table = pd.concat([table, deflex.demand.get_heat_profiles_de21(year, idx)],
                       axis=1)
     return table.sort_index(1)
 
@@ -189,7 +189,7 @@ def scenario_elec_demand(year, table):
         annual_demand = annual_demand * 1e+6
         logging.warning(msg.format(converter))
 
-    df = de21.demand.get_de21_profile(
+    df = deflex.demand.get_de21_profile(
         year, demand_method, annual_demand=annual_demand)
     df = pd.concat([df], axis=1, keys=['electrical_load']).swaplevel(0, 1, 1)
     df = df.reset_index(drop=True).set_index(table.index)
@@ -204,14 +204,14 @@ def scenario_feedin(year):
     feedin = scenario_feedin_pv(year, my_index)
     feedin = scenario_feedin_wind(year, feedin)
     for feedin_type in ['hydro', 'geothermal']:
-        df = de21.feedin.get_de21_feedin(year, feedin_type)
+        df = deflex.feedin.get_de21_feedin(year, feedin_type)
         df = pd.concat([df], axis=1, keys=[feedin_type]).swaplevel(0, 1, 1)
         feedin = pd.DataFrame(pd.concat([feedin, df], axis=1)).sort_index(1)
     return feedin
 
 
 def scenario_feedin_wind(year, feedin_ts):
-    wind = de21.feedin.get_de21_feedin(year, 'wind')
+    wind = deflex.feedin.get_de21_feedin(year, 'wind')
     for reg in wind.columns.levels[0]:
         feedin_ts[reg, 'wind'] = wind[
             reg, 'coastdat_{0}_wind_ENERCON_127_hub135_pwr_7500'.format(year),
@@ -222,7 +222,7 @@ def scenario_feedin_wind(year, feedin_ts):
 def scenario_feedin_pv(year, my_index):
     pv_types = cfg.get_dict('pv_types')
     pv_orientation = cfg.get_dict('pv_orientation')
-    pv = de21.feedin.get_de21_feedin(year, 'solar')
+    pv = deflex.feedin.get_de21_feedin(year, 'solar')
 
     # combine different pv-sets to one feedin time series
     feedin_ts = pd.DataFrame(columns=my_index, index=pv.index)
@@ -256,9 +256,9 @@ def decentralised_heating():
 def chp_scenario(table_collection, year):
 
     # values from heat balance
-    heat_b = de21.chp.get_chp_share_and_efficiency(year)
+    heat_b = deflex.chp.get_chp_share_and_efficiency(year)
 
-    heat_demand = de21.demand.get_heat_profiles_de21(year)
+    heat_demand = deflex.demand.get_heat_profiles_de21(year)
     return chp_table(heat_b, heat_demand, table_collection)
 
 
@@ -342,7 +342,7 @@ def chp_table(heat_b, heat_demand, table_collection, regions=None):
 def powerplants_scenario(table_collection, year, round_values=None):
     """Get power plants for the scenario year
     """
-    pp = de21.powerplants.get_de21_pp_by_year(year, overwrite_capacity=True)
+    pp = deflex.powerplants.get_de21_pp_by_year(year, overwrite_capacity=True)
     return powerplants(pp, table_collection, year, 'de21_region', round_values)
 
 
@@ -405,10 +405,11 @@ def clean_time_series(table_collection):
 
 
 def create_basic_scenario(year, round_values=None):
-    table_collection = de21.basic_scenario.create_scenario(year, round_values)
+    table_collection = deflex.basic_scenario.create_scenario(year,
+                                                             round_values)
     table_collection = clean_time_series(table_collection)
-    sce = de21.scenario_tools.Scenario(table_collection=table_collection,
-                                       name='basic', year=2014)
+    sce = deflex.scenario_tools.Scenario(table_collection=table_collection,
+                                         name='basic', year=2014)
     path = os.path.join(cfg.get('paths', 'scenario'), 'basic', str(year))
     sce.to_excel(os.path.join(path, '_'.join([sce.name, str(year)]) + '.xls'))
     sce.to_csv(os.path.join(path, 'csv'))
