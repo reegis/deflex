@@ -21,7 +21,7 @@ from shapely.geometry import Point
 # internal modules
 import reegis_tools.config as cfg
 import reegis_tools.geometries
-import de21.geometries
+import deflex.geometries
 
 
 def lat_lon2point(df):
@@ -55,10 +55,10 @@ def pumped_hydroelectric_storage():
     gphes.create_geo_df()
 
     # get model region polygons
-    de21_regions = de21.geometries.de21_regions()
+    deflex_regions = deflex.geometries.deflex_regions()
 
     gphes.gdf = reegis_tools.geometries.spatial_join_with_buffer(
-        gphes, de21_regions)
+        gphes, deflex_regions)
 
     # create turbine and pump efficiency from overall efficiency (square root)
     # multiply the efficiency with the capacity to group with "sum()"
@@ -66,7 +66,7 @@ def pumped_hydroelectric_storage():
     gphes.gdf['turbine_eff'] = (
             np.sqrt(gphes.gdf.efficiency) * gphes.gdf.turbine)
 
-    phes = gphes.gdf.groupby('de21_region').sum()
+    phes = gphes.gdf.groupby('deflex_region').sum()
 
     # divide by the capacity to get the efficiency and remove overall
     # efficiency

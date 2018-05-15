@@ -171,7 +171,8 @@ def scenario_demand(year, time_series):
 
 def scenario_heat_demand(year, table):
     idx = table.index  # Use the index of the existing time series
-    table = pd.concat([table, deflex.demand.get_heat_profiles_de21(year, idx)],
+    table = pd.concat([table, deflex.demand.get_heat_profiles_deflex(year,
+                                                                     idx)],
                       axis=1)
     return table.sort_index(1)
 
@@ -189,7 +190,7 @@ def scenario_elec_demand(year, table):
         annual_demand = annual_demand * 1e+6
         logging.warning(msg.format(converter))
 
-    df = deflex.demand.get_de21_profile(
+    df = deflex.demand.get_deflex_profile(
         year, demand_method, annual_demand=annual_demand)
     df = pd.concat([df], axis=1, keys=['electrical_load']).swaplevel(0, 1, 1)
     df = df.reset_index(drop=True).set_index(table.index)
@@ -204,14 +205,14 @@ def scenario_feedin(year):
     feedin = scenario_feedin_pv(year, my_index)
     feedin = scenario_feedin_wind(year, feedin)
     for feedin_type in ['hydro', 'geothermal']:
-        df = deflex.feedin.get_de21_feedin(year, feedin_type)
+        df = deflex.feedin.get_deflex_feedin(year, feedin_type)
         df = pd.concat([df], axis=1, keys=[feedin_type]).swaplevel(0, 1, 1)
         feedin = pd.DataFrame(pd.concat([feedin, df], axis=1)).sort_index(1)
     return feedin
 
 
 def scenario_feedin_wind(year, feedin_ts):
-    wind = deflex.feedin.get_de21_feedin(year, 'wind')
+    wind = deflex.feedin.get_deflex_feedin(year, 'wind')
     for reg in wind.columns.levels[0]:
         feedin_ts[reg, 'wind'] = wind[
             reg, 'coastdat_{0}_wind_ENERCON_127_hub135_pwr_7500'.format(year),
@@ -222,7 +223,7 @@ def scenario_feedin_wind(year, feedin_ts):
 def scenario_feedin_pv(year, my_index):
     pv_types = cfg.get_dict('pv_types')
     pv_orientation = cfg.get_dict('pv_orientation')
-    pv = deflex.feedin.get_de21_feedin(year, 'solar')
+    pv = deflex.feedin.get_deflex_feedin(year, 'solar')
 
     # combine different pv-sets to one feedin time series
     feedin_ts = pd.DataFrame(columns=my_index, index=pv.index)
@@ -248,7 +249,7 @@ def scenario_feedin_pv(year, my_index):
 
 
 def decentralised_heating():
-    filename = os.path.join(cfg.get('paths', 'data_de21'),
+    filename = os.path.join(cfg.get('paths', 'data_deflex'),
                             cfg.get('heating', 'table'))
     return pd.read_csv(filename, header=[0, 1], index_col=[0])
 
@@ -258,7 +259,7 @@ def chp_scenario(table_collection, year):
     # values from heat balance
     heat_b = deflex.chp.get_chp_share_and_efficiency(year)
 
-    heat_demand = deflex.demand.get_heat_profiles_de21(year)
+    heat_demand = deflex.demand.get_heat_profiles_deflex(year)
     return chp_table(heat_b, heat_demand, table_collection)
 
 
@@ -342,11 +343,13 @@ def chp_table(heat_b, heat_demand, table_collection, regions=None):
 def powerplants_scenario(table_collection, year, round_values=None):
     """Get power plants for the scenario year
     """
-    pp = deflex.powerplants.get_de21_pp_by_year(year, overwrite_capacity=True)
-    return powerplants(pp, table_collection, year, 'de21_region', round_values)
+    pp = deflex.powerplants.get_deflex_pp_by_year(year,
+                                                  overwrite_capacity=True)
+    return powerplants(pp, table_collection, year, 'deflex_region',
+                       round_values)
 
 
-def powerplants(pp, table_collection, year, region_column='de21_region',
+def powerplants(pp, table_collection, year, region_column='deflex_region',
                 round_values=None):
     """This function works for all power plant tables with an equivalent
     structure e.g. power plants by state or other regions."""

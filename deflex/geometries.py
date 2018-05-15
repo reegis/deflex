@@ -19,10 +19,14 @@ from reegis_tools import config as cfg
 from reegis_tools import geometries as geo
 
 
-def de21_regions(suffix='vg'):
-    name = os.path.join(cfg.get('paths', 'geo_de21'),
-                        cfg.get('geometry', 'de21_polygon').format(
-                            suffix=suffix))
-    regions = geo.Geometry(name='de21_region')
+def deflex_regions(suffix='vg'):
+    name = os.path.join(cfg.get('paths', 'geo_deflex'),
+                        cfg.get('geometry', 'deflex_polygon').format(
+                            suffix=suffix, map=cfg.get('init', 'map')))
+    regions = geo.Geometry(name='{map}_region'.format(
+        map=cfg.get('init', 'map')))
     regions.load(fullname=name)
     return regions
+
+
+deflex_regions()

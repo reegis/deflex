@@ -31,12 +31,12 @@ import reegis_tools.geometries
 import reegis_tools.openego
 import reegis_tools.heat_demand
 
-import de21.geometries
-import de21.inhabitants
+import deflex.geometries
+import deflex.inhabitants
 
 
 def renpass_demand_share():
-    demand_share = os.path.join(cfg.get('paths', 'data_de21'),
+    demand_share = os.path.join(cfg.get('paths', 'data_deflex'),
                                 cfg.get('static_sources',
                                         'renpass_demand_share'))
     return pd.read_csv(
@@ -50,7 +50,8 @@ def openego_demand_share():
     return demand_reg.div(demand_sum)
 
 
-def de21_profile_from_entsoe(year, share, annual_demand=None, overwrite=False):
+def deflex_profile_from_entsoe(year, share, annual_demand=None,
+                               overwrite=False):
     load_file = os.path.join(cfg.get('paths', 'entsoe'),
                              cfg.get('entsoe', 'load_file'))
 
@@ -78,11 +79,11 @@ def de21_profile_from_entsoe(year, share, annual_demand=None, overwrite=False):
 
 
 def prepare_ego_demand(overwrite=False):
-    egofile_de21 = os.path.join(cfg.get('paths', 'demand'),
-                                cfg.get('demand', 'ego_file_de21'))
+    egofile_deflex = os.path.join(cfg.get('paths', 'demand'),
+                                  cfg.get('demand', 'ego_file_deflex'))
 
-    if os.path.isfile(egofile_de21) and not overwrite:
-        ego_demand_de21 = pd.read_hdf(egofile_de21, 'demand')
+    if os.path.isfile(egofile_deflex) and not overwrite:
+        ego_demand_deflex = pd.read_hdf(egofile_deflex, 'demand')
     else:
         ego_demand_df = reegis_tools.openego.get_ego_demand(overwrite=False)
         # Create GeoDataFrame from ego demand file.
@@ -92,36 +93,36 @@ def prepare_ego_demand(overwrite=False):
         ego_demand.create_geo_df()
 
         # Load region polygons
-        de21_regions = de21.geometries.de21_regions()
+        deflex_regions = deflex.geometries.deflex_regions()
 
         # Add column with region id
         ego_demand.gdf = reegis_tools.geometries.spatial_join_with_buffer(
-            ego_demand, de21_regions)
+            ego_demand, deflex_regions)
 
         # Overwrite Geometry object with its DataFrame, because it is not
         # needed anymore.
-        ego_demand_de21 = pd.DataFrame(ego_demand.gdf)
+        ego_demand_deflex = pd.DataFrame(ego_demand.gdf)
 
         # Delete the geometry column, because spatial grouping will be done
         # only with the region column.
-        del ego_demand_de21['geometry']
+        del ego_demand_deflex['geometry']
 
         # Write out file (hdf-format).
-        ego_demand_de21.to_hdf(egofile_de21, 'demand')
+        ego_demand_deflex.to_hdf(egofile_deflex, 'demand')
 
-    return ego_demand_de21.groupby('de21_region').sum()
+    return ego_demand_deflex.groupby('deflex_region').sum()
 
 
-def create_de21_slp_profile(year, outfile):
-    demand_de21 = prepare_ego_demand()
+def create_deflex_slp_profile(year, outfile):
+    demand_deflex = prepare_ego_demand()
 
     cal = Germany()
     holidays = dict(cal.holidays(year))
 
-    de21_profile = pd.DataFrame()
+    deflex_profile = pd.DataFrame()
 
-    for region in demand_de21.index:
-        annual_demand = demand_de21.loc[region]
+    for region in demand_deflex.index:
+        annual_demand = demand_deflex.loc[region]
 
         annual_electrical_demand_per_sector = {
             'g0': annual_demand.sector_consumption_retail,
@@ -139,28 +140,28 @@ def create_de21_slp_profile(year, outfile):
         elec_demand['i0'] = ilp.simple_profile(
             annual_electrical_demand_per_sector['i0'])
 
-        de21_profile[region] = elec_demand.sum(1).resample('H').mean()
-    de21_profile.to_csv(outfile)
+        deflex_profile[region] = elec_demand.sum(1).resample('H').mean()
+    deflex_profile.to_csv(outfile)
 
 
-def get_de21_slp_profile(year, annual_demand=None, overwrite=False):
+def get_deflex_slp_profile(year, annual_demand=None, overwrite=False):
     outfile = os.path.join(
         cfg.get('paths', 'demand'),
         cfg.get('demand', 'ego_profile_pattern').format(year=year))
     if not os.path.isfile(outfile) or overwrite:
-        create_de21_slp_profile(year, outfile)
+        create_deflex_slp_profile(year, outfile)
 
-    de21_profile = pd.read_csv(
+    deflex_profile = pd.read_csv(
         outfile, index_col=[0], parse_dates=True).multiply(1000)
 
     if annual_demand is not None:
-        de21_profile = de21_profile.div(de21_profile.sum().sum()).multiply(
-            annual_demand)
+        deflex_profile = deflex_profile.div(deflex_profile.sum().sum()
+                                            ).multiply(annual_demand)
 
-    return de21_profile
+    return deflex_profile
 
 
-def get_de21_profile(year, kind, annual_demand=None, overwrite=False):
+def get_deflex_profile(year, kind, annual_demand=None, overwrite=False):
     """
 
     Parameters
@@ -184,34 +185,34 @@ def get_de21_profile(year, kind, annual_demand=None, overwrite=False):
     # Use the openEgo proposal to calculate annual demand and standardised
     # load profiles to create profiles.
     if kind == 'openego':
-        return get_de21_slp_profile(year, annual_demand, overwrite)
+        return get_deflex_slp_profile(year, annual_demand, overwrite)
 
     # Use the renpass demand share values to divide the national entsoe profile
     # into 18 regional profiles.
     elif kind == 'renpass':
-        return de21_profile_from_entsoe(year, renpass_demand_share(),
-                                        annual_demand, overwrite)
+        return deflex_profile_from_entsoe(year, renpass_demand_share(),
+                                          annual_demand, overwrite)
 
     # Use the openEgo proposal to calculate the demand share values and use
     # them to divide the national entsoe profile.
     elif kind == 'openego_entsoe':
-        return de21_profile_from_entsoe(year, openego_demand_share(),
-                                        annual_demand, overwrite)
+        return deflex_profile_from_entsoe(year, openego_demand_share(),
+                                          annual_demand, overwrite)
 
     else:
         logging.error('Method "{0}" not found.'.format(kind))
 
 
 def elec_demand_tester(year):
-    oe = get_de21_profile(year, 'openego') * 1000000
-    rp = get_de21_profile(year, 'renpass') * 1000000
-    ege = get_de21_profile(year, 'openego_entsoe') * 1000000
+    oe = get_deflex_profile(year, 'openego') * 1000000
+    rp = get_deflex_profile(year, 'renpass') * 1000000
+    ege = get_deflex_profile(year, 'openego_entsoe') * 1000000
 
     netto = reegis_tools.bmwi.get_annual_electricity_demand_bmwi(year)
 
-    oe_s = get_de21_profile(year, 'openego', annual_demand=netto)
-    rp_s = get_de21_profile(year, 'renpass', annual_demand=netto)
-    ege_s = get_de21_profile(year, 'openego_entsoe', annual_demand=netto)
+    oe_s = get_deflex_profile(year, 'openego', annual_demand=netto)
+    rp_s = get_deflex_profile(year, 'renpass', annual_demand=netto)
+    ege_s = get_deflex_profile(year, 'openego_entsoe', annual_demand=netto)
 
     print('[TWh] original    scaled (BMWI)')
     print(' oe:  ', int(oe.sum().sum() / 1e+12), '       ',
@@ -223,7 +224,7 @@ def elec_demand_tester(year):
     print(ege_s)
 
 
-def get_heat_profiles_de21(year, time_index=None, keep_unit=False):
+def get_heat_profiles_deflex(year, time_index=None, keep_unit=False):
     heat_demand_state_file = os.path.join(
             cfg.get('paths', 'demand'),
             cfg.get('demand', 'heat_profile_state').format(year=year))
@@ -246,7 +247,7 @@ def get_heat_profiles_de21(year, time_index=None, keep_unit=False):
     district_heat_region = pd.DataFrame(index=my_index, columns=my_columns2)
 
     logging.info("Fetching inhabitants table.")
-    my_ew = de21.inhabitants.get_ew_by_de21_subregions(year)
+    my_ew = deflex.inhabitants.get_ew_by_deflex_subregions(year)
     my_ew = my_ew.replace({'state': cfg.get_dict('STATES')})
 
     state_ew = my_ew.groupby('state').sum()
@@ -278,19 +279,19 @@ def get_heat_profiles_de21(year, time_index=None, keep_unit=False):
     # print(district_heat_region)
     district_heat_region = district_heat_region.groupby(
         level=[0, 1], axis=1).sum()
-    de21_demand = pd.concat([district_heat_region, demand_region], axis=1)
+    deflex_demand = pd.concat([district_heat_region, demand_region], axis=1)
 
     if time_index is not None:
-        de21_demand.index = time_index
+        deflex_demand.index = time_index
 
     if not keep_unit:
         msg = ("The unit of the source is 'TJ'. "
                "Will be divided by {0} to get 'MWh'.")
         converter = 0.0036
-        de21_demand = de21_demand.div(converter)
+        deflex_demand = deflex_demand.div(converter)
         logging.warning(msg.format(converter))
 
-    return de21_demand
+    return deflex_demand
 
 
 if __name__ == "__main__":
@@ -309,6 +310,6 @@ if __name__ == "__main__":
         # print(df)
         # df.copy().to_csv('/home/uwe/test.csv')
         # exit(0)
-        print(get_heat_profiles_de21(y))
+        print(get_heat_profiles_deflex(y))
         # print(heat_demand(y).loc['BE'].sum().sum() / 3.6)
     logging.info("Done!")

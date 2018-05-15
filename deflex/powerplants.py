@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-"""Adapting the general reegis power plants to the de21 model.
+"""Adapting the general reegis power plants to the deflex model.
 
 Copyright (c) 2016-2018 Uwe Krien <uwe.krien@rl-institut.de>
 
@@ -17,7 +17,7 @@ import oemof.tools.logger as logger
 import reegis_tools.geometries
 import reegis_tools.config as cfg
 import reegis_tools.powerplants
-import de21.geometries
+import deflex.geometries
 
 
 def add_model_region_pp(df):
@@ -25,29 +25,30 @@ def add_model_region_pp(df):
     region. Afterwards the geometry column is removed. As the renewable data
     set is big, the hdf5 format is used.
     """
-    # Load de21 geometries
-    de21_regions = de21.geometries.de21_regions()
+    # Load deflex geometries
+    deflex_regions = deflex.geometries.deflex_regions()
 
     # Load power plant geometries
     pp = reegis_tools.geometries.Geometry(name='power plants', df=df)
     pp.create_geo_df()
 
     # Add region names to power plant table
-    pp.gdf = reegis_tools.geometries.spatial_join_with_buffer(pp, de21_regions)
+    pp.gdf = reegis_tools.geometries.spatial_join_with_buffer(pp,
+                                                              deflex_regions)
     df = pp.get_df()
 
     # Delete real geometries because they are not needed anymore.
     del df['geometry']
 
-    logging.info("de21 regions added to power plant table.")
+    logging.info("deflex regions added to power plant table.")
     return df
 
 
-def pp_reegis2de21(clean_offshore=True):
+def pp_reegis2deflex(clean_offshore=True):
     filename_in = os.path.join(cfg.get('paths', 'powerplants'),
                                cfg.get('powerplants', 'reegis_pp'))
     filename_out = os.path.join(cfg.get('paths', 'powerplants'),
-                                cfg.get('powerplants', 'de21_pp'))
+                                cfg.get('powerplants', 'deflex_pp'))
     if not os.path.isfile(filename_in):
         msg = "File '{0}' does not exist. Will create it from opsd file."
         logging.debug(msg.format(filename_in))
@@ -84,7 +85,7 @@ def remove_onshore_technology_from_offshore_regions(df):
             logging.debug("Clean {1} from {0}.".format(region, ttype))
 
             c1 = df['energy_source_level_2'] == ttype
-            c2 = df['de21_region'] == region
+            c2 = df['deflex_region'] == region
 
             condition = c1 & c2
 
@@ -92,12 +93,12 @@ def remove_onshore_technology_from_offshore_regions(df):
                 condition = c1 & c2 & (df['technology'] == 'Onshore')
 
             for i, v in df.loc[condition].iterrows():
-                df.loc[i, 'de21_region'] = (
+                df.loc[i, 'deflex_region'] = (
                     dc[df.loc[i, 'federal_states']])
     return df
 
 
-def get_de21_pp_by_year(year, overwrite_capacity=False):
+def get_deflex_pp_by_year(year, overwrite_capacity=False):
     """
 
     Parameters
@@ -112,12 +113,12 @@ def get_de21_pp_by_year(year, overwrite_capacity=False):
 
     """
     filename = os.path.join(cfg.get('paths', 'powerplants'),
-                            cfg.get('powerplants', 'de21_pp'))
-    logging.info("Get de21 power plants for {0}.".format(year))
+                            cfg.get('powerplants', 'deflex_pp'))
+    logging.info("Get deflex power plants for {0}.".format(year))
     if not os.path.isfile(filename):
         msg = "File '{0}' does not exist. Will create it from reegis file."
         logging.debug(msg.format(filename))
-        filename = pp_reegis2de21()
+        filename = pp_reegis2deflex()
     pp = pd.read_hdf(filename, 'pp', mode='r')
 
     filter_columns = ['capacity_{0}', 'capacity_in_{0}']
@@ -150,15 +151,15 @@ def get_de21_pp_by_year(year, overwrite_capacity=False):
 
 if __name__ == "__main__":
     logger.define_logging(file_level=logging.INFO)
-    # print(pp_reegis2de21())
-    # fn = '/home/uwe/express/reegis/data/powerplants/de21_pp.h5'
+    # print(pp_reegis2deflex())
+    # fn = '/home/uwe/express/reegis/data/powerplants/deflex_pp.h5'
     # df = pd.read_hdf(fn, 'pp')
     # pp = reegis_tools.geometries.Geometry(name='power plants', df=df)
     # pp.create_geo_df()
     # pp.gdf.to_file('/home/uwe/pp_tmp.shp')
     # exit(0)
-    my_df = get_de21_pp_by_year(2014, overwrite_capacity=True)
-    print(my_df.groupby(['de21_region', 'energy_source_level_2']).sum()[
+    my_df = get_deflex_pp_by_year(2014, overwrite_capacity=True)
+    print(my_df.groupby(['deflex_region', 'energy_source_level_2']).sum()[
         'capacity'])
     # exit(0)
     logging.info('Done!')

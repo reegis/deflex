@@ -24,7 +24,7 @@ import reegis_tools.config as cfg
 import reegis_tools.energy_balance
 import reegis_tools.powerplants
 
-import de21.inhabitants
+import deflex.inhabitants
 
 
 def reshape_conversion_balance(year):
@@ -37,7 +37,7 @@ def reshape_conversion_balance(year):
 
     # Use the number of inhabitants to reshape the balance to the new regions
     logging.info("Fetching inhabitants table.")
-    inhabitants = de21.inhabitants.get_ew_by_de21_subregions(year)
+    inhabitants = deflex.inhabitants.get_ew_by_deflex_subregions(year)
     inhabitants = inhabitants.replace({'state': cfg.get_dict('STATES')})
 
     inhabitants_by_state = inhabitants.groupby('state').sum()
@@ -45,25 +45,26 @@ def reshape_conversion_balance(year):
     # Calculate the share of inhabitants of a state that is within a specific
     # model region.
     logging.info(
-        "Rearrange state table of the conversion balance to the de21 regions")
+        "Rearrange state table of the conversion balance to the deflex"
+        "regions")
     for subregion in inhabitants.index:
         inhabitants.loc[subregion, 'share_state'] = float(
             inhabitants.loc[subregion, 'ew'] /
             inhabitants_by_state.loc[inhabitants.loc[subregion, 'state']])
 
-    # Loop over the de21 regions
-    for de21_region in sorted(inhabitants.region.unique()):
-        # Get all states that intersects with the current de21-region
-        states = inhabitants.loc[inhabitants.region == de21_region].state
+    # Loop over the deflex regions
+    for deflex_region in sorted(inhabitants.region.unique()):
+        # Get all states that intersects with the current deflex-region
+        states = inhabitants.loc[inhabitants.region == deflex_region].state
 
         # Sum up the fraction of each state-table to get the new region table
         for idx in eb.loc[states[0]].index:
-            eb21.loc[de21_region, idx[0], idx[1]] = 0
+            eb21.loc[deflex_region, idx[0], idx[1]] = 0
             for state in states:
                 share = inhabitants.loc[
-                    (inhabitants['region'] == de21_region) &
+                    (inhabitants['region'] == deflex_region) &
                     (inhabitants['state'] == state)]['share_state']
-                eb21.loc[de21_region, idx[0], idx[1]] += (
+                eb21.loc[deflex_region, idx[0], idx[1]] += (
                     eb.loc[state, idx[0], idx[1]] * float(share))
     eb21.rename(columns={'re': cfg.get('chp', 'renewable_source')},
                 inplace=True)

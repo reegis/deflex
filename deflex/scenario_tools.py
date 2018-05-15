@@ -25,7 +25,7 @@ import oemof.solph as solph
 import reegis_tools.config as cfg
 import reegis_tools.scenario_tools
 
-import de21.basic_scenario
+import deflex.basic_scenario
 
 
 class Scenario(reegis_tools.scenario_tools.Scenario):

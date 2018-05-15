@@ -22,7 +22,7 @@ from oemof.tools import logger
 
 # internal modules
 import reegis_tools.config as cfg
-import de21
+import deflex
 
 
 def stopwatch():
@@ -34,13 +34,13 @@ def stopwatch():
 def main(year):
     stopwatch()
 
-    sc = de21.Scenario(name='basic', year=2014)
+    sc = deflex.Scenario(name='basic', year=2014)
     scenario_path = os.path.join(cfg.get('paths', 'scenario'), 'basic',
                                  '{year}').format(year=year)
     csv_path = os.path.join(scenario_path, 'csv')
 
     if not os.path.isdir(csv_path):
-        de21.basic_scenario.create_basic_scenario(year)
+        deflex.basic_scenario.create_basic_scenario(year)
 
     logging.info("Read scenario from csv collection: {0}".format(stopwatch()))
     sc.load_csv(csv_path.format(year=str(year)))
@@ -49,7 +49,7 @@ def main(year):
     sc.add_nodes2solph()
 
     # Save energySystem to '.graphml' file.
-    fn = 'de21_{0}'.format(year)
+    fn = 'deflex_{0}'.format(year)
     sc.plot_nodes(filename=os.path.join(scenario_path, fn),
                   remove_nodes_with_substrings=['bus_cs'])
 
@@ -62,7 +62,7 @@ def main(year):
     logging.info("Solved. Dump results: {0}".format(stopwatch()))
     sc.dump_es(os.path.join(scenario_path, fn + '.esys'))
 
-    logging.info("All done. de21 finished without errors: {0}".format(
+    logging.info("All done. deflex finished without errors: {0}".format(
         stopwatch()))
 
 

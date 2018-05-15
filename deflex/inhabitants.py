@@ -17,18 +17,18 @@ import logging
 import oemof.tools.logger
 
 # Internal libraries
-import de21.geometries
+import deflex.geometries
 import reegis_tools.geometries
 import reegis_tools.inhabitants
 import reegis_tools.config as cfg
 
 
-def get_ew_by_de21(year):
-    de21_regions = de21.geometries.de21_regions()
+def get_ew_by_deflex(year):
+    de21_regions = deflex.geometries.deflex_regions()
     return reegis_tools.inhabitants.get_ew_by_region(year, de21_regions)
 
 
-def get_ew_by_de21_subregions(year):
+def get_ew_by_deflex_subregions(year):
     """Get a GeoDataFrame with the inhabitants of each region.
 
     Parameters
@@ -39,16 +39,18 @@ def get_ew_by_de21_subregions(year):
     -------
     geopandas.geoDataFrame
     """
-    de21_sub = reegis_tools.geometries.Geometry(name='de21_subregions')
-    de21_sub.load(cfg.get('paths', 'geo_de21'),
-                  cfg.get('geometry', 'overlap_federal_states_de_21_polygon'))
-    de21_sub.gdf['ew'] = reegis_tools.inhabitants.get_ew_by_region(year,
-                                                                   de21_sub)
-    return de21_sub.gdf
+    deflex_sub = reegis_tools.geometries.Geometry(name='deflex_subregions')
+    deflex_sub.load(cfg.get('paths', 'geo_deflex'),
+                    cfg.get('geometry', 'overlap_federal_states_deflex_polygon'
+                            ).format(map=cfg.get('init', 'map')))
+    deflex_sub.gdf['ew'] = reegis_tools.inhabitants.get_ew_by_region(
+        year, deflex_sub)
+    return deflex_sub.gdf
 
 
 if __name__ == "__main__":
     oemof.tools.logger.define_logging()
-    logging.info("Getting inhabitants by region for de21.")
-    print(get_ew_by_de21_subregions(2012)['ew'])
+    logging.info("Getting inhabitants by region for {0}.".format(cfg.get(
+        'init', 'map')))
+    print(get_ew_by_deflex_subregions(2012)['ew'])
     # print(get_ew_by_de21(2012))
