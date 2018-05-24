@@ -345,7 +345,8 @@ def powerplants_scenario(table_collection, year, round_values=None):
     """
     pp = deflex.powerplants.get_deflex_pp_by_year(year,
                                                   overwrite_capacity=True)
-    return powerplants(pp, table_collection, year, 'deflex_region',
+    region_column = '{0}_region'.format(cfg.get('init', 'map'))
+    return powerplants(pp, table_collection, year, region_column,
                        round_values)
 
 
@@ -407,12 +408,15 @@ def clean_time_series(table_collection):
     return table_collection
 
 
-def create_basic_scenario(year, round_values=None):
+def create_basic_scenario(year, rmap=None, round_values=None):
+    if rmap is not None:
+        cfg.tmp_set('init', 'map', rmap)
     table_collection = deflex.basic_scenario.create_scenario(year,
                                                              round_values)
     table_collection = clean_time_series(table_collection)
+    name = 'basic_{0}'.format(cfg.get('init', 'map'))
     sce = deflex.scenario_tools.Scenario(table_collection=table_collection,
-                                         name='basic', year=2014)
+                                         name=name, year=year)
     path = os.path.join(cfg.get('paths', 'scenario'), 'basic', str(year))
     sce.to_excel(os.path.join(path, '_'.join([sce.name, str(year)]) + '.xls'))
     sce.to_csv(os.path.join(path, 'csv'))
@@ -420,7 +424,12 @@ def create_basic_scenario(year, round_values=None):
 
 if __name__ == "__main__":
     logger.define_logging()
-    for y in [2014, 2013, 2012]:
-        create_basic_scenario(y)
+    # print(cfg.get('init', 'map'))
+    # cfg.tmp_set('init', 'map', 'de23')
+    # print(cfg.get('init', 'map'))
+    # exit(0)
+    for y in [2014]:
+        for my_rmap in ['de21', 'de22']:
+            create_basic_scenario(y, rmap=my_rmap)
     # print(scenario_commodity_sources(2014, use_znes_2014=True))
     # print(scenario_elec_demand(2014, pd.DataFrame()))

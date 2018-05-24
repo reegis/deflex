@@ -38,8 +38,6 @@ def reshape_conversion_balance(year):
     # Use the number of inhabitants to reshape the balance to the new regions
     logging.info("Fetching inhabitants table.")
     inhabitants = deflex.inhabitants.get_ew_by_deflex_subregions(year)
-    inhabitants = inhabitants.replace({'state': cfg.get_dict('STATES')})
-
     inhabitants_by_state = inhabitants.groupby('state').sum()
 
     # Calculate the share of inhabitants of a state that is within a specific

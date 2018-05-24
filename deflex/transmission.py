@@ -20,6 +20,8 @@ import math
 # internal modules
 import reegis_tools.config as cfg
 
+import deflex.geometries
+
 
 def get_grid_capacity(grid, plus, minus):
     tmp_grid = grid.query("plus_region_id == {:0d} & ".format(plus) +
@@ -47,9 +49,7 @@ def get_electrical_transmission_deflex(duplicate=False):
     grid['capacity_calc'] = (grid.circuits * current_max * grid.voltage *
                              f_security * math.sqrt(3) / 1000)
 
-    pwr_lines = pd.read_csv(os.path.join(
-        cfg.get('paths', 'geometry'),
-        cfg.get('transmission', 'powerlines_line')), index_col='name')
+    pwr_lines = deflex.geometries.deflex_power_lines().get_df()
 
     for l in pwr_lines.index:
         split = l.split('-')
@@ -84,6 +84,8 @@ def get_electrical_transmission_deflex(duplicate=False):
 
         df = pd.DataFrame(pd.concat([values, df]))
 
+    if cfg.get('init', 'map') == 'de22':
+        df.loc['DE22-DE01', 'capacity'] = 999999
     return df
 
 

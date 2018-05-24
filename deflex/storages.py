@@ -66,7 +66,7 @@ def pumped_hydroelectric_storage():
     gphes.gdf['turbine_eff'] = (
             np.sqrt(gphes.gdf.efficiency) * gphes.gdf.turbine)
 
-    phes = gphes.gdf.groupby('deflex_region').sum()
+    phes = gphes.gdf.groupby('{0}_region'.format(cfg.get('init', 'map'))).sum()
 
     # divide by the capacity to get the efficiency and remove overall
     # efficiency
