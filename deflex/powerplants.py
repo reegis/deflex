@@ -32,6 +32,7 @@ def add_model_region_pp(df):
     pp = reegis_tools.geometries.Geometry(name='power plants', df=df)
     pp.create_geo_df()
 
+    # exit(0)
     # Add region names to power plant table
     pp.gdf = reegis_tools.geometries.spatial_join_with_buffer(pp,
                                                               deflex_regions)
@@ -48,12 +49,15 @@ def pp_reegis2deflex(clean_offshore=True):
     filename_in = os.path.join(cfg.get('paths', 'powerplants'),
                                cfg.get('powerplants', 'reegis_pp'))
     filename_out = os.path.join(cfg.get('paths', 'powerplants'),
-                                cfg.get('powerplants', 'deflex_pp'))
+                                cfg.get('powerplants', 'deflex_pp')).format(
+        map=cfg.get('init', 'map'))
+
     if not os.path.isfile(filename_in):
         msg = "File '{0}' does not exist. Will create it from opsd file."
         logging.debug(msg.format(filename_in))
         filename_in = reegis_tools.powerplants.pp_opsd2reegis()
     pp = pd.read_hdf(filename_in, 'pp', mode='r')
+
     pp = add_model_region_pp(pp)
     pp = reegis_tools.powerplants.add_capacity_in(pp)
 
@@ -80,12 +84,14 @@ def remove_onshore_technology_from_offshore_regions(df):
           'SH': 'DE13',
           'NI': 'DE14'}
 
+    region_column = '{0}_region'.format(cfg.get('init', 'map'))
+
     for ttype in ['Solar', 'Bioenergy', 'Wind']:
         for region in ['DE19', 'DE20', 'DE21']:
             logging.debug("Clean {1} from {0}.".format(region, ttype))
 
             c1 = df['energy_source_level_2'] == ttype
-            c2 = df['deflex_region'] == region
+            c2 = df[region_column] == region
 
             condition = c1 & c2
 
@@ -93,7 +99,7 @@ def remove_onshore_technology_from_offshore_regions(df):
                 condition = c1 & c2 & (df['technology'] == 'Onshore')
 
             for i, v in df.loc[condition].iterrows():
-                df.loc[i, 'deflex_region'] = (
+                df.loc[i, region_column] = (
                     dc[df.loc[i, 'federal_states']])
     return df
 
@@ -113,7 +119,8 @@ def get_deflex_pp_by_year(year, overwrite_capacity=False):
 
     """
     filename = os.path.join(cfg.get('paths', 'powerplants'),
-                            cfg.get('powerplants', 'deflex_pp'))
+                            cfg.get('powerplants', 'deflex_pp')).format(
+        map=cfg.get('init', 'map'))
     logging.info("Get deflex power plants for {0}.".format(year))
     if not os.path.isfile(filename):
         msg = "File '{0}' does not exist. Will create it from reegis file."
@@ -159,7 +166,7 @@ if __name__ == "__main__":
     # pp.gdf.to_file('/home/uwe/pp_tmp.shp')
     # exit(0)
     my_df = get_deflex_pp_by_year(2014, overwrite_capacity=True)
-    print(my_df.groupby(['deflex_region', 'energy_source_level_2']).sum()[
+    print(my_df.groupby(['de22_region', 'energy_source_level_2']).sum()[
         'capacity'])
     # exit(0)
     logging.info('Done!')

@@ -43,8 +43,20 @@ def get_ew_by_deflex_subregions(year):
     deflex_sub.load(cfg.get('paths', 'geo_deflex'),
                     cfg.get('geometry', 'overlap_federal_states_deflex_polygon'
                             ).format(map=cfg.get('init', 'map')))
+    deflex_sub.gdf['state'] = deflex_sub.gdf.index.to_series().str[2:]
+    deflex_sub.gdf['region'] = deflex_sub.gdf.index.to_series().str[:2]
     deflex_sub.gdf['ew'] = reegis_tools.inhabitants.get_ew_by_region(
         year, deflex_sub)
+
+    deflex_sub.gdf = deflex_sub.gdf.replace({'state': cfg.get_dict(
+        'STATE_KEYS')})
+    deflex_sub.gdf['region'] = deflex_sub.gdf.region.astype(str).apply(
+        'DE{:0>2}'.format)
+    no_inhabitants = deflex_sub.gdf[deflex_sub.gdf.ew == 0]
+    deflex_sub.gdf = deflex_sub.gdf[deflex_sub.gdf.ew != 0]
+    logging.info("States with no inhabitants have been removed: {0}".format(
+        no_inhabitants.index))
+
     return deflex_sub.gdf
 
 

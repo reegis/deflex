@@ -30,26 +30,28 @@ import deflex.powerplants as powerplants
 def get_grouped_power_plants(year):
     """Filter the capacity of the powerplants for the given year.
     """
+    region_column = '{0}_region'.format(cfg.get('init', 'map'))
     return powerplants.get_deflex_pp_by_year(year).groupby(
-        ['energy_source_level_2', 'deflex_region', 'coastdat2']).sum()
+        ['energy_source_level_2', region_column, 'coastdat2']).sum()
 
 
 def aggregate_by_region(year, pp=None):
     # Create the path for the output files.
     feedin_deflex_path = cfg.get('paths_pattern', 'deflex_feedin').format(
-        year=year)
+        year=year, map=cfg.get('init', 'map'))
     os.makedirs(feedin_deflex_path, exist_ok=True)
 
     # Create pattern for the name of the resulting files.
     feedin_deflex_outfile_name = os.path.join(
         feedin_deflex_path,
         cfg.get('feedin', 'feedin_deflex_pattern').format(
-            year=year, type='{type}'))
+            year=year, type='{type}', map=cfg.get('init', 'map')))
 
     # Filter the capacity of the powerplants for the given year.
     if pp is not None:
+        region_column = '{0}_region'.format(cfg.get('init', 'map'))
         pp = pp.groupby(
-            ['energy_source_level_2', 'deflex_region', 'coastdat2']).sum()
+            ['energy_source_level_2', region_column, 'coastdat2']).sum()
     else:
         pp = get_grouped_power_plants(year)
 
@@ -80,7 +82,7 @@ def get_deflex_feedin(year, feedin_type):
     feedin_deflex_file_name = os.path.join(
         cfg.get('paths_pattern', 'deflex_feedin'),
         cfg.get('feedin', 'feedin_deflex_pattern')).format(
-            year=year, type=feedin_type)
+            year=year, type=feedin_type, map=cfg.get('init', 'map'))
     if feedin_type in ['solar', 'wind']:
         if not os.path.isfile(feedin_deflex_file_name):
             aggregate_by_region(year)

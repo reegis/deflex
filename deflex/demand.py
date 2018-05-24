@@ -45,7 +45,6 @@ def renpass_demand_share():
 
 def openego_demand_share():
     demand_reg = prepare_ego_demand()['sector_consumption_sum']
-    print(demand_reg)
     demand_sum = demand_reg.sum()
     return demand_reg.div(demand_sum)
 
@@ -62,12 +61,17 @@ def deflex_profile_from_entsoe(year, share, annual_demand=None,
     # end = datetime.datetime(year, 12, 31, 23, 0)
 
     entsoe = reegis_tools.entsoe.get_entsoe_load(year)
+
     # entsoe = entsoe.tz_localize('UTC').tz_convert('Europe/Berlin')
     de_load_profile = entsoe.DE_load_
 
     load_profile = pd.DataFrame(index=de_load_profile.index)
-    for i in range(21):
-        region = 'DE{:02.0f}'.format(i + 1)
+    regions = pd.read_csv(os.path.join(
+        cfg.get('paths', 'geo_deflex'),
+        cfg.get('geometry', 'region_label')).format(
+        map=cfg.get('init', 'map')), index_col=[0])
+
+    for region in regions.index:
         if region not in share:
             share[region] = 0
         load_profile[region] = de_load_profile.multiply(float(share[region]))
@@ -79,8 +83,10 @@ def deflex_profile_from_entsoe(year, share, annual_demand=None,
 
 
 def prepare_ego_demand(overwrite=False):
-    egofile_deflex = os.path.join(cfg.get('paths', 'demand'),
-                                  cfg.get('demand', 'ego_file_deflex'))
+    rmap = cfg.get('init', 'map')
+    egofile_deflex = os.path.join(
+        cfg.get('paths', 'demand'),
+        cfg.get('demand', 'ego_file_deflex')).format(map=rmap)
 
     if os.path.isfile(egofile_deflex) and not overwrite:
         ego_demand_deflex = pd.read_hdf(egofile_deflex, 'demand')
@@ -94,6 +100,7 @@ def prepare_ego_demand(overwrite=False):
 
         # Load region polygons
         deflex_regions = deflex.geometries.deflex_regions()
+        deflex_regions.gdf.to_file('/home/uwe/{0}_map.shp'.format(rmap))
 
         # Add column with region id
         ego_demand.gdf = reegis_tools.geometries.spatial_join_with_buffer(
@@ -110,7 +117,7 @@ def prepare_ego_demand(overwrite=False):
         # Write out file (hdf-format).
         ego_demand_deflex.to_hdf(egofile_deflex, 'demand')
 
-    return ego_demand_deflex.groupby('deflex_region').sum()
+    return ego_demand_deflex.groupby('{0}_region'.format(rmap)).sum()
 
 
 def create_deflex_slp_profile(year, outfile):
@@ -147,7 +154,8 @@ def create_deflex_slp_profile(year, outfile):
 def get_deflex_slp_profile(year, annual_demand=None, overwrite=False):
     outfile = os.path.join(
         cfg.get('paths', 'demand'),
-        cfg.get('demand', 'ego_profile_pattern').format(year=year))
+        cfg.get('demand', 'ego_profile_pattern').format(
+            year=year, map=cfg.get('init', 'map')))
     if not os.path.isfile(outfile) or overwrite:
         create_deflex_slp_profile(year, outfile)
 
@@ -205,20 +213,20 @@ def get_deflex_profile(year, kind, annual_demand=None, overwrite=False):
 
 def elec_demand_tester(year):
     oe = get_deflex_profile(year, 'openego') * 1000000
-    rp = get_deflex_profile(year, 'renpass') * 1000000
+    # rp = get_deflex_profile(year, 'renpass') * 1000000
     ege = get_deflex_profile(year, 'openego_entsoe') * 1000000
 
     netto = reegis_tools.bmwi.get_annual_electricity_demand_bmwi(year)
 
     oe_s = get_deflex_profile(year, 'openego', annual_demand=netto)
-    rp_s = get_deflex_profile(year, 'renpass', annual_demand=netto)
+    # rp_s = get_deflex_profile(year, 'renpass', annual_demand=netto)
     ege_s = get_deflex_profile(year, 'openego_entsoe', annual_demand=netto)
 
     print('[TWh] original    scaled (BMWI)')
     print(' oe:  ', int(oe.sum().sum() / 1e+12), '       ',
           int(oe_s.sum().sum()))
-    print(' rp:  ', int(rp.sum().sum() / 1e+12), '       ',
-          int(rp_s.sum().sum()))
+    # print(' rp:  ', int(rp.sum().sum() / 1e+12), '       ',
+    #       int(rp_s.sum().sum()))
     print('ege:  ', int(ege.sum().sum() / 1e+12), '       ',
           int(ege_s.sum().sum()))
     print(ege_s)
@@ -228,6 +236,8 @@ def get_heat_profiles_deflex(year, time_index=None, keep_unit=False):
     heat_demand_state_file = os.path.join(
             cfg.get('paths', 'demand'),
             cfg.get('demand', 'heat_profile_state').format(year=year))
+
+    # Load demand heat profiles by state
     if os.path.isfile(heat_demand_state_file):
         logging.info("Demand profiles by state exist. Reading file.")
         demand_state = pd.read_csv(heat_demand_state_file, index_col=[0],
@@ -248,7 +258,6 @@ def get_heat_profiles_deflex(year, time_index=None, keep_unit=False):
 
     logging.info("Fetching inhabitants table.")
     my_ew = deflex.inhabitants.get_ew_by_deflex_subregions(year)
-    my_ew = my_ew.replace({'state': cfg.get_dict('STATES')})
 
     state_ew = my_ew.groupby('state').sum()
     for region in my_ew.index:
@@ -271,12 +280,13 @@ def get_heat_profiles_deflex(year, time_index=None, keep_unit=False):
         state = my_ew.loc[subregion, 'state']
         region = my_ew.loc[subregion, 'region']
         share = my_ew.loc[subregion, 'share_state']
+
         for sector in sectors:
             district_heat_region[
                 region, 'district_heating', sector, subregion] = (
                     district_heat_state[sector, state] * share)
     district_heat_region.sort_index(1, inplace=True)
-    # print(district_heat_region)
+
     district_heat_region = district_heat_region.groupby(
         level=[0, 1], axis=1).sum()
     deflex_demand = pd.concat([district_heat_region, demand_region], axis=1)
@@ -295,7 +305,24 @@ def get_heat_profiles_deflex(year, time_index=None, keep_unit=False):
 
 
 if __name__ == "__main__":
-    logger.define_logging()
+    logger.define_logging(screen_level=logging.ERROR,
+                          file_level=logging.ERROR)
+    # egofile_deflex = os.path.join(
+    #     cfg.get('paths', 'demand'),
+    #     cfg.get('demand', 'ego_file_deflex')).format(map='de22')
+    # ego_demand_deflex = pd.read_hdf(egofile_deflex, 'demand')
+    # print(ego_demand_deflex['de22_region'].unique())
+    # exit(0)
+    cfg.tmp_set('init', 'map', 'de22')
+    net = reegis_tools.bmwi.get_annual_electricity_demand_bmwi(2014)
+    dem22 = get_deflex_profile(2014, 'openego_entsoe', annual_demand=net).sum()
+    cfg.tmp_set('init', 'map', 'de21')
+    dem21 = get_deflex_profile(2014, 'openego_entsoe', annual_demand=net).sum()
+    print(round(dem21-dem22, 2))
+    print(round(dem21, 2))
+    print(round(dem22, 2))
+    # print(get_deflex_profile(2014, 'renpass', annual_demand=net).sum())
+    exit(0)
     # print(openego_demand_share())
     # exit(0)
     # elec_demand_tester(2013)
