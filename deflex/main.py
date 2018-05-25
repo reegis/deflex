@@ -33,17 +33,16 @@ def stopwatch():
 
 def main(year):
     stopwatch()
-
-    sc = deflex.Scenario(name='basic', year=2014)
-    scenario_path = os.path.join(cfg.get('paths', 'scenario'), 'basic',
-                                 '{year}').format(year=year)
-    csv_path = os.path.join(scenario_path, 'csv')
+    name = 'basic_{0}'.format(cfg.get('init', 'map'))
+    sc = deflex.Scenario(name=name, year=2014)
+    scenario_path = os.path.join(cfg.get('paths', 'scenario'), str(year))
+    csv_path = os.path.join(scenario_path, 'csv', name)
 
     if not os.path.isdir(csv_path):
         deflex.basic_scenario.create_basic_scenario(year)
 
     logging.info("Read scenario from csv collection: {0}".format(stopwatch()))
-    sc.load_csv(csv_path.format(year=str(year)))
+    sc.load_csv(csv_path)
 
     logging.info("Add nodes to the EnergySystem: {0}".format(stopwatch()))
     sc.add_nodes2solph()
@@ -69,10 +68,12 @@ def main(year):
 if __name__ == "__main__":
     logger.define_logging()
     for y in [2014, 2013, 2012]:
-        try:
-            main(y)
-        except Exception as e:
-            logging.error(traceback.format_exc())
-            time.sleep(0.5)
-            logging.error(e)
-            time.sleep(0.5)
+        for my_rmap in ['de21', 'de22']:
+            cfg.tmp_set('init', 'map', my_rmap)
+            try:
+                main(y)
+            except Exception as e:
+                logging.error(traceback.format_exc())
+                time.sleep(0.5)
+                logging.error(e)
+                time.sleep(0.5)

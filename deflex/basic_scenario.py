@@ -417,9 +417,9 @@ def create_basic_scenario(year, rmap=None, round_values=None):
     name = 'basic_{0}'.format(cfg.get('init', 'map'))
     sce = deflex.scenario_tools.Scenario(table_collection=table_collection,
                                          name=name, year=year)
-    path = os.path.join(cfg.get('paths', 'scenario'), 'basic', str(year))
+    path = os.path.join(cfg.get('paths', 'scenario'), str(year))
     sce.to_excel(os.path.join(path, '_'.join([sce.name, str(year)]) + '.xls'))
-    sce.to_csv(os.path.join(path, 'csv'))
+    sce.to_csv(os.path.join(path, 'csv', name))
 
 
 if __name__ == "__main__":
@@ -428,7 +428,7 @@ if __name__ == "__main__":
     # cfg.tmp_set('init', 'map', 'de23')
     # print(cfg.get('init', 'map'))
     # exit(0)
-    for y in [2014]:
+    for y in [2014, 2013, 2012]:
         for my_rmap in ['de21', 'de22']:
             create_basic_scenario(y, rmap=my_rmap)
     # print(scenario_commodity_sources(2014, use_znes_2014=True))
