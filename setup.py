@@ -20,7 +20,7 @@ setup(
     package_dir={'deflex': 'deflex'},
     install_requires=[
         'oemof >= 0.1.0',
-        'pandas >= 0.17.0',
+        'pandas >= 0.17.0, <= 0.22',
         'reegis_tools',
         'demandlib',
         'workalendar',
