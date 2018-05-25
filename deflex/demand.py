@@ -100,7 +100,6 @@ def prepare_ego_demand(overwrite=False):
 
         # Load region polygons
         deflex_regions = deflex.geometries.deflex_regions()
-        deflex_regions.gdf.to_file('/home/uwe/{0}_map.shp'.format(rmap))
 
         # Add column with region id
         ego_demand.gdf = reegis_tools.geometries.spatial_join_with_buffer(
