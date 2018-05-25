@@ -49,4 +49,3 @@ def deflex_power_lines(rmap=None, rtype='lines'):
         map=rmap))
     lines.load(fullname=name)
     return lines
-deflex_regions()
