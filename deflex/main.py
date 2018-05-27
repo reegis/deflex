@@ -48,7 +48,7 @@ def main(year):
     sc.add_nodes2solph()
 
     # Save energySystem to '.graphml' file.
-    fn = 'deflex_{0}'.format(year)
+    fn = 'deflex_{0}_{1}'.format(year, cfg.get('init', 'map'))
     sc.plot_nodes(filename=os.path.join(scenario_path, fn),
                   remove_nodes_with_substrings=['bus_cs'])
 
@@ -59,7 +59,9 @@ def main(year):
     sc.solve()
 
     logging.info("Solved. Dump results: {0}".format(stopwatch()))
-    sc.dump_es(os.path.join(scenario_path, fn + '.esys'))
+    out_file = os.path.join(scenario_path, fn + '.esys')
+    logging.info("Dump file to {0}".format(out_file)
+    sc.dump_es(out_file)
 
     logging.info("All done. deflex finished without errors: {0}".format(
         stopwatch()))
