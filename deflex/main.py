@@ -60,7 +60,7 @@ def main(year):
 
     logging.info("Solved. Dump results: {0}".format(stopwatch()))
     out_file = os.path.join(scenario_path, fn + '.esys')
-    logging.info("Dump file to {0}".format(out_file)
+    logging.info("Dump file to {0}".format(out_file))
     sc.dump_es(out_file)
 
     logging.info("All done. deflex finished without errors: {0}".format(
