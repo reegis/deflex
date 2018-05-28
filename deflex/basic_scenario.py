@@ -81,6 +81,9 @@ def scenario_transmission(table_collection):
         msg = ("The calculation of the efficiency by distance is not yet "
                "implemented")
         raise NotImplementedError(msg)
+    if cfg.get('init', 'map') == 'de22':
+        elec_trans.loc['DE22-DE01', ('electrical', 'efficiency')] = 1
+        elec_trans.loc['DE22-DE01', ('electrical', 'capacity')] = 9999999
     return elec_trans
 
 

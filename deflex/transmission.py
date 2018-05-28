@@ -84,8 +84,8 @@ def get_electrical_transmission_deflex(duplicate=False):
 
         df = pd.DataFrame(pd.concat([values, df]))
 
-    if cfg.get('init', 'map') == 'de22':
-        df.loc['DE22-DE01', 'capacity'] = 999999
+    # if cfg.get('init', 'map') == 'de22':
+    #     df.loc['DE22-DE01', 'capacity'] = 999999
     return df
 
 
