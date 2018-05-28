@@ -26,4 +26,6 @@ setup(
         'workalendar',
         'networkx',
         'numpy',
-        'shapely'])
+        'shapely',
+        'rtree',
+        'xlrd'])
