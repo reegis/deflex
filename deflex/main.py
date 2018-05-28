@@ -69,7 +69,7 @@ def main(year):
 
 if __name__ == "__main__":
     logger.define_logging()
-    for y in [2014]:
+    for y in [2014, 2013, 2012]:
         for my_rmap in ['de21', 'de22']:
             cfg.tmp_set('init', 'map', my_rmap)
             deflex.basic_scenario.create_basic_scenario(y, rmap=my_rmap)
