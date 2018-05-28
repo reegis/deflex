@@ -59,7 +59,7 @@ def main(year):
     sc.solve()
 
     logging.info("Solved. Dump results: {0}".format(stopwatch()))
-    out_file = os.path.join(scenario_path, fn + '.esys')
+    out_file = os.path.join(scenario_path, 'results', fn + '.esys')
     logging.info("Dump file to {0}".format(out_file))
     sc.dump_es(out_file)
 
@@ -69,9 +69,10 @@ def main(year):
 
 if __name__ == "__main__":
     logger.define_logging()
-    for y in [2014, 2013, 2012]:
+    for y in [2014]:
         for my_rmap in ['de21', 'de22']:
             cfg.tmp_set('init', 'map', my_rmap)
+            deflex.basic_scenario.create_basic_scenario(y, rmap=my_rmap)
             try:
                 main(y)
             except Exception as e:
