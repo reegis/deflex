@@ -28,4 +28,5 @@ setup(
         'numpy',
         'shapely',
         'rtree',
-        'xlrd'])
+        'xlrd',
+        'xlwt'])
