@@ -82,7 +82,7 @@ def scenario_transmission(table_collection):
                "implemented")
         raise NotImplementedError(msg)
     if cfg.get('init', 'map') == 'de22':
-        elec_trans.loc['DE22-DE01', ('electrical', 'efficiency')] = 1
+        elec_trans.loc['DE22-DE01', ('electrical', 'efficiency')] = 0.9999
         elec_trans.loc['DE22-DE01', ('electrical', 'capacity')] = 9999999
     return elec_trans
 
