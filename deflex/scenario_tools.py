@@ -202,7 +202,7 @@ def nodes_from_table_collection(table_collection):
                             sum_max=params.limit_heat_chp)},
                     conversion_factors={
                         nodes[bus_elec]: params.efficiency_elec_chp,
-                        nodes[bus_elec]: params.efficiency_heat_chp})
+                        nodes[bus_heat]: params.efficiency_heat_chp})
 
             # Create heat plants as 1x1 Transformer
             if params.capacity_hp > 0:
