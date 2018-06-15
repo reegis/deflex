@@ -55,10 +55,11 @@ def pumped_hydroelectric_storage():
     gphes.create_geo_df()
 
     # get model region polygons
+    region_name = '{0}_region'.format(cfg.get('init', 'map'))
     deflex_regions = deflex.geometries.deflex_regions()
 
     gphes.gdf = reegis_tools.geometries.spatial_join_with_buffer(
-        gphes, deflex_regions)
+        gphes, deflex_regions, name=region_name)
 
     # create turbine and pump efficiency from overall efficiency (square root)
     # multiply the efficiency with the capacity to group with "sum()"
@@ -66,7 +67,7 @@ def pumped_hydroelectric_storage():
     gphes.gdf['turbine_eff'] = (
             np.sqrt(gphes.gdf.efficiency) * gphes.gdf.turbine)
 
-    phes = gphes.gdf.groupby('{0}_region'.format(cfg.get('init', 'map'))).sum()
+    phes = gphes.gdf.groupby(region_name).sum()
 
     # divide by the capacity to get the efficiency and remove overall
     # efficiency
