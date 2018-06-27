@@ -194,12 +194,14 @@ def nodes_from_table_collection(table_collection):
                     region, fuel.replace(' ', '_'))
                 nodes[trsf_label] = solph.Transformer(
                     label=trsf_label,
-                    inputs={nodes[bus_fuel]: solph.Flow()},
+                    inputs={nodes[bus_fuel]: solph.Flow(
+                            nominal_value=(params.capacity_heat_chp /
+                                           params.efficiency_heat_chp),
+                            sum_max=(params.limit_heat_chp /
+                                     params.efficiency_heat_chp))},
                     outputs={
                         nodes[bus_elec]: solph.Flow(),
-                        nodes[bus_heat]: solph.Flow(
-                            nominal_value=params.capacity_heat_chp,
-                            sum_max=params.limit_heat_chp)},
+                        nodes[bus_heat]: solph.Flow()},
                     conversion_factors={
                         nodes[bus_elec]: params.efficiency_elec_chp,
                         nodes[bus_heat]: params.efficiency_heat_chp})
