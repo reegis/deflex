@@ -35,24 +35,9 @@ class Label(namedtuple('solph_label', ['cat', 'tag', 'subtag', 'region'])):
 class Scenario(reegis_tools.scenario_tools.Scenario):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.tags = {}
-
-    def create_tags(self, nodes):
-        fields = None
-        node = None
-        for node in nodes:
-            if fields is None:
-                fields = node.__getattribute__('_fields')
-                self.tags.update({f: [] for f in fields})
-
-            for field, value in node.__getattribute__('_asdict')().items():
-                self.tags[field].append(value)
-        for field in node.__getattribute__('_fields'):
-            self.tags[field] = set(self.tags[field])
 
     def create_nodes(self):
         nodes = nodes_from_table_collection(self.table_collection)
-        self.create_tags(nodes)
         return nodes
 
 
