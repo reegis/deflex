@@ -175,7 +175,7 @@ def nodes_from_table_collection(table_collection):
         bus_elec = Label('bus', 'electricity', 'all', region)
         for fuel in trsf[region].columns:
             bus_fuel = Label(
-                'source', 'commodity', fuel.replace(' ', '_'), 'DE')
+                'bus', 'commodity', fuel.replace(' ', '_'), 'DE')
             params = trsf[region, fuel]
 
             # Create power plants as 1x1 Transformer
