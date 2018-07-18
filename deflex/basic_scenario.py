@@ -430,12 +430,35 @@ def create_basic_scenario(year, rmap=None, round_values=None):
     sce.to_csv(os.path.join(path, '{0}_csv'.format(name)))
 
 
+def create_weather_variation_scenario(year, rmap=None, round_values=None):
+
+    weather_years = range(1998, 2015)
+    for weather_year in weather_years:
+        logging.info("Create weather variation {0} for {1}.".format(
+            weather_year, year))
+        if rmap is not None:
+            cfg.tmp_set('init', 'map', rmap)
+        table_collection = deflex.basic_scenario.create_scenario(
+            year, round_values, weather_year=weather_year)
+        table_collection = clean_time_series(table_collection)
+        name = '{0}_{1}_{2}_weather_{3}'.format(
+            'deflex', year, cfg.get('init', 'map'), weather_year)
+        sce = deflex.scenario_tools.Scenario(table_collection=table_collection,
+                                             name=name, year=year)
+        path = os.path.join(cfg.get('paths', 'scenario'), str(year) + '_var')
+        sce.to_excel(os.path.join(path, name + '.xls'))
+        sce.to_csv(os.path.join(path, '{0}_csv'.format(name)))
+
+
 if __name__ == "__main__":
     logger.define_logging()
     # print(cfg.get('init', 'map'))
     # cfg.tmp_set('init', 'map', 'de23')
     # print(cfg.get('init', 'map'))
     # exit(0)
+
+    create_weather_variation_scenario(2014, rmap='de21')
+    exit(0)
     for y in [2014, 2013, 2012]:
         for my_rmap in ['de21', 'de22']:
             create_basic_scenario(y, rmap=my_rmap)
