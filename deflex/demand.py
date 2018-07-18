@@ -231,10 +231,17 @@ def elec_demand_tester(year):
     print(ege_s)
 
 
-def get_heat_profiles_deflex(year, time_index=None, keep_unit=False):
-    heat_demand_state_file = os.path.join(
-            cfg.get('paths', 'demand'),
-            cfg.get('demand', 'heat_profile_state').format(year=year))
+def get_heat_profiles_deflex(year, time_index=None, keep_unit=False,
+                             weather_year=None):
+    if weather_year is None:
+        heat_demand_state_file = os.path.join(
+                cfg.get('paths', 'demand'),
+                cfg.get('demand', 'heat_profile_state').format(year=year))
+    else:
+        heat_demand_state_file = os.path.join(
+                cfg.get('paths', 'demand'),
+                cfg.get('demand', 'heat_profile_state_var').format(
+                    year=year, weather_year=weather_year))
 
     # Load demand heat profiles by state
     if os.path.isfile(heat_demand_state_file):
@@ -245,7 +252,7 @@ def get_heat_profiles_deflex(year, time_index=None, keep_unit=False):
             'Europe/Berlin')
     else:
         demand_state = reegis_tools.heat_demand.get_heat_profiles_by_state(
-            year, to_csv=True)
+            year, to_csv=True, weather_year=weather_year)
 
     my_index = demand_state.index
     my_columns1 = pd.MultiIndex(levels=[[], []], labels=[[], []])

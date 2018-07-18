@@ -35,17 +35,29 @@ def get_grouped_power_plants(year):
         ['energy_source_level_2', region_column, 'coastdat2']).sum()
 
 
-def aggregate_by_region(year, pp=None):
+def aggregate_by_region(year, pp=None, weather_year=None):
     # Create the path for the output files.
     feedin_deflex_path = cfg.get('paths_pattern', 'deflex_feedin').format(
         year=year, map=cfg.get('init', 'map'))
+
+    if weather_year is not None:
+        feedin_deflex_path = os.path.join(feedin_deflex_path,
+                                          'weather_variations')
+
     os.makedirs(feedin_deflex_path, exist_ok=True)
 
     # Create pattern for the name of the resulting files.
-    feedin_deflex_outfile_name = os.path.join(
-        feedin_deflex_path,
-        cfg.get('feedin', 'feedin_deflex_pattern').format(
-            year=year, type='{type}', map=cfg.get('init', 'map')))
+    if weather_year is None:
+        feedin_deflex_outfile_name = os.path.join(
+            feedin_deflex_path,
+            cfg.get('feedin', 'feedin_deflex_pattern').format(
+                year=year, type='{type}', map=cfg.get('init', 'map')))
+    else:
+        feedin_deflex_outfile_name = os.path.join(
+            feedin_deflex_path,
+            cfg.get('feedin', 'feedin_deflex_pattern_var').format(
+                year=year, type='{type}', map=cfg.get('init', 'map'),
+                weather_year=weather_year))
 
     # Filter the capacity of the powerplants for the given year.
     if pp is not None:
@@ -63,7 +75,7 @@ def aggregate_by_region(year, pp=None):
         outfile_name = feedin_deflex_outfile_name.format(type=cat.lower())
         if not os.path.isfile(outfile_name):
             reegis_tools.coastdat.aggregate_by_region_coastdat_feedin(
-                pp, regions, year, cat, outfile_name)
+                pp, regions, year, cat, outfile_name, weather_year)
 
     # HYDRO
     outfile_name = feedin_deflex_outfile_name.format(type='hydro')
@@ -78,14 +90,22 @@ def aggregate_by_region(year, pp=None):
             regions, year, outfile_name)
 
 
-def get_deflex_feedin(year, feedin_type):
-    feedin_deflex_file_name = os.path.join(
-        cfg.get('paths_pattern', 'deflex_feedin'),
-        cfg.get('feedin', 'feedin_deflex_pattern')).format(
-            year=year, type=feedin_type, map=cfg.get('init', 'map'))
+def get_deflex_feedin(year, feedin_type, weather_year=None):
+    if weather_year is None:
+        feedin_deflex_file_name = os.path.join(
+            cfg.get('paths_pattern', 'deflex_feedin'),
+            cfg.get('feedin', 'feedin_deflex_pattern')).format(
+                year=year, type=feedin_type, map=cfg.get('init', 'map'))
+    else:
+        feedin_deflex_file_name = os.path.join(
+            cfg.get('paths_pattern', 'deflex_feedin'), 'weather_variations',
+            cfg.get('feedin', 'feedin_deflex_pattern_var')).format(
+                year=year, type=feedin_type, map=cfg.get('init', 'map'),
+                weather_year=weather_year)
+
     if feedin_type in ['solar', 'wind']:
         if not os.path.isfile(feedin_deflex_file_name):
-            aggregate_by_region(year)
+            aggregate_by_region(year, weather_year=weather_year)
         return pd.read_csv(feedin_deflex_file_name, index_col=[0],
                            header=[0, 1, 2])
     elif feedin_type in ['hydro', 'geothermal']:
