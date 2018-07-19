@@ -208,7 +208,20 @@ def scenario_feedin(year, weather_year=None):
             names=['region', 'type'])
     feedin = scenario_feedin_pv(year, my_index, weather_year=weather_year)
     feedin = scenario_feedin_wind(year, feedin, weather_year=weather_year)
+
+    if len(feedin) > 8760:
+        # If a non-leap year is combined with a leap weather year one day has
+        # to be removed to get the same index length. It is possible to remove
+        # February 29th but this may lead to sudden temperature and wind speed
+        # changes. Therefore, it might be better to remove the last day.
+        msg = ("To combine a leap weather year with a non-leap year one day"
+               "has to be removed from the pv and wind time series.")
+        logging.warning(msg)
+        # feedin.drop(feedin.index[range(1416, 1440)], axis=0, inplace=True)
+        feedin.drop(feedin.index[range(8760, 8784)], axis=0, inplace=True)
+
     feedin.reset_index(drop=True, inplace=True)
+
     for feedin_type in ['hydro', 'geothermal']:
         df = deflex.feedin.get_deflex_feedin(year, feedin_type)
         df = pd.concat([df], axis=1, keys=[feedin_type]).swaplevel(0, 1, 1)
