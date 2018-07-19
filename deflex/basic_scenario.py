@@ -12,6 +12,7 @@ __license__ = "GPLv3"
 # Python libraries
 import os
 import logging
+import warnings
 
 # External libraries
 import pandas as pd
@@ -218,7 +219,11 @@ def scenario_feedin(year, weather_year=None):
                "has to be removed from the pv and wind time series.")
         logging.warning(msg)
         # feedin.drop(feedin.index[range(1416, 1440)], axis=0, inplace=True)
-        feedin.drop(feedin.index[range(8760, 8784)], axis=0, inplace=True)
+        if len(feedin.iloc[8760:]) > 24:
+            msg = ("{0} hours removed. This is more than a day! Check the "
+                   "input data.")
+            warnings.warn(msg.format(len(feedin.iloc[8760:])), RuntimeWarning)
+        feedin = feedin.iloc[:8760]
 
     feedin.reset_index(drop=True, inplace=True)
 
@@ -444,7 +449,6 @@ def create_basic_scenario(year, rmap=None, round_values=None):
 
 
 def create_weather_variation_scenario(year, rmap=None, round_values=None):
-
     weather_years = range(1998, 2015)
     for weather_year in weather_years:
         logging.info("Create weather variation {0} for {1}.".format(

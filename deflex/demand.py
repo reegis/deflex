@@ -13,6 +13,7 @@ __license__ = "GPLv3"
 # Python libraries
 import os
 import logging
+import warnings
 
 # External libraries
 import pandas as pd
@@ -307,8 +308,12 @@ def get_heat_profiles_deflex(year, time_index=None, keep_unit=False,
         logging.warning(msg)
         # deflex_demand = deflex_demand.reset_index(drop=True).drop(
         #     range(1416, 1440), axis=0)
-        deflex_demand = deflex_demand.reset_index(drop=True).drop(
-            range(8760, 8784), axis=0)
+        if len(deflex_demand.iloc[8760:]) > 24:
+            msg = ("{0} hours removed. This is more than a day! Check the "
+                   "input data.")
+            warnings.warn(msg.format(len(deflex_demand.iloc[8760:])),
+                          RuntimeWarning)
+        deflex_demand = deflex_demand.reset_index(drop=True).iloc[:8760]
 
     if time_index is not None:
         deflex_demand.index = time_index
