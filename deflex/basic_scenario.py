@@ -236,6 +236,8 @@ def scenario_feedin(year, weather_year=None):
 
 
 def scenario_feedin_wind(year, feedin_ts, weather_year=None):
+    if weather_year is None:
+        weather_year = year
     wind = deflex.feedin.get_deflex_feedin(year, 'wind', weather_year)
     for reg in wind.columns.levels[0]:
         feedin_ts[reg, 'wind'] = wind[
@@ -246,6 +248,8 @@ def scenario_feedin_wind(year, feedin_ts, weather_year=None):
 
 
 def scenario_feedin_pv(year, my_index, weather_year=None):
+    if weather_year is None:
+        weather_year = year
     pv_types = cfg.get_dict('pv_types')
     pv_orientation = cfg.get_dict('pv_orientation')
     pv = deflex.feedin.get_deflex_feedin(year, 'solar', weather_year)
