@@ -19,9 +19,6 @@ from reegis_tools import config as cfg
 from reegis_tools import geometries as geo
 
 
-
-
-
 def deflex_regions(suffix='reegis', rmap=None, rtype='polygon'):
     if rmap is None:
         rmap = cfg.get('init', 'map')
