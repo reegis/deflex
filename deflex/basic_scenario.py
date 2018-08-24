@@ -443,7 +443,7 @@ def create_basic_scenario(year, rmap=None, round_values=None):
     name = '{0}_{1}_{2}'.format('deflex', year, cfg.get('init', 'map'))
     sce = deflex.scenario_tools.Scenario(table_collection=table_collection,
                                          name=name, year=year)
-    path = os.path.join(cfg.get('paths', 'scenario'), str(year))
+    path = os.path.join(cfg.get('paths', 'scenario'), 'deflex', str(year))
     sce.to_excel(os.path.join(path, name + '.xls'))
     sce.to_csv(os.path.join(path, '{0}_csv'.format(name)))
 
