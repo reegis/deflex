@@ -210,7 +210,9 @@ def scenario_feedin(year, weather_year=None):
     feedin = scenario_feedin_pv(year, my_index, weather_year=weather_year)
     feedin = scenario_feedin_wind(year, feedin, weather_year=weather_year)
 
-    if len(feedin) > 8760:
+    leap_year = year % 4 == 0 and (year % 100 != 0 or year % 400 == 0)
+
+    if len(feedin) > 8760 and not leap_year:
         # If a non-leap year is combined with a leap weather year one day has
         # to be removed to get the same index length. It is possible to remove
         # February 29th but this may lead to sudden temperature and wind speed
