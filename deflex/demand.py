@@ -298,7 +298,9 @@ def get_heat_profiles_deflex(year, time_index=None, keep_unit=False,
         level=[0, 1], axis=1).sum()
     deflex_demand = pd.concat([district_heat_region, demand_region], axis=1)
 
-    if len(deflex_demand) > 8760:
+    leap_year = year % 4 == 0 and (year % 100 != 0 or year % 400 == 0)
+
+    if len(deflex_demand) > 8760 and not leap_year:
         # If a non-leap year is combined with a leap weather year one day has
         # to be removed to get the same index length. It is possible to remove
         # February 29th but this may lead to sudden temperature and wind speed
