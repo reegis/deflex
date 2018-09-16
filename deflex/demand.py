@@ -255,13 +255,15 @@ def get_heat_profiles_deflex(year, time_index=None, keep_unit=False,
         demand_state = reegis_tools.heat_demand.get_heat_profiles_by_state(
             year, to_csv=True, weather_year=weather_year)
 
-    my_index = demand_state.index
-    my_columns1 = pd.MultiIndex(levels=[[], []], labels=[[], []])
-    demand_region = pd.DataFrame(index=my_index, columns=my_columns1)
+    two_level_columns = pd.MultiIndex(levels=[[], []], labels=[[], []])
+    four_level_columns = pd.MultiIndex(levels=[[], [], [], []],
+                                       labels=[[], [], [], []])
 
-    my_columns2 = pd.MultiIndex(levels=[[], [], [], []],
-                                labels=[[], [], [], []])
-    district_heat_region = pd.DataFrame(index=my_index, columns=my_columns2)
+    demand_region = pd.DataFrame(index=demand_state.index,
+                                 columns=two_level_columns)
+
+    district_heat_region = pd.DataFrame(index=demand_state.index,
+                                        columns=four_level_columns)
 
     logging.info("Fetching inhabitants table.")
     my_ew = deflex.inhabitants.get_ew_by_deflex_subregions(year)
