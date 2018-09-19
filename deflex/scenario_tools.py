@@ -216,12 +216,12 @@ def nodes_from_table_collection(table_collection, extra_regions=None):
 
             # Create power plants as 1x1 Transformer
             if params.capacity > 0:
-                # Define output flow with or without sum_max attribute
+                # Define output flow with or without summed_max attribute
                 if params.limit_elec_pp == float('inf'):
                     outflow = solph.Flow(nominal_value=params.capacity)
                 else:
                     outflow = solph.Flow(nominal_value=params.capacity,
-                                         sum_max=params.limit_elec_pp)
+                                         summed_max=params.limit_elec_pp)
 
                 trsf_label = Label(
                     'trsf', 'pp', fuel.replace(' ', '_'), region)
@@ -240,8 +240,8 @@ def nodes_from_table_collection(table_collection, extra_regions=None):
                     inputs={nodes[bus_fuel]: solph.Flow(
                             nominal_value=(params.capacity_heat_chp /
                                            params.efficiency_heat_chp),
-                            sum_max=(params.limit_heat_chp /
-                                     params.efficiency_heat_chp))},
+                            summed_max=(params.limit_heat_chp /
+                                        params.efficiency_heat_chp))},
                     outputs={
                         nodes[bus_elec]: solph.Flow(),
                         nodes[bus_heat]: solph.Flow()},
@@ -258,7 +258,7 @@ def nodes_from_table_collection(table_collection, extra_regions=None):
                     inputs={nodes[bus_fuel]: solph.Flow()},
                     outputs={nodes[bus_heat]: solph.Flow(
                         nominal_value=params.capacity_hp,
-                        sum_max=params.limit_hp)},
+                        summed_max=params.limit_hp)},
                     conversion_factors={nodes[bus_heat]: params.efficiency_hp})
 
     # Storages
