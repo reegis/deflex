@@ -255,14 +255,10 @@ def get_heat_profiles_deflex(year, time_index=None, keep_unit=False,
         demand_state = reegis_tools.heat_demand.get_heat_profiles_by_state(
             year, to_csv=True, weather_year=weather_year)
 
-    two_level_columns = pd.MultiIndex(levels=[[], []], labels=[[], []])
     four_level_columns = pd.MultiIndex(levels=[[], [], [], []],
                                        labels=[[], [], [], []])
 
     demand_region = pd.DataFrame(index=demand_state.index,
-                                 columns=two_level_columns)
-
-    district_heat_region = pd.DataFrame(index=demand_state.index,
                                         columns=four_level_columns)
 
     logging.info("Fetching inhabitants table.")
@@ -278,31 +274,46 @@ def get_heat_profiles_deflex(year, time_index=None, keep_unit=False,
     fuels = demand_state.columns.get_level_values(2).unique()
     sectors = demand_state.columns.get_level_values(1).unique()
     demand_state = demand_state.swaplevel(2, 0, axis=1)
-    district_heat_state = None
-    for fuel in fuels:
-        if fuel != 'district heating':
-            demand_region['DE_demand', fuel] = demand_state[fuel].sum(axis=1)
-        else:
-            district_heat_state = demand_state[fuel]
 
+    # Recalculate the demand of states to the demand of regions using the
+    #  number inhabitants
     for subregion in my_ew.index:
         state = my_ew.loc[subregion, 'state']
         region = my_ew.loc[subregion, 'region']
         share = my_ew.loc[subregion, 'share_state']
-
         for sector in sectors:
-            district_heat_region[
-                region, 'district_heating', sector, subregion] = (
-                    district_heat_state[sector, state] * share)
-    district_heat_region.sort_index(1, inplace=True)
+            for fuel in fuels:
+                demand_region[
+                    region, fuel, sector, subregion] = (
+                        demand_state[fuel, sector, state] * share)
+    demand_region.sort_index(1, inplace=True)
 
-    district_heat_region = district_heat_region.groupby(
+    demand_region = demand_region.groupby(
         level=[0, 1], axis=1).sum()
-    deflex_demand = pd.concat([district_heat_region, demand_region], axis=1)
+
+    # Decentralised demand is combined to a nation-wide demand
+    combine_fuels = [('natural gas', 'gas')]  # add second fuel to first
+    region_fuels = ['district heating']  # regional demand
+    separate_regions = ['DE22']  # keep all demand connected to the region
+
+    regions = list(set(demand_region.columns.get_level_values(0).unique()) -
+                   set(separate_regions))
+
+    for fuel in fuels:
+        demand_region['DE_demand', fuel] = 0
+
+    for region in regions:
+        for f in combine_fuels:
+            demand_region[region, f[0]] += demand_region[region, f[1]]
+            demand_region.drop((region, f[1]), axis=1, inplace=True)
+        cols = list(set(demand_region[region].columns) - set(region_fuels))
+        for col in cols:
+            demand_region['DE_demand', col] += demand_region[region, col]
+            demand_region.drop((region, col), axis=1, inplace=True)
 
     leap_year = year % 4 == 0 and (year % 100 != 0 or year % 400 == 0)
 
-    if len(deflex_demand) > 8760 and not leap_year:
+    if len(demand_region) > 8760 and not leap_year:
         # If a non-leap year is combined with a leap weather year one day has
         # to be removed to get the same index length. It is possible to remove
         # February 29th but this may lead to sudden temperature and wind speed
@@ -312,29 +323,42 @@ def get_heat_profiles_deflex(year, time_index=None, keep_unit=False,
         logging.warning(msg)
         # deflex_demand = deflex_demand.reset_index(drop=True).drop(
         #     range(1416, 1440), axis=0)
-        if len(deflex_demand.iloc[8760:]) > 24:
+        if len(demand_region.iloc[8760:]) > 24:
             msg = ("{0} hours removed. This is more than a day! Check the "
                    "input data.")
-            warnings.warn(msg.format(len(deflex_demand.iloc[8760:])),
+            warnings.warn(msg.format(len(demand_region.iloc[8760:])),
                           RuntimeWarning)
-        deflex_demand = deflex_demand.reset_index(drop=True).iloc[:8760]
+        demand_region = demand_region.reset_index(drop=True).iloc[:8760]
 
     if time_index is not None:
-        deflex_demand.index = time_index
+        demand_region.index = time_index
 
     if not keep_unit:
         msg = ("The unit of the source is 'TJ'. "
                "Will be divided by {0} to get 'MWh'.")
         converter = 0.0036
-        deflex_demand = deflex_demand.div(converter)
+        demand_region = demand_region.div(converter)
+        demand_state = demand_state.div(converter)
         logging.warning(msg.format(converter))
 
-    return deflex_demand
+    demand_region.sort_index(1, inplace=True)
+
+    for c in demand_region.columns:
+        if demand_region[c].sum() == 0:
+            demand_region.drop(c, axis=1, inplace=True)
+
+    if int(demand_region.sum().sum()) != int(demand_state.sum().sum()):
+        logging.error("Something went wrong: {0} != {1}".format(
+            int(demand_region.sum().sum()), int(demand_state.sum().sum())))
+
+    return demand_region
 
 
 if __name__ == "__main__":
     logger.define_logging(screen_level=logging.ERROR,
                           file_level=logging.ERROR)
+    get_heat_profiles_deflex(2014)
+
     # egofile_deflex = os.path.join(
     #     cfg.get('paths', 'demand'),
     #     cfg.get('demand', 'ego_file_deflex')).format(map='de22')

@@ -328,8 +328,8 @@ def chp_table(heat_b, heat_demand, table_collection, regions=None):
         # Remove the total share
         del share['total']
 
-        max_val = float(heat_demand[region]['district_heating'].max())
-        sum_val = float(heat_demand[region]['district_heating'].sum())
+        max_val = float(heat_demand[region]['district heating'].max())
+        sum_val = float(heat_demand[region]['district heating'].sum())
 
         for fuel in share.columns:
             if fuel == 'gas':
@@ -479,6 +479,8 @@ if __name__ == "__main__":
     # cfg.tmp_set('init', 'map', 'de23')
     # print(cfg.get('init', 'map'))
     # exit(0)
+    create_basic_scenario(2014, 'de22')
+    exit(0)
 
     create_weather_variation_scenario(2014, rmap='de21')
     exit(0)
