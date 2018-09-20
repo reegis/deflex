@@ -424,7 +424,7 @@ def clean_time_series(table_collection):
     regions = list(ts.columns.get_level_values(0).unique())
     regions.remove('DE_demand')
     for reg in regions:
-        for load in ['district_heating', 'electrical_load']:
+        for load in ['district heating', 'electrical_load']:
             if ts[reg].get(load) is not None:
                 if ts[reg, load].sum() == 0:
                     del ts[reg, load]
