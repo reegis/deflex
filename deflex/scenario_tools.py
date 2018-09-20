@@ -219,7 +219,6 @@ def nodes_from_table_collection(table_collection, extra_regions=None):
             if params.capacity > 0:
                 # Define output flow with or without summed_max attribute
                 if params.limit_elec_pp == float('inf'):
-                    smax = 'Inf'
                     outflow = solph.Flow(nominal_value=params.capacity)
                 else:
                     smax = params.limit_elec_pp / params.capacity
@@ -228,7 +227,6 @@ def nodes_from_table_collection(table_collection, extra_regions=None):
 
                 trsf_label = Label(
                     'trsf', 'pp', fuel.replace(' ', '_'), region)
-                print(trsf_label, smax)
                 nodes[trsf_label] = solph.Transformer(
                     label=trsf_label,
                     inputs={nodes[bus_fuel]: solph.Flow()},
@@ -244,7 +242,6 @@ def nodes_from_table_collection(table_collection, extra_regions=None):
                     (params.limit_heat_chp / params.efficiency_heat_chp) /
                     (params.capacity_heat_chp / params.efficiency_heat_chp))
 
-                print(trsf_label, smax)
                 nodes[trsf_label] = solph.Transformer(
                     label=trsf_label,
                     inputs={nodes[bus_fuel]: solph.Flow(
@@ -264,7 +261,6 @@ def nodes_from_table_collection(table_collection, extra_regions=None):
                     'trsf', 'hp', fuel.replace(' ', '_'), region)
                 smax = params.limit_hp/params.capacity_hp
 
-                print(trsf_label, smax)
                 nodes[trsf_label] = solph.Transformer(
                     label=trsf_label,
                     inputs={nodes[bus_fuel]: solph.Flow()},
