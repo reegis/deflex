@@ -457,8 +457,8 @@ def create_basic_scenario(year, rmap=None, round_values=None):
 def create_weather_variation_scenario(year, rmap=None, round_values=None):
     weather_years = range(1998, 2015)
     for weather_year in weather_years:
-        logging.info("Create weather variation {0} for {1}.".format(
-            weather_year, year))
+        logging.info("{2} Create weather variation {0} for {1} {2}".format(
+            weather_year, year, '**********************'))
         if rmap is not None:
             cfg.tmp_set('init', 'map', rmap)
         table_collection = deflex.basic_scenario.create_scenario(
@@ -479,8 +479,6 @@ if __name__ == "__main__":
     # cfg.tmp_set('init', 'map', 'de23')
     # print(cfg.get('init', 'map'))
     # exit(0)
-    create_basic_scenario(2014, 'de22')
-    exit(0)
 
     create_weather_variation_scenario(2014, rmap='de21')
     exit(0)
