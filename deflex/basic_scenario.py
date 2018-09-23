@@ -169,7 +169,8 @@ def scenario_commodity_sources(year, use_znes_2014=True):
 
 
 def scenario_demand(year, time_series, weather_year=None):
-    time_series = scenario_elec_demand(year, time_series)
+    time_series = scenario_elec_demand(year, time_series,
+                                       weather_year=weather_year)
     time_series = scenario_heat_demand(year, time_series,
                                        weather_year=weather_year)
     return time_series
@@ -182,7 +183,10 @@ def scenario_heat_demand(year, table, weather_year=None):
     return table.sort_index(1)
 
 
-def scenario_elec_demand(year, table):
+def scenario_elec_demand(year, table, weather_year=None):
+    if weather_year is None:
+        weather_year = year
+
     annual_demand = cfg.get('electricity_demand', 'annual_demand')
     demand_method = cfg.get('electricity_demand', 'demand_method')
 
@@ -196,7 +200,7 @@ def scenario_elec_demand(year, table):
         logging.warning(msg.format(converter))
 
     df = deflex.demand.get_deflex_profile(
-        year, demand_method, annual_demand=annual_demand)
+        weather_year, demand_method, annual_demand=annual_demand)
     df = pd.concat([df], axis=1, keys=['electrical_load']).swaplevel(0, 1, 1)
     df = df.reset_index(drop=True).set_index(table.index)
     return pd.concat([table, df], axis=1).sort_index(1)
@@ -454,8 +458,9 @@ def create_basic_scenario(year, rmap=None, round_values=None):
     sce.to_csv(os.path.join(path, '{0}_csv'.format(name)))
 
 
-def create_weather_variation_scenario(year, rmap=None, round_values=None):
-    weather_years = range(1998, 2015)
+def create_weather_variation_scenario(year, start=1998, rmap=None,
+                                      round_values=None):
+    weather_years = range(start, 2015)
     for weather_year in weather_years:
         logging.info("{2} Create weather variation {0} for {1} {2}".format(
             weather_year, year, '**********************'))
@@ -468,7 +473,8 @@ def create_weather_variation_scenario(year, rmap=None, round_values=None):
             'deflex', year, cfg.get('init', 'map'), weather_year)
         sce = deflex.scenario_tools.Scenario(table_collection=table_collection,
                                              name=name, year=year)
-        path = os.path.join(cfg.get('paths', 'scenario'), str(year) + '_var')
+        path = os.path.join(cfg.get('paths', 'scenario'), 'deflex',
+                            str(year) + '_var_entsoe')
         sce.to_excel(os.path.join(path, name + '.xls'))
         sce.to_csv(os.path.join(path, '{0}_csv'.format(name)))
 
@@ -480,7 +486,7 @@ if __name__ == "__main__":
     # print(cfg.get('init', 'map'))
     # exit(0)
 
-    create_weather_variation_scenario(2014, rmap='de21')
+    create_weather_variation_scenario(2014, start=2006, rmap='de21')
     exit(0)
     for y in [2014, 2013, 2012]:
         for my_rmap in ['de21', 'de22']:
