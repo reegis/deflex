@@ -58,13 +58,8 @@ def deflex_profile_from_entsoe(year, share, annual_demand=None,
     if not os.path.isfile(load_file) or overwrite:
         reegis_tools.entsoe.split_timeseries_file(overwrite)
 
-    # start = datetime.datetime(year, 1, 1, 0, 0)
-    # end = datetime.datetime(year, 12, 31, 23, 0)
-
-    entsoe = reegis_tools.entsoe.get_entsoe_load(year)
-
-    # entsoe = entsoe.tz_localize('UTC').tz_convert('Europe/Berlin')
-    de_load_profile = entsoe.DE_load_
+    # Fetch de load profile from entsoe
+    de_load_profile = reegis_tools.entsoe.get_entsoe_load(year).DE_load_
 
     load_profile = pd.DataFrame(index=de_load_profile.index)
     regions = pd.read_csv(os.path.join(
