@@ -13,6 +13,7 @@ __license__ = "GPLv3"
 import os
 import logging
 import warnings
+import calendar
 
 # External libraries
 import pandas as pd
@@ -202,7 +203,9 @@ def scenario_elec_demand(year, table, weather_year=None):
     df = deflex.demand.get_deflex_profile(
         weather_year, demand_method, annual_demand=annual_demand)
     df = pd.concat([df], axis=1, keys=['electrical_load']).swaplevel(0, 1, 1)
-    df = df.reset_index(drop=True).set_index(table.index)
+    df = df.reset_index(drop=True)
+    if not calendar.isleap(year) and len(df) > 8760:
+        df = df.iloc[:8760]
     return pd.concat([table, df], axis=1).sort_index(1)
 
 
@@ -486,7 +489,7 @@ if __name__ == "__main__":
     # print(cfg.get('init', 'map'))
     # exit(0)
 
-    create_weather_variation_scenario(2014, start=2006, rmap='de21')
+    create_weather_variation_scenario(2014, start=2012, rmap='de21')
     exit(0)
     for y in [2014, 2013, 2012]:
         for my_rmap in ['de21', 'de22']:
