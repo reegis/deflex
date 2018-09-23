@@ -489,7 +489,7 @@ if __name__ == "__main__":
     # print(cfg.get('init', 'map'))
     # exit(0)
 
-    create_weather_variation_scenario(2014, start=2012, rmap='de21')
+    create_weather_variation_scenario(2014, start=2008, rmap='de21')
     exit(0)
     for y in [2014, 2013, 2012]:
         for my_rmap in ['de21', 'de22']:
