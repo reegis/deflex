@@ -23,9 +23,9 @@ import reegis_tools.inhabitants
 import reegis_tools.config as cfg
 
 
-def get_ew_by_deflex(year):
-    de21_regions = deflex.geometries.deflex_regions()
-    return reegis_tools.inhabitants.get_ew_by_region(year, de21_regions)
+def get_ew_by_deflex(year, rmap=None):
+    deflex_regions = deflex.geometries.deflex_regions(rmap=rmap)
+    return reegis_tools.inhabitants.get_ew_by_region(year, deflex_regions)
 
 
 def get_ew_by_deflex_subregions(year):
