@@ -77,17 +77,34 @@ def pp_reegis2deflex(clean_offshore=True):
 
 
 def remove_onshore_technology_from_offshore_regions(df):
+    """ This filter should be improved. It is slow and has to be adapted
+    manually. Anyhow it seems to work this way."""
+
     logging.info("Removing onshore technology from offshore regions.")
     logging.info("The code is not efficient. So it may take a while.")
 
-    dc = {'MV': 'DE01',
-          'SH': 'DE13',
-          'NI': 'DE14'}
+    offshore_regions = (
+        cfg.get_dict_list('offshore_regions_set')[cfg.get('init', 'map')])
+
+    coast_regions = {'de02': {'MV': 'DE01',
+                              'SH': 'DE01',
+                              'NI': 'DE01 '},
+                     'de21': {'MV': 'DE01',
+                              'SH': 'DE13',
+                              'NI': 'DE14'},
+                     'de22': {'MV': 'DE01',
+                              'SH': 'DE13',
+                              'NI': 'DE14'}}
+    try:
+        dc = coast_regions[cfg.get('init', 'map')]
+    except KeyError:
+        raise ValueError('Coast regions not defined for {0} model.'.format(
+            cfg.get('init', 'map')))
 
     region_column = '{0}_region'.format(cfg.get('init', 'map'))
 
     for ttype in ['Solar', 'Bioenergy', 'Wind']:
-        for region in ['DE19', 'DE20', 'DE21']:
+        for region in offshore_regions:
             logging.debug("Clean {1} from {0}.".format(region, ttype))
 
             c1 = df['energy_source_level_2'] == ttype

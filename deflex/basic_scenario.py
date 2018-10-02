@@ -68,10 +68,8 @@ def scenario_transmission(table_collection):
 
     # This should be done automatic e.g. if representative point outside the
     # landmass polygon.
-    offshore_regions_set = {'de22': ['DE19', 'DE20', 'DE21'],
-                            'de21': ['DE19', 'DE20', 'DE21'],
-                            'de02': ['DE02']}
-    offshore_regions = offshore_regions_set[cfg.get('init', 'map')]
+    offshore_regions = (
+        cfg.get_dict_list('offshore_regions_set')[cfg.get('init', 'map')])
 
     elec_trans = deflex.transmission.get_electrical_transmission_deflex()
 
