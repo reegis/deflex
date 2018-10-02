@@ -488,15 +488,7 @@ def create_weather_variation_scenario(year, start=1998, rmap=None,
 
 if __name__ == "__main__":
     logger.define_logging()
-    # print(cfg.get('init', 'map'))
-    # cfg.tmp_set('init', 'map', 'de23')
-    # print(cfg.get('init', 'map'))
-    # exit(0)
 
-    create_weather_variation_scenario(2014, start=2008, rmap='de21')
-    exit(0)
     for y in [2014, 2013, 2012]:
-        for my_rmap in ['de21', 'de22']:
+        for my_rmap in ['de21', 'de22', 'de02']:
             create_basic_scenario(y, rmap=my_rmap)
-    # print(scenario_commodity_sources(2014, use_znes_2014=True))
-    # print(scenario_elec_demand(2014, pd.DataFrame()))
