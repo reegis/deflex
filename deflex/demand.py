@@ -44,8 +44,9 @@ def renpass_demand_share():
             demand_share, index_col='region_code', squeeze=True)
 
 
-def openego_demand_share():
-    demand_reg = prepare_ego_demand()['sector_consumption_sum']
+def openego_demand_share(overwrite=False, rmap=None):
+    demand_reg = prepare_ego_demand(overwrite=overwrite, rmap=rmap)[
+        'sector_consumption_sum']
     demand_sum = demand_reg.sum()
     return demand_reg.div(demand_sum)
 
@@ -78,8 +79,9 @@ def deflex_profile_from_entsoe(year, share, annual_demand=None,
     return load_profile
 
 
-def prepare_ego_demand(overwrite=False):
-    rmap = cfg.get('init', 'map')
+def prepare_ego_demand(rmap=None, overwrite=False):
+    if rmap is None:
+        rmap = cfg.get('init', 'map')
     egofile_deflex = os.path.join(
         cfg.get('paths', 'demand'),
         cfg.get('demand', 'ego_file_deflex')).format(map=rmap)
@@ -87,7 +89,8 @@ def prepare_ego_demand(overwrite=False):
     if os.path.isfile(egofile_deflex) and not overwrite:
         ego_demand_deflex = pd.read_hdf(egofile_deflex, 'demand')
     else:
-        ego_demand_df = reegis_tools.openego.get_ego_demand(overwrite=False)
+        ego_demand_df = reegis_tools.openego.get_ego_demand(
+            overwrite=overwrite)
         # Create GeoDataFrame from ego demand file.
         ego_demand = reegis_tools.geometries.Geometry(name='ego demand',
                                                       df=ego_demand_df)
@@ -99,7 +102,7 @@ def prepare_ego_demand(overwrite=False):
 
         # Add column with region id
         ego_demand.gdf = reegis_tools.geometries.spatial_join_with_buffer(
-            ego_demand, deflex_regions)
+            ego_demand, deflex_regions, name=rmap + '_region')
 
         # Overwrite Geometry object with its DataFrame, because it is not
         # needed anymore.
@@ -224,11 +227,10 @@ def elec_demand_tester(year):
     #       int(rp_s.sum().sum()))
     print('ege:  ', int(ege.sum().sum() / 1e+12), '       ',
           int(ege_s.sum().sum()))
-    print(ege_s)
+    # print(ege_s)
 
 
-def get_heat_profiles_deflex(year, time_index=None, keep_unit=False,
-                             weather_year=None):
+def get_heat_profiles_by_state(year=None, weather_year=None):
     if weather_year is None:
         heat_demand_state_file = os.path.join(
                 cfg.get('paths', 'demand'),
@@ -250,11 +252,32 @@ def get_heat_profiles_deflex(year, time_index=None, keep_unit=False,
         demand_state = reegis_tools.heat_demand.get_heat_profiles_by_state(
             year, to_csv=True, weather_year=weather_year)
 
+    return demand_state
+
+
+def get_heat_profiles_deflex(year, time_index=None, keep_unit=False,
+                             weather_year=None, separate_regions=None,
+                             combine_fuels=None, region_fuels=None):
+
+    # separate_regions = keep all demand connected to the region
+    if separate_regions is None:
+        separate_regions = ['DE22']
+
+    # add second fuel to first
+    if combine_fuels is None:
+        combine_fuels = [('natural gas', 'gas')]
+
+    # fuels to be dissolved per region
+    if region_fuels is None:
+        region_fuels = ['district heating']
+
+    demand_state = get_heat_profiles_by_state(year, weather_year)
+
     four_level_columns = pd.MultiIndex(levels=[[], [], [], []],
                                        labels=[[], [], [], []])
 
     demand_region = pd.DataFrame(index=demand_state.index,
-                                        columns=four_level_columns)
+                                 columns=four_level_columns)
 
     logging.info("Fetching inhabitants table.")
     my_ew = deflex.inhabitants.get_ew_by_deflex_subregions(year)
@@ -283,14 +306,10 @@ def get_heat_profiles_deflex(year, time_index=None, keep_unit=False,
                         demand_state[fuel, sector, state] * share)
     demand_region.sort_index(1, inplace=True)
 
-    demand_region = demand_region.groupby(
-        level=[0, 1], axis=1).sum()
+    demand_region = demand_region.groupby(level=[0, 1], axis=1).sum()
 
-    # Decentralised demand is combined to a nation-wide demand
-    combine_fuels = [('natural gas', 'gas')]  # add second fuel to first
-    region_fuels = ['district heating']  # regional demand
-    separate_regions = ['DE22']  # keep all demand connected to the region
-
+    # Decentralised demand is combined to a nation-wide demand if not part
+    # of region_fuels.
     regions = list(set(demand_region.columns.get_level_values(0).unique()) -
                    set(separate_regions))
 
