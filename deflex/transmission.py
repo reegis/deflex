@@ -38,6 +38,38 @@ def get_grid_capacity(grid, plus, minus):
 
 
 def get_electrical_transmission_deflex(duplicate=False):
+    renpas_maps = ['de21', 'de22']
+    if cfg.get('init', 'map') in renpas_maps:
+        df = get_electrical_transmission_renpass()
+    else:
+        df = get_electrical_transmission_default()
+
+    if duplicate:
+        values = df.copy()
+
+        def id_inverter(name):
+            return '-'.join([name.split('-')[1], name.split('-')[0]])
+
+        df.index = df.index.map(id_inverter)
+
+        df = pd.DataFrame(pd.concat([values, df]))
+    return df
+
+
+def get_electrical_transmission_default():
+    try:
+        pwr_lines = deflex.geometries.deflex_power_lines().get_df()
+    except FileNotFoundError:
+        pwr_lines = pd.DataFrame()
+
+    df = pd.DataFrame()
+    for l in pwr_lines.index:
+        df.loc[l, 'capacity'] = float('inf')
+        df.loc[l, 'distance'] = float('nan')
+    return df
+
+
+def get_electrical_transmission_renpass():
     f_security = cfg.get('transmission', 'security_factor')
     current_max = cfg.get('transmission', 'current_max')
 
@@ -73,19 +105,6 @@ def get_electrical_transmission_deflex(duplicate=False):
 
     # plot_grid(pwr_lines)
     df = pwr_lines[['capacity', 'distance']]
-
-    if duplicate:
-        values = df.copy()
-
-        def id_inverter(name):
-            return '-'.join([name.split('-')[1], name.split('-')[0]])
-
-        df.index = df.index.map(id_inverter)
-
-        df = pd.DataFrame(pd.concat([values, df]))
-
-    # if cfg.get('init', 'map') == 'de22':
-    #     df.loc['DE22-DE01', 'capacity'] = 999999
     return df
 
 
@@ -95,6 +114,7 @@ def get_grid():
 
 
 if __name__ == "__main__":
+    cfg.tmp_set('init', 'map', 'de17')
     lines = get_electrical_transmission_deflex(duplicate=False)
     print(lines)
     print(len(lines))

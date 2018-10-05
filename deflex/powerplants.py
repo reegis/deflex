@@ -89,12 +89,15 @@ def remove_onshore_technology_from_offshore_regions(df):
     coast_regions = {'de02': {'MV': 'DE01',
                               'SH': 'DE01',
                               'NI': 'DE01 '},
+                     'de17': {'MV': 'DE13',
+                              'SH': 'DE01',
+                              'NI': 'DE03'},
                      'de21': {'MV': 'DE01',
                               'SH': 'DE13',
                               'NI': 'DE14'},
                      'de22': {'MV': 'DE01',
                               'SH': 'DE13',
-                              'NI': 'DE14'}}
+                              'NI': 'DE14'},}
     try:
         dc = coast_regions[cfg.get('init', 'map')]
     except KeyError:
