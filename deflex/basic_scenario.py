@@ -14,6 +14,7 @@ import os
 import logging
 import warnings
 import calendar
+from collections import namedtuple
 
 # External libraries
 import pandas as pd
@@ -451,7 +452,9 @@ def clean_time_series(table_collection):
     return table_collection
 
 
-def create_basic_scenario(year, rmap=None, round_values=None):
+def create_basic_scenario(year, rmap=None, path=None, csv_dir=None,
+                          xls_name=None, round_values=None):
+    paths = namedtuple('paths', 'xls, csv')
     if rmap is not None:
         cfg.tmp_set('init', 'map', rmap)
     table_collection = deflex.basic_scenario.create_scenario(year,
@@ -460,9 +463,25 @@ def create_basic_scenario(year, rmap=None, round_values=None):
     name = '{0}_{1}_{2}'.format('deflex', year, cfg.get('init', 'map'))
     sce = deflex.scenario_tools.Scenario(table_collection=table_collection,
                                          name=name, year=year)
-    path = os.path.join(cfg.get('paths', 'scenario'), 'deflex', str(year))
-    sce.to_excel(os.path.join(path, name + '.xls'))
-    sce.to_csv(os.path.join(path, '{0}_csv'.format(name)))
+
+    if path is None:
+        path = os.path.join(cfg.get('paths', 'scenario'), 'deflex', str(year))
+
+    if csv_dir is None:
+        csv_path = os.path.join(path, '{0}_csv'.format(name))
+    else:
+        csv_path = os.path.join(path, csv_dir)
+
+    if xls_name is None:
+        xls_path = os.path.join(path, name + '.xls')
+    else:
+        xls_path = os.path.join(path, xls_name)
+
+    fullpath = paths(xls=xls_path, csv=csv_path)
+    sce.to_excel(fullpath.xls)
+    sce.to_csv(fullpath.csv)
+
+    return fullpath
 
 
 def create_weather_variation_scenario(year, start=1998, rmap=None,
@@ -491,4 +510,6 @@ if __name__ == "__main__":
 
     for y in [2014, 2013, 2012]:
         for my_rmap in ['de21', 'de22', 'de02']:
-            create_basic_scenario(y, rmap=my_rmap)
+            p = create_basic_scenario(y, rmap=my_rmap)
+            logging.info("Xls path: {0}".format(p.xls))
+            logging.info("Csv path: {0}".format(p.csv))

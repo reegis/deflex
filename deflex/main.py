@@ -33,23 +33,29 @@ def stopwatch():
 
 def main(year):
     stopwatch()
-    name = 'basic_{0}'.format(cfg.get('init', 'map'))
+    name = '{0}_{1}_{2}'.format('deflex', year, cfg.get('init', 'map'))
     sc = deflex.Scenario(name=name, year=2014)
-    scenario_path = os.path.join(cfg.get('paths', 'scenario'), str(year))
-    csv_path = os.path.join(scenario_path, 'csv', name)
+    path = os.path.join(cfg.get('paths', 'scenario'), 'deflex', str(year))
+    csv_dir = name + '_csv'
+    csv_path = os.path.join(path, csv_dir)
 
     if not os.path.isdir(csv_path):
-        deflex.basic_scenario.create_basic_scenario(year)
-
+        fn = deflex.basic_scenario.create_basic_scenario(year, path=path,
+                                                         csv_dir=csv_dir)
+        if csv_path != fn.csv:
+            msg = ("\n{0}\n{1}\nThe wrong path is checked. This will recreate "
+                   "the the scenario every time!".format(csv_path, fn.csv))
+            logging.error(msg)
+            csv_path = fn.csv
     logging.info("Read scenario from csv collection: {0}".format(stopwatch()))
     sc.load_csv(csv_path)
 
     logging.info("Add nodes to the EnergySystem: {0}".format(stopwatch()))
-    sc.add_nodes2solph()
+    sc.table2es()
 
     # Save energySystem to '.graphml' file.
     fn = 'deflex_{0}_{1}'.format(year, cfg.get('init', 'map'))
-    sc.plot_nodes(filename=os.path.join(scenario_path, fn),
+    sc.plot_nodes(filename=os.path.join(path, fn),
                   remove_nodes_with_substrings=['bus_cs'])
 
     logging.info("Create the concrete model: {0}".format(stopwatch()))
@@ -59,7 +65,7 @@ def main(year):
     sc.solve()
 
     logging.info("Solved. Dump results: {0}".format(stopwatch()))
-    out_file = os.path.join(scenario_path, 'results', fn + '.esys')
+    out_file = os.path.join(path, 'results', fn + '.esys')
     logging.info("Dump file to {0}".format(out_file))
     sc.dump_es(out_file)
 
@@ -72,7 +78,6 @@ if __name__ == "__main__":
     for y in [2014, 2013, 2012]:
         for my_rmap in ['de21', 'de22']:
             cfg.tmp_set('init', 'map', my_rmap)
-            deflex.basic_scenario.create_basic_scenario(y, rmap=my_rmap)
             try:
                 main(y)
             except Exception as e:
