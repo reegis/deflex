@@ -54,9 +54,6 @@ def main(year, plot_graph=False):
     sc.table2es()
 
     # Save energySystem to '.graphml' file.
-    fn = 'deflex_{0}_{1}'.format(year, cfg.get('init', 'map'))
-    sc.plot_nodes(filename=os.path.join(path, fn),
-                  remove_nodes_with_substrings=['bus_cs'])
 
     if plot_graph:
         sc.plot_nodes(filename=os.path.join(path, name),
@@ -69,7 +66,9 @@ def main(year, plot_graph=False):
     sc.solve()
 
     logging.info("Solved. Dump results: {0}".format(stopwatch()))
-    out_file = os.path.join(path, 'results', fn + '.esys')
+    res_path = os.path.join(path, 'results')
+    os.makedirs(res_path)
+    out_file = os.path.join(res_path, name + '.esys')
     logging.info("Dump file to {0}".format(out_file))
     sc.dump_es(out_file)
 
