@@ -53,8 +53,7 @@ def main(year, plot_graph=False):
     logging.info("Add nodes to the EnergySystem: {0}".format(stopwatch()))
     sc.table2es()
 
-    # Save energySystem to '.graphml' file.
-
+    # Save energySystem to '.graphml' file if plot_graph is True
     if plot_graph:
         sc.plot_nodes(filename=os.path.join(path, name),
                       remove_nodes_with_substrings=['bus_cs'])
