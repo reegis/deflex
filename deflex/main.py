@@ -31,7 +31,7 @@ def stopwatch():
     return str(datetime.now() - stopwatch.start)[:-7]
 
 
-def main(year):
+def main(year, plot_graph=False):
     stopwatch()
     name = '{0}_{1}_{2}'.format('deflex', year, cfg.get('init', 'map'))
     sc = deflex.Scenario(name=name, year=2014)
@@ -57,6 +57,10 @@ def main(year):
     fn = 'deflex_{0}_{1}'.format(year, cfg.get('init', 'map'))
     sc.plot_nodes(filename=os.path.join(path, fn),
                   remove_nodes_with_substrings=['bus_cs'])
+
+    if plot_graph:
+        sc.plot_nodes(filename=os.path.join(path, name),
+                      remove_nodes_with_substrings=['bus_cs'])
 
     logging.info("Create the concrete model: {0}".format(stopwatch()))
     sc.create_model()
