@@ -63,12 +63,15 @@ def deflex_profile_from_entsoe(year, share, annual_demand=None,
     de_load_profile = reegis_tools.entsoe.get_entsoe_load(year).DE_load_
 
     load_profile = pd.DataFrame(index=de_load_profile.index)
-    regions = pd.read_csv(os.path.join(
-        cfg.get('paths', 'geo_deflex'),
-        cfg.get('geometry', 'region_label')).format(
-        map=cfg.get('init', 'map')), index_col=[0])
+    regions = pd.read_csv(
+        os.path.join(
+            cfg.get('paths', 'geo_deflex'),
+            cfg.get('geometry', 'deflex_polygon')).format(
+            map=cfg.get('init', 'map'), type='polygon', suffix='reegis'),
+        index_col=[0])
 
     for region in regions.index:
+        region = 'DE{:02}'.format(region)
         if region not in share:
             share[region] = 0
         load_profile[region] = de_load_profile.multiply(float(share[region]))
