@@ -188,7 +188,7 @@ def nodes_from_table_collection(table_collection, extra_regions=None):
                 raise ValueError(
                     "Bus {0} missing for power line from {0} to {1}".format(
                         bus_label_out, bus_label_in))
-            if values.capacity != 'inf':
+            if values.capacity != float('inf'):
                 logging.debug('Line {0} has a capacity of {1}'.format(
                     line_label, values.capacity))
                 nodes[line_label] = solph.Transformer(
