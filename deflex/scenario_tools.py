@@ -64,7 +64,6 @@ def nodes_from_table_collection(table_collection, extra_regions=None):
     # updated. This avoids the
     if extra_regions is None:
         extra_regions = []
-
     nodes = reegis_tools.scenario_tools.NodeDict()
 
     # Global commodity sources
@@ -189,13 +188,25 @@ def nodes_from_table_collection(table_collection, extra_regions=None):
                 raise ValueError(
                     "Bus {0} missing for power line from {0} to {1}".format(
                         bus_label_out, bus_label_in))
-            nodes[line_label] = solph.Transformer(
-                label=line_label,
-                inputs={nodes[bus_label_in]: solph.Flow()},
-                outputs={nodes[bus_label_out]: solph.Flow(
-                    nominal_value=values.capacity)},
-                conversion_factors={nodes[bus_label_out]: values.efficiency})
-
+            if values.capacity != 'inf':
+                logging.debug('Line {0} has a capacity of {1}'.format(
+                    line_label, values.capacity))
+                nodes[line_label] = solph.Transformer(
+                    label=line_label,
+                    inputs={nodes[bus_label_in]: solph.Flow()},
+                    outputs={nodes[bus_label_out]: solph.Flow(
+                        nominal_value=values.capacity)},
+                    conversion_factors={
+                        nodes[bus_label_out]: values.efficiency})
+            else:
+                logging.debug('Line {0} has no capacity limit'.format(
+                    line_label))
+                nodes[line_label] = solph.Transformer(
+                    label=line_label,
+                    inputs={nodes[bus_label_in]: solph.Flow()},
+                    outputs={nodes[bus_label_out]: solph.Flow()},
+                    conversion_factors={
+                        nodes[bus_label_out]: values.efficiency})
     # Local power plants as Transformer and ExtractionTurbineCHP (chp)
     trsf = table_collection['transformer']
     cs = table_collection['commodity_source']['DE']
@@ -299,7 +310,6 @@ def nodes_from_table_collection(table_collection, extra_regions=None):
         nodes[shortage_label] = solph.Source(
             label=shortage_label,
             outputs={nodes[key]: solph.Flow(variable_costs=900)})
-
     return nodes
 
 

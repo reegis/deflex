@@ -66,6 +66,7 @@ def get_electrical_transmission_default():
     for l in pwr_lines.index:
         df.loc[l, 'capacity'] = float('inf')
         df.loc[l, 'distance'] = float('nan')
+        df.loc[l, 'efficiency'] = 1
     return df
 
 
