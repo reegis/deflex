@@ -65,7 +65,8 @@ def main(year, plot_graph=False):
     sc.solve()
 
     logging.info("Solved. Dump results: {0}".format(stopwatch()))
-    res_path = os.path.join(path, 'results')
+    res_path = os.path.join(path, 'results_{0}'.format(
+        cfg.get('general', 'solver')))
     os.makedirs(res_path, exist_ok=True)
     out_file = os.path.join(res_path, name + '.esys')
     logging.info("Dump file to {0}".format(out_file))
