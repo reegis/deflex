@@ -281,6 +281,24 @@ def nodes_from_table_collection(table_collection, extra_regions=None):
                     conversion_factors={nodes[bus_heat]: params.efficiency_hp})
 
     # Storages
+    if 'storages' in table_collection:
+        nodes = storage_nodes(table_collection, nodes)
+
+    # Add shortage excess to every bus
+    bus_keys = [key for key in nodes.keys() if 'bus' in key.cat]
+    for key in bus_keys:
+        excess_label = Label('excess', key.tag, key.subtag, key.region)
+        nodes[excess_label] = solph.Sink(
+            label=excess_label,
+            inputs={nodes[key]: solph.Flow()})
+        shortage_label = Label('shortage', key.tag, key.subtag, key.region)
+        nodes[shortage_label] = solph.Source(
+            label=shortage_label,
+            outputs={nodes[key]: solph.Flow(variable_costs=900)})
+    return nodes
+
+
+def storage_nodes(table_collection, nodes):
     storages = table_collection['storages']
     storages.columns = storages.columns.swaplevel()
     for region in storages['phes'].columns:
@@ -298,18 +316,6 @@ def nodes_from_table_collection(table_collection, extra_regions=None):
             initial_capacity=None,
             inflow_conversion_factor=params.pump_eff,
             outflow_conversion_factor=params.turbine_eff)
-
-    # Add shortage excess to every bus
-    bus_keys = [key for key in nodes.keys() if 'bus' in key.cat]
-    for key in bus_keys:
-        excess_label = Label('excess', key.tag, key.subtag, key.region)
-        nodes[excess_label] = solph.Sink(
-            label=excess_label,
-            inputs={nodes[key]: solph.Flow()})
-        shortage_label = Label('shortage', key.tag, key.subtag, key.region)
-        nodes[shortage_label] = solph.Source(
-            label=shortage_label,
-            outputs={nodes[key]: solph.Flow(variable_costs=900)})
     return nodes
 
 
