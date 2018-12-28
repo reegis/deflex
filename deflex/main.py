@@ -34,7 +34,12 @@ def stopwatch():
 def main(year, plot_graph=False):
     stopwatch()
     name = '{0}_{1}_{2}'.format('deflex', year, cfg.get('init', 'map'))
-    sc = deflex.Scenario(name=name, year=2014)
+    meta = {'year': year,
+            'model_base': 'deflex',
+            'map': cfg.get('init', 'map'),
+            'solver': cfg.get('general', 'solver'),
+            'start_time': datetime.now()}
+    sc = deflex.Scenario(name=name, year=2014, meta=meta)
     path = os.path.join(cfg.get('paths', 'scenario'), 'deflex', str(year))
     csv_dir = name + '_csv'
     csv_path = os.path.join(path, csv_dir)
@@ -44,7 +49,7 @@ def main(year, plot_graph=False):
                                                          csv_dir=csv_dir)
         if csv_path != fn.csv:
             msg = ("\n{0}\n{1}\nThe wrong path is checked. This will recreate "
-                   "the the scenario every time!".format(csv_path, fn.csv))
+                   "the scenario every time!".format(csv_path, fn.csv))
             logging.error(msg)
             csv_path = fn.csv
     logging.info("Read scenario from csv collection: {0}".format(stopwatch()))
@@ -70,6 +75,7 @@ def main(year, plot_graph=False):
     os.makedirs(res_path, exist_ok=True)
     out_file = os.path.join(res_path, name + '.esys')
     logging.info("Dump file to {0}".format(out_file))
+    sc.meta['end_time'] = datetime.now()
     sc.dump_es(out_file)
 
     logging.info("All done. deflex finished without errors: {0}".format(
