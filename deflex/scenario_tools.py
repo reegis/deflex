@@ -23,7 +23,7 @@ import oemof.tools.logger as logger
 import oemof.solph as solph
 
 # internal modules
-import reegis_tools.scenario_tools
+import reegis.scenario_tools
 
 
 class Label(namedtuple('solph_label', ['cat', 'tag', 'subtag', 'region'])):
@@ -33,7 +33,7 @@ class Label(namedtuple('solph_label', ['cat', 'tag', 'subtag', 'region'])):
         return '_'.join(map(str, self._asdict().values()))
 
 
-class Scenario(reegis_tools.scenario_tools.Scenario):
+class Scenario(reegis.scenario_tools.Scenario):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.extra_regions = kwargs.get('extra_regions')
@@ -64,7 +64,7 @@ def nodes_from_table_collection(table_collection, extra_regions=None):
     # updated. This avoids the
     if extra_regions is None:
         extra_regions = []
-    nodes = reegis_tools.scenario_tools.NodeDict()
+    nodes = reegis.scenario_tools.NodeDict()
 
     # Global commodity sources
     cs = table_collection['commodity_source']['DE']

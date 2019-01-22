@@ -20,13 +20,13 @@ from collections import namedtuple
 import pandas as pd
 
 # internal modules
-import reegis_tools.config as cfg
-import reegis_tools.commodity_sources
-import reegis_tools.bmwi
+import reegis.config as cfg
+import reegis.commodity_sources
+import reegis.bmwi
 import deflex.powerplants
 import deflex.feedin
 import deflex.demand
-import deflex.storages
+import reegis.storages
 import deflex.transmission
 import deflex.chp
 import deflex.scenario_tools
@@ -96,13 +96,16 @@ def scenario_transmission(table_collection):
 
 
 def scenario_storages():
-    stor = deflex.storages.pumped_hydroelectric_storage().transpose()
+    regions = deflex.geometries.deflex_regions()
+    name = '{0}_region'.format(cfg.get('init', 'map'))
+    stor = reegis.storages.pumped_hydroelectric_storage(
+        regions, name).transpose()
     return pd.concat([stor], axis=1, keys=['phes']).swaplevel(0, 1, 1)
 
 
 def add_pp_limit(table_collection, year):
     if len(cfg.get_dict('limited_transformer').keys()) > 0:
-        repp = reegis_tools.bmwi.bmwi_re_energy_capacity()
+        repp = reegis.bmwi.bmwi_re_energy_capacity()
         trsf = table_collection['transformer']
         for limit_trsf in cfg.get_dict('limited_transformer').keys():
             trsf = table_collection['transformer']
@@ -159,7 +162,7 @@ def commodity_sources(year, table_collection):
 
 
 def scenario_commodity_sources(year, use_znes_2014=True):
-    cs = reegis_tools.commodity_sources.get_commodity_sources()
+    cs = reegis.commodity_sources.get_commodity_sources()
     rename_cols = {key.lower(): value for key, value in
                    cfg.get_dict('source_names').items()}
     cs = cs.rename(columns=rename_cols)
@@ -197,7 +200,7 @@ def scenario_elec_demand(year, table, weather_year=None):
     demand_method = cfg.get('electricity_demand', 'demand_method')
 
     if annual_demand == 'bmwi':
-        annual_demand = reegis_tools.bmwi.get_annual_electricity_demand_bmwi(
+        annual_demand = reegis.bmwi.get_annual_electricity_demand_bmwi(
             year)
         msg = ("Unit of BMWI electricity demand is 'TWh'. "
                "Will multiply it with {0} to get 'MWh'")

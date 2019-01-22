@@ -14,9 +14,9 @@ import pandas as pd
 import os
 import logging
 import oemof.tools.logger as logger
-import reegis_tools.geometries
-import reegis_tools.config as cfg
-import reegis_tools.powerplants
+import reegis.geometries
+import reegis.config as cfg
+import reegis.powerplants
 import deflex.geometries
 
 
@@ -29,14 +29,12 @@ def add_model_region_pp(df):
     deflex_regions = deflex.geometries.deflex_regions()
 
     # Load power plant geometries
-    pp = reegis_tools.geometries.Geometry(name='power plants', df=df)
-    pp.create_geo_df()
+    pp = reegis.geometries.create_geo_df(df)
 
-    # exit(0)
     # Add region names to power plant table
-    pp.gdf = reegis_tools.geometries.spatial_join_with_buffer(
+    pp.gdf = reegis.geometries.spatial_join_with_buffer(
         pp, deflex_regions, name=deflex_regions.name)
-    df = pp.get_df()
+    df = pd.DataFrame(pp)
 
     # Delete real geometries because they are not needed anymore.
     del df['geometry']
@@ -55,11 +53,11 @@ def pp_reegis2deflex(clean_offshore=True):
     if not os.path.isfile(filename_in):
         msg = "File '{0}' does not exist. Will create it from opsd file."
         logging.debug(msg.format(filename_in))
-        filename_in = reegis_tools.powerplants.pp_opsd2reegis()
+        filename_in = reegis.powerplants.pp_opsd2reegis()
     pp = pd.read_hdf(filename_in, 'pp', mode='r')
 
     pp = add_model_region_pp(pp)
-    pp = reegis_tools.powerplants.add_capacity_in(pp)
+    pp = reegis.powerplants.add_capacity_in(pp)
 
     # Remove PHES (storages)
     if cfg.get('powerplants', 'remove_phes'):
@@ -146,7 +144,7 @@ def get_deflex_pp_by_year(year, overwrite_capacity=False):
         msg = "File '{0}' does not exist. Will create it from reegis file."
         logging.debug(msg.format(filename))
         filename = pp_reegis2deflex()
-    pp = pd.read_hdf(filename, 'pp', mode='r')
+    pp = pd.DataFrame(pd.read_hdf(filename, 'pp', mode='r'))
 
     filter_columns = ['capacity_{0}', 'capacity_in_{0}']
 
@@ -181,11 +179,13 @@ if __name__ == "__main__":
     # print(pp_reegis2deflex())
     # fn = '/home/uwe/express/reegis/data/powerplants/deflex_pp.h5'
     # df = pd.read_hdf(fn, 'pp')
-    # pp = reegis_tools.geometries.Geometry(name='power plants', df=df)
+    # pp = reegis.geometries.Geometry(name='power plants', df=df)
     # pp.create_geo_df()
     # pp.gdf.to_file('/home/uwe/pp_tmp.shp')
     # exit(0)
     my_df = get_deflex_pp_by_year(2014, overwrite_capacity=True)
+    print(my_df.columns)
+    exit(0)
     print(my_df.groupby(['de22_region', 'energy_source_level_2']).sum()[
         'capacity'])
     # exit(0)

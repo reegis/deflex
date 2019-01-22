@@ -25,12 +25,12 @@ import demandlib.bdew as bdew
 import demandlib.particular_profiles as profiles
 
 # internal modules
-import reegis_tools.config as cfg
-import reegis_tools.entsoe
-import reegis_tools.bmwi
-import reegis_tools.geometries
-import reegis_tools.openego
-import reegis_tools.heat_demand
+import reegis.config as cfg
+import reegis.entsoe
+import reegis.bmwi
+import reegis.geometries
+import reegis.openego
+import reegis.heat_demand
 
 import deflex.geometries
 import deflex.inhabitants
@@ -57,10 +57,10 @@ def deflex_profile_from_entsoe(year, share, annual_demand=None,
                              cfg.get('entsoe', 'load_file'))
 
     if not os.path.isfile(load_file) or overwrite:
-        reegis_tools.entsoe.split_timeseries_file(overwrite)
+        reegis.entsoe.split_timeseries_file(overwrite)
 
     # Fetch de load profile from entsoe
-    de_load_profile = reegis_tools.entsoe.get_entsoe_load(year).DE_load_
+    de_load_profile = reegis.entsoe.get_entsoe_load(year).DE_load_
 
     load_profile = pd.DataFrame(index=de_load_profile.index)
     regions = pd.read_csv(
@@ -92,24 +92,21 @@ def prepare_ego_demand(rmap=None, overwrite=False):
     if os.path.isfile(egofile_deflex) and not overwrite:
         ego_demand_deflex = pd.read_hdf(egofile_deflex, 'demand')
     else:
-        ego_demand_df = reegis_tools.openego.get_ego_demand(
+        ego_demand_df = reegis.openego.get_ego_demand(
             overwrite=overwrite)
         # Create GeoDataFrame from ego demand file.
-        ego_demand = reegis_tools.geometries.Geometry(name='ego demand',
-                                                      df=ego_demand_df)
-
-        ego_demand.create_geo_df()
+        ego_demand = reegis.geometries.create_geo_df(ego_demand_df)
 
         # Load region polygons
         deflex_regions = deflex.geometries.deflex_regions()
 
         # Add column with region id
-        ego_demand.gdf = reegis_tools.geometries.spatial_join_with_buffer(
+        ego_demand = reegis.geometries.spatial_join_with_buffer(
             ego_demand, deflex_regions, name=rmap + '_region')
 
         # Overwrite Geometry object with its DataFrame, because it is not
         # needed anymore.
-        ego_demand_deflex = pd.DataFrame(ego_demand.gdf)
+        ego_demand_deflex = pd.DataFrame(ego_demand)
 
         # Delete the geometry column, because spatial grouping will be done
         # only with the region column.
@@ -217,7 +214,7 @@ def elec_demand_tester(year):
     # rp = get_deflex_profile(year, 'renpass') * 1000000
     ege = get_deflex_profile(year, 'openego_entsoe') * 1000000
 
-    netto = reegis_tools.bmwi.get_annual_electricity_demand_bmwi(year)
+    netto = reegis.bmwi.get_annual_electricity_demand_bmwi(year)
 
     oe_s = get_deflex_profile(year, 'openego', annual_demand=netto)
     # rp_s = get_deflex_profile(year, 'renpass', annual_demand=netto)
@@ -252,7 +249,7 @@ def get_heat_profiles_by_state(year=None, weather_year=None):
         demand_state = demand_state.tz_localize('UTC').tz_convert(
             'Europe/Berlin')
     else:
-        demand_state = reegis_tools.heat_demand.get_heat_profiles_by_state(
+        demand_state = reegis.heat_demand.get_heat_profiles_by_state(
             year, to_csv=True, weather_year=weather_year)
 
     return demand_state
@@ -383,7 +380,7 @@ if __name__ == "__main__":
     # print(ego_demand_deflex['de22_region'].unique())
     # exit(0)
     cfg.tmp_set('init', 'map', 'de22')
-    net = reegis_tools.bmwi.get_annual_electricity_demand_bmwi(2014)
+    net = reegis.bmwi.get_annual_electricity_demand_bmwi(2014)
     dem22 = get_deflex_profile(2014, 'openego_entsoe', annual_demand=net).sum()
     cfg.tmp_set('init', 'map', 'de21')
     dem21 = get_deflex_profile(2014, 'openego_entsoe', annual_demand=net).sum()
@@ -398,7 +395,7 @@ if __name__ == "__main__":
     # prepare_ego_demand()
     # exit(0)
     for y in [2014]:
-        df = reegis_tools.heat_demand.get_heat_profiles_by_state(
+        df = reegis.heat_demand.get_heat_profiles_by_state(
             y, state=['BE'])['BE']
         print(df.groupby(level=1, axis=1).sum())
         # df = df.swaplevel(axis=1)

@@ -21,8 +21,8 @@ import pandas as pd
 from oemof.tools import logger
 
 # internal modules
-import reegis_tools.config as cfg
-import reegis_tools.coastdat
+import reegis.config as cfg
+import reegis.coastdat
 
 import deflex.powerplants as powerplants
 
@@ -74,19 +74,19 @@ def aggregate_by_region(year, pp=None, weather_year=None):
     for cat in ['Wind', 'Solar']:
         outfile_name = feedin_deflex_outfile_name.format(type=cat.lower())
         if not os.path.isfile(outfile_name):
-            reegis_tools.coastdat.aggregate_by_region_coastdat_feedin(
+            reegis.coastdat.aggregate_by_region_coastdat_feedin(
                 pp, regions, year, cat, outfile_name, weather_year)
 
     # HYDRO
     outfile_name = feedin_deflex_outfile_name.format(type='hydro')
     if not os.path.isfile(outfile_name):
-        reegis_tools.coastdat.aggregate_by_region_hydro(
+        reegis.coastdat.aggregate_by_region_hydro(
             pp, regions, year, outfile_name)
 
     # GEOTHERMAL
     outfile_name = feedin_deflex_outfile_name.format(type='geothermal')
     if not os.path.isfile(outfile_name):
-        reegis_tools.coastdat.aggregate_by_region_geothermal(
+        reegis.coastdat.aggregate_by_region_geothermal(
             regions, year, outfile_name)
 
 

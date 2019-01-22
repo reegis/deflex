@@ -18,14 +18,15 @@ import oemof.tools.logger
 
 # Internal libraries
 import deflex.geometries
-import reegis_tools.geometries
-import reegis_tools.inhabitants
-import reegis_tools.config as cfg
+import reegis.geometries
+import reegis.inhabitants
+import reegis.config as cfg
 
 
 def get_ew_by_deflex(year, rmap=None):
     deflex_regions = deflex.geometries.deflex_regions(rmap=rmap)
-    return reegis_tools.inhabitants.get_ew_by_region(year, deflex_regions)
+    name = '{0}_region'.format(cfg.get('init', 'map'))
+    return reegis.inhabitants.get_ew_by_region(year, deflex_regions, name=name)
 
 
 def get_ew_by_deflex_subregions(year):
@@ -39,25 +40,25 @@ def get_ew_by_deflex_subregions(year):
     -------
     geopandas.geoDataFrame
     """
-    deflex_sub = reegis_tools.geometries.Geometry(name='deflex_subregions')
-    deflex_sub.load(cfg.get('paths', 'geo_deflex'),
-                    cfg.get('geometry', 'overlap_federal_states_deflex_polygon'
-                            ).format(map=cfg.get('init', 'map')))
-    deflex_sub.gdf['state'] = deflex_sub.gdf.index.to_series().str[2:]
-    deflex_sub.gdf['region'] = deflex_sub.gdf.index.to_series().str[:2]
-    deflex_sub.gdf['ew'] = reegis_tools.inhabitants.get_ew_by_region(
-        year, deflex_sub)
+    deflex_sub = reegis.geometries.load(
+        cfg.get('paths', 'geo_deflex'),
+        cfg.get('geometry', 'overlap_federal_states_deflex_polygon').format(
+            map=cfg.get('init', 'map')))
+    deflex_sub['state'] = deflex_sub.index.to_series().str[2:]
+    deflex_sub['region'] = deflex_sub.index.to_series().str[:2]
+    deflex_sub['ew'] = reegis.inhabitants.get_ew_by_region(
+        year, deflex_sub, name='deflex_subregions')
 
-    deflex_sub.gdf = deflex_sub.gdf.replace({'state': cfg.get_dict(
+    deflex_sub = deflex_sub.replace({'state': cfg.get_dict(
         'STATE_KEYS')})
-    deflex_sub.gdf['region'] = deflex_sub.gdf.region.astype(str).apply(
+    deflex_sub['region'] = deflex_sub.region.astype(str).apply(
         'DE{:0>2}'.format)
-    no_inhabitants = deflex_sub.gdf[deflex_sub.gdf.ew == 0]
-    deflex_sub.gdf = deflex_sub.gdf[deflex_sub.gdf.ew != 0]
+    no_inhabitants = deflex_sub[deflex_sub.ew == 0]
+    deflex_sub = deflex_sub[deflex_sub.ew != 0]
     logging.info("States with no inhabitants have been removed: {0}".format(
         no_inhabitants.index))
 
-    return deflex_sub.gdf
+    return deflex_sub
 
 
 if __name__ == "__main__":
@@ -65,4 +66,4 @@ if __name__ == "__main__":
     logging.info("Getting inhabitants by region for {0}.".format(cfg.get(
         'init', 'map')))
     print(get_ew_by_deflex_subregions(2012)['ew'])
-    # print(get_ew_by_de21(2012))
+    print(get_ew_by_deflex(2012))

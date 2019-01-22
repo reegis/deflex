@@ -18,7 +18,7 @@ import pandas as pd
 import math
 
 # internal modules
-import reegis_tools.config as cfg
+import reegis.config as cfg
 
 import deflex.geometries
 
@@ -58,7 +58,7 @@ def get_electrical_transmission_deflex(duplicate=False):
 
 def get_electrical_transmission_default():
     try:
-        pwr_lines = deflex.geometries.deflex_power_lines().get_df()
+        pwr_lines = pd.DataFrame(deflex.geometries.deflex_power_lines())
     except FileNotFoundError:
         pwr_lines = pd.DataFrame()
 
@@ -82,7 +82,7 @@ def get_electrical_transmission_renpass():
     grid['capacity_calc'] = (grid.circuits * current_max * grid.voltage *
                              f_security * math.sqrt(3) / 1000)
 
-    pwr_lines = deflex.geometries.deflex_power_lines().get_df()
+    pwr_lines = pd.DataFrame(deflex.geometries.deflex_power_lines())
 
     for l in pwr_lines.index:
         split = l.split('-')

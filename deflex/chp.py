@@ -20,16 +20,16 @@ import pandas as pd
 import oemof.tools.logger as logger
 
 # Internal libraries
-import reegis_tools.config as cfg
-import reegis_tools.energy_balance
-import reegis_tools.powerplants
+import reegis.config as cfg
+import reegis.energy_balance
+import reegis.powerplants
 
 import deflex.inhabitants
 
 
 def reshape_conversion_balance(year):
     # get conversion balance for the federal states
-    eb = reegis_tools.energy_balance.get_conversion_balance(year)
+    eb = reegis.energy_balance.get_conversion_balance(year)
 
     # create empty DataFrame to take the conversion balance for the regions
     my_index = pd.MultiIndex(levels=[[], [], []], labels=[[], [], []])
@@ -71,7 +71,7 @@ def reshape_conversion_balance(year):
 
 def get_chp_share_and_efficiency(year):
     conversion_blnc = reshape_conversion_balance(year)
-    return reegis_tools.powerplants.calculate_chp_share_and_efficiency(
+    return reegis.powerplants.calculate_chp_share_and_efficiency(
         conversion_blnc)
 
 
@@ -79,5 +79,5 @@ if __name__ == "__main__":
     logger.define_logging()
     import pprint as pp
     pp.pprint(get_chp_share_and_efficiency(2014))
-    # pp.pprint(reegis_tools.powerplants.get_chp_share_and_efficiency_states(
+    # pp.pprint(reegis.powerplants.get_chp_share_and_efficiency_states(
     #     2014)['BE'])

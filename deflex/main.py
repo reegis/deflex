@@ -21,7 +21,7 @@ import traceback
 from oemof.tools import logger
 
 # internal modules
-import reegis_tools.config as cfg
+import reegis.config as cfg
 import deflex
 
 
