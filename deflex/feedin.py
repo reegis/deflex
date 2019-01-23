@@ -25,6 +25,7 @@ import reegis.config as cfg
 import reegis.coastdat
 
 import deflex.powerplants as powerplants
+import deflex.geometries
 
 
 def get_grouped_power_plants(year):
@@ -36,58 +37,12 @@ def get_grouped_power_plants(year):
 
 
 def aggregate_by_region(year, pp=None, weather_year=None):
-    # Create the path for the output files.
-    feedin_deflex_path = cfg.get('paths_pattern', 'deflex_feedin').format(
-        year=year, map=cfg.get('init', 'map'))
 
-    if weather_year is not None:
-        feedin_deflex_path = os.path.join(feedin_deflex_path,
-                                          'weather_variations')
+    d_regions = deflex.geometries.deflex_regions()
+    name = '{0}_region'.format(cfg.get('init', 'map'))
 
-    os.makedirs(feedin_deflex_path, exist_ok=True)
-
-    # Create pattern for the name of the resulting files.
-    if weather_year is None:
-        feedin_deflex_outfile_name = os.path.join(
-            feedin_deflex_path,
-            cfg.get('feedin', 'feedin_deflex_pattern').format(
-                year=year, type='{type}', map=cfg.get('init', 'map')))
-    else:
-        feedin_deflex_outfile_name = os.path.join(
-            feedin_deflex_path,
-            cfg.get('feedin', 'feedin_deflex_pattern_var').format(
-                year=year, type='{type}', map=cfg.get('init', 'map'),
-                weather_year=weather_year))
-
-    # Filter the capacity of the powerplants for the given year.
-    if pp is not None:
-        region_column = '{0}_region'.format(cfg.get('init', 'map'))
-        pp = pp.groupby(
-            ['energy_source_level_2', region_column, 'coastdat2']).sum()
-    else:
-        pp = get_grouped_power_plants(year)
-
-    regions = pp.index.get_level_values(1).unique().sort_values()
-
-    # Loop over weather depending feed-in categories.
-    # WIND and PV
-    for cat in ['Wind', 'Solar']:
-        outfile_name = feedin_deflex_outfile_name.format(type=cat.lower())
-        if not os.path.isfile(outfile_name):
-            reegis.coastdat.aggregate_by_region_coastdat_feedin(
-                pp, regions, year, cat, outfile_name, weather_year)
-
-    # HYDRO
-    outfile_name = feedin_deflex_outfile_name.format(type='hydro')
-    if not os.path.isfile(outfile_name):
-        reegis.coastdat.aggregate_by_region_hydro(
-            pp, regions, year, outfile_name)
-
-    # GEOTHERMAL
-    outfile_name = feedin_deflex_outfile_name.format(type='geothermal')
-    if not os.path.isfile(outfile_name):
-        reegis.coastdat.aggregate_by_region_geothermal(
-            regions, year, outfile_name)
+    return reegis.coastdat.get_feedin_per_region(year, d_regions, name, pp=pp,
+                                                 weather_year=weather_year)
 
 
 def get_deflex_feedin(year, feedin_type, weather_year=None):

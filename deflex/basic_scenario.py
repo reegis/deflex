@@ -27,6 +27,7 @@ import deflex.powerplants
 import deflex.feedin
 import deflex.demand
 import reegis.storages
+import reegis.coastdat
 import deflex.transmission
 import deflex.chp
 import deflex.scenario_tools
@@ -194,7 +195,9 @@ def scenario_heat_demand(year, table, weather_year=None):
 
 def scenario_elec_demand(year, table, weather_year=None):
     if weather_year is None:
-        weather_year = year
+        demand_year = year
+    else:
+        demand_year = weather_year
 
     annual_demand = cfg.get('electricity_demand', 'annual_demand')
     demand_method = cfg.get('electricity_demand', 'demand_method')
@@ -209,7 +212,7 @@ def scenario_elec_demand(year, table, weather_year=None):
         logging.warning(msg.format(converter))
 
     df = deflex.demand.get_deflex_profile(
-        weather_year, demand_method, annual_demand=annual_demand)
+        demand_year, demand_method, annual_demand=annual_demand)
     df = pd.concat([df], axis=1, keys=['electrical_load']).swaplevel(0, 1, 1)
     df = df.reset_index(drop=True)
     if not calendar.isleap(year) and len(df) > 8760:
@@ -218,11 +221,8 @@ def scenario_elec_demand(year, table, weather_year=None):
 
 
 def scenario_feedin(year, weather_year=None):
-    # pv feedin
-    my_index = pd.MultiIndex(
-            levels=[[], []], labels=[[], []],
-            names=['region', 'type'])
-    feedin = scenario_feedin_pv(year, my_index, weather_year=weather_year)
+
+    feedin = scenario_feedin_pv(year, weather_year=weather_year)
     feedin = scenario_feedin_wind(year, feedin, weather_year=weather_year)
 
     leap_year = year % 4 == 0 and (year % 100 != 0 or year % 400 == 0)
@@ -252,46 +252,16 @@ def scenario_feedin(year, weather_year=None):
     return feedin
 
 
-def scenario_feedin_wind(year, feedin_ts, weather_year=None):
-    if weather_year is None:
-        weather_year = year
-    wind = deflex.feedin.get_deflex_feedin(year, 'wind', weather_year)
-    for reg in wind.columns.levels[0]:
-        feedin_ts[reg, 'wind'] = wind[
-            reg, 'coastdat_{0}_wind_ENERCON_127_hub135_pwr_7500'.format(
-                weather_year),
-            'E_126_7500']
-    return feedin_ts.sort_index(1)
+def scenario_feedin_wind(year, feedin_ts=None, weather_year=None):
+    name = '{0}_region'.format(cfg.get('init', 'map'))
+    return reegis.coastdat.scenario_feedin_wind(
+        year, name, weather_year=weather_year, feedin_ts=feedin_ts)
 
 
-def scenario_feedin_pv(year, my_index, weather_year=None):
-    if weather_year is None:
-        weather_year = year
-    pv_types = cfg.get_dict('pv_types')
-    pv_orientation = cfg.get_dict('pv_orientation')
-    pv = deflex.feedin.get_deflex_feedin(year, 'solar', weather_year)
-
-    # combine different pv-sets to one feedin time series
-    feedin_ts = pd.DataFrame(columns=my_index, index=pv.index)
-    orientation_fraction = pd.Series(pv_orientation)
-
-    pv.sort_index(1, inplace=True)
-    orientation_fraction.sort_index(inplace=True)
-    base_set_column = 'coastdat_{0}_solar_{1}'.format(weather_year, '{0}')
-    for reg in pv.columns.levels[0]:
-        feedin_ts[reg, 'solar'] = 0
-        for mset in pv_types.keys():
-            set_col = base_set_column.format(mset)
-            feedin_ts[reg, 'solar'] += pv[reg, set_col].multiply(
-                orientation_fraction).sum(1).multiply(
-                    pv_types[mset])
-            # feedin_ts[reg, 'solar'] = rt
-    # print(f.sum())
-    # from matplotlib import pyplot as plt
-    # f.plot()
-    # plt.show()
-    # exit(0)
-    return feedin_ts.sort_index(1)
+def scenario_feedin_pv(year, feedin_ts=None, weather_year=None):
+    name = '{0}_region'.format(cfg.get('init', 'map'))
+    return reegis.coastdat.scenario_feedin_pv(year, name, feedin_ts=feedin_ts,
+                                              weather_year=weather_year)
 
 
 def decentralised_heating():
@@ -515,7 +485,7 @@ if __name__ == "__main__":
     logger.define_logging()
 
     for y in [2014, 2013, 2012]:
-        for my_rmap in ['de21', 'de22', 'de02']:
+        for my_rmap in ['de21', 'de22', 'de17', 'de02']:
             p = create_basic_scenario(y, rmap=my_rmap)
             logging.info("Xls path: {0}".format(p.xls))
             logging.info("Csv path: {0}".format(p.csv))

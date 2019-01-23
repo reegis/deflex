@@ -46,7 +46,7 @@ def renpass_demand_share():
 
 def openego_demand_share(overwrite=False, rmap=None):
     demand_reg = prepare_ego_demand(overwrite=overwrite, rmap=rmap)[
-        'sector_consumption_sum']
+        'consumption']
     demand_sum = demand_reg.sum()
     return demand_reg.div(demand_sum)
 

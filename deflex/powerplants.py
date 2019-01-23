@@ -20,44 +20,22 @@ import reegis.powerplants
 import deflex.geometries
 
 
-def add_model_region_pp(df):
-    """Load the pp data set with geometries and add a column with the model
-    region. Afterwards the geometry column is removed. As the renewable data
-    set is big, the hdf5 format is used.
-    """
-    # Load deflex geometries
-    deflex_regions = deflex.geometries.deflex_regions()
-
-    # Load power plant geometries
-    pp = reegis.geometries.create_geo_df(df)
-
-    # Add region names to power plant table
-    pp.gdf = reegis.geometries.spatial_join_with_buffer(
-        pp, deflex_regions, name=deflex_regions.name)
-    df = pd.DataFrame(pp)
-
-    # Delete real geometries because they are not needed anymore.
-    del df['geometry']
-
-    logging.info("deflex regions added to power plant table.")
-    return df
-
-
 def pp_reegis2deflex(clean_offshore=True):
-    filename_in = os.path.join(cfg.get('paths', 'powerplants'),
-                               cfg.get('powerplants', 'reegis_pp'))
     filename_out = os.path.join(cfg.get('paths', 'powerplants'),
                                 cfg.get('powerplants', 'deflex_pp')).format(
         map=cfg.get('init', 'map'))
 
-    if not os.path.isfile(filename_in):
-        msg = "File '{0}' does not exist. Will create it from opsd file."
-        logging.debug(msg.format(filename_in))
-        filename_in = reegis.powerplants.pp_opsd2reegis()
-    pp = pd.read_hdf(filename_in, 'pp', mode='r')
+    # Add deflex regions to powerplants
+    deflex_regions = deflex.geometries.deflex_regions()
+    name = '{0}_region'.format(cfg.get('init', 'map'))
+    pp = reegis.powerplants.add_regions_to_powerplants(deflex_regions, name)
 
-    pp = add_model_region_pp(pp)
-    pp = reegis.powerplants.add_capacity_in(pp)
+    federal_states = reegis.geometries.load(
+        cfg.get('paths', 'geometry'),
+        cfg.get('geometry', 'federalstates_polygon'))
+
+    pp = reegis.powerplants.add_regions_to_powerplants(
+        federal_states, 'federal_states', pp=pp)
 
     # Remove PHES (storages)
     if cfg.get('powerplants', 'remove_phes'):
@@ -65,7 +43,7 @@ def pp_reegis2deflex(clean_offshore=True):
 
     # Remove powerplants outside Germany
     for state in cfg.get_list('powerplants', 'remove_states'):
-        pp = pp.loc[pp.federal_states != state]
+        pp = pp.loc[pp.state != state]
 
     if clean_offshore:
         pp = remove_onshore_technology_from_offshore_regions(pp)
