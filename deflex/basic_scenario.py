@@ -381,13 +381,12 @@ def clean_time_series(table_collection):
                 if ts[reg, load].sum() == 0:
                     del ts[reg, load]
         for t in ['hydro', 'solar', 'wind', 'geothermal']:
-            rm = False
             # if the column does not exist or is 0 the corresponding column
             # of the time_series table can be removed.
             if vs[reg].get(t) is None or vs[reg].get(t).sum() == 0:
-                rm = True
-            if (ts[reg].get(t) is not None) & rm:
-                del ts[reg, t]
+                if ts.get(reg) is not None:
+                    if ts[reg].get(t) is not None:
+                        del ts[reg, t]
 
     return table_collection
 
