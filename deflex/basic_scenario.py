@@ -379,6 +379,9 @@ def clean_time_series(table_collection):
         for load in ['district heating', 'electrical_load']:
             if ts[reg].get(load) is not None:
                 if ts[reg, load].sum() == 0:
+                    msg = ("Removing {0} time series of region {1} because"
+                           "sum of time series is {2}")
+                    logging.debug(msg.format(load, reg, ts[reg, load].sum()))
                     del ts[reg, load]
         for t in ['hydro', 'solar', 'wind', 'geothermal']:
             # if the column does not exist or is 0 the corresponding column
@@ -386,6 +389,9 @@ def clean_time_series(table_collection):
             if vs[reg].get(t) is None or vs[reg].get(t).sum() == 0:
                 if ts.get(reg) is not None:
                     if ts[reg].get(t) is not None:
+                        msg = ("Removing {0} time series of region {1} because"
+                               "installed capacity is {2}")
+                        logging.debug(msg.format(t, reg, vs[reg].get(t)))
                         del ts[reg, t]
 
     return table_collection
