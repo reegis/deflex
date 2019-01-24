@@ -12,7 +12,6 @@ __license__ = "GPLv3"
 # Python libraries
 import os
 import logging
-import warnings
 import calendar
 from collections import namedtuple
 
@@ -24,7 +23,6 @@ import reegis.config as cfg
 import reegis.commodity_sources
 import reegis.bmwi
 import deflex.powerplants
-import deflex.feedin
 import deflex.demand
 import reegis.storages
 import reegis.coastdat
@@ -221,47 +219,16 @@ def scenario_elec_demand(year, table, weather_year=None):
 
 
 def scenario_feedin(year, weather_year=None):
-
-    feedin = scenario_feedin_pv(year, weather_year=weather_year)
-    feedin = scenario_feedin_wind(year, feedin, weather_year=weather_year)
-
-    leap_year = year % 4 == 0 and (year % 100 != 0 or year % 400 == 0)
-
-    if len(feedin) > 8760 and not leap_year:
-        # If a non-leap year is combined with a leap weather year one day has
-        # to be removed to get the same index length. It is possible to remove
-        # February 29th but this may lead to sudden temperature and wind speed
-        # changes. Therefore, it might be better to remove the last day.
-        msg = ("To combine a leap weather year with a non-leap year one day"
-               "has to be removed from the pv and wind time series.")
-        logging.warning(msg)
-        # feedin.drop(feedin.index[range(1416, 1440)], axis=0, inplace=True)
-        if len(feedin.iloc[8760:]) > 24:
-            msg = ("{0} hours removed. This is more than a day! Check the "
-                   "input data.")
-            warnings.warn(msg.format(len(feedin.iloc[8760:])), RuntimeWarning)
-        feedin = feedin.iloc[:8760]
-
-    feedin.reset_index(drop=True, inplace=True)
-
-    for feedin_type in ['hydro', 'geothermal']:
-        df = deflex.feedin.get_deflex_feedin(year, feedin_type)
-        df = pd.concat([df], axis=1, keys=[feedin_type]).swaplevel(0, 1, 1)
-        df.reset_index(drop=True, inplace=True)
-        feedin = pd.DataFrame(pd.concat([feedin, df], axis=1)).sort_index(1)
+    name = '{0}_region'.format(cfg.get('init', 'map'))
+    wy = weather_year
+    try:
+        feedin = reegis.coastdat.scenario_feedin(year, name, weather_year=wy)
+    except FileNotFoundError:
+        d_regions = deflex.geometries.deflex_regions()
+        reegis.coastdat.get_feedin_per_region(
+            year, d_regions, name, weather_year=wy)
+        feedin = reegis.coastdat.scenario_feedin(year, name, weather_year=wy)
     return feedin
-
-
-def scenario_feedin_wind(year, feedin_ts=None, weather_year=None):
-    name = '{0}_region'.format(cfg.get('init', 'map'))
-    return reegis.coastdat.scenario_feedin_wind(
-        year, name, weather_year=weather_year, feedin_ts=feedin_ts)
-
-
-def scenario_feedin_pv(year, feedin_ts=None, weather_year=None):
-    name = '{0}_region'.format(cfg.get('init', 'map'))
-    return reegis.coastdat.scenario_feedin_pv(year, name, feedin_ts=feedin_ts,
-                                              weather_year=weather_year)
 
 
 def decentralised_heating():
