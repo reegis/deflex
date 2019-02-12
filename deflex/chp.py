@@ -32,7 +32,7 @@ def reshape_conversion_balance(year):
     eb = reegis.energy_balance.get_conversion_balance(year)
 
     # create empty DataFrame to take the conversion balance for the regions
-    my_index = pd.MultiIndex(levels=[[], [], []], labels=[[], [], []])
+    my_index = pd.MultiIndex(levels=[[], [], []], codes=[[], [], []])
     eb21 = pd.DataFrame(index=my_index, columns=eb.columns)
 
     # Use the number of inhabitants to reshape the balance to the new regions

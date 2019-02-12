@@ -274,7 +274,7 @@ def get_heat_profiles_deflex(year, time_index=None, keep_unit=False,
     demand_state = get_heat_profiles_by_state(year, weather_year)
 
     four_level_columns = pd.MultiIndex(levels=[[], [], [], []],
-                                       labels=[[], [], [], []])
+                                       codes=[[], [], [], []])
 
     demand_region = pd.DataFrame(index=demand_state.index,
                                  columns=four_level_columns)
