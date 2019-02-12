@@ -104,7 +104,8 @@ def scenario_storages():
 
 def add_pp_limit(table_collection, year):
     if len(cfg.get_dict('limited_transformer').keys()) > 0:
-        repp = reegis.bmwi.bmwi_re_energy_capacity()
+        # Multiply with 1000 to get MWh (bmwi: GWh)
+        repp = reegis.bmwi.bmwi_re_energy_capacity() * 1000
         trsf = table_collection['transformer']
         for limit_trsf in cfg.get_dict('limited_transformer').keys():
             trsf = table_collection['transformer']
@@ -301,6 +302,14 @@ def chp_table(heat_b, heat_demand, table_collection, regions=None):
             trsf[region] = trsf[region].fillna(0)
             trsf.loc['capacity', (region, src)] = round(
                 trsf.loc['capacity', (region, src)] - cap_elec)
+
+            # If the power plant limit is not 'inf' the limited electricity
+            # output of the chp plant has to be subtracted from the power plant
+            # limit because this is related to the overall electricity output.
+            if not trsf.loc['limit_elec_pp', (region, src)] == float('inf'):
+                trsf.loc['limit_elec_pp', (region, src)] -= round(
+                    trsf.loc['limit_heat_chp', (region, src)] /
+                    eta_heat_chp * eta_elec_chp)
 
             # HP
             trsf.loc['limit_hp', (region, src)] = round(
