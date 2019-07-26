@@ -158,7 +158,8 @@ def get_deflex_slp_profile(year, annual_demand=None, overwrite=False):
         create_deflex_slp_profile(year, outfile)
 
     deflex_profile = pd.read_csv(
-        outfile, index_col=[0], parse_dates=True).multiply(1000)
+        outfile, index_col=[0], parse_dates=True,
+        date_parser=lambda col: pd.to_datetime(col, utc=True)).multiply(1000)
 
     if annual_demand is not None:
         deflex_profile = deflex_profile.div(deflex_profile.sum().sum()
@@ -244,10 +245,11 @@ def get_heat_profiles_by_state(year=None, weather_year=None):
     # Load demand heat profiles by state
     if os.path.isfile(heat_demand_state_file):
         logging.info("Demand profiles by state exist. Reading file.")
-        demand_state = pd.read_csv(heat_demand_state_file, index_col=[0],
-                                   parse_dates=True, header=[0, 1, 2])
-        demand_state = demand_state.tz_localize('UTC').tz_convert(
-            'Europe/Berlin')
+        demand_state = pd.read_csv(
+            heat_demand_state_file, index_col=[0],
+            parse_dates=True, header=[0, 1, 2],
+            date_parser=lambda col: pd.to_datetime(col, utc=True))
+        demand_state = demand_state.tz_convert('Europe/Berlin')
     else:
         demand_state = reegis.heat_demand.get_heat_profiles_by_state(
             year, to_csv=True, weather_year=weather_year)
