@@ -311,9 +311,9 @@ def storage_nodes(table_collection, nodes):
                 nominal_value=params.pump)},
             outputs={nodes[bus_label]: solph.Flow(
                 nominal_value=params.turbine)},
-            nominal_capacity=params.energy,
-            capacity_loss=0,
-            initial_capacity=None,
+            nominal_storage_capacity=params.energy,
+            loss_rate=0,
+            initial_storage_level=None,
             inflow_conversion_factor=params.pump_eff,
             outflow_conversion_factor=params.turbine_eff)
     return nodes
