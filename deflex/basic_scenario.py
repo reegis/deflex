@@ -29,15 +29,16 @@ import reegis.coastdat
 import deflex.transmission
 import deflex.chp
 import deflex.scenario_tools
+from deflex import geometries
 
 import oemof.tools.logger as logger
 
 
-def create_scenario(year, round_values, weather_year=None):
+def create_scenario(year, geo, round_values, weather_year=None):
     table_collection = {}
 
     logging.info('BASIC SCENARIO - STORAGES')
-    table_collection['storages'] = scenario_storages()
+    table_collection['storages'] = scenario_storages(geo)
 
     logging.info('BASIC SCENARIO - POWER PLANTS')
     table_collection = powerplants_scenario(
@@ -47,7 +48,7 @@ def create_scenario(year, round_values, weather_year=None):
     table_collection['transmission'] = scenario_transmission(table_collection)
 
     logging.info('BASIC SCENARIO - CHP PLANTS')
-    table_collection = chp_scenario(table_collection, year,
+    table_collection = chp_scenario(table_collection, year, geo,
                                     weather_year=weather_year)
 
     logging.info('BASIC SCENARIO - DECENTRALISED HEAT')
@@ -55,11 +56,12 @@ def create_scenario(year, round_values, weather_year=None):
 
     logging.info('BASIC SCENARIO - SOURCES')
     table_collection = commodity_sources(year, table_collection)
-    table = scenario_feedin(year, weather_year=weather_year)
+    table_collection['volatile_series'] = scenario_feedin(
+        year, weather_year=weather_year)
 
     logging.info('BASIC SCENARIO - DEMAND')
-    table_collection['time_series'] = scenario_demand(
-        year, table, weather_year=weather_year)
+    table_collection['demand_series'] = scenario_demand(
+        year, geo, weather_year=weather_year)
     return table_collection
 
 
@@ -94,8 +96,7 @@ def scenario_transmission(table_collection):
     return elec_trans
 
 
-def scenario_storages():
-    regions = deflex.geometries.deflex_regions()
+def scenario_storages(regions):
     name = '{0}_region'.format(cfg.get('init', 'map'))
     stor = reegis.storages.pumped_hydroelectric_storage(
         regions, name).transpose()
@@ -177,41 +178,28 @@ def scenario_commodity_sources(year, use_znes_2014=True):
     return cs_year
 
 
-def scenario_demand(year, time_series, weather_year=None):
-    time_series = scenario_elec_demand(year, time_series,
-                                       weather_year=weather_year)
-    time_series = scenario_heat_demand(year, time_series,
-                                       weather_year=weather_year)
-    return time_series
+def scenario_demand(year, geo, weather_year=None):
+    demand_series = scenario_elec_demand(year, pd.DataFrame(), geo,
+                                         weather_year=weather_year)
+    demand_series = scenario_heat_demand(year, demand_series, geo,
+                                         weather_year=weather_year)
+    return demand_series
 
 
-def scenario_heat_demand(year, table, weather_year=None):
+def scenario_heat_demand(year, table, geo, weather_year=None):
     idx = table.index  # Use the index of the existing time series
     table = pd.concat([table, deflex.demand.get_heat_profiles_deflex(
-        year, idx, weather_year=weather_year)], axis=1)
+        year, geo, idx, weather_year=weather_year)], axis=1)
     return table.sort_index(1)
 
 
-def scenario_elec_demand(year, table, weather_year=None):
+def scenario_elec_demand(year, table, geo, weather_year=None):
     if weather_year is None:
         demand_year = year
     else:
         demand_year = weather_year
 
-    annual_demand = cfg.get('electricity_demand', 'annual_demand')
-    demand_method = cfg.get('electricity_demand', 'demand_method')
-
-    if annual_demand == 'bmwi':
-        annual_demand = reegis.bmwi.get_annual_electricity_demand_bmwi(
-            year)
-        msg = ("Unit of BMWI electricity demand is 'TWh'. "
-               "Will multiply it with {0} to get 'MWh'")
-        converter = 1e+6
-        annual_demand = annual_demand * 1e+6
-        logging.warning(msg.format(converter))
-
-    df = deflex.demand.get_deflex_profile(
-        demand_year, demand_method, annual_demand=annual_demand)
+    df = deflex.demand.get_elec_profiles_deflex(demand_year, geo)
     df = pd.concat([df], axis=1, keys=['electrical_load']).swaplevel(0, 1, 1)
     df = df.reset_index(drop=True)
     if not calendar.isleap(year) and len(df) > 8760:
@@ -238,13 +226,13 @@ def decentralised_heating():
     return pd.read_csv(filename, header=[0, 1], index_col=[0])
 
 
-def chp_scenario(table_collection, year, weather_year=None):
+def chp_scenario(table_collection, year, geo, weather_year=None):
 
     # values from heat balance
-    heat_b = deflex.chp.get_chp_share_and_efficiency(year)
+    heat_b = deflex.chp.get_chp_share_and_efficiency(year, geo)
 
     heat_demand = deflex.demand.get_heat_profiles_deflex(
-        year, weather_year=weather_year)
+        year, geo, weather_year=weather_year)
     return chp_table(heat_b, heat_demand, table_collection)
 
 
@@ -379,29 +367,33 @@ def powerplants(pp, table_collection, year, region_column='deflex_region',
 
 
 def clean_time_series(table_collection):
-    ts = table_collection['time_series']
+    dts = table_collection['demand_series']
+    vts = table_collection['volatile_series']
     vs = table_collection['volatile_source']
 
-    regions = list(ts.columns.get_level_values(0).unique())
+    regions = list(dts.columns.get_level_values(0).unique())
     regions.remove('DE_demand')
     for reg in regions:
         for load in ['district heating', 'electrical_load']:
-            if ts[reg].get(load) is not None:
-                if ts[reg, load].sum() == 0:
+            if dts[reg].get(load) is not None:
+                if dts[reg, load].sum() == 0:
                     msg = ("Removing {0} time series of region {1} because"
                            "sum of time series is {2}")
-                    logging.debug(msg.format(load, reg, ts[reg, load].sum()))
-                    del ts[reg, load]
+                    logging.debug(msg.format(load, reg, dts[reg, load].sum()))
+                    del dts[reg, load]
+
+    regions = list(vts.columns.get_level_values(0).unique())
+    for reg in regions:
         for t in ['hydro', 'solar', 'wind', 'geothermal']:
             # if the column does not exist or is 0 the corresponding column
             # of the time_series table can be removed.
             if vs[reg].get(t) is None or vs[reg].get(t).sum() == 0:
-                if ts.get(reg) is not None:
-                    if ts[reg].get(t) is not None:
-                        msg = ("Removing {0} time series of region {1} because"
-                               "installed capacity is {2}")
+                if vts.get(reg) is not None:
+                    if vts[reg].get(t) is not None:
+                        msg = ("Removing {0} time series of region {1} "
+                               "because installed capacity is {2}")
                         logging.debug(msg.format(t, reg, vs[reg].get(t)))
-                        del ts[reg, t]
+                        del vts[reg, t]
 
     return table_collection
 
@@ -411,7 +403,10 @@ def create_basic_scenario(year, rmap=None, path=None, csv_dir=None,
     paths = namedtuple('paths', 'xls, csv')
     if rmap is not None:
         cfg.tmp_set('init', 'map', rmap)
-    table_collection = deflex.basic_scenario.create_scenario(year,
+
+    geo = geometries.deflex_regions(rmap=cfg.get('init', 'map'))
+
+    table_collection = deflex.basic_scenario.create_scenario(year, geo,
                                                              round_values)
     table_collection = clean_time_series(table_collection)
     name = '{0}_{1}_{2}'.format('deflex', year, cfg.get('init', 'map'))
@@ -444,13 +439,14 @@ def create_basic_scenario(year, rmap=None, path=None, csv_dir=None,
 def create_weather_variation_scenario(year, start=1998, rmap=None,
                                       round_values=None):
     weather_years = range(start, 2015)
+    geo = geometries.deflex_regions(rmap=cfg.get('init', 'map'))
     for weather_year in weather_years:
         logging.info("{2} Create weather variation {0} for {1} {2}".format(
             weather_year, year, '**********************'))
         if rmap is not None:
             cfg.tmp_set('init', 'map', rmap)
         table_collection = deflex.basic_scenario.create_scenario(
-            year, round_values, weather_year=weather_year)
+            year, geo, round_values, weather_year=weather_year)
         table_collection = clean_time_series(table_collection)
         name = '{0}_{1}_{2}_weather_{3}'.format(
             'deflex', year, cfg.get('init', 'map'), weather_year)
