@@ -31,6 +31,7 @@ def deflex_regions(suffix='reegis', rmap=None, rtype='polygon'):
     regions['region'] = regions.index.to_series().astype(str).apply(
         'DE{:0>2}'.format)
     regions = regions.set_index('region')
+    regions.name = rmap
     return regions
 
 
