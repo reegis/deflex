@@ -43,6 +43,7 @@ def main(year, plot_graph=False):
     path = os.path.join(cfg.get('paths', 'scenario'), 'deflex', str(year))
     csv_dir = name + '_csv'
     csv_path = os.path.join(path, csv_dir)
+    excel_path = os.path.join(path, name + '.xls')
 
     if not os.path.isdir(csv_path):
         fn = deflex.basic_scenario.create_basic_scenario(year, path=path,
@@ -53,7 +54,8 @@ def main(year, plot_graph=False):
             logging.error(msg)
             csv_path = fn.csv
     logging.info("Read scenario from csv collection: {0}".format(stopwatch()))
-    sc.load_csv(csv_path)
+    # sc.load_csv(csv_path)
+    sc.load_excel(excel_path)
 
     logging.info("Add nodes to the EnergySystem: {0}".format(stopwatch()))
     sc.table2es()
@@ -83,10 +85,12 @@ def main(year, plot_graph=False):
 
 
 if __name__ == "__main__":
-    logger.define_logging()
+    logger.define_logging(screen_level=logging.DEBUG)
     for y in [2014, 2013, 2012]:
         for my_rmap in ['de21', 'de22']:
             cfg.tmp_set('init', 'map', my_rmap)
+            main(y, plot_graph=True)
+            exit(0)
             try:
                 main(y)
             except Exception as e:
