@@ -28,25 +28,24 @@ def pp_reegis2deflex(clean_offshore=True):
     # Add deflex regions to powerplants
     deflex_regions = deflex.geometries.deflex_regions()
     name = '{0}_region'.format(cfg.get('init', 'map'))
-    pp = reegis.powerplants.add_regions_to_powerplants(deflex_regions, name)
+    pp = reegis.powerplants.add_regions_to_powerplants(deflex_regions, name,
+                                                       dump=False)
 
-    federal_states = reegis.geometries.load(
-        cfg.get('paths', 'geometry'),
-        cfg.get('geometry', 'federalstates_polygon'))
+    federal_states = reegis.geometries.get_federal_states_polygon()
 
     pp = reegis.powerplants.add_regions_to_powerplants(
-        federal_states, 'federal_states', pp=pp)
+        federal_states, 'federal_states', pp=pp, dump=False)
 
     # Remove PHES (storages)
     if cfg.get('powerplants', 'remove_phes'):
         pp = pp.loc[pp.technology != 'Pumped storage']
 
-    # Remove powerplants outside Germany
-    for state in cfg.get_list('powerplants', 'remove_states'):
-        pp = pp.loc[pp.state != state]
-
-    if clean_offshore:
-        pp = remove_onshore_technology_from_offshore_regions(pp)
+    # # Remove powerplants outside Germany
+    # for state in cfg.get_list('powerplants', 'remove_states'):
+    #     pp = pp.loc[pp.state != state]
+    #
+    # if clean_offshore:
+    #     pp = remove_onshore_technology_from_offshore_regions(pp)
 
     pp.to_hdf(filename_out, 'pp')
     return filename_out
