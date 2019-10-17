@@ -36,11 +36,40 @@ class Label(namedtuple('solph_label', ['cat', 'tag', 'subtag', 'region'])):
 class Scenario(reegis.scenario_tools.Scenario):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.extra_regions = kwargs.get('extra_regions')
+        self.extra_regions = kwargs.get('extra_regions', list())
 
     def create_nodes(self):
-        nodes = nodes_from_table_collection(self.table_collection,
-                                            self.extra_regions)
+        # Create  a special dictionary that will raise an error if a key is
+        # updated. This avoids the
+        nodes = reegis.scenario_tools.NodeDict()
+
+        # Local volatile sources
+        add_volatile_sources(self.table_collection, nodes)
+
+        # Decentralised heating systems
+        add_decentralised_heating_systems(self.table_collection, nodes,
+                                          self.extra_regions)
+
+        # Local electricity demand
+        add_electricity_demand(self.table_collection, nodes)
+
+        # Local district heating demand
+        add_district_heating_systems(self.table_collection, nodes)
+
+        # Connect electricity buses with transmission
+        add_transmission_lines_between_electricity_nodes(self.table_collection,
+                                                         nodes)
+
+        # Local power plants as Transformer and ExtractionTurbineCHP (chp)
+        add_power_and_heat_plants(self.table_collection, nodes,
+                                  self.extra_regions)
+
+        # Storages
+        if 'storages' in self.table_collection:
+            add_storages(self.table_collection, nodes)
+
+        # Add shortage excess to every bus
+        add_shortage_excess(self.table_collection, nodes)
         return nodes
 
 
@@ -56,31 +85,29 @@ def create_fuel_bus_with_source(nodes, fuel, region, data):
             label=cs_label, outputs={nodes[bus_label]: solph.Flow(
                 variable_costs=data.loc['costs', fuel.replace('_', ' ')],
                 emission=data.loc['emission', fuel.replace('_', ' ')])})
-    return nodes
 
 
-def nodes_from_table_collection(table_collection, extra_regions=None):
-    # Create  a special dictionary that will raise an error if a key is
-    # updated. This avoids the
-    if extra_regions is None:
-        extra_regions = []
-    nodes = reegis.scenario_tools.NodeDict()
+def add_volatile_sources(table_collection, nodes):
+    """
 
-    # Global commodity sources
-    cs = table_collection['commodity_source']['DE']
-    for fuel in cs.columns:
-        nodes = create_fuel_bus_with_source(nodes, fuel, 'DE', cs)
+    Parameters
+    ----------
+    table_collection
+    nodes
 
-    # Local volatile sources
+    Returns
+    -------
+
+    """
+    logging.debug("Add volatile sources to nodes dictionary.")
     vs = table_collection['volatile_source']
-    ts = table_collection['time_series']
 
     for region in vs.columns.get_level_values(0).unique():
         for vs_type in vs[region].columns:
             vs_label = Label('source', 'ee', vs_type, region)
             capacity = vs.loc['capacity', (region, vs_type)]
             try:
-                feedin = ts[region, vs_type]
+                feedin = table_collection['volatile_series'][region, vs_type]
             except KeyError:
                 if capacity > 0:
                     msg = "Missing time series for {0} (capacity: {1}) in {2}."
@@ -96,7 +123,11 @@ def nodes_from_table_collection(table_collection, extra_regions=None):
                         actual_value=feedin, nominal_value=capacity,
                         fixed=True, emission=0)})
 
-    # Decentralised heating systems
+
+def add_decentralised_heating_systems(table_collection, nodes, extra_regions):
+    logging.debug("Add decentralised_heating_systems to nodes dictionary.")
+    cs = table_collection['commodity_source']['DE']
+    dts = table_collection['demand_series']
     dh = table_collection['decentralised_heating']
     demand_regions = list({'DE_demand'}.union(set(extra_regions)))
 
@@ -108,7 +139,7 @@ def nodes_from_table_collection(table_collection, extra_regions=None):
         else:
             data_name = d_region
 
-        fuels = [f for f in dh[data_name].columns if f in ts[d_region]]
+        fuels = [f for f in dh[data_name].columns if f in dts[d_region]]
         for fuel in fuels:
             src = dh.loc['source', (data_name, fuel)]
             bus_label = Label('bus', 'commodity', src.replace(' ', '_'),
@@ -139,15 +170,18 @@ def nodes_from_table_collection(table_collection, extra_regions=None):
             d_heat_demand_label = Label('demand', 'heat',
                                         fuel.replace(' ', '_'), region_name)
             nodes[d_heat_demand_label] = solph.Sink(
-                    label=d_heat_demand_label,
-                    inputs={nodes[heat_bus_label]: solph.Flow(
-                        actual_value=ts[d_region, fuel],
-                        nominal_value=1, fixed=True)})
+                label=d_heat_demand_label,
+                inputs={nodes[heat_bus_label]: solph.Flow(
+                    actual_value=dts[d_region, fuel],
+                    nominal_value=1, fixed=True)})
 
-    # Local electricity demand
-    ts.columns = ts.columns.swaplevel()
-    for region in ts['electrical_load'].columns:
-        if ts['electrical_load'][region].sum() > 0:
+
+def add_electricity_demand(table_collection, nodes):
+    logging.debug("Add local electricity demand to nodes dictionary.")
+    dts = table_collection['demand_series']
+    dts.columns = dts.columns.swaplevel()
+    for region in dts['electrical_load'].columns:
+        if dts['electrical_load'][region].sum() > 0:
             bus_label = Label('bus', 'electricity', 'all', region)
             if bus_label not in nodes:
                 nodes[bus_label] = solph.Bus(label=bus_label)
@@ -155,12 +189,15 @@ def nodes_from_table_collection(table_collection, extra_regions=None):
             nodes[elec_demand_label] = solph.Sink(
                 label=elec_demand_label,
                 inputs={nodes[bus_label]: solph.Flow(
-                    actual_value=ts['electrical_load', region],
+                    actual_value=dts['electrical_load', region],
                     nominal_value=1, fixed=True)})
 
-    # Local district heating demand
-    for region in ts['district heating'].columns:
-        if ts['district heating'][region].sum() > 0:
+
+def add_district_heating_systems(table_collection, nodes):
+    logging.debug("Add district heating systems to nodes dictionary.")
+    dts = table_collection['demand_series']
+    for region in dts['district heating'].columns:
+        if dts['district heating'][region].sum() > 0:
             bus_label = Label('bus', 'heat', 'district', region)
             if bus_label not in nodes:
                 nodes[bus_label] = solph.Bus(label=bus_label)
@@ -168,10 +205,12 @@ def nodes_from_table_collection(table_collection, extra_regions=None):
             nodes[heat_demand_label] = solph.Sink(
                 label=heat_demand_label,
                 inputs={nodes[bus_label]: solph.Flow(
-                    actual_value=ts['district heating', region],
+                    actual_value=dts['district heating', region],
                     nominal_value=1, fixed=True)})
 
-    # Connect electricity buses with transmission
+
+def add_transmission_lines_between_electricity_nodes(table_collection, nodes):
+    logging.debug("Add transmission lines to nodes dictionary.")
     power_lines = table_collection['transmission']['electrical']
     for idx, values in power_lines.iterrows():
         b1, b2 = idx.split('-')
@@ -207,7 +246,9 @@ def nodes_from_table_collection(table_collection, extra_regions=None):
                     outputs={nodes[bus_label_out]: solph.Flow()},
                     conversion_factors={
                         nodes[bus_label_out]: values.efficiency})
-    # Local power plants as Transformer and ExtractionTurbineCHP (chp)
+
+
+def add_power_and_heat_plants(table_collection, nodes, extra_regions):
     trsf = table_collection['transformer']
     cs = table_collection['commodity_source']['DE']
 
@@ -219,11 +260,13 @@ def nodes_from_table_collection(table_collection, extra_regions=None):
             if region in extra_regions:
                 bus_fuel = Label(
                     'bus', 'commodity', fuel.replace(' ', '_'), region)
-                nodes = create_fuel_bus_with_source(nodes, fuel, region, cs)
+                create_fuel_bus_with_source(nodes, fuel, region, cs)
             else:
                 bus_fuel = Label(
                     'bus', 'commodity', fuel.replace(' ', '_'), 'DE')
-
+                if bus_fuel not in nodes:
+                    create_fuel_bus_with_source(nodes, fuel.replace(' ', '_'),
+                                                'DE', cs)
             params = trsf[region, fuel]
 
             # Create power plants as 1x1 Transformer
@@ -280,25 +323,8 @@ def nodes_from_table_collection(table_collection, extra_regions=None):
                         summed_max=smax)},
                     conversion_factors={nodes[bus_heat]: params.efficiency_hp})
 
-    # Storages
-    if 'storages' in table_collection:
-        nodes = storage_nodes(table_collection, nodes)
 
-    # Add shortage excess to every bus
-    bus_keys = [key for key in nodes.keys() if 'bus' in key.cat]
-    for key in bus_keys:
-        excess_label = Label('excess', key.tag, key.subtag, key.region)
-        nodes[excess_label] = solph.Sink(
-            label=excess_label,
-            inputs={nodes[key]: solph.Flow()})
-        shortage_label = Label('shortage', key.tag, key.subtag, key.region)
-        nodes[shortage_label] = solph.Source(
-            label=shortage_label,
-            outputs={nodes[key]: solph.Flow(variable_costs=900)})
-    return nodes
-
-
-def storage_nodes(table_collection, nodes):
+def add_storages(table_collection, nodes):
     storages = table_collection['storages']
     storages.columns = storages.columns.swaplevel()
     for region in storages['phes'].columns:
@@ -316,7 +342,19 @@ def storage_nodes(table_collection, nodes):
             initial_storage_level=None,
             inflow_conversion_factor=params.pump_eff,
             outflow_conversion_factor=params.turbine_eff)
-    return nodes
+
+
+def add_shortage_excess(table_collection, nodes):
+    bus_keys = [key for key in nodes.keys() if 'bus' in key.cat]
+    for key in bus_keys:
+        excess_label = Label('excess', key.tag, key.subtag, key.region)
+        nodes[excess_label] = solph.Sink(
+            label=excess_label,
+            inputs={nodes[key]: solph.Flow()})
+        shortage_label = Label('shortage', key.tag, key.subtag, key.region)
+        nodes[shortage_label] = solph.Source(
+            label=shortage_label,
+            outputs={nodes[key]: solph.Flow(variable_costs=900)})
 
 
 def draw_graph(grph, edge_labels=True, node_color='#AFAFAF',
