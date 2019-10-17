@@ -29,4 +29,6 @@ setup(
         'shapely',
         'rtree',
         'xlrd',
-        'xlwt'])
+        'xlwt',
+        'dill',
+        'matplotlib'])

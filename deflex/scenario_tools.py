@@ -9,21 +9,258 @@ SPDX-License-Identifier: MIT
 __copyright__ = "Uwe Krien <krien@uni-bremen.de>"
 __license__ = "MIT"
 
-
 # Python libraries
+import os
+import calendar
+import datetime
+import shutil
+import dill as pickle
 from collections import namedtuple
 import logging
 
 # External libraries
 import networkx as nx
+import pandas as pd
 from matplotlib import pyplot as plt
 
 # oemof libraries
-import oemof.tools.logger as logger
-import oemof.solph as solph
+from oemof import solph
+from oemof.tools import logger, helpers
+from oemof import outputlib
+from oemof import graph
 
-# internal modules
-import reegis.scenario_tools
+from reegis import config as cfg
+
+
+class NodeDict(dict):
+    __slots__ = ()
+
+    def __setitem__(self, key, item):
+        if super().get(key) is None:
+            super().__setitem__(key, item)
+        else:
+            msg = ("Key '{0}' already exists. ".format(key) +
+                   "Duplicate keys are not allowed in a node dictionary.")
+            raise KeyError(msg)
+
+
+class Scenario:
+    def __init__(self, **kwargs):
+        self.name = kwargs.get('name', 'unnamed_scenario')
+        self.table_collection = kwargs.get('table_collection', {})
+        self.year = kwargs.get('year', None)
+        self.ignore_errors = kwargs.get('ignore_errors', False)
+        self.round_values = kwargs.get('round_values', 0)
+        self.model = kwargs.get('model', None)
+        self.es = kwargs.get('es', None)
+        self.results = None
+        self.results_fn = kwargs.get('results_fn', None)
+        self.debug = kwargs.get('debug', None)
+        self.location = None
+        self.map = None
+        self.meta = kwargs.get('meta', dict())
+
+    def initialise_energy_system(self):
+        if self.debug is True:
+            number_of_time_steps = 3
+        else:
+            try:
+                if calendar.isleap(self.year):
+                    number_of_time_steps = 8784
+                else:
+                    number_of_time_steps = 8760
+            except TypeError:
+                msg = "You cannot create an EnergySystem with self.year = {0}"
+                raise TypeError(msg.format(self.year))
+
+        date_time_index = pd.date_range('1/1/{0}'.format(self.year),
+                                        periods=number_of_time_steps,
+                                        freq='H')
+        return solph.EnergySystem(timeindex=date_time_index)
+
+    def load_excel(self, filename=None):
+        """Load scenario from an excel-file."""
+        if filename is not None:
+            self.location = filename
+        xls = pd.ExcelFile(self.location)
+        for sheet in xls.sheet_names:
+            self.table_collection[sheet] = xls.parse(
+                sheet, index_col=[0], header=[0, 1])
+        return self
+
+    def load_csv(self, path=None):
+        """Load scenario from a csv-collection."""
+        if path is not None:
+            self.location = path
+        for file in os.listdir(self.location):
+            if file[-4:] == '.csv':
+                filename = os.path.join(self.location, file)
+                self.table_collection[file[:-4]] = pd.read_csv(
+                    filename, index_col=[0], header=[0, 1])
+        return self
+
+    def to_excel(self, filename):
+        """Dump scenario into an excel-file."""
+        # create path if it does not exist
+        os.makedirs(os.path.dirname(filename), exist_ok=True)
+        writer = pd.ExcelWriter(filename)
+        for name, df in sorted(self.table_collection.items()):
+            df.to_excel(writer, name)
+        writer.save()
+        logging.info("Scenario saved as excel file to {0}".format(filename))
+
+    def to_csv(self, path):
+        """Dump scenario into a csv-collection."""
+        if os.path.isdir(path):
+            shutil.rmtree(os.path.join(path))
+        os.makedirs(path)
+
+        for name, df in self.table_collection.items():
+            name = name.replace(' ', '_') + '.csv'
+            filename = os.path.join(path, name)
+            df.to_csv(filename)
+        logging.info("Scenario saved as csv-collection to {0}".format(path))
+
+    def check_table(self, table_name):
+        if self.table_collection[table_name].isnull().values.any():
+            c = []
+            for column in self.table_collection[table_name].columns:
+                if self.table_collection[table_name][column].isnull().any():
+                    c.append(column)
+            msg = "Nan Values in the {0} table (columns: {1})."
+            raise ValueError(msg.format(table_name, c))
+        return self
+
+    def create_nodes(self):
+        pass
+
+    def initialise_es(self, year=None):
+        if year is not None:
+            self.year = year
+        self.es = self.initialise_energy_system()
+        return self
+
+    def add_nodes(self, nodes):
+        """
+
+        Parameters
+        ----------
+        nodes : dict
+            Dictionary with a unique key and values of type oemof.network.Node.
+
+        Returns
+        -------
+        self
+
+        """
+        if self.es is None:
+            self.initialise_es()
+        self.es.add(*nodes.values())
+        return self
+
+    def add_nodes2solph(self):
+        logging.ERROR("Deprecated.")
+        self.table2es()
+
+    def table2es(self):
+        if self.es is None:
+            self.es = self.initialise_energy_system()
+        nodes = self.create_nodes()
+        self.es.add(*nodes.values())
+        return self
+
+    def create_model(self):
+        self.model = solph.Model(self.es)
+        return self
+
+    def dump_es(self, filename):
+        os.makedirs(os.path.dirname(filename), exist_ok=True)
+        f = open(filename, "wb")
+        if self.__meta is None:
+            meta = {}
+        else:
+            meta = self.__meta
+        pickle.dump(meta, f)
+        pickle.dump(self.es.__dict__, f)
+        f.close()
+        logging.info("Results dumped to {0}.".format(filename))
+
+    def restore_es(self, filename=None):
+        if filename is None:
+            filename = self.results_fn
+        else:
+            self.results_fn = filename
+        if self.es is None:
+            self.es = solph.EnergySystem()
+        f = open(filename, "rb")
+        self.__meta = pickle.load(f)
+        self.es.__dict__ = pickle.load(f)
+        f.close()
+        self.results = self.es.results['main']
+        logging.info("Results restored from {0}.".format(filename))
+
+    def scenario_info(self, solver_name):
+        sc_info = {
+            'name': self.name,
+            'datetime': datetime.datetime.now(),
+            'year': self.year,
+            'solver': solver_name
+        }
+        return sc_info
+
+    def solve(self, with_duals=False, tee=True, logfile=None, solver=None):
+        if solver is None:
+            solver_name = cfg.get('general', 'solver')
+        else:
+            solver_name = solver
+
+        logging.info("Optimising using {0}.".format(solver_name))
+
+        if with_duals:
+            self.model.receive_duals()
+
+        if self.debug:
+            filename = os.path.join(
+                helpers.extend_basic_path('lp_files'), 'reegis.lp')
+            logging.info('Store lp-file in {0}.'.format(filename))
+            self.model.write(filename,
+                             io_options={'symbolic_solver_labels': True})
+
+        self.model.solve(solver=solver_name,
+                         solve_kwargs={'tee': tee, 'logfile': logfile})
+        self.es.results['main'] = outputlib.processing.results(self.model)
+        self.es.results['meta'] = outputlib.processing.meta_results(self.model)
+        self.es.results['param'] = outputlib.processing.parameter_as_dict(
+            self.es)
+        self.es.results['scenario'] = self.scenario_info(solver_name)
+        self.es.results['meta']['in_location'] = self.location
+        self.es.results['meta']['file_date'] = datetime.datetime.fromtimestamp(
+            os.path.getmtime(self.location))
+        self.es.results['meta']['oemof_version'] = logger.get_version()
+        self.results = self.es.results['main']
+
+    def plot_nodes(self, show=None, filename=None, **kwargs):
+
+        rm_nodes = kwargs.get('remove_nodes_with_substrings')
+
+        g = graph.create_nx_graph(self.es, filename=filename,
+                                  remove_nodes_with_substrings=rm_nodes)
+        if show is True:
+            draw_graph(g, **kwargs)
+        return g
+
+    @property
+    def meta(self):
+        if self.__meta is None:
+            if self.results_fn is not None:
+                f = open(self.results_fn, "rb")
+                self.__meta = pickle.load(f)
+                f.close()
+        return self.__meta
+
+    @meta.setter
+    def meta(self, meta):
+        self.__meta = meta
 
 
 class Label(namedtuple('solph_label', ['cat', 'tag', 'subtag', 'region'])):
@@ -33,7 +270,7 @@ class Label(namedtuple('solph_label', ['cat', 'tag', 'subtag', 'region'])):
         return '_'.join(map(str, self._asdict().values()))
 
 
-class Scenario(reegis.scenario_tools.Scenario):
+class DeflexScenario(Scenario):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.extra_regions = kwargs.get('extra_regions', list())
@@ -41,7 +278,7 @@ class Scenario(reegis.scenario_tools.Scenario):
     def create_nodes(self):
         # Create  a special dictionary that will raise an error if a key is
         # updated. This avoids the
-        nodes = reegis.scenario_tools.NodeDict()
+        nodes = NodeDict()
 
         # Local volatile sources
         add_volatile_sources(self.table_collection, nodes)
@@ -69,7 +306,7 @@ class Scenario(reegis.scenario_tools.Scenario):
             add_storages(self.table_collection, nodes)
 
         # Add shortage excess to every bus
-        add_shortage_excess(self.table_collection, nodes)
+        add_shortage_excess(nodes)
         return nodes
 
 
@@ -344,7 +581,7 @@ def add_storages(table_collection, nodes):
             outflow_conversion_factor=params.turbine_eff)
 
 
-def add_shortage_excess(table_collection, nodes):
+def add_shortage_excess(nodes):
     bus_keys = [key for key in nodes.keys() if 'bus' in key.cat]
     for key in bus_keys:
         excess_label = Label('excess', key.tag, key.subtag, key.region)
@@ -420,7 +657,4 @@ def draw_graph(grph, edge_labels=True, node_color='#AFAFAF',
 
 
 if __name__ == "__main__":
-    logger.define_logging()
-    # logger.define_logging(screen_level=logging.WARNING)
-    # logging.warning("Only warnings will be displayed!")
-
+    pass
