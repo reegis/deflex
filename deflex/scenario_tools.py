@@ -159,7 +159,7 @@ class Scenario:
         return self
 
     def add_nodes2solph(self):
-        logging.ERROR("Deprecated.")
+        logging.error("Deprecated.")
         self.table2es()
 
     def table2es(self):
