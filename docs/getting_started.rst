@@ -9,13 +9,13 @@ Go to the `download page <http://readthedocs.org/projects/deflex/downloads/>`_ t
 Installation
 ============
 
-If you have a working Python 3 environment, use pypi to install the latest reegis version:
+If you have a working Python 3 environment, use pypi to install the latest deflex version:
 
 ::
 
-    pip install reegis
+    pip install deflex
 
-The reegis library is designed for Python 3 and tested on Python >= 3.6. We highly recommend to use virtual environments.
+The deflex library is designed for Python 3 and tested on Python >= 3.6. We highly recommend to use virtual environments.
 Please see the `installation page <http://oemof.readthedocs.io/en/stable/installation_and_setup.html>`_ of the oemof documentation for complete instructions on how to install python and a virtual environment on your operating system.
 
 
@@ -31,7 +31,7 @@ Contributing
 We are warmly welcoming all who want to contribute to the deflex library.
 
 
-Citing reegis
+Citing deflex
 ========================
 
 We soon will use the zenodo project to get a DOI for each version.
