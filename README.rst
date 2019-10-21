@@ -1,16 +1,16 @@
 .. deflex documentation master file
 
 .. image:: https://travis-ci.org/reegis/deflex.svg?branch=master
-    :target: https://travis-ci.org/reegis/reegis
+    :target: https://travis-ci.org/reegis/deflex
 
 .. image:: https://coveralls.io/repos/github/reegis/deflex/badge.svg?branch=master
-    :target: https://coveralls.io/github/reegis/reegis?branch=master
+    :target: https://coveralls.io/github/reegis/deflex?branch=master
 
 .. image:: https://img.shields.io/lgtm/grade/python/g/reegis/deflex.svg?logo=lgtm&logoWidth=18
-    :target: https://lgtm.com/projects/g/reegis/reegis/context:python
+    :target: https://lgtm.com/projects/g/reegis/deflex/context:python
 
 .. image:: https://img.shields.io/lgtm/alerts/g/reegis/deflex.svg?logo=lgtm&logoWidth=18
-    :target: https://lgtm.com/projects/g/reegis/reegis/alerts/
+    :target: https://lgtm.com/projects/g/reegis/deflex/alerts/
 
 
 Introduction
