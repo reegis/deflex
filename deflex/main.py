@@ -52,7 +52,6 @@ def main(year, plot_graph=False):
             msg = ("\n{0}\n{1}\nThe wrong path is checked. This will recreate "
                    "the scenario every time!".format(csv_path, fn.csv))
             logging.error(msg)
-            csv_path = fn.csv
     logging.info("Read scenario from csv collection: {0}".format(stopwatch()))
     # sc.load_csv(csv_path)
     sc.load_excel(excel_path)

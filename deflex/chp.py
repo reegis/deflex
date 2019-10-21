@@ -10,12 +10,6 @@ __copyright__ = "Uwe Krien <krien@uni-bremen.de>"
 __license__ = "MIT"
 
 
-# Python libraries
-import logging
-
-# oemof libraries
-import oemof.tools.logger as logger
-
 # Internal libraries
 import reegis.config as cfg
 import reegis.energy_balance
@@ -36,8 +30,4 @@ def get_chp_share_and_efficiency(year, geo):
 
 
 if __name__ == "__main__":
-    logger.define_logging()
-    import pprint as pp
-    pp.pprint(get_chp_share_and_efficiency(2014))
-    # pp.pprint(reegis.powerplants.get_chp_share_and_efficiency_states(
-    #     2014)['BE'])
+    pass

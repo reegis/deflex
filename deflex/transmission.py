@@ -101,8 +101,6 @@ def get_electrical_transmission_renpass():
         elif cap1 != 0 and cap2 == 0:
             pwr_lines.loc[l, 'capacity'] = cap1
             pwr_lines.loc[l, 'distance'] = dist1
-        else:
-            print("Error in {0}".format(l))
 
     # plot_grid(pwr_lines)
     df = pwr_lines[['capacity', 'distance']]
@@ -115,7 +113,4 @@ def get_grid():
 
 
 if __name__ == "__main__":
-    cfg.tmp_set('init', 'map', 'de17')
-    lines = get_electrical_transmission_deflex(duplicate=False)
-    print(lines)
-    print(len(lines))
+    pass
