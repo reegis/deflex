@@ -22,7 +22,8 @@ from oemof.tools import logger
 
 # internal modules
 import reegis.config as cfg
-import deflex
+from deflex import scenario_tools
+from deflex import basic_scenario
 
 
 def stopwatch():
@@ -39,14 +40,14 @@ def main(year, plot_graph=False):
             'map': cfg.get('init', 'map'),
             'solver': cfg.get('general', 'solver'),
             'start_time': datetime.now()}
-    sc = deflex.Scenario(name=name, year=2014, meta=meta)
+    sc = scenario_tools.Scenario(name=name, year=2014, meta=meta)
     path = os.path.join(cfg.get('paths', 'scenario'), 'deflex', str(year))
     csv_dir = name + '_csv'
     csv_path = os.path.join(path, csv_dir)
     excel_path = os.path.join(path, name + '.xls')
 
     if not os.path.isdir(csv_path):
-        fn = deflex.basic_scenario.create_basic_scenario(year, path=path,
+        fn = basic_scenario.create_basic_scenario(year, path=path,
                                                          csv_dir=csv_dir)
         if csv_path != fn.csv:
             msg = ("\n{0}\n{1}\nThe wrong path is checked. This will recreate "

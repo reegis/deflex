@@ -86,19 +86,19 @@ def get_electrical_transmission_renpass():
 
     for l in pwr_lines.index:
         split = l.split('-')
-        a = ('110{0}'.format(split[0][2:]))
-        b = ('110{0}'.format(split[1][2:]))
+        a = int('110{0}'.format(split[0][2:]))
+        b = int('110{0}'.format(split[1][2:]))
         # print(a, b)
-        cap1, dist1 = get_grid_capacity(grid, int(a), int(b))
-        cap2, dist2 = get_grid_capacity(grid, int(b), int(a))
+        cap1, dist1 = get_grid_capacity(grid, a, b)
+        cap2, dist2 = get_grid_capacity(grid, b, a)
 
         if cap1 == 0 and cap2 == 0:
             pwr_lines.loc[l, 'capacity'] = 0
             pwr_lines.loc[l, 'distance'] = 0
-        elif cap1 == 0 and cap2 != 0:
+        elif cap1 == 0 and not cap2 == 0:
             pwr_lines.loc[l, 'capacity'] = cap2
             pwr_lines.loc[l, 'distance'] = dist2
-        elif cap1 != 0 and cap2 == 0:
+        elif not cap1 == 0 and cap2 == 0:
             pwr_lines.loc[l, 'capacity'] = cap1
             pwr_lines.loc[l, 'distance'] = dist1
 
