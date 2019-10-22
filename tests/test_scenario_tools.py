@@ -21,3 +21,6 @@ def test_scenario_building():
         os.path.dirname(__file__), 'data', 'deflex_2014_de21_test_csv')
     sc.load_csv(csv_path)
     sc.table2es()
+
+def test_node_dict():
+    pass
