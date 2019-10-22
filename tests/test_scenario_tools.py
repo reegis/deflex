@@ -15,12 +15,14 @@ import logging
 from deflex import scenario_tools
 
 
-def test_scenario_building():
-    sc = scenario_tools.DeflexScenario(name='test', year=2014)
-    csv_path = os.path.join(
-        os.path.dirname(__file__), 'data', 'deflex_2014_de21_test_csv')
-    sc.load_csv(csv_path)
-    sc.table2es()
+class TestScenarioTools:
 
-def test_node_dict():
-    pass
+    def test_scenario_building(self):
+        sc = scenario_tools.DeflexScenario(name='test', year=2014)
+        csv_path = os.path.join(
+            os.path.dirname(__file__), 'data', 'deflex_2014_de21_test_csv')
+        sc.load_csv(csv_path)
+        sc.table2es()
+
+    def test_node_dict(self):
+        pass

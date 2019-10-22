@@ -12,7 +12,7 @@ before_install:
 install:
   - pip install cython
   - pip install .
-  - pip install coveralls
+  - pip install coveralls sphinx sphinx_rtd_theme
 
 # command to run tests
 script:
