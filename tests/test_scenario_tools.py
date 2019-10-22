@@ -11,7 +11,7 @@ __license__ = "MIT"
 
 
 import os
-import logging
+import pytest
 from deflex import scenario_tools
 
 
@@ -25,4 +25,10 @@ class TestScenarioTools:
         sc.table2es()
 
     def test_node_dict(self):
-        pass
+        nc = scenario_tools.NodeDict()
+        nc['g'] = 5
+        nc['h'] = 6
+        msg = ("Key 'g' already exists. Duplicate keys are not allowed in a "
+               "node dictionary.")
+        with pytest.raises(KeyError, match=msg):
+            nc['g'] = 7
