@@ -399,15 +399,14 @@ def clean_time_series(table_collection):
 
 
 def create_basic_scenario(year, rmap=None, path=None, csv_dir=None,
-                          xls_name=None, round_values=None):
+                          xls_name=None, round_values=None, only_out=None):
     paths = namedtuple('paths', 'xls, csv')
     if rmap is not None:
         cfg.tmp_set('init', 'map', rmap)
 
     geo = geometries.deflex_regions(rmap=cfg.get('init', 'map'))
 
-    table_collection = deflex.basic_scenario.create_scenario(year, geo,
-                                                             round_values)
+    table_collection = create_scenario(year, geo, round_values)
     table_collection = clean_time_series(table_collection)
     name = '{0}_{1}_{2}'.format('deflex', year, cfg.get('init', 'map'))
     sce = deflex.scenario_tools.Scenario(table_collection=table_collection,
@@ -430,8 +429,10 @@ def create_basic_scenario(year, rmap=None, path=None, csv_dir=None,
     os.makedirs(csv_path, exist_ok=True)
 
     fullpath = paths(xls=xls_path, csv=csv_path)
-    sce.to_excel(fullpath.xls)
-    sce.to_csv(fullpath.csv)
+    if not only_out == 'csv':
+        sce.to_excel(fullpath.xls)
+    if not only_out == 'xls':
+        sce.to_csv(fullpath.csv)
 
     return fullpath
 
