@@ -174,10 +174,8 @@ class Scenario:
         os.makedirs(os.path.dirname(filename), exist_ok=True)
         f = open(filename, "wb")
         if self.meta is None:
-            if 'Meta' in self.es.results:
+            if self.es.results is not None and 'Meta' in self.es.results:
                 self.meta = self.es.results['meta']
-            else:
-                self.meta = {}
         pickle.dump(self.meta, f)
         pickle.dump(self.es.__dict__, f)
         f.close()
@@ -207,12 +205,7 @@ class Scenario:
         return sc_info
 
     def solve(self, with_duals=False, tee=True, logfile=None, solver=None):
-        if solver is None:
-            solver_name = cfg.get('general', 'solver')
-        else:
-            solver_name = solver
-
-        logging.info("Optimising using {0}.".format(solver_name))
+        logging.info("Optimising using {0}.".format(solver))
 
         if with_duals:
             self.model.receive_duals()
@@ -224,13 +217,13 @@ class Scenario:
             self.model.write(filename,
                              io_options={'symbolic_solver_labels': True})
 
-        self.model.solve(solver=solver_name,
+        self.model.solve(solver=solver,
                          solve_kwargs={'tee': tee, 'logfile': logfile})
         self.es.results['main'] = outputlib.processing.results(self.model)
         self.es.results['meta'] = outputlib.processing.meta_results(self.model)
         self.es.results['param'] = outputlib.processing.parameter_as_dict(
             self.es)
-        self.es.results['meta']['scenario'] = self.scenario_info(solver_name)
+        self.es.results['meta']['scenario'] = self.scenario_info(solver)
         self.es.results['meta']['in_location'] = self.location
         self.es.results['meta']['file_date'] = datetime.datetime.fromtimestamp(
             os.path.getmtime(self.location))
