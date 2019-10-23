@@ -15,12 +15,18 @@ import os
 from deflex import scenario_tools
 
 
+def test_basic_scenario_class():
+    sc = scenario_tools.Scenario()
+    sc.create_nodes()
+
+
 def test_scenario_building():
     sc = scenario_tools.DeflexScenario(name='test', year=2014)
     csv_path = os.path.join(
         os.path.dirname(__file__), 'data', 'deflex_2014_de21_test_csv')
     sc.load_csv(csv_path)
     sc.table2es()
+    sc.check_table('volatile_series')
 
 
 def test_node_dict():
@@ -62,6 +68,7 @@ def test_excel_reader():
     csv_path = os.path.join(
         os.path.expanduser('~'), 'deflex_2014_de02_nose_test_csv')
     sc.to_csv(csv_path)
+    sc.to_csv(csv_path)
     xls_fn = os.path.join(
         os.path.expanduser('~'), 'deflex_2014_de02_nose_test.xls')
     sc.to_excel(xls_fn)
@@ -76,11 +83,25 @@ def test_build_model_manually():
     sc.load_excel(xls_fn)
     nodes = sc.create_nodes()
     sc.add_nodes(nodes)
-    sc.create_model()
-    sc.solve(solver='cbc', with_duals=True)
-    eq_(sc.es.results['meta']['scenario']['name'], 'my_test')
     dump_fn = os.path.join(
         os.path.expanduser('~'), 'nose_test.deflex')
     sc.dump_es(dump_fn)
+    sc.create_model()
+    sc.solve(solver='cbc', with_duals=True)
+    eq_(sc.es.results['meta']['scenario']['name'], 'my_test')
+    sc.dump_es(dump_fn)
+    sc.plot_nodes()
+    sc.results_fn = dump_fn
     sc.restore_es(dump_fn)
     eq_(sc.meta['scenario']['year'], 2014)
+    os.remove(dump_fn)
+
+
+def test_corrupt_data():
+    sc = scenario_tools.DeflexScenario(year=2014)
+    csv_path = os.path.join(
+        os.path.dirname(__file__), 'data', 'deflex_2014_de02_test_csv')
+    sc.load_csv(csv_path)
+    msg = "Missing time series for solar"
+    with assert_raises_regexp(ValueError, msg):
+        sc.table2es()
