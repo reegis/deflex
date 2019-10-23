@@ -7,7 +7,7 @@ matrix:
 
 # command to install dependencies
 before_install:
-  - sudo apt install libhdf5-serial-dev proj-bin libproj-dev libgeos-dev libspatialindex-dev
+  - sudo apt-get install libhdf5-serial-dev proj-bin libproj-dev libgeos-dev libspatialindex-dev
 
 install:
   - pip install cython
