@@ -21,7 +21,8 @@ def test_scenario_building():
     sc.load_csv(csv_path)
     sc.table2es()
 
-def test_node_dict(self):
+
+def test_node_dict():
     nc = scenario_tools.NodeDict()
     nc['g'] = 5
     nc['h'] = 6
