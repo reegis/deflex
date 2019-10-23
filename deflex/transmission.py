@@ -95,12 +95,19 @@ def get_electrical_transmission_renpass():
         if cap1 == 0 and cap2 == 0:
             pwr_lines.loc[l, 'capacity'] = 0
             pwr_lines.loc[l, 'distance'] = 0
-        elif cap1 == 0 and not cap2 == 0:
+        elif cap1 == 0:
             pwr_lines.loc[l, 'capacity'] = cap2
             pwr_lines.loc[l, 'distance'] = dist2
-        elif not cap1 == 0 and cap2 == 0:
+        elif cap2 == 0:
             pwr_lines.loc[l, 'capacity'] = cap1
             pwr_lines.loc[l, 'distance'] = dist1
+        elif cap1 == cap2:
+            pwr_lines.loc[l, 'capacity'] = cap1
+            pwr_lines.loc[l, 'distance'] = dist1
+        else:
+            msg = ("The same line ({0}, {1}) has different capacities: {2} "
+                   "!= {3}")
+            raise ValueError(msg.format(a, b, cap1, cap2))
 
     # plot_grid(pwr_lines)
     df = pwr_lines[['capacity', 'distance']]
