@@ -95,6 +95,7 @@ class Scenario:
         for file in os.listdir(self.location):
             if file[-4:] == '.csv':
                 filename = os.path.join(self.location, file)
+                logging.info(filename)
                 self.table_collection[file[:-4]] = pd.read_csv(
                     filename, index_col=[0], header=[0, 1])
         return self
