@@ -17,9 +17,6 @@ from datetime import datetime
 import time
 import traceback
 
-# oemof packages
-from oemof.tools import logger
-
 # internal modules
 import reegis.config as cfg
 from deflex import scenario_tools
@@ -65,7 +62,7 @@ def main(year, rmap, plot_graph=False):
 
     if not os.path.isdir(csv_path):
         fn = basic_scenario.create_basic_scenario(year, path=path,
-                                                         csv_dir=csv_dir)
+                                                  csv_dir=csv_dir)
         if csv_path != fn.csv:
             msg = ("\n{0}\n{1}\nThe wrong path is checked. This will recreate "
                    "the scenario every time!".format(csv_path, fn.csv))
@@ -117,9 +114,8 @@ def main_secure(year, rmap, plot_graph=False):
     --------
     >>> main_secure(2014, 'de21', False)  # doctest: +SKIP
     """
-    cfg.tmp_set('init', 'map', rmap)
     try:
-        main(year, plot_graph=plot_graph)
+        main(year, rmap, plot_graph=plot_graph)
     except Exception as e:
         logging.error(traceback.format_exc())
         time.sleep(0.5)

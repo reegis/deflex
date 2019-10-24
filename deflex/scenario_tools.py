@@ -29,8 +29,6 @@ from oemof.tools import logger, helpers
 from oemof import outputlib
 from oemof import graph
 
-from reegis import config as cfg
-
 
 class NodeDict(dict):
     __slots__ = ()

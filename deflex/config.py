@@ -17,8 +17,6 @@ from reegis.config import *
 
 
 _loaded = False
-print('count')
 if not _loaded:
     init(paths=[os.path.dirname(__file__)])
     _loaded = True
-    print('load!!!!!!!!!')

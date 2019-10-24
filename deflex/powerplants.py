@@ -19,10 +19,10 @@ import reegis.powerplants
 import deflex.geometries
 
 
-#Todo: Revise and test.
+# Todo: Revise and test.
 
 
-def pp_reegis2deflex(clean_offshore=True):
+def pp_reegis2deflex():
     filename_out = os.path.join(cfg.get('paths', 'powerplants'),
                                 cfg.get('powerplants', 'deflex_pp')).format(
         map=cfg.get('init', 'map'))
@@ -74,7 +74,7 @@ def remove_onshore_technology_from_offshore_regions(df):
                               'NI': 'DE14'},
                      'de22': {'MV': 'DE01',
                               'SH': 'DE13',
-                              'NI': 'DE14'},}
+                              'NI': 'DE14'}}
     try:
         dc = coast_regions[cfg.get('init', 'map')]
     except KeyError:
