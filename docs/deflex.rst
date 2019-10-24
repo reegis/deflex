@@ -3,17 +3,9 @@ API
 
 
 deflex.basic_scenario module
-------------------
+----------------------------
 
 .. automodule:: deflex.basic_scenario
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-deflex.chp module
-----------------------
-
-.. automodule:: deflex.chp
     :members:
     :undoc-members:
     :show-inheritance:
@@ -27,23 +19,15 @@ deflex.demand module
     :show-inheritance:
 
 deflex.geometries module
-----------------------
+------------------------
 
 .. automodule:: deflex.geometries
     :members:
     :undoc-members:
     :show-inheritance:
 
-deflex.inhabitants module
---------------------
-
-.. automodule:: deflex.inhabitants
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 deflex.main module
-------------------------
+------------------
 
 .. automodule:: deflex.main
     :members:
@@ -51,7 +35,7 @@ deflex.main module
     :show-inheritance:
 
 deflex.scenario_tools module
--------------------------
+----------------------------
 
 .. automodule:: deflex.scenario_tools
     :members:
@@ -59,7 +43,7 @@ deflex.scenario_tools module
     :show-inheritance:
 
 deflex.transmission module
-------------------
+--------------------------
 
 .. automodule:: deflex.transmission
     :members:
