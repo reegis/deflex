@@ -24,7 +24,8 @@ class Mock(MagicMock):
 
 
 MOCK_MODULES = ['pygtk', 'gtk', 'gobject', 'argparse', 'numpy', 'pandas',
-                'pvlib', 'shapely', 'reegis', 'dill', 'reegis.geometries']
+                'pvlib', 'shapely', 'reegis', 'dill', 'reegis.geometries',
+                'reegis.config', 'networkx']
 sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
 
 # If extensions (or modules to document with autodoc) are in another directory,
