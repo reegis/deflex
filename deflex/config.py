@@ -13,6 +13,7 @@ __license__ = "MIT"
 
 
 # Python libraries
+import os
 from reegis.config import *
 
 
