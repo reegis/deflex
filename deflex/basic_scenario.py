@@ -31,8 +31,6 @@ import deflex.chp
 import deflex.scenario_tools
 from deflex import geometries
 
-import oemof.tools.logger as logger
-
 
 def create_scenario(year, geo, round_values, weather_year=None):
     table_collection = {}
@@ -400,6 +398,32 @@ def clean_time_series(table_collection):
 
 def create_basic_scenario(year, rmap=None, path=None, csv_dir=None,
                           xls_name=None, round_values=None, only_out=None):
+    """
+    Create a basic scenario for a given year and region-set.
+
+    Parameters
+    ----------
+    year : int
+    rmap : str
+    path : str
+    csv_dir : str
+    xls_name : str
+    round_values : bool
+    only_out : str
+
+    Returns
+    -------
+    namedtuple : Path
+
+    Examples
+    --------
+    >>> year = 2014  # doctest: +SKIP
+    >>> my_rmap = 'de21'  # doctest: +SKIP
+    >>> p = create_basic_scenario(year, rmap=my_rmap)  # doctest: +SKIP
+    >>> print("Xls path: {0}".format(p.xls))  # doctest: +SKIP
+    >>> print("Csv path: {0}".format(p.csv))  # doctest: +SKIP
+
+    """
     paths = namedtuple('paths', 'xls, csv')
     if rmap is not None:
         cfg.tmp_set('init', 'map', rmap)
@@ -415,12 +439,16 @@ def create_basic_scenario(year, rmap=None, path=None, csv_dir=None,
     if path is None:
         path = os.path.join(cfg.get('paths', 'scenario'), 'deflex', str(year))
 
-    if csv_dir is None:
+    if only_out == 'xls':
+        csv_path = None
+    elif csv_dir is None:
         csv_path = os.path.join(path, '{0}_csv'.format(name))
     else:
         csv_path = os.path.join(path, csv_dir)
 
-    if xls_name is None:
+    if only_out == 'csv':
+        xls_path = None
+    elif xls_name is None:
         xls_path = os.path.join(path, name + '.xls')
     else:
         xls_path = os.path.join(path, xls_name)
@@ -460,10 +488,4 @@ def create_weather_variation_scenario(year, start=1998, rmap=None,
 
 
 if __name__ == "__main__":
-    logger.define_logging()
-
-    for y in [2014, 2013, 2012]:
-        for my_rmap in ['de21', 'de22', 'de17', 'de02']:
-            p = create_basic_scenario(y, rmap=my_rmap)
-            logging.info("Xls path: {0}".format(p.xls))
-            logging.info("Csv path: {0}".format(p.csv))
+    pass
