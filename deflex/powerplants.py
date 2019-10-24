@@ -13,10 +13,10 @@ __license__ = "MIT"
 import pandas as pd
 import os
 import logging
-import reegis.geometries
-import reegis.config as cfg
-import reegis.powerplants
-import deflex.geometries
+from reegis import geometries as reegis_geometries
+from reegis import config as cfg
+from reegis import powerplants
+from deflex import geometries
 
 
 # Todo: Revise and test.
@@ -28,14 +28,14 @@ def pp_reegis2deflex():
         map=cfg.get('init', 'map'))
 
     # Add deflex regions to powerplants
-    deflex_regions = deflex.geometries.deflex_regions()
+    deflex_regions = geometries.deflex_regions()
     name = '{0}_region'.format(cfg.get('init', 'map'))
-    pp = reegis.powerplants.add_regions_to_powerplants(deflex_regions, name,
-                                                       dump=False)
+    pp = powerplants.add_regions_to_powerplants(deflex_regions, name,
+                                                dump=False)
 
-    federal_states = reegis.geometries.get_federal_states_polygon()
+    federal_states = reegis_geometries.get_federal_states_polygon()
 
-    pp = reegis.powerplants.add_regions_to_powerplants(
+    pp = powerplants.add_regions_to_powerplants(
         federal_states, 'federal_states', pp=pp, dump=False)
 
     # Remove PHES (storages)

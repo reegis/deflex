@@ -18,7 +18,7 @@ import time
 import traceback
 
 # internal modules
-import reegis.config as cfg
+from reegis import config as cfg
 from deflex import scenario_tools
 from deflex import basic_scenario
 
