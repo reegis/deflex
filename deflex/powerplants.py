@@ -13,11 +13,13 @@ __license__ = "MIT"
 import pandas as pd
 import os
 import logging
-import oemof.tools.logger as logger
 import reegis.geometries
 import reegis.config as cfg
 import reegis.powerplants
 import deflex.geometries
+
+
+#Todo: Revise and test.
 
 
 def pp_reegis2deflex(clean_offshore=True):
@@ -152,18 +154,4 @@ def get_deflex_pp_by_year(year, overwrite_capacity=False):
 
 
 if __name__ == "__main__":
-    logger.define_logging(file_level=logging.INFO)
-    # print(pp_reegis2deflex())
-    # fn = '/home/uwe/express/reegis/data/powerplants/deflex_pp.h5'
-    # df = pd.read_hdf(fn, 'pp')
-    # pp = reegis.geometries.Geometry(name='power plants', df=df)
-    # pp.create_geo_df()
-    # pp.gdf.to_file('/home/uwe/pp_tmp.shp')
-    # exit(0)
-    my_df = get_deflex_pp_by_year(2014, overwrite_capacity=True)
-    print(my_df.columns)
-    exit(0)
-    print(my_df.groupby(['de22_region', 'energy_source_level_2']).sum()[
-        'capacity'])
-    # exit(0)
-    logging.info('Done!')
+    pass

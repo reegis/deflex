@@ -27,8 +27,9 @@ import deflex.demand
 import reegis.storages
 import reegis.coastdat
 from reegis import demand_elec
+from reegis import energy_balance
+from reegis import powerplants as reegis_powerplants
 import deflex.transmission
-import deflex.chp
 import deflex.scenario_tools
 from deflex import geometries
 
@@ -229,7 +230,10 @@ def decentralised_heating():
 def chp_scenario(table_collection, year, geo, weather_year=None):
 
     # values from heat balance
-    heat_b = deflex.chp.get_chp_share_and_efficiency(year, geo)
+
+    cb = reegis.energy_balance.get_conversion_balance_by_region(year, geo)
+    cb.rename(columns={'re': cfg.get('chp', 'renewable_source')}, inplace=True)
+    heat_b = reegis_powerplants.calculate_chp_share_and_efficiency(cb)
 
     heat_demand = deflex.demand.get_heat_profiles_deflex(
         year, geo, weather_year=weather_year)

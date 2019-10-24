@@ -32,8 +32,25 @@ def stopwatch():
     return str(datetime.now() - stopwatch.start)[:-7]
 
 
-def main(year, plot_graph=False):
+def main(year, rmap, plot_graph=False):
+    """
+
+    Parameters
+    ----------
+    year : int
+    rmap : str
+    plot_graph : bool
+
+    Returns
+    -------
+
+    Examples
+    --------
+    >>> main_secure(2014, 'de21', False)  # doctest: +SKIP
+    """
     stopwatch()
+    cfg.tmp_set('init', 'map', rmap)
+
     name = '{0}_{1}_{2}'.format('deflex', year, cfg.get('init', 'map'))
     meta = {'year': year,
             'model_base': 'deflex',
@@ -84,17 +101,31 @@ def main(year, plot_graph=False):
         stopwatch()))
 
 
+def main_secure(year, rmap, plot_graph=False):
+    """
+
+    Parameters
+    ----------
+    year : int
+    rmap : str
+    plot_graph : bool
+
+    Returns
+    -------
+
+    Examples
+    --------
+    >>> main_secure(2014, 'de21', False)  # doctest: +SKIP
+    """
+    cfg.tmp_set('init', 'map', rmap)
+    try:
+        main(year, plot_graph=plot_graph)
+    except Exception as e:
+        logging.error(traceback.format_exc())
+        time.sleep(0.5)
+        logging.error(e)
+        time.sleep(0.5)
+
+
 if __name__ == "__main__":
-    logger.define_logging(screen_level=logging.DEBUG)
-    for y in [2014, 2013, 2012]:
-        for my_rmap in ['de02', 'de17', 'de21']:
-            cfg.tmp_set('init', 'map', my_rmap)
-            main(y, plot_graph=True)
-            exit(0)
-            try:
-                main(y)
-            except Exception as e:
-                logging.error(traceback.format_exc())
-                time.sleep(0.5)
-                logging.error(e)
-                time.sleep(0.5)
+    pass
