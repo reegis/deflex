@@ -1,5 +1,3 @@
 [run]
 omit =
-    tests/*
-    docs/*
-source = deflex
+    *snippets*

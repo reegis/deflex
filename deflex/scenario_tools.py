@@ -58,7 +58,7 @@ class Scenario:
         self.debug = kwargs.get('debug', None)
         self.location = None
         self.map = None
-        self.meta = kwargs.get('meta', dict())
+        self.meta = kwargs.get('meta', None)
 
     def initialise_energy_system(self):
         if self.debug is True:
@@ -70,8 +70,9 @@ class Scenario:
                 else:
                     number_of_time_steps = 8760
             except TypeError:
-                msg = "You cannot create an EnergySystem with self.year = {0}"
-                raise TypeError(msg.format(self.year))
+                msg = ("You cannot create an EnergySystem with self.year={0}, "
+                       "of type {1}.")
+                raise TypeError(msg.format(self.year, type(self.year)))
 
         date_time_index = pd.date_range('1/1/{0}'.format(self.year),
                                         periods=number_of_time_steps,
@@ -158,10 +159,6 @@ class Scenario:
         self.es.add(*nodes.values())
         return self
 
-    def add_nodes2solph(self):
-        logging.error("Deprecated.")
-        self.table2es()
-
     def table2es(self):
         if self.es is None:
             self.es = self.initialise_energy_system()
@@ -176,11 +173,10 @@ class Scenario:
     def dump_es(self, filename):
         os.makedirs(os.path.dirname(filename), exist_ok=True)
         f = open(filename, "wb")
-        if self.__meta is None:
-            meta = {}
-        else:
-            meta = self.__meta
-        pickle.dump(meta, f)
+        if self.meta is None:
+            if self.es.results is not None and 'Meta' in self.es.results:
+                self.meta = self.es.results['meta']
+        pickle.dump(self.meta, f)
         pickle.dump(self.es.__dict__, f)
         f.close()
         logging.info("Results dumped to {0}.".format(filename))
@@ -193,7 +189,7 @@ class Scenario:
         if self.es is None:
             self.es = solph.EnergySystem()
         f = open(filename, "rb")
-        self.__meta = pickle.load(f)
+        self.meta = pickle.load(f)
         self.es.__dict__ = pickle.load(f)
         f.close()
         self.results = self.es.results['main']
@@ -209,12 +205,7 @@ class Scenario:
         return sc_info
 
     def solve(self, with_duals=False, tee=True, logfile=None, solver=None):
-        if solver is None:
-            solver_name = cfg.get('general', 'solver')
-        else:
-            solver_name = solver
-
-        logging.info("Optimising using {0}.".format(solver_name))
+        logging.info("Optimising using {0}.".format(solver))
 
         if with_duals:
             self.model.receive_duals()
@@ -226,13 +217,13 @@ class Scenario:
             self.model.write(filename,
                              io_options={'symbolic_solver_labels': True})
 
-        self.model.solve(solver=solver_name,
+        self.model.solve(solver=solver,
                          solve_kwargs={'tee': tee, 'logfile': logfile})
         self.es.results['main'] = outputlib.processing.results(self.model)
         self.es.results['meta'] = outputlib.processing.meta_results(self.model)
         self.es.results['param'] = outputlib.processing.parameter_as_dict(
             self.es)
-        self.es.results['scenario'] = self.scenario_info(solver_name)
+        self.es.results['meta']['scenario'] = self.scenario_info(solver)
         self.es.results['meta']['in_location'] = self.location
         self.es.results['meta']['file_date'] = datetime.datetime.fromtimestamp(
             os.path.getmtime(self.location))
@@ -248,19 +239,6 @@ class Scenario:
         if show is True:
             draw_graph(g, **kwargs)
         return g
-
-    @property
-    def meta(self):
-        if self.__meta is None:
-            if self.results_fn is not None:
-                f = open(self.results_fn, "rb")
-                self.__meta = pickle.load(f)
-                f.close()
-        return self.__meta
-
-    @meta.setter
-    def meta(self, meta):
-        self.__meta = meta
 
 
 class Label(namedtuple('solph_label', ['cat', 'tag', 'subtag', 'region'])):

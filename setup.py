@@ -21,7 +21,7 @@ setup(
     install_requires=[
         'oemof >= 0.3.0',
         'pandas >= 0.17.0',
-        'reegis == v0.1.0-rc.4',
+        'reegis == v0.1.0-rc.5',
         'demandlib',
         'workalendar',
         'networkx',
