@@ -19,19 +19,19 @@ from collections import namedtuple
 import pandas as pd
 
 # internal modules
-import reegis.config as cfg
-import reegis.commodity_sources
-import reegis.bmwi
-import deflex.powerplants
-import deflex.demand
-import reegis.storages
-import reegis.coastdat
+from reegis import commodity_sources
+from reegis import bmwi
+from reegis import storages
+from reegis import coastdat
 from reegis import demand_elec
 from reegis import energy_balance
 from reegis import powerplants as reegis_powerplants
-import deflex.transmission
-import deflex.scenario_tools
+from deflex import powerplants
+from deflex import demand
+from deflex import transmission
+from deflex import scenario_tools
 from deflex import geometries
+from deflex import config as cfg
 
 
 def create_scenario(year, geo, round_values, weather_year=None):
@@ -55,7 +55,7 @@ def create_scenario(year, geo, round_values, weather_year=None):
     table_collection['decentralised_heating'] = decentralised_heating()
 
     logging.info('BASIC SCENARIO - SOURCES')
-    table_collection = commodity_sources(year, table_collection)
+    table_collection = create_commodity_sources(year, table_collection)
     table_collection['volatile_series'] = scenario_feedin(
         year, weather_year=weather_year)
 
@@ -73,7 +73,7 @@ def scenario_transmission(table_collection):
     offshore_regions = (
         cfg.get_dict_list('offshore_regions_set')[cfg.get('init', 'map')])
 
-    elec_trans = deflex.transmission.get_electrical_transmission_deflex()
+    elec_trans = transmission.get_electrical_transmission_deflex()
 
     # Set transmission capacity of offshore power lines to installed capacity
     # Multiply the installed capacity with 1.1 to get a buffer of 10%.
@@ -98,7 +98,7 @@ def scenario_transmission(table_collection):
 
 def scenario_storages(regions):
     name = '{0}_region'.format(cfg.get('init', 'map'))
-    stor = reegis.storages.pumped_hydroelectric_storage(
+    stor = storages.pumped_hydroelectric_storage(
         regions, name).transpose()
     return pd.concat([stor], axis=1, keys=['phes']).swaplevel(0, 1, 1)
 
@@ -106,7 +106,7 @@ def scenario_storages(regions):
 def add_pp_limit(table_collection, year):
     if len(cfg.get_dict('limited_transformer').keys()) > 0:
         # Multiply with 1000 to get MWh (bmwi: GWh)
-        repp = reegis.bmwi.bmwi_re_energy_capacity() * 1000
+        repp = bmwi.bmwi_re_energy_capacity() * 1000
         trsf = table_collection['transformer']
         for limit_trsf in cfg.get_dict('limited_transformer').keys():
             trsf = table_collection['transformer']
@@ -129,7 +129,7 @@ def add_pp_limit(table_collection, year):
     return table_collection
 
 
-def commodity_sources(year, table_collection):
+def create_commodity_sources(year, table_collection):
     commodity_src = scenario_commodity_sources(year)
     commodity_src = commodity_src.swaplevel().unstack()
 
@@ -163,7 +163,7 @@ def commodity_sources(year, table_collection):
 
 
 def scenario_commodity_sources(year, use_znes_2014=True):
-    cs = reegis.commodity_sources.get_commodity_sources()
+    cs = commodity_sources.get_commodity_sources()
     rename_cols = {key.lower(): value for key, value in
                    cfg.get_dict('source_names').items()}
     cs = cs.rename(columns=rename_cols)
@@ -188,7 +188,7 @@ def scenario_demand(year, geo, weather_year=None):
 
 def scenario_heat_demand(year, table, geo, weather_year=None):
     idx = table.index  # Use the index of the existing time series
-    table = pd.concat([table, deflex.demand.get_heat_profiles_deflex(
+    table = pd.concat([table, demand.get_heat_profiles_deflex(
         year, geo, idx, weather_year=weather_year)], axis=1)
     return table.sort_index(1)
 
@@ -199,7 +199,7 @@ def scenario_elec_demand(year, table, geo, weather_year=None):
     else:
         demand_year = weather_year
 
-    df = reegis.demand_elec.get_entsoe_profile_by_region(
+    df = demand_elec.get_entsoe_profile_by_region(
         geo, demand_year, geo.name, annual_demand='bmwi')
     df = pd.concat([df], axis=1, keys=['electrical_load']).swaplevel(0, 1, 1)
     df = df.reset_index(drop=True)
@@ -212,12 +212,12 @@ def scenario_feedin(year, weather_year=None):
     name = '{0}_region'.format(cfg.get('init', 'map'))
     wy = weather_year
     try:
-        feedin = reegis.coastdat.scenario_feedin(year, name, weather_year=wy)
+        feedin = coastdat.scenario_feedin(year, name, weather_year=wy)
     except FileNotFoundError:
-        d_regions = deflex.geometries.deflex_regions()
-        reegis.coastdat.get_feedin_per_region(
+        d_regions = geometries.deflex_regions()
+        coastdat.get_feedin_per_region(
             year, d_regions, name, weather_year=wy)
-        feedin = reegis.coastdat.scenario_feedin(year, name, weather_year=wy)
+        feedin = coastdat.scenario_feedin(year, name, weather_year=wy)
     return feedin
 
 
@@ -231,11 +231,11 @@ def chp_scenario(table_collection, year, geo, weather_year=None):
 
     # values from heat balance
 
-    cb = reegis.energy_balance.get_conversion_balance_by_region(year, geo)
+    cb = energy_balance.get_conversion_balance_by_region(year, geo)
     cb.rename(columns={'re': cfg.get('chp', 'renewable_source')}, inplace=True)
     heat_b = reegis_powerplants.calculate_chp_share_and_efficiency(cb)
 
-    heat_demand = deflex.demand.get_heat_profiles_deflex(
+    heat_demand = demand.get_heat_profiles_deflex(
         year, geo, weather_year=weather_year)
     return chp_table(heat_b, heat_demand, table_collection)
 
@@ -328,15 +328,14 @@ def chp_table(heat_b, heat_demand, table_collection, regions=None):
 def powerplants_scenario(table_collection, year, round_values=None):
     """Get power plants for the scenario year
     """
-    pp = deflex.powerplants.get_deflex_pp_by_year(year,
-                                                  overwrite_capacity=True)
+    pp = powerplants.get_deflex_pp_by_year(year, overwrite_capacity=True)
     region_column = '{0}_region'.format(cfg.get('init', 'map'))
-    return powerplants(pp, table_collection, year, region_column,
-                       round_values)
+    return create_powerplants(pp, table_collection, year, region_column,
+                              round_values)
 
 
-def powerplants(pp, table_collection, year, region_column='deflex_region',
-                round_values=None):
+def create_powerplants(pp, table_collection, year,
+                       region_column='deflex_region', round_values=None):
     """This function works for all power plant tables with an equivalent
     structure e.g. power plants by state or other regions."""
     logging.info("Adding power plants to your scenario.")
@@ -439,8 +438,8 @@ def create_basic_scenario(year, rmap=None, path=None, csv_dir=None,
     table_collection = create_scenario(year, geo, round_values)
     table_collection = clean_time_series(table_collection)
     name = '{0}_{1}_{2}'.format('deflex', year, cfg.get('init', 'map'))
-    sce = deflex.scenario_tools.Scenario(table_collection=table_collection,
-                                         name=name, year=year)
+    sce = scenario_tools.Scenario(table_collection=table_collection,
+                                  name=name, year=year)
 
     if path is None:
         path = os.path.join(cfg.get('paths', 'scenario'), 'deflex', str(year))
@@ -480,13 +479,13 @@ def create_weather_variation_scenario(year, start=1998, rmap=None,
             weather_year, year, '**********************'))
         if rmap is not None:
             cfg.tmp_set('init', 'map', rmap)
-        table_collection = deflex.basic_scenario.create_scenario(
+        table_collection = create_scenario(
             year, geo, round_values, weather_year=weather_year)
         table_collection = clean_time_series(table_collection)
         name = '{0}_{1}_{2}_weather_{3}'.format(
             'deflex', year, cfg.get('init', 'map'), weather_year)
-        sce = deflex.scenario_tools.Scenario(table_collection=table_collection,
-                                             name=name, year=year)
+        sce = scenario_tools.Scenario(table_collection=table_collection,
+                                      name=name, year=year)
         path = os.path.join(cfg.get('paths', 'scenario'), 'deflex',
                             str(year) + '_var_entsoe')
         sce.to_excel(os.path.join(path, name + '.xls'))
