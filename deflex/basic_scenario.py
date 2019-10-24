@@ -26,6 +26,7 @@ import deflex.powerplants
 import deflex.demand
 import reegis.storages
 import reegis.coastdat
+from reegis import demand_elec
 import deflex.transmission
 import deflex.chp
 import deflex.scenario_tools
@@ -197,7 +198,8 @@ def scenario_elec_demand(year, table, geo, weather_year=None):
     else:
         demand_year = weather_year
 
-    df = deflex.demand.get_elec_profiles_deflex(demand_year, geo)
+    df = reegis.demand_elec.get_entsoe_profile_by_region(
+        geo, demand_year, geo.name, annual_demand='bmwi')
     df = pd.concat([df], axis=1, keys=['electrical_load']).swaplevel(0, 1, 1)
     df = df.reset_index(drop=True)
     if not calendar.isleap(year) and len(df) > 8760:

@@ -14,19 +14,9 @@ __license__ = "MIT"
 import os
 import logging
 
-# oemof libraries
-from oemof.tools import logger
-
 # internal modules
 from reegis import config as cfg
-from reegis import geometries
 from reegis import demand_heat
-from reegis import demand_elec
-
-
-def get_elec_profiles_deflex(year, deflex_geo):
-    return demand_elec.get_entsoe_profile_by_region(
-        deflex_geo, year, deflex_geo.name, annual_demand='bmwi')
 
 
 def get_heat_profiles_deflex(year, deflex_geo, time_index=None,
@@ -103,15 +93,4 @@ def get_heat_profiles_deflex(year, deflex_geo, time_index=None,
 
 
 if __name__ == "__main__":
-    logger.define_logging(screen_level=logging.ERROR,
-                          file_level=logging.ERROR)
-    deflex_map = cfg.get('init', 'map')
-
-    my_deflex_geo = geometries.load(
-        cfg.get('paths', 'geo_deflex'),
-        cfg.get('geometry', 'deflex_polygon').format(
-            type='polygon', map=deflex_map, suffix='reegis'))
-    my_deflex_geo = my_deflex_geo.set_index(
-        'DE' + my_deflex_geo.index.map(str).str.zfill(2))
-    my_deflex_geo.name = deflex_map
-    get_elec_profiles_deflex(2014, my_deflex_geo)
+    pass
