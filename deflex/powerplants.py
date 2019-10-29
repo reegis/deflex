@@ -22,83 +22,97 @@ from deflex import geometries
 # Todo: Revise and test.
 
 
-def pp_reegis2deflex():
-    filename_out = os.path.join(cfg.get('paths', 'powerplants'),
-                                cfg.get('powerplants', 'deflex_pp')).format(
-        map=cfg.get('init', 'map'))
+def pp_reegis2deflex(filename_in=None, filename_out=None):
+    """
+    Add federal states and deflex regions to powerplant table from reegis. As
+    the process takes a while the result is stored for further usage.
+
+    Returns
+    -------
+    str : The full path where the result file is stored.
+
+    """
+    if filename_out is None:
+        filename_out = os.path.join(
+            cfg.get('paths', 'powerplants'),
+            cfg.get('powerplants', 'deflex_pp')).format(
+                map=cfg.get('init', 'map'))
 
     # Add deflex regions to powerplants
     deflex_regions = geometries.deflex_regions()
     name = '{0}_region'.format(cfg.get('init', 'map'))
-    pp = powerplants.add_regions_to_powerplants(deflex_regions, name,
-                                                dump=False)
+    pp = powerplants.add_regions_to_powerplants(
+        deflex_regions, name, dump=False, filename=filename_in)
 
+    # Add federal states to powerplants
     federal_states = reegis_geometries.get_federal_states_polygon()
-
     pp = powerplants.add_regions_to_powerplants(
         federal_states, 'federal_states', pp=pp, dump=False)
 
-    # Remove PHES (storages)
-    if cfg.get('powerplants', 'remove_phes'):
-        pp = pp.loc[pp.technology != 'Pumped storage']
+    # store the results for further usage of deflex
+    pp.to_hdf(filename_out, 'pp')
+    return filename_out
 
+
+# def remove_onshore_technology_from_offshore_regions(df):
+#     """ This filter should be improved. It is slow and has to be adapted
+#     manually. Anyhow it seems to work this way."""
+#
+#     logging.info("Removing onshore technology from offshore regions.")
+#     logging.info("The code is not efficient. So it may take a while.")
+#
+#     offshore_regions = (
+#         cfg.get_dict_list('offshore_regions_set')[cfg.get('init', 'map')])
+#
+#     coast_regions = {'de02': {'MV': 'DE01',
+#                               'SH': 'DE01',
+#                               'NI': 'DE01 '},
+#                      'de17': {'MV': 'DE13',
+#                               'SH': 'DE01',
+#                               'NI': 'DE03'},
+#                      'de21': {'MV': 'DE01',
+#                               'SH': 'DE13',
+#                               'NI': 'DE14'},
+#                      'de22': {'MV': 'DE01',
+#                               'SH': 'DE13',
+#                               'NI': 'DE14'}}
+#     try:
+#         dc = coast_regions[cfg.get('init', 'map')]
+#     except KeyError:
+#         raise ValueError('Coast regions not defined for {0} model.'.format(
+#             cfg.get('init', 'map')))
+#
+#     region_column = '{0}_region'.format(cfg.get('init', 'map'))
+#
+#     for ttype in ['Solar', 'Bioenergy', 'Wind']:
+#         for region in offshore_regions:
+#             logging.debug("Clean {1} from {0}.".format(region, ttype))
+#
+#             c1 = df['energy_source_level_2'] == ttype
+#             c2 = df[region_column] == region
+#
+#             condition = c1 & c2
+#
+#             if ttype == 'Wind':
+#                 condition = c1 & c2 & (df['technology'] == 'Onshore')
+#
+#             for i, v in df.loc[condition].iterrows():
+#                 df.loc[i, region_column] = (
+#                     dc[df.loc[i, 'federal_states']])
+#     return df
+
+
+def process_pp_table(pp):
     # # Remove powerplants outside Germany
     # for state in cfg.get_list('powerplants', 'remove_states'):
     #     pp = pp.loc[pp.state != state]
     #
     # if clean_offshore:
     #     pp = remove_onshore_technology_from_offshore_regions(pp)
-
-    pp.to_hdf(filename_out, 'pp')
-    return filename_out
-
-
-def remove_onshore_technology_from_offshore_regions(df):
-    """ This filter should be improved. It is slow and has to be adapted
-    manually. Anyhow it seems to work this way."""
-
-    logging.info("Removing onshore technology from offshore regions.")
-    logging.info("The code is not efficient. So it may take a while.")
-
-    offshore_regions = (
-        cfg.get_dict_list('offshore_regions_set')[cfg.get('init', 'map')])
-
-    coast_regions = {'de02': {'MV': 'DE01',
-                              'SH': 'DE01',
-                              'NI': 'DE01 '},
-                     'de17': {'MV': 'DE13',
-                              'SH': 'DE01',
-                              'NI': 'DE03'},
-                     'de21': {'MV': 'DE01',
-                              'SH': 'DE13',
-                              'NI': 'DE14'},
-                     'de22': {'MV': 'DE01',
-                              'SH': 'DE13',
-                              'NI': 'DE14'}}
-    try:
-        dc = coast_regions[cfg.get('init', 'map')]
-    except KeyError:
-        raise ValueError('Coast regions not defined for {0} model.'.format(
-            cfg.get('init', 'map')))
-
-    region_column = '{0}_region'.format(cfg.get('init', 'map'))
-
-    for ttype in ['Solar', 'Bioenergy', 'Wind']:
-        for region in offshore_regions:
-            logging.debug("Clean {1} from {0}.".format(region, ttype))
-
-            c1 = df['energy_source_level_2'] == ttype
-            c2 = df[region_column] == region
-
-            condition = c1 & c2
-
-            if ttype == 'Wind':
-                condition = c1 & c2 & (df['technology'] == 'Onshore')
-
-            for i, v in df.loc[condition].iterrows():
-                df.loc[i, region_column] = (
-                    dc[df.loc[i, 'federal_states']])
-    return df
+    # Remove PHES (storages)
+    if cfg.get('powerplants', 'remove_phes'):
+        pp = pp.loc[pp.technology != 'Pumped storage']
+    return pp
 
 
 def get_deflex_pp_by_year(year, overwrite_capacity=False):
@@ -124,6 +138,9 @@ def get_deflex_pp_by_year(year, overwrite_capacity=False):
         logging.debug(msg.format(filename))
         filename = pp_reegis2deflex()
     pp = pd.DataFrame(pd.read_hdf(filename, 'pp', mode='r'))
+
+    # Remove unwanted data sets
+    pp = process_pp_table(pp)
 
     filter_columns = ['capacity_{0}', 'capacity_in_{0}']
 
