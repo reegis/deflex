@@ -18,6 +18,8 @@ setup(
     long_description=read('README.rst'),
     packages=find_packages(),
     package_dir={'deflex': 'deflex'},
+    extras_require={
+          'dev': ['nose', 'sphinx', 'sphinx_rtd_theme']},
     install_requires=[
         'oemof >= 0.3.0',
         'pandas >= 0.17.0',
