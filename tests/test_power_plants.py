@@ -1,6 +1,7 @@
 import os
 import requests
-from nose.tools import eq_
+from nose.tools import eq_, assert_raises_regexp
+from unittest.mock import MagicMock
 from deflex import config as cfg
 from deflex import powerplants
 
@@ -37,5 +38,14 @@ def test_03_download_deflex_full_pp():
 
 
 def test_04_deflex_power_plants_by_year():
-    pp = powerplants.get_deflex_pp_by_year(2014)
-    eq_(int(pp['capacity'].sum()), 219696)
+    pp = powerplants.get_deflex_pp_by_year(2014, overwrite_capacity=True)
+    eq_(int(pp['capacity'].sum()), 175615)
+
+
+def test_05_not_existing_file():
+    cfg.tmp_set('paths', 'powerplants', '/home/pet/')
+    powerplants.pp_reegis2deflex = MagicMock(return_value='/home/pet/pp.h5')
+
+    with assert_raises_regexp(Exception,
+                              "File /home/pet/pp.h5 does not exist"):
+        powerplants.get_deflex_pp_by_year(2012)
