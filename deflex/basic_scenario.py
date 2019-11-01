@@ -231,7 +231,7 @@ def chp_scenario(table_collection, year, geo, weather_year=None):
 
     # values from heat balance
 
-    cb = energy_balance.get_conversion_balance_by_region(year, geo)
+    cb = energy_balance.get_transformation_balance_by_region(year, geo)
     cb.rename(columns={'re': cfg.get('chp', 'renewable_source')}, inplace=True)
     heat_b = reegis_powerplants.calculate_chp_share_and_efficiency(cb)
 
