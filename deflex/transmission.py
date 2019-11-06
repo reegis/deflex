@@ -71,6 +71,21 @@ def get_electrical_transmission_default():
 
 
 def get_electrical_transmission_renpass():
+    """
+    Calculate the capacity of the transmission lines for the de21 map from
+    the ranpass data using the renpass methods.
+
+    Cite:
+        Mehtod: renpass F.Wiese (page 49)
+        Database: ...
+
+    Returns
+    -------
+
+    Examples
+    --------
+
+    """
     f_security = cfg.get('transmission', 'security_factor')
     current_max = cfg.get('transmission', 'current_max')
 

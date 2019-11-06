@@ -77,7 +77,7 @@ readme_file = timeseries_readme.md
 json_file = timeseries_datapackage.json
 
 [heating]
-table = decentralised_heating.csv
+table = scenario_decentralised_heat.csv
 
 [demand]
 ego_file_deflex = oep_ego_demand_{map}.h5

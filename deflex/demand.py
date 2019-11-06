@@ -19,7 +19,7 @@ from reegis import config as cfg
 from reegis import demand_heat
 
 
-def get_heat_profiles_deflex(year, deflex_geo, time_index=None,
+def get_heat_profiles_deflex(deflex_geo, year, time_index=None,
                              weather_year=None, keep_unit=False):
     """
 
@@ -49,7 +49,7 @@ def get_heat_profiles_deflex(year, deflex_geo, time_index=None,
         'heat_profiles_{year}_{map}'.format(year=year, map=deflex_geo.name))
 
     demand_region = demand_heat.get_heat_profiles_by_region(
-        year, deflex_geo, to_csv=fn, weather_year=weather_year).groupby(
+        deflex_geo, year, to_csv=fn, weather_year=weather_year).groupby(
             level=[0, 1], axis=1).sum()
 
     # Decentralised demand is combined to a nation-wide demand if not part

@@ -34,34 +34,34 @@ from deflex import geometries
 from deflex import config as cfg
 
 
-def create_scenario(year, geo, round_values, weather_year=None):
+def create_scenario(regions, year, name, round_values=True, weather_year=None):
     table_collection = {}
 
     logging.info('BASIC SCENARIO - STORAGES')
-    table_collection['storages'] = scenario_storages(geo)
+    table_collection['storages'] = scenario_storages(regions, year, name)
 
     logging.info('BASIC SCENARIO - POWER PLANTS')
-    table_collection = powerplants_scenario(
-        table_collection, year, round_values)
+    table_collection = scenario_powerplants(
+        table_collection, regions, year, name, round_values)
 
     logging.info('BASIC SCENARIO - TRANSMISSION')
     table_collection['transmission'] = scenario_transmission(table_collection)
 
     logging.info('BASIC SCENARIO - CHP PLANTS')
-    table_collection = chp_scenario(table_collection, year, geo,
+    table_collection = scenario_chp(table_collection, regions, year, name,
                                     weather_year=weather_year)
 
     logging.info('BASIC SCENARIO - DECENTRALISED HEAT')
-    table_collection['decentralised_heating'] = decentralised_heating()
+    table_collection['decentralised_heat'] = scenario_decentralised_heat()
 
     logging.info('BASIC SCENARIO - SOURCES')
-    table_collection = create_commodity_sources(year, table_collection)
+    table_collection = scenario_commodity_sources(year, table_collection)
     table_collection['volatile_series'] = scenario_feedin(
-        year, weather_year=weather_year)
+        regions, year, name, weather_year=weather_year)
 
     logging.info('BASIC SCENARIO - DEMAND')
     table_collection['demand_series'] = scenario_demand(
-        year, geo, weather_year=weather_year)
+        regions, year, name, weather_year=weather_year)
     return table_collection
 
 
@@ -96,10 +96,9 @@ def scenario_transmission(table_collection):
     return elec_trans
 
 
-def scenario_storages(regions):
-    name = '{0}_region'.format(cfg.get('init', 'map'))
-    stor = storages.pumped_hydroelectric_storage(
-        regions, name).transpose()
+def scenario_storages(regions, year, name):
+    stor = storages.pumped_hydroelectric_storage_by_region(
+        regions, year, name).transpose()
     return pd.concat([stor], axis=1, keys=['phes']).swaplevel(0, 1, 1)
 
 
@@ -129,8 +128,8 @@ def add_pp_limit(table_collection, year):
     return table_collection
 
 
-def create_commodity_sources(year, table_collection):
-    commodity_src = scenario_commodity_sources(year)
+def scenario_commodity_sources(year, table_collection):
+    commodity_src = create_commodity_sources(year)
     commodity_src = commodity_src.swaplevel().unstack()
 
     msg = ("The unit for {0} of the source is '{1}'. "
@@ -162,7 +161,7 @@ def create_commodity_sources(year, table_collection):
     return table_collection
 
 
-def scenario_commodity_sources(year, use_znes_2014=True):
+def create_commodity_sources(year, use_znes_2014=True):
     cs = commodity_sources.get_commodity_sources()
     rename_cols = {key.lower(): value for key, value in
                    cfg.get_dict('source_names').items()}
@@ -178,29 +177,29 @@ def scenario_commodity_sources(year, use_znes_2014=True):
     return cs_year
 
 
-def scenario_demand(year, geo, weather_year=None):
-    demand_series = scenario_elec_demand(year, pd.DataFrame(), geo,
+def scenario_demand(regions, year, name, weather_year=None):
+    demand_series = scenario_elec_demand(pd.DataFrame(), regions, year, name,
                                          weather_year=weather_year)
-    demand_series = scenario_heat_demand(year, demand_series, geo,
+    demand_series = scenario_heat_demand(demand_series, regions, year,
                                          weather_year=weather_year)
     return demand_series
 
 
-def scenario_heat_demand(year, table, geo, weather_year=None):
+def scenario_heat_demand(table, regions, year, weather_year=None):
     idx = table.index  # Use the index of the existing time series
     table = pd.concat([table, demand.get_heat_profiles_deflex(
-        year, geo, idx, weather_year=weather_year)], axis=1)
+        regions, year, idx, weather_year=weather_year)], axis=1)
     return table.sort_index(1)
 
 
-def scenario_elec_demand(year, table, geo, weather_year=None):
+def scenario_elec_demand(table, regions, year, name, weather_year=None):
     if weather_year is None:
         demand_year = year
     else:
         demand_year = weather_year
 
     df = demand_elec.get_entsoe_profile_by_region(
-        geo, demand_year, geo.name, annual_demand='bmwi')
+        regions, demand_year, name, annual_demand='bmwi')
     df = pd.concat([df], axis=1, keys=['electrical_load']).swaplevel(0, 1, 1)
     df = df.reset_index(drop=True)
     if not calendar.isleap(year) and len(df) > 8760:
@@ -208,35 +207,34 @@ def scenario_elec_demand(year, table, geo, weather_year=None):
     return pd.concat([table, df], axis=1).sort_index(1)
 
 
-def scenario_feedin(year, weather_year=None):
-    name = '{0}_region'.format(cfg.get('init', 'map'))
+def scenario_feedin(regions, year, name, weather_year=None):
     wy = weather_year
     try:
         feedin = coastdat.scenario_feedin(year, name, weather_year=wy)
     except FileNotFoundError:
-        d_regions = geometries.deflex_regions()
         coastdat.get_feedin_per_region(
-            year, d_regions, name, weather_year=wy)
+            year, regions, name, weather_year=wy)
         feedin = coastdat.scenario_feedin(year, name, weather_year=wy)
     return feedin
 
 
-def decentralised_heating():
+def scenario_decentralised_heat():
     filename = os.path.join(cfg.get('paths', 'data_deflex'),
                             cfg.get('heating', 'table'))
     return pd.read_csv(filename, header=[0, 1], index_col=[0])
 
 
-def chp_scenario(table_collection, year, geo, weather_year=None):
+def scenario_chp(table_collection, regions, year, name, weather_year=None):
 
     # values from heat balance
 
-    cb = energy_balance.get_transformation_balance_by_region(year, geo)
+    cb = energy_balance.get_transformation_balance_by_region(
+        regions, year, name)
     cb.rename(columns={'re': cfg.get('chp', 'renewable_source')}, inplace=True)
     heat_b = reegis_powerplants.calculate_chp_share_and_efficiency(cb)
 
     heat_demand = demand.get_heat_profiles_deflex(
-        year, geo, weather_year=weather_year)
+        year, regions, weather_year=weather_year)
     return chp_table(heat_b, heat_demand, table_collection)
 
 
@@ -325,13 +323,12 @@ def chp_table(heat_b, heat_demand, table_collection, regions=None):
     return table_collection
 
 
-def powerplants_scenario(table_collection, year, round_values=None):
+def scenario_powerplants(table_collection, regions, year, name, round_values):
     """Get power plants for the scenario year
     """
-    pp = powerplants.get_deflex_pp_by_year(year, overwrite_capacity=True)
-    region_column = '{0}_region'.format(cfg.get('init', 'map'))
-    return create_powerplants(pp, table_collection, year, region_column,
-                              round_values)
+    pp = powerplants.get_deflex_pp_by_year(regions, year, name,
+                                           overwrite_capacity=True)
+    return create_powerplants(pp, table_collection, year, name, round_values)
 
 
 def create_powerplants(pp, table_collection, year,
