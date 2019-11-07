@@ -74,8 +74,8 @@ def get_electrical_transmission_default(rmap=None, power_lines=None,
 
     Returns
     -------
-    pd.DataFrame : Transmission capacity, distance and efficiency between
-        regions.
+    pd.DataFrame
+        Transmission capacity, distance and efficiency between regions
 
     Examples
     --------
@@ -124,8 +124,9 @@ def get_electrical_transmission_renpass(both_directions=False):
     the renpass database. The original table of the reegis database is
     transferred to a csv file, which is part of the reegis package. As renpass
     is deprecated it will not change in the future. The index uses the format
-    'region1-region2'. The distance is taken from centroid to centroid. Every
-    region pair exists only once.
+    'region1-region2'. The distance is taken from centroid to centroid. By
+    default every region pair exists only once. It is possible to get an entry
+    in both directions if the parameter `both_directions` is set True.
 
     The capacity calculation is taken from the description of the renpass
     package [1]_. The data is taken from the renpass database [2]_.
@@ -139,7 +140,8 @@ def get_electrical_transmission_renpass(both_directions=False):
 
     Returns
     -------
-    pd.DataFrame : Transmission capacity and distance between regions.
+    pd.DataFrame
+        Transmission capacity and distance between regions
 
     References
     ----------
@@ -147,6 +149,7 @@ def get_electrical_transmission_renpass(both_directions=False):
         System – Open Source as an approach to meet challenges in energy
         modeling“. Diss. University of Flensburg. URL :
         https://www.reiner-lemoine-stiftung.de/pdf/dissertationen/Dissertation_Frauke_Wiese.pdf.
+        (page 49)
     .. [2] Wiese, F.: Renpass - Renewable Energy Pathways Simulation System,
         https://github.com/fraukewiese/renpass
 
@@ -174,7 +177,6 @@ def get_electrical_transmission_renpass(both_directions=False):
         cfg.get('paths', 'data_deflex'),
         cfg.get('transmission', 'transmission_renpass')))
 
-    # renpass F.Wiese (page 49)
     grid['capacity_calc'] = (grid.circuits * current_max * grid.voltage *
                              f_security * math.sqrt(3) / 1000)
 
