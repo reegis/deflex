@@ -34,7 +34,8 @@ from deflex import geometries
 from deflex import config as cfg
 
 
-def create_scenario(regions, year, name, round_values=True, weather_year=None):
+def create_scenario(regions, year, name, round_values=True, weather_year=None,
+                    cupper_plate=False):
     table_collection = {}
 
     logging.info('BASIC SCENARIO - STORAGES')
@@ -45,7 +46,8 @@ def create_scenario(regions, year, name, round_values=True, weather_year=None):
         table_collection, regions, year, name, round_values)
 
     logging.info('BASIC SCENARIO - TRANSMISSION')
-    table_collection['transmission'] = scenario_transmission(table_collection)
+    table_collection['transmission'] = scenario_transmission(
+        table_collection, regions, name, cupper_plate=cupper_plate)
 
     logging.info('BASIC SCENARIO - CHP PLANTS')
     table_collection = scenario_chp(table_collection, regions, year, name,
@@ -65,15 +67,66 @@ def create_scenario(regions, year, name, round_values=True, weather_year=None):
     return table_collection
 
 
-def scenario_transmission(table_collection):
+def scenario_storages(regions, year, name):
+    stor = storages.pumped_hydroelectric_storage_by_region(
+        regions, year, name).transpose()
+    return pd.concat([stor], axis=1, keys=['phes']).swaplevel(0, 1, 1)
+
+
+def scenario_powerplants(table_collection, regions, year, name, round_values):
+    """Get power plants for the scenario year
+    """
+    pp = powerplants.get_deflex_pp_by_year(regions, year, name,
+                                           overwrite_capacity=True)
+    return create_powerplants(pp, table_collection, year, name, round_values)
+
+
+def create_powerplants(pp, table_collection, year,
+                       region_column='deflex_region', round_values=None):
+    """This function works for all power plant tables with an equivalent
+    structure e.g. power plants by state or other regions."""
+    logging.info("Adding power plants to your scenario.")
+
+    replace_names = cfg.get_dict('source_names')
+    replace_names.update(cfg.get_dict('source_groups'))
+
+    pp['energy_source_level_2'].replace(replace_names, inplace=True)
+
+    pp['model_classes'] = pp['energy_source_level_2'].replace(
+        cfg.get_dict('model_classes'))
+
+    pp = pp.groupby(
+        ['model_classes', region_column, 'energy_source_level_2']).sum()[
+        ['capacity', 'capacity_in']]
+
+    for model_class in pp.index.get_level_values(level=0).unique():
+        pp_class = pp.loc[model_class]
+        if model_class != 'volatile_source':
+            pp_class['efficiency'] = (pp_class['capacity'] /
+                                      pp_class['capacity_in'] * 100)
+        del pp_class['capacity_in']
+        if round_values is not None:
+            pp_class = pp_class.round(round_values)
+        if 'efficiency' in pp_class:
+            pp_class['efficiency'] = pp_class['efficiency'].div(100)
+        pp_class = pp_class.transpose()
+        pp_class.index.name = 'parameter'
+        table_collection[model_class] = pp_class
+    table_collection = add_pp_limit(table_collection, year)
+    return table_collection
+
+
+def scenario_transmission(table_collection, regions, name, cupper_plate=False):
     vs = table_collection['volatile_source']
 
     # This should be done automatic e.g. if representative point outside the
     # landmass polygon.
-    offshore_regions = (
-        cfg.get_dict_list('offshore_regions_set')[cfg.get('init', 'map')])
+    offshore_regions = geometries.divide_off_and_onshore(regions)
 
-    elec_trans = transmission.get_electrical_transmission_deflex()
+    if name in ['de21', 'de22']:
+        elec_trans = transmission.get_electrical_transmission_renpass()
+    else:
+        elec_trans = transmission.get_electrical_transmission_default()
 
     # Set transmission capacity of offshore power lines to installed capacity
     # Multiply the installed capacity with 1.1 to get a buffer of 10%.
@@ -94,12 +147,6 @@ def scenario_transmission(table_collection):
         elec_trans.loc['DE22-DE01', ('electrical', 'efficiency')] = 0.9999
         elec_trans.loc['DE22-DE01', ('electrical', 'capacity')] = 9999999
     return elec_trans
-
-
-def scenario_storages(regions, year, name):
-    stor = storages.pumped_hydroelectric_storage_by_region(
-        regions, year, name).transpose()
-    return pd.concat([stor], axis=1, keys=['phes']).swaplevel(0, 1, 1)
 
 
 def add_pp_limit(table_collection, year):
@@ -320,49 +367,6 @@ def chp_table(heat_b, heat_demand, table_collection, regions=None):
     trsf[trsf < 0] = 0
 
     table_collection['transformer'] = trsf
-    return table_collection
-
-
-def scenario_powerplants(table_collection, regions, year, name, round_values):
-    """Get power plants for the scenario year
-    """
-    pp = powerplants.get_deflex_pp_by_year(regions, year, name,
-                                           overwrite_capacity=True)
-    return create_powerplants(pp, table_collection, year, name, round_values)
-
-
-def create_powerplants(pp, table_collection, year,
-                       region_column='deflex_region', round_values=None):
-    """This function works for all power plant tables with an equivalent
-    structure e.g. power plants by state or other regions."""
-    logging.info("Adding power plants to your scenario.")
-
-    replace_names = cfg.get_dict('source_names')
-    replace_names.update(cfg.get_dict('source_groups'))
-
-    pp['energy_source_level_2'].replace(replace_names, inplace=True)
-
-    pp['model_classes'] = pp['energy_source_level_2'].replace(
-        cfg.get_dict('model_classes'))
-
-    pp = pp.groupby(
-        ['model_classes', region_column, 'energy_source_level_2']).sum()[
-        ['capacity', 'capacity_in']]
-
-    for model_class in pp.index.get_level_values(level=0).unique():
-        pp_class = pp.loc[model_class]
-        if model_class != 'volatile_source':
-            pp_class['efficiency'] = (pp_class['capacity'] /
-                                      pp_class['capacity_in'] * 100)
-        del pp_class['capacity_in']
-        if round_values is not None:
-            pp_class = pp_class.round(round_values)
-        if 'efficiency' in pp_class:
-            pp_class['efficiency'] = pp_class['efficiency'].div(100)
-        pp_class = pp_class.transpose()
-        pp_class.index.name = 'parameter'
-        table_collection[model_class] = pp_class
-    table_collection = add_pp_limit(table_collection, year)
     return table_collection
 
 
