@@ -143,11 +143,11 @@ def get_electrical_transmission_renpass(both_directions=False):
 
     References
     ----------
-    .. [1] Wiese, Frauke (2015). „Renewable Energy Pathways Simulation System
-      – Open Source as an approach to meet challenges in energy modeling“.
-       Diss. University of Flensburg. URL :
-       https://www.reiner-lemoine-stiftung.de/pdf/dissertationen
-       /Dissertation_Frauke_Wiese.pdf.
+    .. [1] Wiese, Frauke (2015). „Renewable Energy Pathways Simulation
+        System – Open Source as an approach to meet challenges in energy
+        modeling“. Diss. University of Flensburg. URL :
+        https://www.reiner-lemoine-stiftung.de/pdf/dissertationen
+        /Dissertation_Frauke_Wiese.pdf.
     .. [2] Wiese, F.: Renpass - Renewable Energy Pathways Simulation System,
         https://github.com/fraukewiese/renpass
 
