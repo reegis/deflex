@@ -120,15 +120,15 @@ def divide_off_and_onshore(regions):
     """
     region_type = namedtuple('RegionType', 'offshore onshore')
     regions.geometry = regions.centroid
-    # print(regions)
+
     germany_onshore = geo.load(
         cfg.get('paths', 'geometry'),
         cfg.get('geometry', 'germany_polygon'))
-    print(cfg.get('paths', 'geometry'),
-        cfg.get('geometry', 'germany_polygon'))
+
     gdf = geo.spatial_join_with_buffer(regions, germany_onshore,
                                        'onshore', limit=0)
-    # print(gdf)
+
     onshore = list(gdf.loc[gdf.onshore == 0].index)
     offshore = list(gdf.loc[gdf.onshore == 'unknown'].index)
+
     return region_type(offshore=offshore, onshore=onshore)
