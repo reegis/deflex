@@ -11,7 +11,6 @@ scenario = local_root, scenarios
 deflex_feedin = local_root, data, feedin, {map}_region, {year}
 
 [geometry]
-germany_polygon = germany_polygon.csv
 deflex_polygon = region_{type}_{map}_{suffix}.csv
 region_polygon_simple = region_polygons_{map}_simple.csv
 region_label = region_labels_{map}.csv
