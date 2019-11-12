@@ -35,7 +35,7 @@ from deflex import config as cfg
 
 
 def create_scenario(regions, year, name, round_values=True, weather_year=None,
-                    cupper_plate=False):
+                    copperplate=False):
     table_collection = {}
 
     logging.info('BASIC SCENARIO - STORAGES')
@@ -47,7 +47,7 @@ def create_scenario(regions, year, name, round_values=True, weather_year=None,
 
     logging.info('BASIC SCENARIO - TRANSMISSION')
     table_collection['transmission'] = scenario_transmission(
-        table_collection, regions, name, cupper_plate=cupper_plate)
+        table_collection, regions, name, copperplate=copperplate)
 
     logging.info('BASIC SCENARIO - CHP PLANTS')
     table_collection = scenario_chp(table_collection, regions, year, name,
@@ -57,7 +57,7 @@ def create_scenario(regions, year, name, round_values=True, weather_year=None,
     table_collection['decentralised_heat'] = scenario_decentralised_heat()
 
     logging.info('BASIC SCENARIO - SOURCES')
-    table_collection = scenario_commodity_sources(year, table_collection)
+    table_collection = scenario_commodity_sources(table_collection, year)
     table_collection['volatile_series'] = scenario_feedin(
         regions, year, name, weather_year=weather_year)
 
@@ -68,6 +68,30 @@ def create_scenario(regions, year, name, round_values=True, weather_year=None,
 
 
 def scenario_storages(regions, year, name):
+    """
+    Fetch storage, pump and turbine capacity and their efficiency of
+    hydroelectric storages for each deflex region.
+
+    Parameters
+    ----------
+    regions
+    year
+    name
+
+    Returns
+    -------
+
+    Examples
+    --------
+    >>> regions = geometries.deflex_regions(rmap='de17')
+    >>> deflex_storages = scenario_storages(regions, 2012, 'de17')
+    >>> list(deflex_storages.columns.get_level_values(0))
+    ['DE01', 'DE03', 'DE05', 'DE06', 'DE08', 'DE09', 'DE14', 'DE15', 'DE16']
+    >>> int(deflex_storages.loc['turbine', 'DE03'])
+    220
+    >>> int(deflex_storages.loc['energy', 'DE16'])
+    12115
+    """
     stor = storages.pumped_hydroelectric_storage_by_region(
         regions, year, name).transpose()
     return pd.concat([stor], axis=1, keys=['phes']).swaplevel(0, 1, 1)
@@ -75,6 +99,17 @@ def scenario_storages(regions, year, name):
 
 def scenario_powerplants(table_collection, regions, year, name, round_values):
     """Get power plants for the scenario year
+
+    Examples
+    --------
+    >>> regions = geometries.deflex_regions(rmap='de21')
+    >>> pp = scenario_powerplants(
+    ...     dict(), regions, 2014, 'de21', 1)  # doctest: +SKIP
+    >>> float(pp['volatile_source']['DE03', 'wind'])  # doctest: +SKIP
+    3052.8
+    >>> float(pp['transformer'].loc[
+    ...     'capacity', ('DE03', 'lignite')])  # doctest: +SKIP
+    1135.6
     """
     pp = powerplants.get_deflex_pp_by_year(regions, year, name,
                                            overwrite_capacity=True)
@@ -116,40 +151,18 @@ def create_powerplants(pp, table_collection, year,
     return table_collection
 
 
-def scenario_transmission(table_collection, regions, name, cupper_plate=False):
-    vs = table_collection['volatile_source']
-
-    # This should be done automatic e.g. if representative point outside the
-    # landmass polygon.
-    offshore_regions = geometries.divide_off_and_onshore(regions)
-
-    if name in ['de21', 'de22']:
-        elec_trans = transmission.get_electrical_transmission_renpass()
-    else:
-        elec_trans = transmission.get_electrical_transmission_default()
-
-    # Set transmission capacity of offshore power lines to installed capacity
-    # Multiply the installed capacity with 1.1 to get a buffer of 10%.
-    for offreg in offshore_regions:
-        elec_trans.loc[elec_trans.index.str.contains(offreg), 'capacity'] = (
-            vs[offreg].sum().sum() * 1.1)
-
-    elec_trans = (
-        pd.concat([elec_trans], axis=1, keys=['electrical']).sort_index(1))
-    general_efficiency = cfg.get('transmission', 'general_efficiency')
-    if general_efficiency is not None:
-        elec_trans['electrical', 'efficiency'] = general_efficiency
-    else:
-        msg = ("The calculation of the efficiency by distance is not yet "
-               "implemented")
-        raise NotImplementedError(msg)
-    if cfg.get('init', 'map') == 'de22':
-        elec_trans.loc['DE22-DE01', ('electrical', 'efficiency')] = 0.9999
-        elec_trans.loc['DE22-DE01', ('electrical', 'capacity')] = 9999999
-    return elec_trans
-
-
 def add_pp_limit(table_collection, year):
+    """
+
+    Parameters
+    ----------
+    table_collection
+    year
+
+    Returns
+    -------
+
+    """
     if len(cfg.get_dict('limited_transformer').keys()) > 0:
         # Multiply with 1000 to get MWh (bmwi: GWh)
         repp = bmwi.bmwi_re_energy_capacity() * 1000
@@ -175,7 +188,91 @@ def add_pp_limit(table_collection, year):
     return table_collection
 
 
-def scenario_commodity_sources(year, table_collection):
+def scenario_transmission(table_collection, regions, name, copperplate=False):
+    """Get power plants for the scenario year
+
+    Examples
+    --------
+    >>> regions = geometries.deflex_regions(rmap='de21')  # doctest: +SKIP
+    >>> pp = scenario_powerplants(dict(), regions, 2014, 'de21', 1
+    ...     )  # doctest: +SKIP
+    >>> lines = scenario_transmission(pp, regions, 'de21')  # doctest: +SKIP
+    >>> int(lines.loc['DE07-DE05', ('electrical', 'capacity')]
+    ...     )  # doctest: +SKIP
+    1978
+    >>> int(lines.loc['DE07-DE05', ('electrical', 'distance')]
+    ...     )  # doctest: +SKIP
+    199
+    >>> float(lines.loc['DE07-DE05', ('electrical', 'efficiency')]
+    ...     )  # doctest: +SKIP
+    0.9
+    >>> lines = scenario_transmission(pp, regions, 'de21', copperplate=True
+    ...     )  # doctest: +SKIP
+    >>> float(lines.loc['DE07-DE05', ('electrical', 'capacity')]
+    ...     )  # doctest: +SKIP
+    inf
+    >>> float(lines.loc['DE07-DE05', ('electrical', 'distance')]
+    ...     )  # doctest: +SKIP
+    nan
+    >>> float(lines.loc['DE07-DE05', ('electrical', 'efficiency')]
+    ...     )  # doctest: +SKIP
+    1.0
+    """
+    vs = table_collection['volatile_source']
+
+    # This should be done automatic e.g. if representative point outside the
+    # landmass polygon.
+    offshore_regions = geometries.divide_off_and_onshore(regions).offshore
+
+    if name in ['de21', 'de22'] and not copperplate:
+        elec_trans = transmission.get_electrical_transmission_renpass()
+        general_efficiency = cfg.get('transmission', 'general_efficiency')
+        if general_efficiency is not None:
+            elec_trans['efficiency'] = general_efficiency
+        else:
+            msg = ("The calculation of the efficiency by distance is not yet "
+                   "implemented")
+            raise NotImplementedError(msg)
+    else:
+        elec_trans = transmission.get_electrical_transmission_default()
+
+    # Set transmission capacity of offshore power lines to installed capacity
+    # Multiply the installed capacity with 1.1 to get a buffer of 10%.
+    for offreg in offshore_regions:
+        elec_trans.loc[elec_trans.index.str.contains(offreg), 'capacity'] = (
+            vs[offreg].sum().sum() * 1.1)
+
+    elec_trans = (
+        pd.concat([elec_trans], axis=1, keys=['electrical']).sort_index(1))
+    if cfg.get('init', 'map') == 'de22':
+        elec_trans.loc['DE22-DE01', ('electrical', 'efficiency')] = 0.9999
+        elec_trans.loc['DE22-DE01', ('electrical', 'capacity')] = 9999999
+    return elec_trans
+
+
+def scenario_commodity_sources(table_collection, year):
+    """
+
+    Parameters
+    ----------
+    year
+    table_collection
+
+    Returns
+    -------
+
+    Examples
+    --------
+    >>> regions = geometries.deflex_regions(rmap='de21')  # doctest: +SKIP
+    >>> pp = scenario_powerplants(dict(), regions, 2014, 'de21', 1
+    ...     )  # doctest: +SKIP
+    >>> src = scenario_commodity_sources(pp, 2014)  # doctest: +SKIP
+    >>> src = src['commodity_source']  # doctest: +SKIP
+    >>> round(src.loc['costs', ('DE', 'hard coal')], 2)  # doctest: +SKIP
+    8.93
+    >>> round(src.loc['emission',  ('DE', 'natural gas')], 2)  # doctest: +SKIP
+    201.24
+    """
     commodity_src = create_commodity_sources(year)
     commodity_src = commodity_src.swaplevel().unstack()
 
@@ -209,6 +306,17 @@ def scenario_commodity_sources(year, table_collection):
 
 
 def create_commodity_sources(year, use_znes_2014=True):
+    """
+
+    Parameters
+    ----------
+    year
+    use_znes_2014
+
+    Returns
+    -------
+
+    """
     cs = commodity_sources.get_commodity_sources()
     rename_cols = {key.lower(): value for key, value in
                    cfg.get_dict('source_names').items()}
@@ -225,6 +333,28 @@ def create_commodity_sources(year, use_znes_2014=True):
 
 
 def scenario_demand(regions, year, name, weather_year=None):
+    """
+
+    Parameters
+    ----------
+    regions
+    year
+    name
+    weather_year
+
+    Returns
+    -------
+
+    Examples
+    --------
+    >>> regions = geometries.deflex_regions(rmap='de21')  # doctest: +SKIP
+    >>> my_demand = scenario_demand(regions, 2014, 'de21')  # doctest: +SKIP
+    >>> int(my_demand['DE01', 'district heating'].sum())  # doctest: +SKIP
+    18639262
+    >>> int(my_demand['DE05', 'electrical_load'].sum())  # doctest: +SKIP
+    10069
+
+    """
     demand_series = scenario_elec_demand(pd.DataFrame(), regions, year, name,
                                          weather_year=weather_year)
     demand_series = scenario_heat_demand(demand_series, regions, year,
@@ -255,6 +385,35 @@ def scenario_elec_demand(table, regions, year, name, weather_year=None):
 
 
 def scenario_feedin(regions, year, name, weather_year=None):
+    """
+
+    Parameters
+    ----------
+    regions
+    year
+    name
+    weather_year
+
+    Returns
+    -------
+
+    Examples
+    --------
+    >>> regions = geometries.deflex_regions(rmap='de21')  # doctest: +SKIP
+    >>> f = scenario_feedin(regions, 2014, 'de21')  # doctest: +SKIP
+    >>> f['DE01'].sum()  # doctest: +SKIP
+    geothermal    4380.000000
+    hydro         1346.632529
+    solar          913.652083
+    wind          2152.983589
+    dtype: float64
+    >>> f['DE16'].sum()
+    geothermal    4380.000000
+    hydro         1346.632529
+    solar          903.527200
+    wind          1753.673492
+    dtype: float64
+    """
     wy = weather_year
     try:
         feedin = coastdat.scenario_feedin(year, name, weather_year=wy)
@@ -272,7 +431,35 @@ def scenario_decentralised_heat():
 
 
 def scenario_chp(table_collection, regions, year, name, weather_year=None):
+    """
 
+    Parameters
+    ----------
+    table_collection
+    regions
+    year
+    name
+    weather_year
+
+    Returns
+    -------
+
+    Examples
+    --------
+    >>> regions = geometries.deflex_regions(rmap='de21')  # doctest: +SKIP
+    >>> pp = scenario_powerplants(dict(), regions, 2014, 'de21', 1
+    ...     )  # doctest: +SKIP
+    >>> int(pp['transformer'].loc['capacity', ('DE01', 'hard coal')]
+    ...     )  # doctest: +SKIP
+    1291
+    >>> transf = scenario_chp(pp, regions, 2014, 'de21')  # doctest: +SKIP
+    >>> transf = transf['transformer']  # doctest: +SKIP
+    >>> int(transf.loc['capacity', ('DE01', 'hard coal')])  # doctest: +SKIP
+    485
+    >>> int(transf.loc['capacity_elec_chp', ('DE01', 'hard coal')]
+    ...     )  # doctest: +SKIP
+    806
+    """
     # values from heat balance
 
     cb = energy_balance.get_transformation_balance_by_region(
@@ -281,7 +468,7 @@ def scenario_chp(table_collection, regions, year, name, weather_year=None):
     heat_b = reegis_powerplants.calculate_chp_share_and_efficiency(cb)
 
     heat_demand = demand.get_heat_profiles_deflex(
-        year, regions, weather_year=weather_year)
+        regions, year, weather_year=weather_year)
     return chp_table(heat_b, heat_demand, table_collection)
 
 
