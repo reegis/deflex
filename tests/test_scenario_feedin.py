@@ -1,7 +1,6 @@
 import os
-import requests
-from nose.tools import eq_, assert_raises_regexp, with_setup
-from unittest.mock import MagicMock
+from shutil import copyfile
+from nose.tools import with_setup, eq_
 from deflex import config as cfg, basic_scenario, geometries
 from reegis.tools import download_file
 
@@ -24,10 +23,16 @@ def setup_func():
         os.makedirs(path, exist_ok=True)
         download_file(filename, url)
 
+    src = os.path.join(os.path.dirname(__file__), 'data', 'windzone_de21.csv')
+    trg = os.path.join(cfg.get('paths', 'powerplants'), 'windzone_de21.csv')
+    copyfile(src, trg)
+
 
 @with_setup(setup_func)
 def scenario_feedin_test():
+    cfg.tmp_set('init', 'map', 'de21')
     regions = geometries.deflex_regions(rmap='de21')
     f = basic_scenario.scenario_feedin(regions, 2014, 'de21')
-    # eq_(int(d['DE01', 'district heating'].sum()), 18639262)
-    # eq_(int(d['DE05', 'electrical_load'].sum()), 10069)
+    eq_(int(f['DE01'].sum()['wind']), 2159)
+    eq_(int(f['DE01'].sum()['solar']), 913)
+    eq_(int(f['DE16'].sum()['wind']), 1753)

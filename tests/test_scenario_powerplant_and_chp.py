@@ -1,25 +1,18 @@
-import os
-import requests
 from nose.tools import eq_
-from deflex import config as cfg, basic_scenario, geometries
+from deflex import config as cfg, basic_scenario, geometries, powerplants
 
 
 class TestScenarioPowerplantsAndCHP:
     @classmethod
     def setUpClass(cls):
-        """Download pp-file from osf."""
-        url = 'https://osf.io/qtc56/download'
-        path = cfg.get('paths', 'powerplants')
-        file = 'de21_pp.h5'
-        filename = os.path.join(path, file)
-    
-        if not os.path.isfile(filename):
-            req = requests.get(url)
-            with open(filename, 'wb') as fout:
-                fout.write(req.content)
         cls.regions = geometries.deflex_regions(rmap='de21')
         cls.pp = basic_scenario.scenario_powerplants(
             dict(), cls.regions, 2014, 'de21', 1)
+
+    def test_04_deflex_power_plants_by_year(self):
+        pp = powerplants.get_deflex_pp_by_year(self.regions, 2014, 'de21',
+                                               overwrite_capacity=True)
+        eq_(int(pp['capacity'].sum()), 181489)
 
     def scenario_pp_test(self):
         eq_(float(self.pp['volatile_source']['DE03', 'wind']), 3052.8)

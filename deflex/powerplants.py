@@ -130,7 +130,7 @@ def get_deflex_pp_by_year(regions, year, name, overwrite_capacity=False):
     """
     filename = os.path.join(cfg.get('paths', 'powerplants'),
                             cfg.get('powerplants', 'deflex_pp')).format(
-        map=cfg.get('init', 'map'))
+        map=name)
     logging.info("Get deflex power plants for {0}.".format(year))
     if not os.path.isfile(filename):
         msg = "File '{0}' does not exist. Will create it from reegis file."

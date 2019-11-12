@@ -1,7 +1,5 @@
 import os
-import requests
-from nose.tools import eq_, assert_raises_regexp, with_setup
-from unittest.mock import MagicMock
+from nose.tools import eq_, with_setup
 from deflex import config as cfg, basic_scenario, geometries
 from reegis.tools import download_file
 
@@ -15,8 +13,8 @@ def setup_func():
     filename = os.path.join(path, file)
     download_file(filename, url)
 
-    url = 'https://osf.io/m435r/download'
-    file = 'heat_profile_state_2014_weather_2014.csv'
+    url = 'https://osf.io/6vmdh/download'
+    file = 'oep_ego_demand_combined.h5'
     filename = os.path.join(path, file)
     download_file(filename, url)
 
