@@ -1,5 +1,5 @@
 from nose.tools import eq_
-from deflex import config as cfg, basic_scenario, geometries, powerplants
+from deflex import basic_scenario, geometries, powerplants
 
 
 class TestScenarioPowerplantsAndCHP:
@@ -9,7 +9,7 @@ class TestScenarioPowerplantsAndCHP:
         cls.pp = basic_scenario.scenario_powerplants(
             dict(), cls.regions, 2014, 'de21', 1)
 
-    def test_04_deflex_power_plants_by_year(self):
+    def test_01_deflex_power_plants_by_year(self):
         pp = powerplants.get_deflex_pp_by_year(self.regions, 2014, 'de21',
                                                overwrite_capacity=True)
         eq_(int(pp['capacity'].sum()), 181489)
@@ -18,7 +18,7 @@ class TestScenarioPowerplantsAndCHP:
         eq_(float(self.pp['volatile_source']['DE03', 'wind']), 3052.8)
         eq_(float(self.pp['transformer'].loc['capacity', ('DE03', 'lignite')]),
             1135.6)
-    
+
     def test_scenario_transmission(self):
         lines = basic_scenario.scenario_transmission(
             self.pp, self.regions, 'de21')
@@ -31,13 +31,13 @@ class TestScenarioPowerplantsAndCHP:
             float('inf'))
         eq_(str(lines.loc['DE07-DE05', ('electrical', 'distance')]), 'nan')
         eq_(float(lines.loc['DE07-DE05', ('electrical', 'efficiency')]), 1.0)
-       
+
     def test_scenario_commodity_sources(self):
         src = basic_scenario.scenario_commodity_sources(
             self.pp, 2014)['commodity_source']
         eq_(round(src.loc['costs', ('DE', 'hard coal')], 2), 8.93)
         eq_(round(src.loc['emission',  ('DE', 'natural gas')], 2), 201.24)
-        
+
     def test_chp(self):
         eq_(int(self.pp['transformer'].loc['capacity', ('DE01', 'hard coal')]),
             1291)
