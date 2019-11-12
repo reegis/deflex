@@ -341,7 +341,7 @@ def add_decentralised_heating_systems(table_collection, nodes, extra_regions):
     logging.debug("Add decentralised_heating_systems to nodes dictionary.")
     cs = table_collection['commodity_source']['DE']
     dts = table_collection['demand_series']
-    dh = table_collection['decentralised_heating']
+    dh = table_collection['decentralised_heat']
     demand_regions = list({'DE_demand'}.union(set(extra_regions)))
 
     for d_region in demand_regions:

@@ -16,13 +16,12 @@ import logging
 from reegis import geometries as reegis_geometries
 from reegis import config as cfg
 from reegis import powerplants
-from deflex import geometries
 
 
 # Todo: Revise and test.
 
 
-def pp_reegis2deflex(filename_in=None, filename_out=None):
+def pp_reegis2deflex(regions, name, filename_in=None, filename_out=None):
     """
     Add federal states and deflex regions to powerplant table from reegis. As
     the process takes a while the result is stored for further usage.
@@ -39,10 +38,8 @@ def pp_reegis2deflex(filename_in=None, filename_out=None):
                 map=cfg.get('init', 'map'))
 
     # Add deflex regions to powerplants
-    deflex_regions = geometries.deflex_regions()
-    name = '{0}_region'.format(cfg.get('init', 'map'))
     pp = powerplants.add_regions_to_powerplants(
-        deflex_regions, name, dump=False, filename=filename_in)
+        regions, name, dump=False, filename=filename_in)
 
     # Add federal states to powerplants
     federal_states = reegis_geometries.get_federal_states_polygon()
@@ -115,12 +112,14 @@ def process_pp_table(pp):
     return pp
 
 
-def get_deflex_pp_by_year(year, overwrite_capacity=False):
+def get_deflex_pp_by_year(regions, year, name, overwrite_capacity=False):
     """
 
     Parameters
     ----------
+    regions : GeoDataFrame
     year : int
+    name : str
     overwrite_capacity : bool
         By default (False) a new column "capacity_<year>" is created. If set to
         True the old capacity column will be overwritten.
@@ -131,12 +130,12 @@ def get_deflex_pp_by_year(year, overwrite_capacity=False):
     """
     filename = os.path.join(cfg.get('paths', 'powerplants'),
                             cfg.get('powerplants', 'deflex_pp')).format(
-        map=cfg.get('init', 'map'))
+        map=name)
     logging.info("Get deflex power plants for {0}.".format(year))
     if not os.path.isfile(filename):
         msg = "File '{0}' does not exist. Will create it from reegis file."
         logging.debug(msg.format(filename))
-        filename = pp_reegis2deflex()
+        filename = pp_reegis2deflex(regions, name)
     pp = pd.DataFrame(pd.read_hdf(filename, 'pp', mode='r'))
 
     # Remove unwanted data sets

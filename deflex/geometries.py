@@ -13,6 +13,7 @@ __license__ = "MIT"
 
 # Python libraries
 import os
+from collections import namedtuple
 
 # Internal libraries
 from deflex import config as cfg
@@ -91,3 +92,43 @@ def deflex_power_lines(rmap=None, rtype='lines'):
     lines.set_index('name', inplace=True)
     lines.name = rmap
     return lines
+
+
+def divide_off_and_onshore(regions):
+    """
+    Sort regions into onshore and offshore regions. A namedtuple with two list
+    of regions ids will be returned. Fetch the `onshore` and `offshore`
+    attribute of the named tuple to get the list.
+
+    Parameters
+    ----------
+    regions : GeoDataFrame
+        A region set with the region id in the index.
+
+    Returns
+    -------
+    named tuple
+
+    Examples
+    --------
+    >>> reg = deflex_regions('de02')
+    >>> divide_off_and_onshore(reg).onshore
+    ['DE01']
+    >>> reg = deflex_regions('de21')
+    >>> divide_off_and_onshore(reg).offshore
+    ['DE19', 'DE20', 'DE21']
+    """
+    region_type = namedtuple('RegionType', 'offshore onshore')
+    regions.geometry = regions.centroid
+
+    germany_onshore = geo.load(
+        cfg.get('paths', 'geometry'),
+        cfg.get('geometry', 'germany_polygon'))
+
+    gdf = geo.spatial_join_with_buffer(regions, germany_onshore,
+                                       'onshore', limit=0)
+
+    onshore = list(gdf.loc[gdf.onshore == 0].index)
+    offshore = list(gdf.loc[gdf.onshore == 'unknown'].index)
+
+    return region_type(offshore=offshore, onshore=onshore)
