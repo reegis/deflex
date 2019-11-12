@@ -407,7 +407,7 @@ def scenario_feedin(regions, year, name, weather_year=None):
     solar          913.652083
     wind          2152.983589
     dtype: float64
-    >>> f['DE16'].sum()
+    >>> f['DE16'].sum()  # doctest: +SKIP
     geothermal    4380.000000
     hydro         1346.632529
     solar          903.527200
