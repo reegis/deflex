@@ -1,5 +1,5 @@
-from nose.tools import eq_
-from deflex import basic_scenario, geometries, powerplants
+from nose.tools import eq_, assert_raises_regexp
+from deflex import basic_scenario, geometries, powerplants, config as cfg
 
 
 class TestScenarioPowerplantsAndCHP:
@@ -21,21 +21,30 @@ class TestScenarioPowerplantsAndCHP:
 
     def test_scenario_transmission(self):
         lines = basic_scenario.scenario_transmission(
-            self.pp, self.regions, 'de21')
+            self.pp, self.regions, 'de22')
         eq_(int(lines.loc['DE07-DE05', ('electrical', 'capacity')]), 1978)
         eq_(int(lines.loc['DE07-DE05', ('electrical', 'distance')]), 199)
         eq_(float(lines.loc['DE07-DE05', ('electrical', 'efficiency')]), 0.9)
         lines = basic_scenario.scenario_transmission(
-            self.pp, self.regions, 'de21', copperplate=True)
+            self.pp, self.regions, 'de22', copperplate=True)
         eq_(float(lines.loc['DE07-DE05', ('electrical', 'capacity')]),
             float('inf'))
         eq_(str(lines.loc['DE07-DE05', ('electrical', 'distance')]), 'nan')
         eq_(float(lines.loc['DE07-DE05', ('electrical', 'efficiency')]), 1.0)
 
+    def test_scenario_transmisson_error(self):
+        old_value = cfg.get('transmission', 'general_efficiency')
+        cfg.tmp_set('transmission', 'general_efficiency', 'None')
+        msg = "The calculation of the efficiency by distance is not yet"
+        with assert_raises_regexp(NotImplementedError, msg):
+            basic_scenario.scenario_transmission(
+                self.pp, self.regions, 'de22')
+        cfg.tmp_set('transmission', 'general_efficiency', old_value)
+
     def test_scenario_commodity_sources(self):
         src = basic_scenario.scenario_commodity_sources(
-            self.pp, 2014)['commodity_source']
-        eq_(round(src.loc['costs', ('DE', 'hard coal')], 2), 8.93)
+            self.pp, 2013)['commodity_source']
+        eq_(round(src.loc['costs', ('DE', 'hard coal')], 2), 9.71)
         eq_(round(src.loc['emission',  ('DE', 'natural gas')], 2), 201.24)
 
     def test_chp(self):

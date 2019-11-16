@@ -34,7 +34,7 @@ from deflex import geometries
 from deflex import config as cfg
 
 
-def create_scenario(regions, year, name, round_values=True, weather_year=None,
+def create_scenario(regions, year, name, round_values=0, weather_year=None,
                     copperplate=False):
     table_collection = {}
 
@@ -244,7 +244,7 @@ def scenario_transmission(table_collection, regions, name, copperplate=False):
 
     elec_trans = (
         pd.concat([elec_trans], axis=1, keys=['electrical']).sort_index(1))
-    if cfg.get('init', 'map') == 'de22':
+    if cfg.get('init', 'map') == 'de22' and not copperplate:
         elec_trans.loc['DE22-DE01', ('electrical', 'efficiency')] = 0.9999
         elec_trans.loc['DE22-DE01', ('electrical', 'capacity')] = 9999999
     return elec_trans
@@ -620,10 +620,10 @@ def create_basic_scenario(year, rmap=None, path=None, csv_dir=None,
     paths = namedtuple('paths', 'xls, csv')
     if rmap is not None:
         cfg.tmp_set('init', 'map', rmap)
+    name = cfg.get('init', 'map')
+    regions = geometries.deflex_regions(rmap=cfg.get('init', 'map'))
 
-    geo = geometries.deflex_regions(rmap=cfg.get('init', 'map'))
-
-    table_collection = create_scenario(year, geo, round_values)
+    table_collection = create_scenario(regions, year, name, round_values)
     table_collection = clean_time_series(table_collection)
     name = '{0}_{1}_{2}'.format('deflex', year, cfg.get('init', 'map'))
     sce = scenario_tools.Scenario(table_collection=table_collection,
