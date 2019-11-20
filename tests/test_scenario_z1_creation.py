@@ -32,7 +32,7 @@ def test_scenario_creation():
     regions = geometries.deflex_regions(rmap='de21')
     table_collection = basic_scenario.create_scenario(regions, 2014, 'de21')
     eq_(sorted(list(table_collection.keys())), sorted([
-        'storages', 'transformer', 'volatile_source',
+        'storages', 'transformer', 'volatile_source', 'Storage',
         'transmission', 'decentralised_heat', 'commodity_source',
         'volatile_series', 'demand_series']))
-    eq_(len(list(table_collection.keys())), 8)
+    eq_(len(list(table_collection.keys())), 9)
