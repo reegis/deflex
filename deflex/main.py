@@ -29,13 +29,14 @@ def stopwatch():
     return str(datetime.now() - stopwatch.start)[:-7]
 
 
-def main(year, rmap, plot_graph=False):
+def main(year, rmap, es=None, plot_graph=False):
     """
 
     Parameters
     ----------
     year : int
     rmap : str
+    es : oemof.solph.EnergySystem
     plot_graph : bool
 
     Returns
@@ -54,11 +55,13 @@ def main(year, rmap, plot_graph=False):
             'map': cfg.get('init', 'map'),
             'solver': cfg.get('general', 'solver'),
             'start_time': datetime.now()}
-    sc = scenario_tools.Scenario(name=name, year=2014, meta=meta)
+    sc = scenario_tools.DeflexScenario(name=name, year=2014, meta=meta)
+    if es is not None:
+        sc.es = es
     path = os.path.join(cfg.get('paths', 'scenario'), 'deflex', str(year))
     csv_dir = name + '_csv'
     csv_path = os.path.join(path, csv_dir)
-    excel_path = os.path.join(path, name + '.xls')
+    # excel_path = os.path.join(path, name + '.xls')
 
     if not os.path.isdir(csv_path):
         fn = basic_scenario.create_basic_scenario(year, path=path,
@@ -68,8 +71,8 @@ def main(year, rmap, plot_graph=False):
                    "the scenario every time!".format(csv_path, fn.csv))
             logging.error(msg)
     logging.info("Read scenario from csv collection: {0}".format(stopwatch()))
-    # sc.load_csv(csv_path)
-    sc.load_excel(excel_path)
+    sc.load_csv(csv_path)
+    # sc.load_excel(excel_path)
 
     logging.info("Add nodes to the EnergySystem: {0}".format(stopwatch()))
     sc.table2es()
@@ -83,7 +86,7 @@ def main(year, rmap, plot_graph=False):
     sc.create_model()
 
     logging.info("Solve the optimisation model: {0}".format(stopwatch()))
-    sc.solve()
+    sc.solve(solver=cfg.get('general', 'solver'))
 
     logging.info("Solved. Dump results: {0}".format(stopwatch()))
     res_path = os.path.join(path, 'results_{0}'.format(
@@ -98,7 +101,7 @@ def main(year, rmap, plot_graph=False):
         stopwatch()))
 
 
-def main_secure(year, rmap, plot_graph=False):
+def main_secure(year, rmap, es=None, plot_graph=False):
     """
 
     Parameters
@@ -115,7 +118,7 @@ def main_secure(year, rmap, plot_graph=False):
     >>> main_secure(2014, 'de21', False)  # doctest: +SKIP
     """
     try:
-        main(year, rmap, plot_graph=plot_graph)
+        main(year, rmap, es=es, plot_graph=plot_graph)
     except Exception as e:
         logging.error(traceback.format_exc())
         time.sleep(0.5)
