@@ -31,8 +31,8 @@ def test_scenario_creation():
         return_value=data['heat_demand_deflex'])
     regions = geometries.deflex_regions(rmap='de21')
     table_collection = basic_scenario.create_scenario(regions, 2014, 'de21')
-    eq_(list(table_collection.keys()), [
-        'storages', 'Storage', 'transformer', 'volatile_source',
+    eq_(sorted(list(table_collection.keys())), sorted([
+        'storages', 'transformer', 'volatile_source',
         'transmission', 'decentralised_heat', 'commodity_source',
-        'volatile_series', 'demand_series'])
+        'volatile_series', 'demand_series']))
     eq_(len(list(table_collection.keys())), 9)
