@@ -27,6 +27,11 @@ def test_scenario_building():
     sc.load_csv(csv_path)
     sc.table2es()
     sc.check_table('volatile_series')
+    sc.table_collection['volatile_series'].loc[5, ('DE01', 'wind')] = (
+        float('nan'))
+    with assert_raises_regexp(ValueError,
+                              "Nan Values in the volatile_series table"):
+        sc.check_table('volatile_series')
 
 
 def test_node_dict():

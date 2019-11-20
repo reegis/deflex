@@ -646,13 +646,12 @@ def create_basic_scenario(year, rmap=None, path=None, csv_dir=None,
     else:
         xls_path = os.path.join(path, xls_name)
 
-    os.makedirs(path, exist_ok=True)
-    os.makedirs(csv_path, exist_ok=True)
-
     fullpath = paths(xls=xls_path, csv=csv_path)
     if not only_out == 'csv':
+        os.makedirs(path, exist_ok=True)
         sce.to_excel(fullpath.xls)
     if not only_out == 'xls':
+        os.makedirs(csv_path, exist_ok=True)
         sce.to_csv(fullpath.csv)
 
     return fullpath
