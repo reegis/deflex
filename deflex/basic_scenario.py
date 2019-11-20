@@ -657,27 +657,5 @@ def create_basic_scenario(year, rmap=None, path=None, csv_dir=None,
     return fullpath
 
 
-def create_weather_variation_scenario(year, start=1998, rmap=None,
-                                      round_values=None):
-    weather_years = range(start, 2015)
-    geo = geometries.deflex_regions(rmap=cfg.get('init', 'map'))
-    for weather_year in weather_years:
-        logging.info("{2} Create weather variation {0} for {1} {2}".format(
-            weather_year, year, '**********************'))
-        if rmap is not None:
-            cfg.tmp_set('init', 'map', rmap)
-        table_collection = create_scenario(
-            year, geo, round_values, weather_year=weather_year)
-        table_collection = clean_time_series(table_collection)
-        name = '{0}_{1}_{2}_weather_{3}'.format(
-            'deflex', year, cfg.get('init', 'map'), weather_year)
-        sce = scenario_tools.Scenario(table_collection=table_collection,
-                                      name=name, year=year)
-        path = os.path.join(cfg.get('paths', 'scenario'), 'deflex',
-                            str(year) + '_var_entsoe')
-        sce.to_excel(os.path.join(path, name + '.xls'))
-        sce.to_csv(os.path.join(path, '{0}_csv'.format(name)))
-
-
 if __name__ == "__main__":
     pass
