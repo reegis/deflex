@@ -1,5 +1,5 @@
 import os
-from nose.tools import eq_, assert_raises_regexp
+from nose.tools import assert_raises_regexp
 from unittest.mock import MagicMock
 from deflex import config as cfg, powerplants, geometries
 from reegis.tools import download_file
