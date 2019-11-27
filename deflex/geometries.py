@@ -36,9 +36,14 @@ def deflex_regions(rmap=None, rtype='polygons'):
 
     Examples
     --------
-    >>> len(deflex_regions('de17'))
+    >>> regions = deflex_regions('de17')
+    >>> len(regions)
     17
+    >>> regions.geometry.iloc[0].geom_type
+    'MultiPolygon'
     >>> l = deflex_regions('de21', 'labels').loc['DE04', 'geometry']
+    >>> l.geom_type
+    'Point'
     >>> l.x
     13.2
     >>> l.y
@@ -75,7 +80,10 @@ def deflex_power_lines(rmap=None, rtype='lines'):
 
     Examples
     --------
-    >>> len(deflex_power_lines('de17'))
+    >>> lines = deflex_power_lines('de17')
+    >>> lines.geometry.iloc[0].geom_type
+    'LineString'
+    >>> len(lines)
     31
     >>> deflex_power_lines('de02').index[0]
     'DE01-DE02'
@@ -119,13 +127,14 @@ def divide_off_and_onshore(regions):
     ['DE19', 'DE20', 'DE21']
     """
     region_type = namedtuple('RegionType', 'offshore onshore')
-    regions.geometry = regions.centroid
+    regions_centroid = regions.copy()
+    regions_centroid.geometry = regions_centroid.centroid
 
     germany_onshore = geo.load(
         cfg.get('paths', 'geometry'),
         cfg.get('geometry', 'germany_polygon'))
 
-    gdf = geo.spatial_join_with_buffer(regions, germany_onshore,
+    gdf = geo.spatial_join_with_buffer(regions_centroid, germany_onshore,
                                        'onshore', limit=0)
 
     onshore = list(gdf.loc[gdf.onshore == 0].index)
