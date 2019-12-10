@@ -29,14 +29,19 @@ def stopwatch():
     return str(datetime.now() - stopwatch.start)[:-7]
 
 
-def main_secure(year, rmap, es=None, plot_graph=False):
+def main_secure(year, rmap, csv=True, es=None, plot_graph=False):
     """
 
     Parameters
     ----------
+    ----------
     year : int
+        Year of an existing  basic scenario.
     rmap : str
-    es : oemof.solph.EnergySystem or None
+        A valid deflex map id (de02, de17, de21, de22) of an existing scenario.
+    csv : bool
+        Use csv collection. If set to False the xls-file is used.
+    es : oemof.solph.EnergySystem
     plot_graph : bool
 
     Returns
@@ -47,7 +52,7 @@ def main_secure(year, rmap, es=None, plot_graph=False):
     >>> main_secure(2014, 'de21')  # doctest: +SKIP
     """
     try:
-        main(year, rmap, es=es, plot_graph=plot_graph)
+        main(year, rmap, csv=csv, es=es, plot_graph=plot_graph)
     except Exception as e:
         logging.error(traceback.format_exc())
         time.sleep(0.5)
