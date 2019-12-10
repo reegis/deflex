@@ -23,7 +23,7 @@ Simple heat and power model of Germany
 Documentation
 ~~~~~~~~~~~~~
 
-Full documentation can be found at `readthedocs <https://deflex.readthedocs.io/en/latest/>`_.
+The `documentation of deflex <https://deflex.readthedocs.io/en/latest/>`_ is powered by readthedocs.
 
 Go to the `download page <http://readthedocs.org/projects/deflex/downloads/>`_ to download different versions and formats (pdf, html, epub) of the documentation.
 
@@ -44,7 +44,58 @@ Please see the `installation page <http://oemof.readthedocs.io/en/stable/install
 Basic usage
 ===========
 
-Soon.
+Create a basic scenario as xls-file or collection of csv-files using the following lines.
+
+.. NOTE::
+
+    The first run of the following lines may take some hours, because all
+    needed data will be downloaded, processed and stored locally. On the next
+    run the stored files will be used.
+
+    Use the logger to see the state of the script.
+
+.. code-block:: python
+
+    import logging
+    from deflex import basic_scenario
+    logging.getLogger()
+    logger.setLevel(logging.INFO)
+    basic_scenario.create_basic_scenario(2014, 'de21')
+
+Use the following lines to optimise an existing basic scenario:
+
+.. code-block:: python
+
+    import logging
+    from deflex import main
+    logging.getLogger()
+    logger.setLevel(logging.INFO)
+    main.main(2014, 'de21')
+
+To optimise a user scenario one has to pass the path to the scenario file(s).
+
+.. code-block:: python
+
+    import logging
+    from deflex import main
+    logging.getLogger()
+    logger.setLevel(logging.INFO)
+    main.model_scenario(xls_file='/my/path/to/scenario.xls',
+                        name='my_scenario', rmap='deXX', year=2025)
+
+It is faster to use csv-files!
+
+.. code-block:: python
+
+    import logging
+    from deflex import main
+    logging.getLogger()
+    logger.setLevel(logging.INFO)
+    main.model_scenario(csv_path='/my/path/to/my_csv_files',
+                        name='my_scenario', rmap='deXX', year=2025)
+
+
+
 
 
 Contributing
