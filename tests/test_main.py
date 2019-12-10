@@ -1,3 +1,15 @@
+# -*- coding: utf-8 -*-
+
+"""
+Test the main module
+
+Copyright (c) 2016-2019 Uwe Krien <krien@uni-bremen.de>
+
+SPDX-License-Identifier: MIT
+"""
+__copyright__ = "Uwe Krien <krien@uni-bremen.de>"
+__license__ = "MIT"
+
 import os
 import shutil
 import pandas as pd
@@ -9,25 +21,34 @@ from nose.tools import assert_raises_regexp
 class TestMain:
     @classmethod
     def setUpClass(cls):
-        date_time_index = pd.date_range('1/1/2014', periods=30, freq='H')
-        cls.es = solph.EnergySystem(timeindex=date_time_index)
-        base_path = os.path.join(os.path.dirname(__file__), 'data')
-        cfg.tmp_set('paths', 'scenario', base_path)
+        cls.date_time_index = pd.date_range('1/1/2014', periods=30, freq='H')
+        cls.es = solph.EnergySystem(timeindex=cls.date_time_index)
+        cls.base_path = os.path.join(os.path.dirname(__file__), 'data')
+        cfg.tmp_set('paths', 'scenario', cls.base_path)
 
     @classmethod
     def tearDownClass(cls):
         base_path = os.path.join(os.path.dirname(__file__), 'data')
-        shutil.rmtree(os.path.join(
-            base_path, 'deflex', '2014', 'results_cbc'))
+        shutil.rmtree(os.path.join(base_path, 'deflex', '2014', 'results_cbc'))
+        shutil.rmtree(os.path.join(base_path, 'deflex', '2013', 'results_cbc'))
 
     def test_main_secure(self):
         main.main_secure(2014, 'de22')
 
     def test_main_secure_with_es(self):
-        main.main_secure(2014, 'de21', es=self.es)
+        main.main(2014, 'de21', es=self.es)
 
     def test_main_secure_with_xls_file(self):
-        main.main_secure(2014, 'de02', csv=False, es=self.es)
+        my_es = solph.EnergySystem(timeindex=self.date_time_index)
+        main.main(2013, 'de02', csv=False, es=my_es)
+
+    def test_model_scenario(self):
+        rp = os.path.join(self.base_path, 'deflex', '2014')
+        ip = os.path.join(
+            self.base_path, 'deflex', '2013', 'deflex_2013_de02.xls')
+        my_es = solph.EnergySystem(timeindex=self.date_time_index)
+        main.model_scenario(xls_file=ip, name='test_02', rmap='de', year=2025,
+                            res_path=rp, es=my_es)
 
 
 def test_duplicate_input():
