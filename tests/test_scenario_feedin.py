@@ -1,3 +1,15 @@
+# -*- coding: utf-8 -*-
+
+"""
+Test feed-in.
+
+Copyright (c) 2016-2019 Uwe Krien <krien@uni-bremen.de>
+
+SPDX-License-Identifier: MIT
+"""
+__copyright__ = "Uwe Krien <krien@uni-bremen.de>"
+__license__ = "MIT"
+
 import os
 from shutil import copyfile
 from nose.tools import with_setup, eq_
@@ -30,6 +42,7 @@ def setup_func():
 
 @with_setup(setup_func)
 def scenario_feedin_test():
+    """Test scenario feed-in."""
     cfg.tmp_set('init', 'map', 'de21')
     regions = geometries.deflex_regions(rmap='de21')
     f = basic_scenario.scenario_feedin(regions, 2014, 'de21')

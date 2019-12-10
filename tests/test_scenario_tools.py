@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
-"""Processing a list of power plants in Germany.
+"""
+Processing a list of power plants in Germany.
 
 Copyright (c) 2016-2019 Uwe Krien <krien@uni-bremen.de>
 
