@@ -33,7 +33,7 @@ class TestMain:
         shutil.rmtree(os.path.join(base_path, 'deflex', '2013', 'results_cbc'))
 
     def test_main_secure(self):
-        main.main_secure(2014, 'de22')
+        main.main_secure(1910, 'de55')
 
     def test_main_secure_with_es(self):
         main.main(2014, 'de21', es=self.es)
@@ -43,12 +43,11 @@ class TestMain:
         main.main(2013, 'de02', csv=False, es=my_es)
 
     def test_model_scenario(self):
-        rp = os.path.join(self.base_path, 'deflex', '2014')
         ip = os.path.join(
             self.base_path, 'deflex', '2013', 'deflex_2013_de02.xls')
         my_es = solph.EnergySystem(timeindex=self.date_time_index)
         main.model_scenario(xls_file=ip, name='test_02', rmap='de', year=2025,
-                            res_path=rp, es=my_es)
+                            es=my_es)
 
 
 def test_duplicate_input():
