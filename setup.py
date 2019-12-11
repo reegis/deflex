@@ -2,6 +2,7 @@
 
 from setuptools import setup, find_packages
 import os
+import deflex
 
 
 def read(fname):
@@ -10,20 +11,23 @@ def read(fname):
 
 setup(
     name='deflex',
-    version='0.0.1',
+    version=deflex.__version__,
     author='Uwe Krien',
-    author_email='uwe.krien@rl-institut.de',
-    description='A reegis model of Germany with flexible multi regions.',
+    author_email='krien@uni-bremen.de',
+    description=(
+        'A multi-sectoral model of Germany with flexible multi regions.'),
     namespace_package=['deflex'],
     long_description=read('README.rst'),
+    long_description_content_type='text/x-rst',
     packages=find_packages(),
     package_dir={'deflex': 'deflex'},
+    url='https://github.com/reegis/deflex',
     extras_require={
           'dev': ['nose', 'sphinx', 'sphinx_rtd_theme', 'requests']},
     install_requires=[
         'oemof >= 0.3.0',
         'pandas >= 0.17.0',
-        'reegis == v0.1.0-rc.9',
+        'reegis >= v0.1.0',
         'demandlib',
         'workalendar',
         'networkx',
