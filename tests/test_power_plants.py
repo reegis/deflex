@@ -11,10 +11,14 @@ __copyright__ = "Uwe Krien <krien@uni-bremen.de>"
 __license__ = "MIT"
 
 import os
+from pandas import errors
+from warnings import filterwarnings
 from nose.tools import assert_raises_regexp
 from unittest.mock import MagicMock
 from deflex import config as cfg, powerplants, geometries
 from reegis.tools import download_file
+
+filterwarnings('ignore', category=errors.PerformanceWarning)
 
 
 def test_01_download_reegis_power_plants():
