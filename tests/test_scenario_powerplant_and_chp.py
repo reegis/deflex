@@ -1,3 +1,15 @@
+# -*- coding: utf-8 -*-
+
+"""
+Test power plants and chp.
+
+Copyright (c) 2016-2019 Uwe Krien <krien@uni-bremen.de>
+
+SPDX-License-Identifier: MIT
+"""
+__copyright__ = "Uwe Krien <krien@uni-bremen.de>"
+__license__ = "MIT"
+
 from nose.tools import eq_, assert_raises_regexp
 from deflex import basic_scenario, geometries, powerplants, config as cfg
 

@@ -11,6 +11,7 @@ __license__ = "MIT"
 
 # Python libraries
 import os
+import sys
 import calendar
 import datetime
 import shutil
@@ -28,6 +29,9 @@ from oemof import solph
 from oemof.tools import logger, helpers
 from oemof import outputlib
 from oemof import graph
+
+if sys.getrecursionlimit() < 3000:
+    sys.setrecursionlimit(3000)
 
 
 class NodeDict(dict):

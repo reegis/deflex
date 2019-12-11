@@ -1,3 +1,15 @@
+# -*- coding: utf-8 -*-
+
+"""
+Test the main module
+
+Copyright (c) 2016-2019 Uwe Krien <krien@uni-bremen.de>
+
+SPDX-License-Identifier: MIT
+"""
+__copyright__ = "Uwe Krien <krien@uni-bremen.de>"
+__license__ = "MIT"
+
 import os
 from nose.tools import eq_
 from unittest.mock import MagicMock
