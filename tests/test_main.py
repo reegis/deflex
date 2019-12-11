@@ -37,10 +37,16 @@ class TestMain:
 
     def test_main_secure_with_es(self):
         main.main(2014, 'de21', es=self.es)
+        assert os.path.isfile(
+            os.path.join(self.base_path, 'deflex', '2014', 'results_cbc',
+                         'deflex_2014_de21.esys'))
 
     def test_main_secure_with_xls_file(self):
         my_es = solph.EnergySystem(timeindex=self.date_time_index)
         main.main(2013, 'de02', csv=False, es=my_es)
+        assert os.path.isfile(
+            os.path.join(self.base_path, 'deflex', '2013', 'results_cbc',
+                         'deflex_2013_de02.esys'))
 
     def test_model_scenario(self):
         ip = os.path.join(
@@ -48,6 +54,8 @@ class TestMain:
         my_es = solph.EnergySystem(timeindex=self.date_time_index)
         main.model_scenario(xls_file=ip, name='test_02', rmap='de', year=2025,
                             es=my_es)
+        assert os.path.isfile(os.path.join(
+            self.base_path, 'deflex', '2013', 'results_cbc', 'test_02.esys'))
 
 
 def test_duplicate_input():
