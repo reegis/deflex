@@ -82,26 +82,41 @@ def main(year, rmap, csv=True, es=None, plot_graph=False):
     >>> main(2014, 'de21')  # doctest: +SKIP
     """
     stopwatch()
-    cfg.tmp_set('init', 'map', rmap)
-    name = '{0}_{1}_{2}'.format('deflex', year, cfg.get('init', 'map'))
+    cfg.tmp_set("init", "map", rmap)
+    name = "{0}_{1}_{2}".format("deflex", year, cfg.get("init", "map"))
 
-    path = os.path.join(cfg.get('paths', 'scenario'), 'deflex', str(year))
+    path = os.path.join(cfg.get("paths", "scenario"), "deflex", str(year))
 
     if csv is True:
-        csv_dir = name + '_csv'
+        csv_dir = name + "_csv"
         csv_path = os.path.join(path, csv_dir)
         excel_path = None
     else:
-        excel_path = os.path.join(path, name + '.xls')
+        excel_path = os.path.join(path, name + ".xls")
         csv_path = None
 
-    model_scenario(xls_file=excel_path, csv_path=csv_path, res_path=path,
-                   name=name, rmap=rmap, year=year, es=es,
-                   plot_graph=plot_graph)
+    model_scenario(
+        xls_file=excel_path,
+        csv_path=csv_path,
+        res_path=path,
+        name=name,
+        rmap=rmap,
+        year=year,
+        es=es,
+        plot_graph=plot_graph,
+    )
 
 
-def model_scenario(xls_file=None, csv_path=None, res_path=None, name='noname',
-                   rmap=None, year='unknown', es=None, plot_graph=False):
+def model_scenario(
+    xls_file=None,
+    csv_path=None,
+    res_path=None,
+    name="noname",
+    rmap=None,
+    year="unknown",
+    es=None,
+    plot_graph=False,
+):
     """
     Compute a deflex scenario.
 
@@ -138,11 +153,13 @@ def model_scenario(xls_file=None, csv_path=None, res_path=None, name='noname',
     if xls_file is not None and csv_path is not None:
         raise ValueError("It is not allowed to define more than one input.")
 
-    meta = {'year': year,
-            'model_base': 'deflex',
-            'map': rmap,
-            'solver': cfg.get('general', 'solver'),
-            'start_time': datetime.now()}
+    meta = {
+        "year": year,
+        "model_base": "deflex",
+        "map": rmap,
+        "solver": cfg.get("general", "solver"),
+        "start_time": datetime.now(),
+    }
 
     sc = scenario_tools.DeflexScenario(name=name, year=2014, meta=meta)
     if es is not None:
@@ -151,8 +168,9 @@ def model_scenario(xls_file=None, csv_path=None, res_path=None, name='noname',
     if csv_path is not None:
         if res_path is None:
             res_path = os.path.dirname(csv_path)
-        logging.info("Read scenario from csv collection: {0}".format(
-            stopwatch()))
+        logging.info(
+            "Read scenario from csv collection: {0}".format(stopwatch())
+        )
         sc.load_csv(csv_path)
     elif xls_file is not None:
         if res_path is None:
@@ -165,26 +183,30 @@ def model_scenario(xls_file=None, csv_path=None, res_path=None, name='noname',
 
     # Save energySystem to '.graphml' file if plot_graph is True
     if plot_graph:
-        sc.plot_nodes(filename=os.path.join(res_path, name),
-                      remove_nodes_with_substrings=['bus_cs'])
+        sc.plot_nodes(
+            filename=os.path.join(res_path, name),
+            remove_nodes_with_substrings=["bus_cs"],
+        )
 
     logging.info("Create the concrete model: {0}".format(stopwatch()))
     sc.create_model()
 
     logging.info("Solve the optimisation model: {0}".format(stopwatch()))
-    sc.solve(solver=cfg.get('general', 'solver'))
+    sc.solve(solver=cfg.get("general", "solver"))
 
     logging.info("Solved. Dump results: {0}".format(stopwatch()))
-    res_path = os.path.join(res_path, 'results_{0}'.format(
-        cfg.get('general', 'solver')))
+    res_path = os.path.join(
+        res_path, "results_{0}".format(cfg.get("general", "solver"))
+    )
     os.makedirs(res_path, exist_ok=True)
-    out_file = os.path.join(res_path, name + '.esys')
+    out_file = os.path.join(res_path, name + ".esys")
     logging.info("Dump file to {0}".format(out_file))
-    sc.meta['end_time'] = datetime.now()
+    sc.meta["end_time"] = datetime.now()
     sc.dump_es(out_file)
 
-    logging.info("All done. deflex finished without errors: {0}".format(
-        stopwatch()))
+    logging.info(
+        "All done. deflex finished without errors: {0}".format(stopwatch())
+    )
 
 
 if __name__ == "__main__":
