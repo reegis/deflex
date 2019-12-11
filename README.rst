@@ -12,13 +12,17 @@
 .. image:: https://img.shields.io/lgtm/alerts/g/reegis/deflex.svg?logo=lgtm&logoWidth=18
     :target: https://lgtm.com/projects/g/reegis/deflex/alerts/
 
+.. image:: https://img.shields.io/badge/automatic%20code%20style-black-blueviolet
+    :target: https://black.readthedocs.io/en/stable/
+
+.. image:: https://img.shields.io/badge/licence-MIT-blue
+    :target: https://spdx.org/licenses/MIT.html
 
 Introduction
 =============
 
-The deflex library...
-
-Simple heat and power model of Germany
+The deflex library provides a simple heat and power model of Germany. Some
+basic scenarios with all data are included.
 
 Documentation
 ~~~~~~~~~~~~~
