@@ -39,4 +39,13 @@ setup(
         "dill",
         "matplotlib",
     ],
+    package_data={
+        "deflex": [
+            os.path.join("data", "static", "*.csv"),
+            os.path.join("data", "static", "*.txt"),
+            os.path.join("data", "geometries", "*.csv"),
+            os.path.join("data", "geometries", "*.geojson"),
+            "*.ini",
+        ]
+    },
 )
