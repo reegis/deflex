@@ -6,8 +6,8 @@ SPDX-FileCopyrightText: 2016-2019 Uwe Krien <krien@uni-bremen.de>
 
 SPDX-License-Identifier: MIT
 """
-__copyright__ = "Uwe Krien <krien@uni-bremen.de>"
-__license__ = "MIT"
+__copyright__="Uwe Krien <krien@uni-bremen.de>"
+__license__="MIT"
 
 
 # Python libraries
@@ -25,16 +25,16 @@ from deflex import geometries
 
 def get_grid_capacity(grid, plus, minus):
     """Read the grid capacity from a given region pair from the renpass db."""
-    tmp_grid = grid.query("plus_region_id == {:0d} & ".format(plus) +
+    tmp_grid=grid.query("plus_region_id == {:0d} & ".format(plus) +
                           "minus_region_id == {:1d} & ".format(minus) +
                           "scenario_name == 'status_quo_2012_distance'")
 
     if len(tmp_grid) > 0:
-        capacity = tmp_grid.capacity_calc.sum()
-        distance = tmp_grid.distance.iloc[0]
+        capacity=tmp_grid.capacity_calc.sum()
+        distance=tmp_grid.distance.iloc[0]
     else:
-        capacity = 0
-        distance = 0
+        capacity=0
+        distance=0
     return capacity, distance
 
 
@@ -43,13 +43,13 @@ def add_reverse_direction(df):
     Duplicate all entries of a DataFrame with a reverse index. The index must
     contain a dash between two sub-strings.
     """
-    values = df.copy()
+    values=df.copy()
 
     def id_inverter(name):
         """Swap the sub-parts of a string left and right of a dash."""
         return '-'.join([name.split('-')[1], name.split('-')[0]])
 
-    df.index = df.index.map(id_inverter)
+    df.index=df.index.map(id_inverter)
 
     return pd.DataFrame(pd.concat([values, df]))
 
@@ -79,7 +79,7 @@ def get_electrical_transmission_default(rmap=None, power_lines=None,
 
     Examples
     --------
-    >>> df = get_electrical_transmission_default('de21')
+    >>> df=get_electrical_transmission_default('de21')
     >>> df.loc['DE10-DE12', 'capacity']
     inf
     >>> df.loc['DE10-DE12', 'distance']
@@ -94,27 +94,27 @@ def get_electrical_transmission_default(rmap=None, power_lines=None,
     31
     >>> len(get_electrical_transmission_default('de02'))
     1
-    >>> my_lines = ['reg1-reg2', 'reg2-reg3']
-    >>> df = get_electrical_transmission_default(power_lines=my_lines)
+    >>> my_lines=['reg1-reg2', 'reg2-reg3']
+    >>> df=get_electrical_transmission_default(power_lines=my_lines)
     >>> df.loc['reg1-reg2', 'capacity']
     inf
-    >>> df = get_electrical_transmission_default(power_lines=my_lines,
+    >>> df=get_electrical_transmission_default(power_lines=my_lines,
     ...                                          both_directions=True)
     >>> df.loc['reg2-reg1', 'capacity']
     inf
 
     """
     if power_lines is None:
-        power_lines = pd.DataFrame(geometries.deflex_power_lines(rmap)).index
+        power_lines=pd.DataFrame(geometries.deflex_power_lines(rmap)).index
 
-    df = pd.DataFrame()
+    df=pd.DataFrame()
     for l in power_lines:
-        df.loc[l, 'capacity'] = float('inf')
-        df.loc[l, 'distance'] = float('nan')
-        df.loc[l, 'efficiency'] = 1
+        df.loc[l, 'capacity']=float('inf')
+        df.loc[l, 'distance']=float('nan')
+        df.loc[l, 'efficiency']=1
 
     if both_directions is True:
-        df = add_reverse_direction(df)
+        df=add_reverse_direction(df)
     return df
 
 
@@ -155,7 +155,7 @@ def get_electrical_transmission_renpass(both_directions=False):
 
     Examples
     --------
-    >>> df = get_electrical_transmission_renpass()
+    >>> df=get_electrical_transmission_renpass()
     >>> int(df.loc['DE11-DE17', 'capacity'])
     2506
     >>> int(df.loc['DE18-DE17', 'distance'])
@@ -164,47 +164,47 @@ def get_electrical_transmission_renpass(both_directions=False):
     capacity    7519.040402
     distance     257.000000
     Name: DE08-DE06, dtype: float64
-    >>> df = get_electrical_transmission_renpass(both_directions=True)
+    >>> df=get_electrical_transmission_renpass(both_directions=True)
     >>> int(df.loc['DE11-DE17', 'capacity'])
     2506
     >>> int(df.loc['DE17-DE11', 'capacity'])
     2506
     """
-    f_security = cfg.get('transmission', 'security_factor')
-    current_max = cfg.get('transmission', 'current_max')
+    f_security=cfg.get('transmission', 'security_factor')
+    current_max=cfg.get('transmission', 'current_max')
 
-    grid = pd.read_csv(os.path.join(
+    grid=pd.read_csv(os.path.join(
         cfg.get('paths', 'data_deflex'),
         cfg.get('transmission', 'transmission_renpass')))
 
-    grid['capacity_calc'] = (grid.circuits * current_max * grid.voltage *
+    grid['capacity_calc']=(grid.circuits * current_max * grid.voltage *
                              f_security * math.sqrt(3) / 1000)
 
-    pwr_lines = pd.DataFrame(geometries.deflex_power_lines())
+    pwr_lines=pd.DataFrame(geometries.deflex_power_lines())
 
     for l in pwr_lines.index:
-        split = l.split('-')
-        a = int('110{0}'.format(split[0][2:]))
-        b = int('110{0}'.format(split[1][2:]))
+        split=l.split('-')
+        a=int('110{0}'.format(split[0][2:]))
+        b=int('110{0}'.format(split[1][2:]))
         # print(a, b)
-        cap1, dist1 = get_grid_capacity(grid, a, b)
-        cap2, dist2 = get_grid_capacity(grid, b, a)
+        cap1, dist1=get_grid_capacity(grid, a, b)
+        cap2, dist2=get_grid_capacity(grid, b, a)
 
         if cap1 == 0 and cap2 == 0:
-            pwr_lines.loc[l, 'capacity'] = 0
-            pwr_lines.loc[l, 'distance'] = 0
+            pwr_lines.loc[l, 'capacity']=0
+            pwr_lines.loc[l, 'distance']=0
         elif cap1 == 0:
-            pwr_lines.loc[l, 'capacity'] = cap2
-            pwr_lines.loc[l, 'distance'] = dist2
+            pwr_lines.loc[l, 'capacity']=cap2
+            pwr_lines.loc[l, 'distance']=dist2
         elif cap2 == 0:
-            pwr_lines.loc[l, 'capacity'] = cap1
-            pwr_lines.loc[l, 'distance'] = dist1
+            pwr_lines.loc[l, 'capacity']=cap1
+            pwr_lines.loc[l, 'distance']=dist1
 
     # plot_grid(pwr_lines)
-    df = pwr_lines[['capacity', 'distance']]
+    df=pwr_lines[['capacity', 'distance']]
 
     if both_directions is True:
-        df = add_reverse_direction(df)
+        df=add_reverse_direction(df)
 
     return df
 

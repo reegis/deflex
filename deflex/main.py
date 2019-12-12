@@ -6,8 +6,8 @@ SPDX-FileCopyrightText: 2016-2019 Uwe Krien <krien@uni-bremen.de>
 
 SPDX-License-Identifier: MIT
 """
-__copyright__ = "Uwe Krien <krien@uni-bremen.de>"
-__license__ = "MIT"
+__copyright__="Uwe Krien <krien@uni-bremen.de>"
+__license__="MIT"
 
 
 # Python libraries
@@ -25,7 +25,7 @@ from deflex import scenario_tools
 def stopwatch():
     """Track the running time."""
     if not hasattr(stopwatch, 'start'):
-        stopwatch.start = datetime.now()
+        stopwatch.start=datetime.now()
     return str(datetime.now() - stopwatch.start)[:-7]
 
 
@@ -83,17 +83,17 @@ def main(year, rmap, csv=True, es=None, plot_graph=False):
     """
     stopwatch()
     cfg.tmp_set("init", "map", rmap)
-    name = "{0}_{1}_{2}".format("deflex", year, cfg.get("init", "map"))
+    name="{0}_{1}_{2}".format("deflex", year, cfg.get("init", "map"))
 
-    path = os.path.join(cfg.get("paths", "scenario"), "deflex", str(year))
+    path=os.path.join(cfg.get("paths", "scenario"), "deflex", str(year))
 
     if csv is True:
-        csv_dir = name + "_csv"
-        csv_path = os.path.join(path, csv_dir)
-        excel_path = None
+        csv_dir=name + "_csv"
+        csv_path=os.path.join(path, csv_dir)
+        excel_path=None
     else:
-        excel_path = os.path.join(path, name + ".xls")
-        csv_path = None
+        excel_path=os.path.join(path, name + ".xls")
+        csv_path=None
 
     model_scenario(
         xls_file=excel_path,
@@ -153,7 +153,7 @@ def model_scenario(
     if xls_file is not None and csv_path is not None:
         raise ValueError("It is not allowed to define more than one input.")
 
-    meta = {
+    meta={
         "year": year,
         "model_base": "deflex",
         "map": rmap,
@@ -161,20 +161,20 @@ def model_scenario(
         "start_time": datetime.now(),
     }
 
-    sc = scenario_tools.DeflexScenario(name=name, year=2014, meta=meta)
+    sc=scenario_tools.DeflexScenario(name=name, year=2014, meta=meta)
     if es is not None:
-        sc.es = es
+        sc.es=es
 
     if csv_path is not None:
         if res_path is None:
-            res_path = os.path.dirname(csv_path)
+            res_path=os.path.dirname(csv_path)
         logging.info(
             "Read scenario from csv collection: {0}".format(stopwatch())
         )
         sc.load_csv(csv_path)
     elif xls_file is not None:
         if res_path is None:
-            res_path = os.path.dirname(xls_file)
+            res_path=os.path.dirname(xls_file)
         logging.info("Read scenario from xls-file: {0}".format(stopwatch()))
         sc.load_excel(xls_file)
 
@@ -195,13 +195,13 @@ def model_scenario(
     sc.solve(solver=cfg.get("general", "solver"))
 
     logging.info("Solved. Dump results: {0}".format(stopwatch()))
-    res_path = os.path.join(
+    res_path=os.path.join(
         res_path, "results_{0}".format(cfg.get("general", "solver"))
     )
     os.makedirs(res_path, exist_ok=True)
-    out_file = os.path.join(res_path, name + ".esys")
+    out_file=os.path.join(res_path, name + ".esys")
     logging.info("Dump file to {0}".format(out_file))
-    sc.meta["end_time"] = datetime.now()
+    sc.meta["end_time"]=datetime.now()
     sc.dump_es(out_file)
 
     logging.info(
