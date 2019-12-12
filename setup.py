@@ -22,6 +22,7 @@ setup(
     packages=find_packages(),
     package_dir={'deflex': 'deflex'},
     url='https://github.com/reegis/deflex',
+    license='MIT',
     extras_require={
           'dev': ['nose', 'sphinx', 'sphinx_rtd_theme', 'requests']},
     install_requires=[
