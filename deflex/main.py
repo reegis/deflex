@@ -2,7 +2,7 @@
 
 """Main script.
 
-Copyright (c) 2016-2019 Uwe Krien <krien@uni-bremen.de>
+SPDX-FileCopyrightText: 2016-2019 Uwe Krien <krien@uni-bremen.de>
 
 SPDX-License-Identifier: MIT
 """
@@ -24,7 +24,7 @@ from deflex import scenario_tools
 
 def stopwatch():
     """Track the running time."""
-    if not hasattr(stopwatch, 'start'):
+    if not hasattr(stopwatch, "start"):
         stopwatch.start = datetime.now()
     return str(datetime.now() - stopwatch.start)[:-7]
 

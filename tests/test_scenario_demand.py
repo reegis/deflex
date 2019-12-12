@@ -3,7 +3,7 @@
 """
 Test the demand module
 
-Copyright (c) 2016-2019 Uwe Krien <krien@uni-bremen.de>
+SPDX-FileCopyrightText: 2016-2019 Uwe Krien <krien@uni-bremen.de>
 
 SPDX-License-Identifier: MIT
 """
@@ -19,14 +19,14 @@ from reegis.tools import download_file
 def setup_func():
     """Download pp-file from osf."""
 
-    url = 'https://osf.io/m435r/download'
-    path = cfg.get('paths', 'demand')
-    file = 'heat_profile_state_2014_weather_2014.csv'
+    url = "https://osf.io/m435r/download"
+    path = cfg.get("paths", "demand")
+    file = "heat_profile_state_2014_weather_2014.csv"
     filename = os.path.join(path, file)
     download_file(filename, url)
 
-    url = 'https://osf.io/6vmdh/download'
-    file = 'oep_ego_demand_combined.h5'
+    url = "https://osf.io/6vmdh/download"
+    file = "oep_ego_demand_combined.h5"
     filename = os.path.join(path, file)
     download_file(filename, url)
 
@@ -34,7 +34,7 @@ def setup_func():
 @with_setup(setup_func)
 def scenario_demand_test():
     """Test scenario demand."""
-    regions = geometries.deflex_regions(rmap='de21')
-    d = basic_scenario.scenario_demand(regions, 2014, 'de21')
-    eq_(int(d['DE01', 'district heating'].sum()), 18639262)
-    eq_(int(d['DE05', 'electrical_load'].sum()), 10069)
+    regions = geometries.deflex_regions(rmap="de21")
+    d = basic_scenario.scenario_demand(regions, 2014, "de21")
+    eq_(int(d["DE01", "district heating"].sum()), 18639262)
+    eq_(int(d["DE05", "electrical_load"].sum()), 10069)
