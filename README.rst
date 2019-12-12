@@ -111,7 +111,7 @@ We are warmly welcoming all who want to contribute to the deflex library.
 Citing deflex
 ========================
 
-We soon will use the zenodo project to get a DOI for each version.
+Use Zenodo to get the DOI for your `deflex version <https://zenodo.org/search?page=1&size=20&q=deflex>`_.
 
 License
 ============
