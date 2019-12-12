@@ -6,8 +6,8 @@ SPDX-FileCopyrightText: 2016-2019 Uwe Krien <krien@uni-bremen.de>
 
 SPDX-License-Identifier: MIT
 """
-__copyright__="Uwe Krien <krien@uni-bremen.de>"
-__license__="MIT"
+__copyright__ = "Uwe Krien <krien@uni-bremen.de>"
+__license__ = "MIT"
 
 # Python libraries
 import os
@@ -34,36 +34,42 @@ from deflex import geometries
 from deflex import config as cfg
 
 
-def create_scenario(regions, year, name, round_values=0, weather_year=None,
-                    copperplate=False):
-    table_collection={}
+def create_scenario(
+    regions, year, name, round_values=0, weather_year=None, copperplate=False
+):
+    table_collection = {}
 
-    logging.info('BASIC SCENARIO - STORAGES')
-    table_collection['storages']=scenario_storages(regions, year, name)
+    logging.info("BASIC SCENARIO - STORAGES")
+    table_collection["storages"] = scenario_storages(regions, year, name)
 
-    logging.info('BASIC SCENARIO - POWER PLANTS')
-    table_collection=scenario_powerplants(
-        table_collection, regions, year, name, round_values)
+    logging.info("BASIC SCENARIO - POWER PLANTS")
+    table_collection = scenario_powerplants(
+        table_collection, regions, year, name, round_values
+    )
 
-    logging.info('BASIC SCENARIO - TRANSMISSION')
-    table_collection['transmission']=scenario_transmission(
-        table_collection, regions, name, copperplate=copperplate)
+    logging.info("BASIC SCENARIO - TRANSMISSION")
+    table_collection["transmission"] = scenario_transmission(
+        table_collection, regions, name, copperplate=copperplate
+    )
 
-    logging.info('BASIC SCENARIO - CHP PLANTS')
-    table_collection=scenario_chp(table_collection, regions, year, name,
-                                    weather_year=weather_year)
+    logging.info("BASIC SCENARIO - CHP PLANTS")
+    table_collection = scenario_chp(
+        table_collection, regions, year, name, weather_year=weather_year
+    )
 
-    logging.info('BASIC SCENARIO - DECENTRALISED HEAT')
-    table_collection['decentralised_heat']=scenario_decentralised_heat()
+    logging.info("BASIC SCENARIO - DECENTRALISED HEAT")
+    table_collection["decentralised_heat"] = scenario_decentralised_heat()
 
-    logging.info('BASIC SCENARIO - SOURCES')
-    table_collection=scenario_commodity_sources(table_collection, year)
-    table_collection['volatile_series']=scenario_feedin(
-        regions, year, name, weather_year=weather_year)
+    logging.info("BASIC SCENARIO - SOURCES")
+    table_collection = scenario_commodity_sources(table_collection, year)
+    table_collection["volatile_series"] = scenario_feedin(
+        regions, year, name, weather_year=weather_year
+    )
 
-    logging.info('BASIC SCENARIO - DEMAND')
-    table_collection['demand_series']=scenario_demand(
-        regions, year, name, weather_year=weather_year)
+    logging.info("BASIC SCENARIO - DEMAND")
+    table_collection["demand_series"] = scenario_demand(
+        regions, year, name, weather_year=weather_year
+    )
     return table_collection
 
 
@@ -92,9 +98,10 @@ def scenario_storages(regions, year, name):
     >>> int(deflex_storages.loc['energy', 'DE16'])
     12115
     """
-    stor=storages.pumped_hydroelectric_storage_by_region(
-        regions, year, name).transpose()
-    return pd.concat([stor], axis=1, keys=['phes']).swaplevel(0, 1, 1)
+    stor = storages.pumped_hydroelectric_storage_by_region(
+        regions, year, name
+    ).transpose()
+    return pd.concat([stor], axis=1, keys=["phes"]).swaplevel(0, 1, 1)
 
 
 def scenario_powerplants(table_collection, regions, year, name, round_values):
@@ -111,43 +118,51 @@ def scenario_powerplants(table_collection, regions, year, name, round_values):
     ...     'capacity', ('DE03', 'lignite')])  # doctest: +SKIP
     1135.6
     """
-    pp=powerplants.get_deflex_pp_by_year(regions, year, name,
-                                           overwrite_capacity=True)
+    pp = powerplants.get_deflex_pp_by_year(
+        regions, year, name, overwrite_capacity=True
+    )
     return create_powerplants(pp, table_collection, year, name, round_values)
 
 
-def create_powerplants(pp, table_collection, year,
-                       region_column='deflex_region', round_values=None):
+def create_powerplants(
+    pp,
+    table_collection,
+    year,
+    region_column="deflex_region",
+    round_values=None,
+):
     """This function works for all power plant tables with an equivalent
     structure e.g. power plants by state or other regions."""
     logging.info("Adding power plants to your scenario.")
 
-    replace_names=cfg.get_dict('source_names')
-    replace_names.update(cfg.get_dict('source_groups'))
+    replace_names = cfg.get_dict("source_names")
+    replace_names.update(cfg.get_dict("source_groups"))
 
-    pp['energy_source_level_2'].replace(replace_names, inplace=True)
+    pp["energy_source_level_2"].replace(replace_names, inplace=True)
 
-    pp['model_classes']=pp['energy_source_level_2'].replace(
-        cfg.get_dict('model_classes'))
+    pp["model_classes"] = pp["energy_source_level_2"].replace(
+        cfg.get_dict("model_classes")
+    )
 
-    pp=pp.groupby(
-        ['model_classes', region_column, 'energy_source_level_2']).sum()[
-        ['capacity', 'capacity_in']]
+    pp = pp.groupby(
+        ["model_classes", region_column, "energy_source_level_2"]
+    ).sum()[["capacity", "capacity_in"]]
 
     for model_class in pp.index.get_level_values(level=0).unique():
-        pp_class=pp.loc[model_class]
-        if model_class != 'volatile_source':
-            pp_class['efficiency']=(pp_class['capacity'] /
-                                      pp_class['capacity_in'] * 100)
-        del pp_class['capacity_in']
+        pp_class = pp.loc[model_class]
+        if model_class != "volatile_source":
+            pp_class["efficiency"] = (
+                pp_class["capacity"] / pp_class["capacity_in"] * 100
+            )
+        del pp_class["capacity_in"]
         if round_values is not None:
-            pp_class=pp_class.round(round_values)
-        if 'efficiency' in pp_class:
-            pp_class['efficiency']=pp_class['efficiency'].div(100)
-        pp_class=pp_class.transpose()
-        pp_class.index.name='parameter'
-        table_collection[model_class]=pp_class
-    table_collection=add_pp_limit(table_collection, year)
+            pp_class = pp_class.round(round_values)
+        if "efficiency" in pp_class:
+            pp_class["efficiency"] = pp_class["efficiency"].div(100)
+        pp_class = pp_class.transpose()
+        pp_class.index.name = "parameter"
+        table_collection[model_class] = pp_class
+    table_collection = add_pp_limit(table_collection, year)
     return table_collection
 
 
@@ -163,28 +178,33 @@ def add_pp_limit(table_collection, year):
     -------
 
     """
-    if len(cfg.get_dict('limited_transformer').keys()) > 0:
+    if len(cfg.get_dict("limited_transformer").keys()) > 0:
         # Multiply with 1000 to get MWh (bmwi: GWh)
-        repp=bmwi.bmwi_re_energy_capacity() * 1000
-        trsf=table_collection['transformer']
-        for limit_trsf in cfg.get_dict('limited_transformer').keys():
-            trsf=table_collection['transformer']
+        repp = bmwi.bmwi_re_energy_capacity() * 1000
+        trsf = table_collection["transformer"]
+        for limit_trsf in cfg.get_dict("limited_transformer").keys():
+            trsf = table_collection["transformer"]
             try:
-                limit=repp.loc[year, (limit_trsf, 'energy')]
+                limit = repp.loc[year, (limit_trsf, "energy")]
             except KeyError:
-                msg="Cannot calculate limit for {0} in {1}."
+                msg = "Cannot calculate limit for {0} in {1}."
                 raise ValueError(msg.format(limit_trsf, year))
-            cap_sum=trsf.loc[
-                'capacity', (slice(None), slice(limit_trsf))].sum()
+            cap_sum = trsf.loc[
+                "capacity", (slice(None), slice(limit_trsf))
+            ].sum()
             for region in trsf.columns.get_level_values(level=0).unique():
-                trsf.loc['limit_elec_pp', (region, limit_trsf)]=round(
-                    trsf.loc['capacity', (region, limit_trsf)] /
-                    cap_sum * limit + 0.5)
+                trsf.loc["limit_elec_pp", (region, limit_trsf)] = round(
+                    trsf.loc["capacity", (region, limit_trsf)]
+                    / cap_sum
+                    * limit
+                    + 0.5
+                )
 
-        trsf.loc['limit_elec_pp']=trsf.loc['limit_elec_pp'].fillna(
-            float('inf'))
+        trsf.loc["limit_elec_pp"] = trsf.loc["limit_elec_pp"].fillna(
+            float("inf")
+        )
 
-        table_collection['transformer']=trsf
+        table_collection["transformer"] = trsf
     return table_collection
 
 
@@ -218,35 +238,39 @@ def scenario_transmission(table_collection, regions, name, copperplate=False):
     ...     )  # doctest: +SKIP
     1.0
     """
-    vs=table_collection['volatile_source']
+    vs = table_collection["volatile_source"]
 
     # This should be done automatic e.g. if representative point outside the
     # landmass polygon.
-    offshore_regions=geometries.divide_off_and_onshore(regions).offshore
+    offshore_regions = geometries.divide_off_and_onshore(regions).offshore
 
-    if name in ['de21', 'de22'] and not copperplate:
-        elec_trans=transmission.get_electrical_transmission_renpass()
-        general_efficiency=cfg.get('transmission', 'general_efficiency')
+    if name in ["de21", "de22"] and not copperplate:
+        elec_trans = transmission.get_electrical_transmission_renpass()
+        general_efficiency = cfg.get("transmission", "general_efficiency")
         if general_efficiency is not None:
-            elec_trans['efficiency']=general_efficiency
+            elec_trans["efficiency"] = general_efficiency
         else:
-            msg=("The calculation of the efficiency by distance is not yet "
-                   "implemented")
+            msg = (
+                "The calculation of the efficiency by distance is not yet "
+                "implemented"
+            )
             raise NotImplementedError(msg)
     else:
-        elec_trans=transmission.get_electrical_transmission_default()
+        elec_trans = transmission.get_electrical_transmission_default()
 
     # Set transmission capacity of offshore power lines to installed capacity
     # Multiply the installed capacity with 1.1 to get a buffer of 10%.
     for offreg in offshore_regions:
-        elec_trans.loc[elec_trans.index.str.contains(offreg), 'capacity']=(
-            vs[offreg].sum().sum() * 1.1)
+        elec_trans.loc[elec_trans.index.str.contains(offreg), "capacity"] = (
+            vs[offreg].sum().sum() * 1.1
+        )
 
-    elec_trans=(
-        pd.concat([elec_trans], axis=1, keys=['electrical']).sort_index(1))
-    if cfg.get('init', 'map') == 'de22' and not copperplate:
-        elec_trans.loc['DE22-DE01', ('electrical', 'efficiency')]=0.9999
-        elec_trans.loc['DE22-DE01', ('electrical', 'capacity')]=9999999
+    elec_trans = pd.concat(
+        [elec_trans], axis=1, keys=["electrical"]
+    ).sort_index(1)
+    if cfg.get("init", "map") == "de22" and not copperplate:
+        elec_trans.loc["DE22-DE01", ("electrical", "efficiency")] = 0.9999
+        elec_trans.loc["DE22-DE01", ("electrical", "capacity")] = 9999999
     return elec_trans
 
 
@@ -273,18 +297,24 @@ def scenario_commodity_sources(table_collection, year):
     >>> round(src.loc['emission',  ('DE', 'natural gas')], 2)  # doctest: +SKIP
     201.24
     """
-    commodity_src=create_commodity_sources(year)
-    commodity_src=commodity_src.swaplevel().unstack()
+    commodity_src = create_commodity_sources(year)
+    commodity_src = commodity_src.swaplevel().unstack()
 
-    msg=("The unit for {0} of the source is '{1}'. "
-           "Will multiply it with {2} to get '{3}'.")
+    msg = (
+        "The unit for {0} of the source is '{1}'. "
+        "Will multiply it with {2} to get '{3}'."
+    )
 
-    converter={'costs': ['costs', 'EUR/J', 1e+9 * 3.6, 'EUR/MWh'],
-                 'emission': ['emission', 'g/J', 1e+6 * 3.6, 'kg/MWh']}
+    converter = {
+        "costs": ["costs", "EUR/J", 1e9 * 3.6, "EUR/MWh"],
+        "emission": ["emission", "g/J", 1e6 * 3.6, "kg/MWh"],
+    }
 
-    transformer_list=(
-        table_collection['transformer'].columns.get_level_values(
-            level=1).unique())
+    transformer_list = (
+        table_collection["transformer"]
+        .columns.get_level_values(level=1)
+        .unique()
+    )
 
     # Delete unused sources
     for col in commodity_src.columns:
@@ -293,15 +323,17 @@ def scenario_commodity_sources(table_collection, year):
 
     # convert units
     for key in converter.keys():
-        commodity_src.loc[key]=commodity_src.loc[key].multiply(
-            converter[key][2])
+        commodity_src.loc[key] = commodity_src.loc[key].multiply(
+            converter[key][2]
+        )
         logging.warning(msg.format(*converter[key]))
 
     # Add region level to be consistent to other tables
-    commodity_src.columns=pd.MultiIndex.from_product(
-        [['DE'], commodity_src.columns])
+    commodity_src.columns = pd.MultiIndex.from_product(
+        [["DE"], commodity_src.columns]
+    )
 
-    table_collection['commodity_source']=commodity_src
+    table_collection["commodity_source"] = commodity_src
     return table_collection
 
 
@@ -317,15 +349,17 @@ def create_commodity_sources(year, use_znes_2014=True):
     -------
 
     """
-    cs=commodity_sources.get_commodity_sources()
-    rename_cols={key.lower(): value for key, value in
-                   cfg.get_dict('source_names').items()}
-    cs=cs.rename(columns=rename_cols)
-    cs_year=cs.loc[year]
+    cs = commodity_sources.get_commodity_sources()
+    rename_cols = {
+        key.lower(): value
+        for key, value in cfg.get_dict("source_names").items()
+    }
+    cs = cs.rename(columns=rename_cols)
+    cs_year = cs.loc[year]
     if use_znes_2014:
-        before=len(cs_year[cs_year.isnull()])
-        cs_year=cs_year.fillna(cs.loc[2014])
-        after=len(cs_year[cs_year.isnull()])
+        before = len(cs_year[cs_year.isnull()])
+        cs_year = cs_year.fillna(cs.loc[2014])
+        after = len(cs_year[cs_year.isnull()])
         if before - after > 0:
             logging.warning("Values were replaced with znes2014 data.")
     cs_year.sort_index(inplace=True)
@@ -355,32 +389,42 @@ def scenario_demand(regions, year, name, weather_year=None):
     10069
 
     """
-    demand_series=scenario_elec_demand(pd.DataFrame(), regions, year, name,
-                                         weather_year=weather_year)
-    demand_series=scenario_heat_demand(demand_series, regions, year,
-                                         weather_year=weather_year)
+    demand_series = scenario_elec_demand(
+        pd.DataFrame(), regions, year, name, weather_year=weather_year
+    )
+    demand_series = scenario_heat_demand(
+        demand_series, regions, year, weather_year=weather_year
+    )
     return demand_series
 
 
 def scenario_heat_demand(table, regions, year, weather_year=None):
-    idx=table.index  # Use the index of the existing time series
-    table=pd.concat([table, demand.get_heat_profiles_deflex(
-        regions, year, idx, weather_year=weather_year)], axis=1)
+    idx = table.index  # Use the index of the existing time series
+    table = pd.concat(
+        [
+            table,
+            demand.get_heat_profiles_deflex(
+                regions, year, idx, weather_year=weather_year
+            ),
+        ],
+        axis=1,
+    )
     return table.sort_index(1)
 
 
 def scenario_elec_demand(table, regions, year, name, weather_year=None):
     if weather_year is None:
-        demand_year=year
+        demand_year = year
     else:
-        demand_year=weather_year
+        demand_year = weather_year
 
-    df=demand_elec.get_entsoe_profile_by_region(
-        regions, demand_year, name, annual_demand='bmwi')
-    df=pd.concat([df], axis=1, keys=['electrical_load']).swaplevel(0, 1, 1)
-    df=df.reset_index(drop=True)
+    df = demand_elec.get_entsoe_profile_by_region(
+        regions, demand_year, name, annual_demand="bmwi"
+    )
+    df = pd.concat([df], axis=1, keys=["electrical_load"]).swaplevel(0, 1, 1)
+    df = df.reset_index(drop=True)
     if not calendar.isleap(year) and len(df) > 8760:
-        df=df.iloc[:8760]
+        df = df.iloc[:8760]
     return pd.concat([table, df], axis=1).sort_index(1)
 
 
@@ -414,19 +458,19 @@ def scenario_feedin(regions, year, name, weather_year=None):
     wind          1753.673492
     dtype: float64
     """
-    wy=weather_year
+    wy = weather_year
     try:
-        feedin=coastdat.scenario_feedin(year, name, weather_year=wy)
+        feedin = coastdat.scenario_feedin(year, name, weather_year=wy)
     except FileNotFoundError:
-        coastdat.get_feedin_per_region(
-            year, regions, name, weather_year=wy)
-        feedin=coastdat.scenario_feedin(year, name, weather_year=wy)
+        coastdat.get_feedin_per_region(year, regions, name, weather_year=wy)
+        feedin = coastdat.scenario_feedin(year, name, weather_year=wy)
     return feedin
 
 
 def scenario_decentralised_heat():
-    filename=os.path.join(cfg.get('paths', 'data_deflex'),
-                            cfg.get('heating', 'table'))
+    filename = os.path.join(
+        cfg.get("paths", "data_deflex"), cfg.get("heating", "table")
+    )
     return pd.read_csv(filename, header=[0, 1], index_col=[0])
 
 
@@ -462,135 +506,152 @@ def scenario_chp(table_collection, regions, year, name, weather_year=None):
     """
     # values from heat balance
 
-    cb=energy_balance.get_transformation_balance_by_region(
-        regions, year, name)
-    cb.rename(columns={'re': cfg.get('chp', 'renewable_source')}, inplace=True)
-    heat_b=reegis_powerplants.calculate_chp_share_and_efficiency(cb)
+    cb = energy_balance.get_transformation_balance_by_region(
+        regions, year, name
+    )
+    cb.rename(columns={"re": cfg.get("chp", "renewable_source")}, inplace=True)
+    heat_b = reegis_powerplants.calculate_chp_share_and_efficiency(cb)
 
-    heat_demand=demand.get_heat_profiles_deflex(
-        regions, year, weather_year=weather_year)
+    heat_demand = demand.get_heat_profiles_deflex(
+        regions, year, weather_year=weather_year
+    )
     return chp_table(heat_b, heat_demand, table_collection)
 
 
 def chp_table(heat_b, heat_demand, table_collection, regions=None):
-    trsf=table_collection['transformer']
-    trsf=trsf.fillna(0)
+    trsf = table_collection["transformer"]
+    trsf = trsf.fillna(0)
 
-    rows=['Heizkraftwerke der allgemeinen Versorgung (nur KWK)',
-            'Heizwerke']
+    rows = ["Heizkraftwerke der allgemeinen Versorgung (nur KWK)", "Heizwerke"]
     if regions is None:
-        regions=sorted(heat_b.keys())
+        regions = sorted(heat_b.keys())
 
-    logging.info('start')
+    logging.info("start")
     for region in regions:
-        eta_hp=round(heat_b[region]['sys_heat'] * heat_b[region]['hp'], 2)
-        eta_heat_chp=round(
-            heat_b[region]['sys_heat'] * heat_b[region]['heat_chp'], 2)
-        eta_elec_chp=round(heat_b[region]['elec_chp'], 2)
+        eta_hp = round(heat_b[region]["sys_heat"] * heat_b[region]["hp"], 2)
+        eta_heat_chp = round(
+            heat_b[region]["sys_heat"] * heat_b[region]["heat_chp"], 2
+        )
+        eta_elec_chp = round(heat_b[region]["elec_chp"], 2)
 
         # Remove 'district heating' and 'electricity' and spread the share
         # to the remaining columns.
-        share=pd.DataFrame(columns=heat_b[region]['fuel_share'].columns)
+        share = pd.DataFrame(columns=heat_b[region]["fuel_share"].columns)
         for row in rows:
-            tmp=heat_b[region]['fuel_share'].loc[region, :, row]
-            tot=float(tmp['total'])
+            tmp = heat_b[region]["fuel_share"].loc[region, :, row]
+            tot = float(tmp["total"])
 
-            d=float(tmp['district heating'] + tmp['electricity'])
-            tmp=tmp + tmp / (tot - d) * d
-            tmp=tmp.reset_index(drop=True)
-            share.loc[row]=tmp.loc[0]
-        del share['district heating']
-        del share['electricity']
+            d = float(tmp["district heating"] + tmp["electricity"])
+            tmp = tmp + tmp / (tot - d) * d
+            tmp = tmp.reset_index(drop=True)
+            share.loc[row] = tmp.loc[0]
+        del share["district heating"]
+        del share["electricity"]
 
         # Remove the total share
-        del share['total']
+        del share["total"]
 
-        max_val=float(heat_demand[region]['district heating'].max())
-        sum_val=float(heat_demand[region]['district heating'].sum())
+        max_val = float(heat_demand[region]["district heating"].max())
+        sum_val = float(heat_demand[region]["district heating"].sum())
 
         for fuel in share.columns:
-            if fuel == 'gas':
-                src='natural gas'
+            if fuel == "gas":
+                src = "natural gas"
             else:
-                src=fuel
+                src = fuel
 
             # CHP
-            trsf.loc['limit_heat_chp', (region, src)]=round(
-                    sum_val * share.loc[rows[0], fuel] + 0.5)
-            cap_heat_chp=round(
-                    max_val * share.loc[rows[0], fuel] + 0.005, 2)
-            trsf.loc['capacity_heat_chp', (region, src)]=cap_heat_chp
-            cap_elec=(cap_heat_chp / eta_heat_chp *
-                        eta_elec_chp)
-            trsf.loc['capacity_elec_chp', (region, src)]=round(cap_elec, 2)
-            trsf[region]=trsf[region].fillna(0)
-            trsf.loc['capacity', (region, src)]=round(
-                trsf.loc['capacity', (region, src)] - cap_elec)
+            trsf.loc["limit_heat_chp", (region, src)] = round(
+                sum_val * share.loc[rows[0], fuel] + 0.5
+            )
+            cap_heat_chp = round(max_val * share.loc[rows[0], fuel] + 0.005, 2)
+            trsf.loc["capacity_heat_chp", (region, src)] = cap_heat_chp
+            cap_elec = cap_heat_chp / eta_heat_chp * eta_elec_chp
+            trsf.loc["capacity_elec_chp", (region, src)] = round(cap_elec, 2)
+            trsf[region] = trsf[region].fillna(0)
+            trsf.loc["capacity", (region, src)] = round(
+                trsf.loc["capacity", (region, src)] - cap_elec
+            )
 
             # If the power plant limit is not 'inf' the limited electricity
             # output of the chp plant has to be subtracted from the power plant
             # limit because this is related to the overall electricity output.
-            if not trsf.loc['limit_elec_pp', (region, src)] == float('inf'):
-                trsf.loc['limit_elec_pp', (region, src)] -= round(
-                    trsf.loc['limit_heat_chp', (region, src)] /
-                    eta_heat_chp * eta_elec_chp)
+            if not trsf.loc["limit_elec_pp", (region, src)] == float("inf"):
+                trsf.loc["limit_elec_pp", (region, src)] -= round(
+                    trsf.loc["limit_heat_chp", (region, src)]
+                    / eta_heat_chp
+                    * eta_elec_chp
+                )
 
             # HP
-            trsf.loc['limit_hp', (region, src)]=round(
-                sum_val * share.loc[rows[1], fuel] + 0.5)
-            trsf.loc['capacity_hp', (region, src)]=round(
-                max_val * share.loc[rows[1], fuel] + 0.005, 2)
-            if trsf.loc['capacity_hp', (region, src)] > 0:
-                trsf.loc['efficiency_hp', (region, src)]=eta_hp
+            trsf.loc["limit_hp", (region, src)] = round(
+                sum_val * share.loc[rows[1], fuel] + 0.5
+            )
+            trsf.loc["capacity_hp", (region, src)] = round(
+                max_val * share.loc[rows[1], fuel] + 0.005, 2
+            )
+            if trsf.loc["capacity_hp", (region, src)] > 0:
+                trsf.loc["efficiency_hp", (region, src)] = eta_hp
             if cap_heat_chp * cap_elec > 0:
-                trsf.loc['efficiency_heat_chp', (region, src)]=eta_heat_chp
-                trsf.loc['efficiency_elec_chp', (region, src)]=eta_elec_chp
+                trsf.loc["efficiency_heat_chp", (region, src)] = eta_heat_chp
+                trsf.loc["efficiency_elec_chp", (region, src)] = eta_elec_chp
 
-    logging.info('Done')
+    logging.info("Done")
 
     trsf.sort_index(axis=1, inplace=True)
     for col in trsf.sum().loc[trsf.sum() == 0].index:
         del trsf[col]
-    trsf[trsf < 0]=0
+    trsf[trsf < 0] = 0
 
-    table_collection['transformer']=trsf
+    table_collection["transformer"] = trsf
     return table_collection
 
 
 def clean_time_series(table_collection):
-    dts=table_collection['demand_series']
-    vts=table_collection['volatile_series']
-    vs=table_collection['volatile_source']
+    dts = table_collection["demand_series"]
+    vts = table_collection["volatile_series"]
+    vs = table_collection["volatile_source"]
 
-    regions=list(dts.columns.get_level_values(0).unique())
-    regions.remove('DE_demand')
+    regions = list(dts.columns.get_level_values(0).unique())
+    regions.remove("DE_demand")
     for reg in regions:
-        for load in ['district heating', 'electrical_load']:
+        for load in ["district heating", "electrical_load"]:
             if dts[reg].get(load) is not None:
                 if dts[reg, load].sum() == 0:
-                    msg=("Removing {0} time series of region {1} because"
-                           "sum of time series is {2}")
+                    msg = (
+                        "Removing {0} time series of region {1} because"
+                        "sum of time series is {2}"
+                    )
                     logging.debug(msg.format(load, reg, dts[reg, load].sum()))
                     del dts[reg, load]
 
-    regions=list(vts.columns.get_level_values(0).unique())
+    regions = list(vts.columns.get_level_values(0).unique())
     for reg in regions:
-        for t in ['hydro', 'solar', 'wind', 'geothermal']:
+        for t in ["hydro", "solar", "wind", "geothermal"]:
             # if the column does not exist or is 0 the corresponding column
             # of the time_series table can be removed.
             if vs[reg].get(t) is None or vs[reg].get(t).sum() == 0:
                 if vts.get(reg) is not None:
                     if vts[reg].get(t) is not None:
-                        msg=("Removing {0} time series of region {1} "
-                               "because installed capacity is {2}")
+                        msg = (
+                            "Removing {0} time series of region {1} "
+                            "because installed capacity is {2}"
+                        )
                         logging.debug(msg.format(t, reg, vs[reg].get(t)))
                         del vts[reg, t]
 
     return table_collection
 
 
-def create_basic_scenario(year, rmap=None, path=None, csv_dir=None,
-                          xls_name=None, round_values=None, only_out=None):
+def create_basic_scenario(
+    year,
+    rmap=None,
+    path=None,
+    csv_dir=None,
+    xls_name=None,
+    round_values=None,
+    only_out=None,
+):
     """
     Create a basic scenario for a given year and region-set.
 
@@ -617,40 +678,41 @@ def create_basic_scenario(year, rmap=None, path=None, csv_dir=None,
     >>> print("Csv path: {0}".format(p.csv))  # doctest: +SKIP
 
     """
-    paths=namedtuple('paths', 'xls, csv')
+    paths = namedtuple("paths", "xls, csv")
     if rmap is not None:
-        cfg.tmp_set('init', 'map', rmap)
-    name=cfg.get('init', 'map')
-    regions=geometries.deflex_regions(rmap=cfg.get('init', 'map'))
+        cfg.tmp_set("init", "map", rmap)
+    name = cfg.get("init", "map")
+    regions = geometries.deflex_regions(rmap=cfg.get("init", "map"))
 
-    table_collection=create_scenario(regions, year, name, round_values)
-    table_collection=clean_time_series(table_collection)
-    name='{0}_{1}_{2}'.format('deflex', year, cfg.get('init', 'map'))
-    sce=scenario_tools.Scenario(table_collection=table_collection,
-                                  name=name, year=year)
+    table_collection = create_scenario(regions, year, name, round_values)
+    table_collection = clean_time_series(table_collection)
+    name = "{0}_{1}_{2}".format("deflex", year, cfg.get("init", "map"))
+    sce = scenario_tools.Scenario(
+        table_collection=table_collection, name=name, year=year
+    )
 
     if path is None:
-        path=os.path.join(cfg.get('paths', 'scenario'), 'deflex', str(year))
+        path = os.path.join(cfg.get("paths", "scenario"), "deflex", str(year))
 
-    if only_out == 'xls':
-        csv_path=None
+    if only_out == "xls":
+        csv_path = None
     elif csv_dir is None:
-        csv_path=os.path.join(path, '{0}_csv'.format(name))
+        csv_path = os.path.join(path, "{0}_csv".format(name))
     else:
-        csv_path=os.path.join(path, csv_dir)
+        csv_path = os.path.join(path, csv_dir)
 
-    if only_out == 'csv':
-        xls_path=None
+    if only_out == "csv":
+        xls_path = None
     elif xls_name is None:
-        xls_path=os.path.join(path, name + '.xls')
+        xls_path = os.path.join(path, name + ".xls")
     else:
-        xls_path=os.path.join(path, xls_name)
+        xls_path = os.path.join(path, xls_name)
 
-    fullpath=paths(xls=xls_path, csv=csv_path)
-    if not only_out == 'csv':
+    fullpath = paths(xls=xls_path, csv=csv_path)
+    if not only_out == "csv":
         os.makedirs(path, exist_ok=True)
         sce.to_excel(fullpath.xls)
-    if not only_out == 'xls':
+    if not only_out == "xls":
         os.makedirs(csv_path, exist_ok=True)
         sce.to_csv(fullpath.csv)
 

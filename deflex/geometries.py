@@ -7,8 +7,8 @@ SPDX-FileCopyrightText: 2016-2019 Uwe Krien <krien@uni-bremen.de>
 
 SPDX-License-Identifier: MIT
 """
-__copyright__="Uwe Krien <krien@uni-bremen.de>"
-__license__="MIT"
+__copyright__ = "Uwe Krien <krien@uni-bremen.de>"
+__license__ = "MIT"
 
 
 # Python libraries
@@ -55,17 +55,20 @@ def deflex_regions(rmap=None, rtype='polygons'):
     ['DE01', 'DE02']
     """
     if rmap is None:
-        rmap=cfg.get('init', 'map')
-    name=os.path.join(cfg.get('paths', 'geo_deflex'),
-                        cfg.get('geometry', 'deflex_polygon').format(
-                            suffix='.geojson', map=rmap, type=rtype))
-    regions=geo.load(fullname=name)
-    regions.set_index('region', inplace=True)
-    regions.name=rmap
+        rmap = cfg.get("init", "map")
+    name = os.path.join(
+        cfg.get("paths", "geo_deflex"),
+        cfg.get("geometry", "deflex_polygon").format(
+            suffix=".geojson", map=rmap, type=rtype
+        ),
+    )
+    regions = geo.load(fullname=name)
+    regions.set_index("region", inplace=True)
+    regions.name = rmap
     return regions
 
 
-def deflex_power_lines(rmap=None, rtype='lines'):
+def deflex_power_lines(rmap=None, rtype="lines"):
     """
 
     Parameters
@@ -92,13 +95,16 @@ def deflex_power_lines(rmap=None, rtype='lines'):
     'de21'
     """
     if rmap is None:
-        rmap=cfg.get('init', 'map')
-    name=os.path.join(cfg.get('paths', 'geo_deflex'),
-                        cfg.get('geometry', 'powerlines').format(
-                            map=rmap, type=rtype, suffix='.geojson'))
-    lines=geo.load(fullname=name)
-    lines.set_index('name', inplace=True)
-    lines.name=rmap
+        rmap = cfg.get("init", "map")
+    name = os.path.join(
+        cfg.get("paths", "geo_deflex"),
+        cfg.get("geometry", "powerlines").format(
+            map=rmap, type=rtype, suffix=".geojson"
+        ),
+    )
+    lines = geo.load(fullname=name)
+    lines.set_index("name", inplace=True)
+    lines.name = rmap
     return lines
 
 
@@ -126,18 +132,19 @@ def divide_off_and_onshore(regions):
     >>> divide_off_and_onshore(reg).offshore
     ['DE19', 'DE20', 'DE21']
     """
-    region_type=namedtuple('RegionType', 'offshore onshore')
-    regions_centroid=regions.copy()
-    regions_centroid.geometry=regions_centroid.centroid
+    region_type = namedtuple("RegionType", "offshore onshore")
+    regions_centroid = regions.copy()
+    regions_centroid.geometry = regions_centroid.centroid
 
-    germany_onshore=geo.load(
-        cfg.get('paths', 'geometry'),
-        cfg.get('geometry', 'germany_polygon'))
+    germany_onshore = geo.load(
+        cfg.get("paths", "geometry"), cfg.get("geometry", "germany_polygon")
+    )
 
-    gdf=geo.spatial_join_with_buffer(regions_centroid, germany_onshore,
-                                       'onshore', limit=0)
+    gdf = geo.spatial_join_with_buffer(
+        regions_centroid, germany_onshore, "onshore", limit=0
+    )
 
-    onshore=list(gdf.loc[gdf.onshore == 0].index)
-    offshore=list(gdf.loc[gdf.onshore == 'unknown'].index)
+    onshore = list(gdf.loc[gdf.onshore == 0].index)
+    offshore = list(gdf.loc[gdf.onshore == "unknown"].index)
 
     return region_type(offshore=offshore, onshore=onshore)

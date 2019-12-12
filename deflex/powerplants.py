@@ -6,8 +6,8 @@ SPDX-FileCopyrightText: 2016-2019 Uwe Krien <krien@uni-bremen.de>
 
 SPDX-License-Identifier: MIT
 """
-__copyright__="Uwe Krien <krien@uni-bremen.de>"
-__license__="MIT"
+__copyright__ = "Uwe Krien <krien@uni-bremen.de>"
+__license__ = "MIT"
 
 
 import pandas as pd
@@ -32,22 +32,24 @@ def pp_reegis2deflex(regions, name, filename_in=None, filename_out=None):
 
     """
     if filename_out is None:
-        filename_out=os.path.join(
-            cfg.get('paths', 'powerplants'),
-            cfg.get('powerplants', 'deflex_pp')).format(
-                map=cfg.get('init', 'map'))
+        filename_out = os.path.join(
+            cfg.get("paths", "powerplants"),
+            cfg.get("powerplants", "deflex_pp"),
+        ).format(map=cfg.get("init", "map"))
 
     # Add deflex regions to powerplants
-    pp=powerplants.add_regions_to_powerplants(
-        regions, name, dump=False, filename=filename_in)
+    pp = powerplants.add_regions_to_powerplants(
+        regions, name, dump=False, filename=filename_in
+    )
 
     # Add federal states to powerplants
-    federal_states=reegis_geometries.get_federal_states_polygon()
-    pp=powerplants.add_regions_to_powerplants(
-        federal_states, 'federal_states', pp=pp, dump=False)
+    federal_states = reegis_geometries.get_federal_states_polygon()
+    pp = powerplants.add_regions_to_powerplants(
+        federal_states, "federal_states", pp=pp, dump=False
+    )
 
     # store the results for further usage of deflex
-    pp.to_hdf(filename_out, 'pp')
+    pp.to_hdf(filename_out, "pp")
     return filename_out
 
 
@@ -128,20 +130,20 @@ def get_deflex_pp_by_year(regions, year, name, overwrite_capacity=False):
     -------
 
     """
-    filename=os.path.join(cfg.get('paths', 'powerplants'),
-                            cfg.get('powerplants', 'deflex_pp')).format(
-        map=name)
+    filename = os.path.join(
+        cfg.get("paths", "powerplants"), cfg.get("powerplants", "deflex_pp")
+    ).format(map=name)
     logging.info("Get deflex power plants for {0}.".format(year))
     if not os.path.isfile(filename):
-        msg="File '{0}' does not exist. Will create it from reegis file."
+        msg = "File '{0}' does not exist. Will create it from reegis file."
         logging.debug(msg.format(filename))
-        filename=pp_reegis2deflex(regions, name)
-    pp=pd.DataFrame(pd.read_hdf(filename, 'pp', mode='r'))
+        filename = pp_reegis2deflex(regions, name)
+    pp = pd.DataFrame(pd.read_hdf(filename, "pp", mode="r"))
 
     # Remove unwanted data sets
-    pp=process_pp_table(pp)
+    pp = process_pp_table(pp)
 
-    filter_columns=['capacity_{0}', 'capacity_in_{0}']
+    filter_columns = ["capacity_{0}", "capacity_in_{0}"]
 
     # Get all powerplants for the given year.
     # If com_month exist the power plants will be considered month-wise.
@@ -149,21 +151,23 @@ def get_deflex_pp_by_year(regions, year, name, overwrite_capacity=False):
     # considered.
 
     for fcol in filter_columns:
-        filter_column=fcol.format(year)
-        orig_column=fcol[:-4]
-        c1=(pp['com_year'] < year) & (pp['decom_year'] > year)
-        pp.loc[c1, filter_column]=pp.loc[c1, orig_column]
+        filter_column = fcol.format(year)
+        orig_column = fcol[:-4]
+        c1 = (pp["com_year"] < year) & (pp["decom_year"] > year)
+        pp.loc[c1, filter_column] = pp.loc[c1, orig_column]
 
-        c2=pp['com_year'] == year
-        pp.loc[c2, filter_column]=(pp.loc[c2, orig_column] *
-                                     (12 - pp.loc[c2, 'com_month']) / 12)
-        c3=pp['decom_year'] == year
-        pp.loc[c3, filter_column]=(pp.loc[c3, orig_column] *
-                                     pp.loc[c3, 'com_month'] / 12)
+        c2 = pp["com_year"] == year
+        pp.loc[c2, filter_column] = (
+            pp.loc[c2, orig_column] * (12 - pp.loc[c2, "com_month"]) / 12
+        )
+        c3 = pp["decom_year"] == year
+        pp.loc[c3, filter_column] = (
+            pp.loc[c3, orig_column] * pp.loc[c3, "com_month"] / 12
+        )
 
         if overwrite_capacity:
-            pp[orig_column]=0
-            pp[orig_column]=pp[filter_column]
+            pp[orig_column] = 0
+            pp[orig_column] = pp[filter_column]
             del pp[filter_column]
 
     return pp
