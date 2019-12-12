@@ -109,8 +109,8 @@ def process_pp_table(pp):
     # if clean_offshore:
     #     pp=remove_onshore_technology_from_offshore_regions(pp)
     # Remove PHES (storages)
-    if cfg.get('powerplants', 'remove_phes'):
-        pp=pp.loc[pp.technology != 'Pumped storage']
+    if cfg.get("powerplants", "remove_phes"):
+        pp = pp.loc[pp.technology != "Pumped storage"]
     return pp
 
 
