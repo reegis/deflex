@@ -18,7 +18,7 @@ import pandas as pd
 import math
 
 # internal modules
-from reegis import config as cfg
+from deflex import config as cfg
 
 from deflex import geometries
 

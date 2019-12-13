@@ -14,7 +14,7 @@ import pandas as pd
 import os
 import logging
 from reegis import geometries as reegis_geometries
-from reegis import config as cfg
+from deflex import config as cfg
 from reegis import powerplants
 
 
