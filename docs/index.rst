@@ -12,6 +12,15 @@
 .. image:: https://img.shields.io/lgtm/alerts/g/reegis/deflex.svg?logo=lgtm&logoWidth=18
     :target: https://lgtm.com/projects/g/reegis/reegis/alerts/
 
+.. image:: https://img.shields.io/badge/automatic%20code%20style-black-blueviolet
+    :target: https://black.readthedocs.io/en/stable/
+
+.. image:: https://img.shields.io/badge/licence-MIT-blue
+    :target: https://spdx.org/licenses/MIT.html
+
+.. image:: https://zenodo.org/badge/DOI/10.5281/zenodo.3572594.svg
+   :target: https://doi.org/10.5281/zenodo.3572594
+
 
 Introduction
 =============
@@ -33,4 +42,3 @@ Indices and tables
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
-

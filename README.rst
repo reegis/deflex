@@ -18,6 +18,9 @@
 .. image:: https://img.shields.io/badge/licence-MIT-blue
     :target: https://spdx.org/licenses/MIT.html
 
+.. image:: https://zenodo.org/badge/DOI/10.5281/zenodo.3572594.svg
+   :target: https://doi.org/10.5281/zenodo.3572594
+
 Introduction
 =============
 
@@ -118,7 +121,10 @@ We are warmly welcoming all who want to contribute to the deflex library.
 Citing deflex
 ========================
 
-Use Zenodo to get the DOI for your `deflex version <https://zenodo.org/search?page=1&size=20&q=deflex>`_.
+Go to the `Zenodo page of deflex <https://doi.org/10.5281/zenodo.3572594>`_ to find the DOI of your version. To cite all deflex versions use:
+
+.. image:: https://zenodo.org/badge/DOI/10.5281/zenodo.3572594.svg
+   :target: https://doi.org/10.5281/zenodo.3572594
 
 License
 ============
