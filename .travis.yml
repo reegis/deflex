@@ -4,8 +4,9 @@ matrix:
   include:
     - python: 3.6
     - python: 3.7
+    - python: 3.8
 
-# command to install dependencies
+# install os dependencies
 addons:
   apt:
     packages:
@@ -16,6 +17,7 @@ addons:
       - libgeos-dev
       - libspatialindex-dev
 
+# install python dependencies
 install:
   - pip install cython
   - pip install .
