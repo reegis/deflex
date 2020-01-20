@@ -569,12 +569,12 @@ def chp_table(heat_b, heat_demand, table_collection, regions=None):
 
             # CHP
             trsf.loc["limit_heat_chp", (region, src)] = round(
-                sum_val * share.loc[rows[0], fuel] *
-                out_share_factor_chp + 0.5
+                sum_val * share.loc[rows[0], fuel] * out_share_factor_chp + 0.5
             )
             cap_heat_chp = round(
                 max_val * share.loc[rows[0], fuel] * out_share_factor_chp
-                + 0.005, 2
+                + 0.005,
+                2,
             )
             trsf.loc["capacity_heat_chp", (region, src)] = cap_heat_chp
             cap_elec = cap_heat_chp / eta_heat_chp * eta_elec_chp
@@ -596,12 +596,12 @@ def chp_table(heat_b, heat_demand, table_collection, regions=None):
 
             # HP
             trsf.loc["limit_hp", (region, src)] = round(
-                sum_val * share.loc[rows[1], fuel] *
-                out_share_factor_hp + 0.5
+                sum_val * share.loc[rows[1], fuel] * out_share_factor_hp + 0.5
             )
             trsf.loc["capacity_hp", (region, src)] = round(
                 max_val * share.loc[rows[1], fuel] * out_share_factor_hp
-                + 0.005, 2
+                + 0.005,
+                2,
             )
             if trsf.loc["capacity_hp", (region, src)] > 0:
                 trsf.loc["efficiency_hp", (region, src)] = eta_hp
