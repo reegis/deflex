@@ -534,6 +534,13 @@ def chp_table(heat_b, heat_demand, table_collection, regions=None):
         )
         eta_elec_chp = round(heat_b[region]["elec_chp"], 2)
 
+        # Due to the different efficiency between heat from chp-plants and
+        # heat from heat-plants the share of the output is different to the
+        # share of the input. As heat-plants will produce more heat per fuel
+        # factor will be greater than 1 and for chp-plants smaller than 1.
+        out_share_factor_chp = heat_b[region]["out_share_factor_chp"]
+        out_share_factor_hp = heat_b[region]["out_share_factor_hp"]
+
         # Remove 'district heating' and 'electricity' and spread the share
         # to the remaining columns.
         share = pd.DataFrame(columns=heat_b[region]["fuel_share"].columns)
@@ -562,9 +569,13 @@ def chp_table(heat_b, heat_demand, table_collection, regions=None):
 
             # CHP
             trsf.loc["limit_heat_chp", (region, src)] = round(
-                sum_val * share.loc[rows[0], fuel] + 0.5
+                sum_val * share.loc[rows[0], fuel] *
+                out_share_factor_chp + 0.5
             )
-            cap_heat_chp = round(max_val * share.loc[rows[0], fuel] + 0.005, 2)
+            cap_heat_chp = round(
+                max_val * share.loc[rows[0], fuel] * out_share_factor_chp
+                + 0.005, 2
+            )
             trsf.loc["capacity_heat_chp", (region, src)] = cap_heat_chp
             cap_elec = cap_heat_chp / eta_heat_chp * eta_elec_chp
             trsf.loc["capacity_elec_chp", (region, src)] = round(cap_elec, 2)
@@ -585,10 +596,12 @@ def chp_table(heat_b, heat_demand, table_collection, regions=None):
 
             # HP
             trsf.loc["limit_hp", (region, src)] = round(
-                sum_val * share.loc[rows[1], fuel] + 0.5
+                sum_val * share.loc[rows[1], fuel] *
+                out_share_factor_hp + 0.5
             )
             trsf.loc["capacity_hp", (region, src)] = round(
-                max_val * share.loc[rows[1], fuel] + 0.005, 2
+                max_val * share.loc[rows[1], fuel] * out_share_factor_hp
+                + 0.005, 2
             )
             if trsf.loc["capacity_hp", (region, src)] > 0:
                 trsf.loc["efficiency_hp", (region, src)] = eta_hp
