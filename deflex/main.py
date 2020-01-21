@@ -29,7 +29,8 @@ def stopwatch():
     return str(datetime.now() - stopwatch.start)[:-7]
 
 
-def main_secure(year, rmap, csv=True, es=None, plot_graph=False):
+def main_secure(year, rmap, csv=True, es=None, plot_graph=False,
+                extra_regions=None):
     """
 
     Parameters
@@ -42,7 +43,11 @@ def main_secure(year, rmap, csv=True, es=None, plot_graph=False):
     csv : bool
         Use csv collection. If set to False the xls-file is used.
     es : oemof.solph.EnergySystem
+        A valid energy system if needed.
     plot_graph : bool
+        Set to True to plot the energy system.
+    extra_regions : list
+        Use separate resource buses for these regions.
 
     Returns
     -------
@@ -52,7 +57,8 @@ def main_secure(year, rmap, csv=True, es=None, plot_graph=False):
     >>> main_secure(2014, 'de21')  # doctest: +SKIP
     """
     try:
-        main(year, rmap, csv=csv, es=es, plot_graph=plot_graph)
+        main(year, rmap, csv=csv, es=es, plot_graph=plot_graph,
+             extra_regions=extra_regions)
     except Exception as e:
         logging.error(traceback.format_exc())
         time.sleep(0.5)
@@ -60,7 +66,7 @@ def main_secure(year, rmap, csv=True, es=None, plot_graph=False):
         time.sleep(0.5)
 
 
-def main(year, rmap, csv=True, es=None, plot_graph=False):
+def main(year, rmap, csv=True, es=None, plot_graph=False, extra_regions=None):
     """
 
     Parameters
@@ -72,7 +78,11 @@ def main(year, rmap, csv=True, es=None, plot_graph=False):
     csv : bool
         Use csv collection. If set to False the xls-file is used.
     es : oemof.solph.EnergySystem
+        A valid energy system if needed.
     plot_graph : bool
+        Set to True to plot the energy system.
+    extra_regions : list
+        Use separate resource buses for these regions.
 
     Returns
     -------
@@ -104,6 +114,7 @@ def main(year, rmap, csv=True, es=None, plot_graph=False):
         year=year,
         es=es,
         plot_graph=plot_graph,
+        extra_regions=extra_regions,
     )
 
 
@@ -116,6 +127,7 @@ def model_scenario(
     year="unknown",
     es=None,
     plot_graph=False,
+    extra_regions=None,
 ):
     """
     Compute a deflex scenario.
@@ -139,6 +151,8 @@ def model_scenario(
         A valid energy system if needed.
     plot_graph : bool
         Set to True to plot the energy system.
+    extra_regions : list
+        Use separate resource buses for these regions.
 
     Returns
     -------
@@ -177,6 +191,9 @@ def model_scenario(
             res_path = os.path.dirname(xls_file)
         logging.info("Read scenario from xls-file: {0}".format(stopwatch()))
         sc.load_excel(xls_file)
+
+    if extra_regions is not None:
+        sc.extra_regions = extra_regions
 
     logging.info("Add nodes to the EnergySystem: {0}".format(stopwatch()))
     sc.table2es()
