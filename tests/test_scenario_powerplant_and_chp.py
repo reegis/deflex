@@ -75,5 +75,5 @@ class TestScenarioPowerplantsAndCHP:
         transf = basic_scenario.scenario_chp(
             self.pp, self.regions, 2014, "de21"
         )["transformer"]
-        eq_(int(transf.loc["capacity", ("DE01", "hard coal")]), 485)
-        eq_(int(transf.loc["capacity_elec_chp", ("DE01", "hard coal")]), 806)
+        eq_(int(transf.loc["capacity", ("DE01", "hard coal")]), 623)
+        eq_(int(transf.loc["capacity_elec_chp", ("DE01", "hard coal")]), 667)
