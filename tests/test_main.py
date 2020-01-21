@@ -38,22 +38,23 @@ class TestMain:
     def test_main_secure_with_es(self):
         main.main(2014, "de21", es=self.es, extra_regions=["DE03", "DE07"])
         fn = os.path.join(
-                self.base_path,
-                "deflex",
-                "2014",
-                "results_cbc",
-                "deflex_2014_de21.esys",
-            )
+            self.base_path,
+            "deflex",
+            "2014",
+            "results_cbc",
+            "deflex_2014_de21.esys",
+        )
         assert os.path.isfile(fn)
         sc = scenario_tools.Scenario()
         sc.restore_es(fn)
         flows = [x for x in sc.es.results["main"].keys() if x[1] is not None]
         commodity_regions = [
-            x[0].label.region for x in flows
-            if x[1].label.tag == "commodity" and
-            x[1].label.subtag == "natural_gas" and
-            x[1].label.cat == "bus" and
-            x[0].label.cat == "source"
+            x[0].label.region
+            for x in flows
+            if x[1].label.tag == "commodity"
+            and x[1].label.subtag == "natural_gas"
+            and x[1].label.cat == "bus"
+            and x[0].label.cat == "source"
         ]
         eq_(commodity_regions, ["DE", "DE03", "DE07"])
 
