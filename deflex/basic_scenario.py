@@ -420,7 +420,7 @@ def scenario_elec_demand(table, regions, year, name, weather_year=None):
 
     df = demand_elec.get_entsoe_profile_by_region(
         regions, demand_year, name, annual_demand="bmwi"
-    )
+    ).mul(1000)
     df = pd.concat([df], axis=1, keys=["electrical_load"]).swaplevel(0, 1, 1)
     df = df.reset_index(drop=True)
     if not calendar.isleap(year) and len(df) > 8760:
