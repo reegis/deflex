@@ -58,13 +58,15 @@ def test_scenario_creation():
                 "storages",
                 "transformer",
                 "volatile_source",
-                "Storage",
                 "transmission",
                 "decentralised_heat",
                 "commodity_source",
                 "volatile_series",
                 "demand_series",
+                "mobility_energy_content",
+                "mobility_mileage",
+                "mobility_spec_demand",
             ]
         ),
     )
-    eq_(len(list(table_collection.keys())), 9)
+    eq_(len(list(table_collection.keys())), 11)
