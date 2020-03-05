@@ -451,7 +451,7 @@ def scenario_heat_demand(table, regions, year, weather_year=None):
 
 def scenario_elec_demand(table, regions, year, name, weather_year=None):
     """
-    
+
     Parameters
     ----------
     table
@@ -577,7 +577,7 @@ def scenario_chp(table_collection, regions, year, name, weather_year=None):
 
 def chp_table(heat_b, heat_demand, table_collection, regions=None):
     """
-    
+
     Parameters
     ----------
     heat_b
@@ -692,7 +692,7 @@ def chp_table(heat_b, heat_demand, table_collection, regions=None):
 
 def scenario_mobility(year, table):
     """
-    
+
     Parameters
     ----------
     year
