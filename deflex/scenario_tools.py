@@ -49,7 +49,17 @@ class NodeDict(dict):
 
 
 class Scenario:
+    """
+    Definition of a deflex scenario object.
+    """
+
     def __init__(self, **kwargs):
+        """
+        
+        Parameters
+        ----------
+        kwargs
+        """
         self.name = kwargs.get("name", "unnamed_scenario")
         self.table_collection = kwargs.get("table_collection", {})
         self.year = kwargs.get("year", None)
