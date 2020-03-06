@@ -26,6 +26,7 @@ from reegis import coastdat
 from reegis import demand_elec
 from reegis import energy_balance
 from reegis import powerplants as reegis_powerplants
+from reegis import mobility
 from deflex import powerplants
 from deflex import demand
 from deflex import transmission
@@ -37,6 +38,22 @@ from deflex import config as cfg
 def create_scenario(
     regions, year, name, round_values=0, weather_year=None, copperplate=False
 ):
+    """
+    Create a basic scenario for a given year and region-set.
+
+    Parameters
+    ----------
+    regions
+    year
+    name
+    round_values
+    weather_year
+    copperplate
+
+    Returns
+    -------
+
+    """
     table_collection = {}
 
     logging.info("BASIC SCENARIO - STORAGES")
@@ -70,6 +87,9 @@ def create_scenario(
     table_collection["demand_series"] = scenario_demand(
         regions, year, name, weather_year=weather_year
     )
+
+    logging.info("BASIC SCENARIO - MOBILITY")
+    table_collection = scenario_mobility(year, table_collection)
     return table_collection
 
 
@@ -148,7 +168,11 @@ def create_powerplants(
         ["model_classes", region_column, "energy_source_level_2"]
     ).sum()[["capacity", "capacity_in"]]
 
-    for model_class in pp.index.get_level_values(level=0).unique():
+    model_classes = pp.index.get_level_values(level=0).unique()
+    if "Storage" in model_classes:
+        model_classes = model_classes.drop("Storage")
+
+    for model_class in model_classes:
         pp_class = pp.loc[model_class]
         if model_class != "volatile_source":
             pp_class["efficiency"] = (
@@ -399,6 +423,19 @@ def scenario_demand(regions, year, name, weather_year=None):
 
 
 def scenario_heat_demand(table, regions, year, weather_year=None):
+    """
+
+    Parameters
+    ----------
+    table
+    regions
+    year
+    weather_year
+
+    Returns
+    -------
+
+    """
     idx = table.index  # Use the index of the existing time series
     table = pd.concat(
         [
@@ -413,6 +450,20 @@ def scenario_heat_demand(table, regions, year, weather_year=None):
 
 
 def scenario_elec_demand(table, regions, year, name, weather_year=None):
+    """
+
+    Parameters
+    ----------
+    table
+    regions
+    year
+    name
+    weather_year
+
+    Returns
+    -------
+
+    """
     if weather_year is None:
         demand_year = year
     else:
@@ -420,7 +471,7 @@ def scenario_elec_demand(table, regions, year, name, weather_year=None):
 
     df = demand_elec.get_entsoe_profile_by_region(
         regions, demand_year, name, annual_demand="bmwi"
-    ).mul(1000)
+    )
     df = pd.concat([df], axis=1, keys=["electrical_load"]).swaplevel(0, 1, 1)
     df = df.reset_index(drop=True)
     if not calendar.isleap(year) and len(df) > 8760:
@@ -468,6 +519,12 @@ def scenario_feedin(regions, year, name, weather_year=None):
 
 
 def scenario_decentralised_heat():
+    """
+
+    Returns
+    -------
+
+    """
     filename = os.path.join(
         cfg.get("paths", "data_deflex"), cfg.get("heating", "table")
     )
@@ -519,6 +576,19 @@ def scenario_chp(table_collection, regions, year, name, weather_year=None):
 
 
 def chp_table(heat_b, heat_demand, table_collection, regions=None):
+    """
+
+    Parameters
+    ----------
+    heat_b
+    heat_demand
+    table_collection
+    regions
+
+    Returns
+    -------
+
+    """
     trsf = table_collection["transformer"]
     trsf = trsf.fillna(0)
 
@@ -620,7 +690,65 @@ def chp_table(heat_b, heat_demand, table_collection, regions=None):
     return table_collection
 
 
+def scenario_mobility(year, table):
+    """
+
+    Parameters
+    ----------
+    year
+    table
+
+    Returns
+    -------
+
+    Examples
+    --------
+    >>> table = scenario_mobility(2015, {})
+    >>> table["mobility_mileage"].sum()
+    diesel    3.769021e+11
+    petrol    3.272263e+11
+    other     1.334462e+10
+    dtype: float64
+    >>> table["mobility_spec_demand"].loc["passenger car"]
+    diesel    0.067
+    petrol    0.079
+    other     0.000
+    Name: passenger car, dtype: float64
+    >>> table["mobility_energy_content"]["diesel"]
+    energy_per_liter [MJ/l]    34.7
+    Name: diesel, dtype: float64
+    """
+
+    table["mobility_mileage"] = mobility.get_mileage_by_type_and_fuel(year)
+
+    # fetch table of specific demand by fuel and vehicle type (from 2011)
+    table["mobility_spec_demand"] = (
+        pd.DataFrame(
+            cfg.get_dict_list("fuel consumption"),
+            index=["diesel", "petrol", "other"],
+        )
+        .astype(float)
+        .transpose()
+    )
+
+    # fetch the energy content of the different fuel types
+    table["mobility_energy_content"] = pd.DataFrame(
+        cfg.get_dict("energy_per_liter"), index=["energy_per_liter [MJ/l]"]
+    )[["diesel", "petrol", "other"]]
+    return table
+
+
 def clean_time_series(table_collection):
+    """
+
+    Parameters
+    ----------
+    table_collection
+
+    Returns
+    -------
+
+    """
     dts = table_collection["demand_series"]
     vts = table_collection["volatile_series"]
     vs = table_collection["volatile_source"]
@@ -666,7 +794,8 @@ def create_basic_scenario(
     only_out=None,
 ):
     """
-    Create a basic scenario for a given year and region-set.
+    Create a basic scenario for a given year and region-set and store it into
+    an excel-file or csv-collection.
 
     Parameters
     ----------
