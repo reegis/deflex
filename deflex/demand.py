@@ -37,6 +37,9 @@ def get_heat_profiles_deflex(deflex_geo, year, time_index=None,
     """
     # separate_regions=keep all demand connected to the region
     separate_regions = cfg.get_list("demand_heat", "separate_heat_regions")
+    # Add lower and upper cases to be not case sensitive
+    separate_regions = ([x.upper() for x in separate_regions] +
+                        [x.lower() for x in separate_regions])
 
     # add second fuel to first
     combine_fuels = cfg.get_dict("combine_heat_fuels")
