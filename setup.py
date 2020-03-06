@@ -29,6 +29,7 @@ setup(
         "oemof >= 0.3.0",
         "pandas >= 0.17.0",
         "reegis > v0.1.1",
+        "reegis@https://github.com/reegis/reegis/archive/master.zip",
         "demandlib",
         "workalendar",
         "networkx",
