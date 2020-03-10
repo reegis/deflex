@@ -671,11 +671,6 @@ def add_conventional_mobility(table_collection, nodes):
     Returns
     -------
 
-    Examples
-    --------
-    >>> nodes
-    >>> table_collection
-
     """
     mileage = table_collection["mobility_mileage"]["DE"]
     spec_demand = table_collection["mobility_spec_demand"]["DE"]
