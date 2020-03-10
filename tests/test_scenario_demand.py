@@ -37,4 +37,4 @@ def scenario_demand_test():
     regions = geometries.deflex_regions(rmap="de21")
     d = basic_scenario.scenario_demand(regions, 2014, "de21")
     eq_(int(d["DE01", "district heating"].sum()), 18639262)
-    eq_(int(d["DE05", "electrical_load"].sum()), 10069)
+    eq_(int(d["DE05", "electrical_load"].sum()), 10069304)
