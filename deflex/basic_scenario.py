@@ -704,17 +704,17 @@ def scenario_mobility(year, table):
     Examples
     --------
     >>> table = scenario_mobility(2015, {})
-    >>> table["mobility_mileage"].sum()
+    >>> table["mobility_mileage"]["DE"].sum()
     diesel    3.769021e+11
     petrol    3.272263e+11
     other     1.334462e+10
     dtype: float64
-    >>> table["mobility_spec_demand"].loc["passenger car"]
+    >>> table["mobility_spec_demand"]["DE"].loc["passenger car"]
     diesel    0.067
     petrol    0.079
     other     0.000
     Name: passenger car, dtype: float64
-    >>> table["mobility_energy_content"]["diesel"]
+    >>> table["mobility_energy_content"]["DE"]["diesel"]
     energy_per_liter [MJ/l]    34.7
     Name: diesel, dtype: float64
     """
@@ -735,6 +735,16 @@ def scenario_mobility(year, table):
     table["mobility_energy_content"] = pd.DataFrame(
         cfg.get_dict("energy_per_liter"), index=["energy_per_liter [MJ/l]"]
     )[["diesel", "petrol", "other"]]
+
+    for key in [
+        "mobility_mileage",
+        "mobility_spec_demand",
+        "mobility_energy_content",
+    ]:
+        # Add "DE" as region level to be consistent to other tables
+        table[key].columns = pd.MultiIndex.from_product(
+            [["DE"], table[key].columns]
+        )
     return table
 
 

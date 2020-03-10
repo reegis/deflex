@@ -1,0 +1,12 @@
+,DE,DE,DE
+,diesel,petrol,other
+motorcycle,0.045,0.045,0.0
+passenger car,0.067,0.079,0.0
+small truck (max. 3.5 tons),0.288,0.115,0.0
+medium truck (3.5 to 7.5 tons),0.288,0.115,0.0
+big truck (over 7.5 tons),0.288,0.115,0.0
+agriculture and forestry,0.3,0.17,0.0
+truck tractor,0.346,0.0,0.0
+traction engine,0.3,0.17,0.0
+buses,0.29,0.18,0.0
+other,0.235,0.17,0.0
