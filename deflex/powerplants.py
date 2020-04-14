@@ -15,10 +15,47 @@ import os
 import logging
 from reegis import geometries as reegis_geometries
 from deflex import config as cfg
+from deflex import geometries
 from reegis import powerplants
 
 
 # Todo: Revise and test.
+
+
+def get_merit_order(filename, name, year, aggregated=None):
+    """pass"""
+    if aggregated is None:
+        aggregated = ["Solar", "Wind", "Bioenergy", "Hydro"]
+    regions = geometries.deflex_regions("de01")
+    pp = get_deflex_pp_by_year(regions, year, name, True, filename=filename)
+    pp.drop(
+        [
+            "chp",
+            "com_month",
+            "com_year",
+            "comment",
+            "decom_month",
+            "decom_year",
+            "efficiency",
+            "energy_source_level_1",
+            "energy_source_level_3",
+            "geometry",
+            "technology",
+            "thermal_capacity",
+            "coastdat2",
+            "BE",
+            "de01",
+            "federal_states",
+        ],
+        axis=1,
+        inplace=True,
+    )
+    print(pp.columns)
+    print(pp.groupby("energy_source_level_2").sum().loc[aggregated])
+    pp = pp.loc[~pp.energy_source_level_2.isin(aggregated)]
+    print(pp.energy_source_level_2.unique())
+    print(pp)
+    # .to_csv("/home/uwe/probe.csv")
 
 
 def pp_reegis2deflex(regions, name, filename_in=None, filename_out=None):
@@ -114,7 +151,9 @@ def process_pp_table(pp):
     return pp
 
 
-def get_deflex_pp_by_year(regions, year, name, overwrite_capacity=False):
+def get_deflex_pp_by_year(
+    regions, year, name, overwrite_capacity=False, filename=None
+):
     """
 
     Parameters
@@ -122,6 +161,7 @@ def get_deflex_pp_by_year(regions, year, name, overwrite_capacity=False):
     regions : GeoDataFrame
     year : int
     name : str
+    filename : str
     overwrite_capacity : bool
         By default (False) a new column "capacity_<year>" is created. If set to
         True the old capacity column will be overwritten.
@@ -130,15 +170,17 @@ def get_deflex_pp_by_year(regions, year, name, overwrite_capacity=False):
     -------
 
     """
-    filename = os.path.join(
-        cfg.get("paths", "powerplants"), cfg.get("powerplants", "deflex_pp")
-    ).format(map=name)
+    if filename is None:
+        filename = os.path.join(
+            cfg.get("paths", "powerplants"),
+            cfg.get("powerplants", "deflex_pp"),
+        ).format(map=name)
     logging.info("Get deflex power plants for {0}.".format(year))
     if not os.path.isfile(filename):
         msg = "File '{0}' does not exist. Will create it from reegis file."
         logging.debug(msg.format(filename))
-        filename = pp_reegis2deflex(regions, name)
-    pp = pd.DataFrame(pd.read_hdf(filename, "pp", mode="r"))
+        filename = pp_reegis2deflex(regions, name, filename_out=filename)
+    pp = pd.DataFrame(pd.read_hdf(filename, "pp"))
 
     # Remove unwanted data sets
     pp = process_pp_table(pp)
@@ -174,4 +216,4 @@ def get_deflex_pp_by_year(regions, year, name, overwrite_capacity=False):
 
 
 if __name__ == "__main__":
-    pass
+    get_merit_order("/home/uwe/test_temp.hdf", "de01", 2015)
