@@ -11,13 +11,15 @@ __license__ = "MIT"
 
 
 import pandas as pd
+import numpy as np
 import os
 import logging
+from matplotlib import pyplot as plt
 from reegis import geometries as reegis_geometries
 from deflex import config as cfg
 from deflex import geometries
 from reegis import powerplants
-
+from reegis import commodity_sources
 
 # Todo: Revise and test.
 
@@ -28,6 +30,7 @@ def get_merit_order(filename, name, year, aggregated=None):
         aggregated = ["Solar", "Wind", "Bioenergy", "Hydro"]
     regions = geometries.deflex_regions("de01")
     pp = get_deflex_pp_by_year(regions, year, name, True, filename=filename)
+    print(pp.capacity.sum())
     pp.drop(
         [
             "chp",
@@ -50,12 +53,47 @@ def get_merit_order(filename, name, year, aggregated=None):
         axis=1,
         inplace=True,
     )
-    print(pp.columns)
-    print(pp.groupby("energy_source_level_2").sum().loc[aggregated])
+    pp["count"] = 1
+    pp_agg = (
+        pp.groupby("energy_source_level_2").sum().loc[aggregated].reset_index()
+    )
+    pp_agg.index = [x + pp.index[-1] + 1 for x in range(len(pp_agg))]
     pp = pp.loc[~pp.energy_source_level_2.isin(aggregated)]
-    print(pp.energy_source_level_2.unique())
-    print(pp)
-    # .to_csv("/home/uwe/probe.csv")
+    pp = pd.concat([pp, pp_agg], sort=False)
+    pp["efficiency"] = pp.capacity.div(pp.capacity_in)
+    pp.drop(["capacity_in"], axis=1, inplace=True)
+    pp.rename({"energy_source_level_2": "source"}, inplace=True, axis=1)
+    pp = pp.loc[~pp.source.isin(["Storage"])]
+    pp.loc[
+        pp.source == "unknown from conventional", "source"
+    ] = "Other fossil fuels"
+    pp.loc[pp.source == "Other fuels", "source"] = "Other fossil fuels"
+    pp["source"] = pp.source.str.lower()
+
+    re_sources = ["geothermal", "solar", "wind", "hydro"]
+    zeros = np.zeros(shape=(len(re_sources), 2))
+    re = pd.DataFrame(zeros, columns=["costs", "emission"], index=re_sources)
+    cs = commodity_sources.get_commodity_sources().loc[2014].unstack()
+    converter = {
+        "costs": ["costs", "EUR/J", 1e9 * 3.6, "EUR/MWh"],
+        "emission": ["emission", "g/J", 1e6 * 3.6, "kg/MWh"],
+    }
+    for key in converter.keys():
+        cs[key] = cs[key].multiply(converter[key][2])
+    cs = pd.concat([re, cs])
+    print(cs)
+    pp = pp.merge(cs, left_on="source", right_index=True)
+    pp = pp.loc[pp.fillna(0).capacity != 0]
+    pp["costs_total"] = pp.costs.div(pp.efficiency)
+    pp.sort_values(["costs_total", "capacity"], inplace=True)
+    pp["cum_cap"] = pp.capacity.cumsum().div(1000)
+    pp.to_csv("/home/uwe/probe.csv")
+    pp = pp.set_index("cum_cap")
+    pp.to_csv("/home/uwe/probe2.csv")
+    pp.costs_total.plot()
+    plt.xlabel("Kummulierte Leistung [GW]")
+    plt.ylabel("Brennstoffkosten [EUR/MWh]")
+    plt.show()
 
 
 def pp_reegis2deflex(regions, name, filename_in=None, filename_out=None):
