@@ -37,9 +37,12 @@ COSTS_EWI = {
     "hard coal": 11.28,
     "lignite": 3.1,
     "natural gas": 22.78,
-    "oil": 33,
-    "nuclear": 5.5
+    "oil": 32.92,
+    "nuclear": 5.5,
+    "waste": 0,
+    "other fossil fuels": 32.92,
 }
+
 
 EMISSIONS_EWI = {
     "hard coal": 0.336,
@@ -48,6 +51,30 @@ EMISSIONS_EWI = {
     "oil": 0.263,
     "nuclear": 0,
 }
+
+
+def get_costs_and_emissions(source="ewi"):
+    re_sources = ["geothermal", "solar", "wind", "hydro"]
+    zeros = np.zeros(shape=(len(re_sources), 2))
+    re = pd.DataFrame(zeros, columns=["costs", "emission"], index=re_sources)
+    cs = commodity_sources.get_commodity_sources().loc[2014].unstack()
+    converter = {
+        "costs": ["costs", "EUR/J", 1e9 * 3.6, "EUR/MWh"],
+        "emission": ["emission", "g/J", 1e6 * 3.6, "kg/MWh"],
+    }
+    for key in converter.keys():
+        cs[key] = cs[key].multiply(converter[key][2])
+    cs = pd.concat([re, cs])
+
+    # Add region level to be consistent to other tables
+    cs.columns = pd.MultiIndex.from_product([["reegis"], cs.columns])
+    cs["ewi", "costs"] = pd.Series(COSTS_EWI)
+    cs["ewi", "emission"] = pd.Series(EMISSIONS_EWI).multiply(1000)
+    print(cs)
+    if source == "all":
+        return cs
+    else:
+        return cs[source]
 
 
 def get_merit_order_ewi():
@@ -73,7 +100,7 @@ def get_merit_order_reegis(filename, name, year, aggregated=None, zero=False):
     """pass"""
     get_merit_order_ewi()
     if aggregated is None:
-        aggregated = ["Solar", "Wind", "Bioenergy", "Hydro"]
+        aggregated = ["Solar", "Wind", "Bioenergy", "Hydro", "Geothermal"]
     regions = geometries.deflex_regions("de01")
     pp = dp.get_deflex_pp_by_year(regions, year, name, True, filename=filename)
     pp.drop(
@@ -114,17 +141,7 @@ def get_merit_order_reegis(filename, name, year, aggregated=None, zero=False):
     pp.loc[pp.source == "Other fuels", "source"] = "Other fossil fuels"
     pp["source"] = pp.source.str.lower()
 
-    re_sources = ["geothermal", "solar", "wind", "hydro"]
-    zeros = np.zeros(shape=(len(re_sources), 2))
-    re = pd.DataFrame(zeros, columns=["costs", "emission"], index=re_sources)
-    cs = commodity_sources.get_commodity_sources().loc[2014].unstack()
-    converter = {
-        "costs": ["costs", "EUR/J", 1e9 * 3.6, "EUR/MWh"],
-        "emission": ["emission", "g/J", 1e6 * 3.6, "kg/MWh"],
-    }
-    for key in converter.keys():
-        cs[key] = cs[key].multiply(converter[key][2])
-    cs = pd.concat([re, cs])
+    cs = get_costs_and_emissions("ewi")
     pp = pp.merge(cs, left_on="source", right_index=True)
     pp = pp.loc[pp.fillna(0).capacity != 0]
     pp["costs_total"] = pp.costs.div(pp.efficiency)
@@ -133,7 +150,7 @@ def get_merit_order_reegis(filename, name, year, aggregated=None, zero=False):
     return pp
 
 
-def plot_merit_order(pp):
+def plot_merit_order(pp, ax):
     cdict = {
         "nuclear": "#DDF45B",
         "hard coal": "#141115",
@@ -148,33 +165,47 @@ def plot_merit_order(pp):
         "waste": "#547969",
         "geothermal": "#f32eb7",
     }
+    print(pp.source.unique())
+
     for src in pp.source.unique():
         pp[src] = pp.costs_total
         pp.loc[pp.source != src, src] = np.nan
         pp[src].fillna(method='bfill', limit=1, inplace=True)
-        plt.fill_between(pp["capacity_cum"], pp[src], step="pre",
+        ax.fill_between(pp["capacity_cum"], pp[src], step="pre",
                          color=cdict[src])
-    pp.to_csv("/home/uwe/probe2.csv")
-    plt.xlabel("Kummulierte Leistung [GW]")
-    plt.ylabel("Brennstoffkosten [EUR/MWh]")
-    plt.ylim(0)
-    plt.xlim(0, pp["capacity_cum"].max())
-    # plt.show()
+    pp.set_index("capacity_cum")[pp.source.unique()].plot(ax=ax, alpha=0)
+    # pp.to_csv("/home/uwe/probe2.csv")
+    # ax.xlabel("Kummulierte Leistung [GW]")
+    # ax.ylabel("Brennstoffkosten [EUR/MWh]")
+    # ax.ylim(0)
+    # ax.xlim(0, pp["capacity_cum"].max())
+    ax.legend(loc=2)
+    for leg in ax.get_legend().legendHandles:
+        leg.set_color(cdict[leg.get_label()])
+        leg.set_linewidth(4.0)
+        leg.set_alpha(1)
 
 
 if __name__ == "__main__":
-    my_pp = get_merit_order_ewi_raw()
-    plot_merit_order(my_pp)
-    plt.title("EWI raw")
-    plt.savefig("/home/uwe/mo_ewi_raw.png")
-    plt.show()
-    my_pp = get_merit_order_ewi()
-    plot_merit_order(my_pp)
-    plt.title("EWI")
-    plt.savefig("/home/uwe/mo_ewi.png")
-    plt.show()
+    f, ax_ar = plt.subplots(2, 2, figsize=(15, 10))
+
+    # my_pp = get_merit_order_ewi_raw()
+    # plot_merit_order(my_pp)
+    # plt.title("EWI raw")
+    # plt.savefig("/home/uwe/mo_ewi_raw.png")
+    # plt.show()
+    # my_pp = get_merit_order_ewi()
+    # plot_merit_order(my_pp)
+    # plt.title("EWI")
+    # plt.savefig("/home/uwe/mo_ewi.png")
+    # plt.show()
     my_pp = get_merit_order_reegis("/home/uwe/test_temp.hdf", "de01", 2015)
-    plot_merit_order(my_pp)
-    plt.title("reegis")
+    plot_merit_order(my_pp, ax_ar[0, 0])
+    my_pp = get_merit_order_ewi_raw()
+    plot_merit_order(my_pp, ax_ar[0, 1])
+    plt.ylim(0)
+    plt.xlim(0)
+    plt.ylabel("Brennstoffkosten [EUR/MWh]")
+    plt.xlabel("Kummulierte Leistung [GW]")
     plt.savefig("/home/uwe/mo_reegis.png")
     plt.show()
