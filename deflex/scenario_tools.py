@@ -26,9 +26,9 @@ from matplotlib import pyplot as plt
 
 # oemof libraries
 from oemof import solph
-from oemof.tools import logger, helpers
-from oemof import outputlib
-from oemof import graph
+from oemof.solph import helpers
+from oemof.tools import logger
+from oemof.network import graph
 
 if sys.getrecursionlimit() < 3000:
     sys.setrecursionlimit(3000)
@@ -220,7 +220,7 @@ class Scenario:
 
         if self.debug:
             filename = os.path.join(
-                helpers.extend_basic_path("lp_files"), "reegis.lp"
+                solph.helpers.extend_basic_path("lp_files"), "reegis.lp"
             )
             logging.info("Store lp-file in {0}.".format(filename))
             self.model.write(
@@ -230,9 +230,9 @@ class Scenario:
         self.model.solve(
             solver=solver, solve_kwargs={"tee": tee, "logfile": logfile}
         )
-        self.es.results["main"] = outputlib.processing.results(self.model)
-        self.es.results["meta"] = outputlib.processing.meta_results(self.model)
-        self.es.results["param"] = outputlib.processing.parameter_as_dict(
+        self.es.results["main"] = solph.processing.results(self.model)
+        self.es.results["meta"] = solph.processing.meta_results(self.model)
+        self.es.results["param"] = solph.processing.parameter_as_dict(
             self.es
         )
         self.es.results["meta"]["scenario"] = self.scenario_info(solver)
