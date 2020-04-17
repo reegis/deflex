@@ -10,25 +10,31 @@ __copyright__ = "Uwe Krien <krien@uni-bremen.de>"
 __license__ = "MIT"
 
 
-import pandas as pd
-import numpy as np
-from matplotlib import pyplot as plt
-from deflex import powerplants as dp
-from deflex import geometries
-from reegis import commodity_sources
+import os
+from collections import namedtuple
 
+import numpy as np
+import pandas as pd
+from matplotlib import pyplot as plt
+
+from deflex import config as cfg
+from deflex import geometries
+from deflex import powerplants as dp
+from reegis import commodity_sources
+from reegis.tools import download_file
 
 TRANS = {
-        'Abfall': "waste",
-        'Kernenergie': "nuclear",
-        'Braunkohle': "lignite",
-        'Steinkohle': "hard coal",
-        'Erdgas': "natural gas",
-        'GuD': "natural gas",
-        'Gasturbine': "natural gas",
-        'Öl': "oil",
-        'Sonstige': "other fossil fuels",
-    }
+    "Abfall": "waste",
+    "Kernenergie": "nuclear",
+    "Braunkohle": "lignite",
+    "Steinkohle": "hard coal",
+    "Erdgas": "natural gas",
+    "GuD": "natural gas",
+    "Gasturbine": "natural gas gt",
+    "Öl": "oil",
+    "Sonstige": "other fossil fuels",
+    "Emissionszertifikatspreis": "co2_price",
+}
 
 # Kostenannahmen von EWI
 # https://www.ewi.uni-koeln.de/de/news/ewi-merit-order-tool-2019/
@@ -51,6 +57,44 @@ EMISSIONS_EWI = {
     "oil": 0.263,
     "nuclear": 0,
 }
+
+
+def download_ewi_data():
+    """
+
+    Returns
+    -------
+    namedtuple
+    """
+    # Download file
+    url = (
+        "https://www.ewi.uni-koeln.de/cms/wp-content/uploads/2019/12"
+        "/EWI_Merit_Order_Tool_2019_1_4.xlsm"
+    )
+    fn = "/home/uwe/ewi.xlsm"
+    download_file(fn, url)
+
+    # Creat named tuple with all sub tables
+    ewi_tables = {
+        "fuel_costs": {"skiprows": 7, "usecols": "C:F", "nrows": 7},
+        "transport_costs": {"skiprows": 21, "usecols": "C:F", "nrows": 7},
+        "other_var_costs": {"skiprows": 31, "usecols": "C:F", "nrows": 8},
+        "downtime": {"skiprows": 31, "usecols": "H:K", "nrows": 8},
+        "emission": {"skiprows": 31, "usecols": "M:P", "nrows": 7},
+        "co2_price": {"skiprows": 17, "usecols": "C:F", "nrows": 1},
+    }
+    ewi_data = {}
+    ewi = namedtuple("ewi_data", list(ewi_tables.keys()))
+    cols = ["fuel", "value", "unit", "source"]
+    xls = pd.ExcelFile(fn)
+    for table in ewi_tables.keys():
+        tmp = xls.parse("Start", header=[0], **ewi_tables[table]).replace(
+            TRANS
+        )
+        tmp.drop_duplicates(tmp.columns[0], keep="first", inplace=True)
+        tmp.columns = cols
+        ewi_data[table] = tmp.set_index("fuel")
+    return ewi(**ewi_data)
 
 
 def get_costs_and_emissions(source="ewi"):
@@ -78,26 +122,65 @@ def get_costs_and_emissions(source="ewi"):
 
 
 def get_merit_order_ewi():
-    pp = pd.read_csv("/home/uwe/merit_order_ewi.csv", header=[0],
-                     index_col=[0])
+    fn = os.path.join(
+        cfg.get("paths", "analyses"), "data", "merit_order_ewi.csv"
+    )
+    pp = pd.read_csv(fn, header=[0], index_col=[0])
     pp = pp.replace(TRANS)
     return pp
 
 
 def get_merit_order_ewi_raw():
-    pp = pd.read_csv("/home/uwe/merit_order_ewi_raw.csv", header=[0],
-                     index_col=[0])
+    fn = os.path.join(
+        cfg.get("paths", "analyses"), "data", "merit_order_ewi_raw.csv"
+    )
+    pp = pd.read_csv(fn, header=[0], index_col=[0])
     pp = pp.replace(TRANS)
+    print(pp.columns)
     pp["capacity"] = pp["capacity_net"]
-    pp["costs_total"] = pp.costs_fuel.div(pp.efficiency)
+    pp["costs_total"] = pp.costs_limit.multiply(pp.efficiency)
+
+    print(pp["costs_total"])
     pp.sort_values(["costs_total", "capacity"], inplace=True)
     pp["capacity_cum"] = pp.capacity.cumsum().div(1000)
 
     return pp
 
 
-def get_merit_order_reegis(filename, name, year, aggregated=None, zero=False):
+def get_merit_order_reegis(year=2018):
+    fn = os.path.join(
+        cfg.get("paths", "analyses"), "data", "merit_order_reegis_base.csv"
+    )
+    if not os.path.isfile(fn):
+        get_reegis_pp_for_merit_order("de01", year)
+    pp = pd.read_csv(fn, header=[0], index_col=[0])
+    ewi = download_ewi_data()
+    ewi_table = pd.DataFrame(index=ewi.fuel_costs.index)
+    for table in [
+        "fuel_costs",
+        "transport_costs",
+        "other_var_costs",
+        "downtime",
+        "emission",
+    ]:
+        ewi_table[table] = getattr(ewi, table).value
+    pp = pp.merge(ewi_table, left_on="fuel", right_index=True)
+    pp = pp.loc[pp.fillna(0).capacity != 0]
+    pp = pp.loc[pp.capacity >= 100]
+    pp["capacity"] = pp.capacity.multiply(1-pp.downtime.div(100))
+    pp["costs_total"] = (
+        pp.fuel_costs + pp.transport_costs + pp.emission * float(ewi.co2_price["value"])).div(pp.efficiency) + pp.other_var_costs
+    print(pp["costs_total"])
+    pp.sort_values(["costs_total", "capacity"], inplace=True)
+    pp["capacity_cum"] = pp.capacity.cumsum().div(1000)
+    return pp
+
+
+def get_reegis_pp_for_merit_order(name, year, aggregated=None, zero=False):
     """pass"""
+    filename = os.path.join(
+        cfg.get("paths", "analyses"), "data", "deflex_pp.hdf"
+    )
     get_merit_order_ewi()
     if aggregated is None:
         aggregated = ["Solar", "Wind", "Bioenergy", "Hydro", "Geothermal"]
@@ -133,21 +216,17 @@ def get_merit_order_reegis(filename, name, year, aggregated=None, zero=False):
         pp = pd.concat([pp, pp_agg], sort=False)
     pp["efficiency"] = pp.capacity.div(pp.capacity_in)
     pp.drop(["capacity_in"], axis=1, inplace=True)
-    pp.rename({"energy_source_level_2": "source"}, inplace=True, axis=1)
-    pp = pp.loc[~pp.source.isin(["Storage"])]
+    pp.rename({"energy_source_level_2": "fuel"}, inplace=True, axis=1)
+    pp = pp.loc[~pp.fuel.isin(["Storage"])]
     pp.loc[
-        pp.source == "unknown from conventional", "source"
+        pp.fuel == "unknown from conventional", "fuel"
     ] = "Other fossil fuels"
-    pp.loc[pp.source == "Other fuels", "source"] = "Other fossil fuels"
-    pp["source"] = pp.source.str.lower()
-
-    cs = get_costs_and_emissions("ewi")
-    pp = pp.merge(cs, left_on="source", right_index=True)
-    pp = pp.loc[pp.fillna(0).capacity != 0]
-    pp["costs_total"] = pp.costs.div(pp.efficiency)
-    pp.sort_values(["costs_total", "capacity"], inplace=True)
-    pp["capacity_cum"] = pp.capacity.cumsum().div(1000)
-    return pp
+    pp.loc[pp.fuel == "Other fuels", "fuel"] = "Other fossil fuels"
+    pp["fuel"] = pp.fuel.str.lower()
+    fn = os.path.join(
+        cfg.get("paths", "analyses"), "data", "merit_order_reegis_base.csv"
+    )
+    pp.to_csv(fn)
 
 
 def plot_merit_order(pp, ax):
@@ -165,15 +244,16 @@ def plot_merit_order(pp, ax):
         "waste": "#547969",
         "geothermal": "#f32eb7",
     }
-    print(pp.source.unique())
+    print(pp.fuel.unique())
 
-    for src in pp.source.unique():
+    for src in pp.fuel.unique():
         pp[src] = pp.costs_total
-        pp.loc[pp.source != src, src] = np.nan
-        pp[src].fillna(method='bfill', limit=1, inplace=True)
-        ax.fill_between(pp["capacity_cum"], pp[src], step="pre",
-                         color=cdict[src])
-    pp.set_index("capacity_cum")[pp.source.unique()].plot(ax=ax, alpha=0)
+        pp.loc[pp.fuel != src, src] = np.nan
+        pp[src].fillna(method="bfill", limit=1, inplace=True)
+        ax.fill_between(
+            pp["capacity_cum"], pp[src], step="pre", color=cdict[src]
+        )
+    pp.set_index("capacity_cum")[pp.fuel.unique()].plot(ax=ax, alpha=0)
     # pp.to_csv("/home/uwe/probe2.csv")
     # ax.xlabel("Kummulierte Leistung [GW]")
     # ax.ylabel("Brennstoffkosten [EUR/MWh]")
@@ -188,7 +268,11 @@ def plot_merit_order(pp, ax):
 
 if __name__ == "__main__":
     f, ax_ar = plt.subplots(2, 2, figsize=(15, 10))
-
+    print(download_ewi_data())
+    my_pp = get_merit_order_reegis()
+    plot_merit_order(my_pp, ax_ar[0, 0])
+    plt.show()
+    exit(0)
     # my_pp = get_merit_order_ewi_raw()
     # plot_merit_order(my_pp)
     # plt.title("EWI raw")
@@ -199,7 +283,7 @@ if __name__ == "__main__":
     # plt.title("EWI")
     # plt.savefig("/home/uwe/mo_ewi.png")
     # plt.show()
-    my_pp = get_merit_order_reegis("/home/uwe/test_temp.hdf", "de01", 2015)
+    my_pp = get_reegis_pp_for_merit_order("de01", 2018)
     plot_merit_order(my_pp, ax_ar[0, 0])
     my_pp = get_merit_order_ewi_raw()
     plot_merit_order(my_pp, ax_ar[0, 1])
