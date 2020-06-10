@@ -594,6 +594,9 @@ def chp_table(heat_b, heat_demand, table_collection, regions=None):
     trsf = table_collection["transformer"]
     trsf = trsf.fillna(0)
 
+    chp_hp = pd.DataFrame(
+        columns=pd.MultiIndex(levels=[[], []], codes=[[], []]))
+
     rows = ["Heizkraftwerke der allgemeinen Versorgung (nur KWK)", "Heizwerke"]
     if regions is None:
         regions = sorted(heat_b.keys())
@@ -633,14 +636,12 @@ def chp_table(heat_b, heat_demand, table_collection, regions=None):
         max_val = float(heat_demand[region]["district heating"].max())
         sum_val = float(heat_demand[region]["district heating"].sum())
 
-        for fuel in share.columns:
-            if fuel == "gas":
-                src = "natural gas"
-            else:
-                src = fuel
+        share = share.rename({"gas": "natural gas"}, axis=1)
 
+        for fuel in share.columns:
             # CHP
-            trsf.loc["limit_heat_chp", (region, src)] = round(
+            logging.info(fuel)
+            chp_hp.loc["limit_heat_chp", (region, fuel)] = round(
                 sum_val * share.loc[rows[0], fuel] * out_share_factor_chp + 0.5
             )
             cap_heat_chp = round(
@@ -648,47 +649,44 @@ def chp_table(heat_b, heat_demand, table_collection, regions=None):
                 + 0.005,
                 2,
             )
-            trsf.loc["capacity_heat_chp", (region, src)] = cap_heat_chp
+            chp_hp.loc["capacity_heat_chp", (region, fuel)] = cap_heat_chp
             cap_elec = cap_heat_chp / eta_heat_chp * eta_elec_chp
-            trsf.loc["capacity_elec_chp", (region, src)] = round(cap_elec, 2)
-            trsf[region] = trsf[region].fillna(0)
-            trsf.loc["capacity", (region, src)] = round(
-                trsf.loc["capacity", (region, src)] - cap_elec
-            )
+            chp_hp.loc["capacity_elec_chp", (region, fuel)] = round(cap_elec, 2)
+            chp_hp[region] = chp_hp[region].fillna(0)
 
-            # If the power plant limit is not 'inf' the limited electricity
-            # output of the chp plant has to be subtracted from the power plant
-            # limit because this is related to the overall electricity output.
-            if not trsf.loc["limit_elec_pp", (region, src)] == float("inf"):
-                trsf.loc["limit_elec_pp", (region, src)] -= round(
-                    trsf.loc["limit_heat_chp", (region, src)]
-                    / eta_heat_chp
-                    * eta_elec_chp
-                )
+            # # If the power plant limit is not 'inf' the limited electricity
+            # # output of the chp plant has to be subtracted from the power plant
+            # # limit because this is related to the overall electricity output.
+            # if not chp_hp.loc["limit_elec_pp", (region, fuel)] == float("inf"):
+            #     chp_hp.loc["limit_elec_pp", (region, fuel)] -= round(
+            #         chp_hp.loc["limit_heat_chp", (region, fuel)]
+            #         / eta_heat_chp
+            #         * eta_elec_chp
+            #     )
 
             # HP
-            trsf.loc["limit_hp", (region, src)] = round(
+            chp_hp.loc["limit_hp", (region, fuel)] = round(
                 sum_val * share.loc[rows[1], fuel] * out_share_factor_hp + 0.5
             )
-            trsf.loc["capacity_hp", (region, src)] = round(
+            chp_hp.loc["capacity_hp", (region, fuel)] = round(
                 max_val * share.loc[rows[1], fuel] * out_share_factor_hp
                 + 0.005,
                 2,
             )
-            if trsf.loc["capacity_hp", (region, src)] > 0:
-                trsf.loc["efficiency_hp", (region, src)] = eta_hp
+            if chp_hp.loc["capacity_hp", (region, fuel)] > 0:
+                chp_hp.loc["efficiency_hp", (region, fuel)] = eta_hp
             if cap_heat_chp * cap_elec > 0:
-                trsf.loc["efficiency_heat_chp", (region, src)] = eta_heat_chp
-                trsf.loc["efficiency_elec_chp", (region, src)] = eta_elec_chp
+                chp_hp.loc["efficiency_heat_chp", (region, fuel)] = eta_heat_chp
+                chp_hp.loc["efficiency_elec_chp", (region, fuel)] = eta_elec_chp
 
     logging.info("Done")
 
-    trsf.sort_index(axis=1, inplace=True)
-    for col in trsf.sum().loc[trsf.sum() == 0].index:
-        del trsf[col]
-    trsf[trsf < 0] = 0
+    chp_hp.sort_index(axis=1, inplace=True)
+    # for col in trsf.sum().loc[trsf.sum() == 0].index:
+    #     del trsf[col]
+    # trsf[trsf < 0] = 0
 
-    table_collection["transformer"] = trsf
+    table_collection["chp_hp"] = chp_hp
     return table_collection
 
 
@@ -802,14 +800,13 @@ def create_basic_scenario(
         xls_path = os.path.join(path, name + ".xls")
     else:
         xls_path = os.path.join(path, xls_name)
-
     fullpath = paths(xls=xls_path, csv=csv_path)
-    if not only_out == "csv":
-        os.makedirs(path, exist_ok=True)
-        sce.to_excel(fullpath.xls)
     if not only_out == "xls":
         os.makedirs(csv_path, exist_ok=True)
         sce.to_csv(fullpath.csv)
+    if not only_out == "csv":
+        os.makedirs(path, exist_ok=True)
+        sce.to_excel(fullpath.xls)
 
     return fullpath
 
