@@ -20,6 +20,7 @@ from matplotlib import pyplot as plt
 from deflex import config as cfg
 from deflex import geometries
 from deflex import powerplants as dp
+from deflex import scenario_tools
 from reegis import commodity_sources
 from reegis.tools import download_file
 
@@ -30,9 +31,9 @@ TRANS = {
     "Steinkohle": "hard coal",
     "Erdgas": "natural gas",
     "GuD": "natural gas",
-    "Gasturbine": "natural gas gt",
+    "Gasturbine": "natural gas",
     "Öl": "oil",
-    "Sonstige": "other fossil fuels",
+    "Sonstige": "other",
     "Emissionszertifikatspreis": "co2_price",
 }
 
@@ -78,8 +79,9 @@ def download_ewi_data():
     ewi_tables = {
         "fuel_costs": {"skiprows": 7, "usecols": "C:F", "nrows": 7},
         "transport_costs": {"skiprows": 21, "usecols": "C:F", "nrows": 7},
-        "other_var_costs": {"skiprows": 31, "usecols": "C:F", "nrows": 8},
-        "downtime": {"skiprows": 31, "usecols": "H:K", "nrows": 8},
+        "variable_costs": {"skiprows": 31, "usecols": "C:F", "nrows": 8},
+        "downtime_factor": {"skiprows": 31, "usecols": "H:K", "nrows": 8,
+                            "scale": 0.01},
         "emission": {"skiprows": 31, "usecols": "M:P", "nrows": 7},
         "co2_price": {"skiprows": 17, "usecols": "C:F", "nrows": 1},
     }
@@ -94,6 +96,9 @@ def download_ewi_data():
         tmp.drop_duplicates(tmp.columns[0], keep="first", inplace=True)
         tmp.columns = cols
         ewi_data[table] = tmp.set_index("fuel")
+        if "scale" in ewi_tables[table]:
+            ewi_data[table]["value"] *= ewi_tables[table]["scale"]
+
     return ewi(**ewi_data)
 
 
@@ -114,11 +119,39 @@ def get_costs_and_emissions(source="ewi"):
     cs.columns = pd.MultiIndex.from_product([["reegis"], cs.columns])
     cs["ewi", "costs"] = pd.Series(COSTS_EWI)
     cs["ewi", "emission"] = pd.Series(EMISSIONS_EWI).multiply(1000)
-    print(cs)
     if source == "all":
         return cs
     else:
         return cs[source]
+
+
+def merit_order_from_scenario():
+    name = "de02"
+    bas_path = "/home/uwe/reegis/scenarios/deflex/2014/"
+    csv_path = os.path.join(bas_path, "deflex_2014_de02_csv")
+    sc = scenario_tools.DeflexScenario(name=name, year=2014)
+    sc.load_csv(csv_path)
+    transf = sc.table_collection["transformer"].transpose()
+    num_cols = ["capacity", "variable_costs", "efficiency", "count"]
+    transf[num_cols] = transf[num_cols].astype(float)
+    transf = transf.loc[transf["capacity"] != 0]
+    transf["capacity"] *= (
+            1 - pd.to_numeric(transf["downtime_factor"].fillna(0.1)))
+    data = sc.table_collection["commodity_source"]["DE"].transpose()
+    transf = transf.merge(data, right_index=True, how="left", left_on="fuel")
+    transf["costs_total"] = pd.to_numeric(transf["variable_costs"].fillna(1)) + transf["costs"].div(
+        transf["efficiency"])
+    if "co2_price" in transf:
+        transf["costs_total"] += transf["co2_price"] * transf["emission"].div(
+            1000).div(transf["efficiency"])
+    transf.sort_values(["costs_total", "capacity"], inplace=True)
+    transf = transf.loc[transf["fuel"] != "bioenergy"]
+    transf = transf.loc[transf["fuel"] != "other"]
+    transf.loc["dummy_for_the_plot"] = 0
+    transf.loc["dummy_for_the_plot", "fuel"] = transf.iloc[0]["fuel"]
+    transf.sort_values(["costs_total", "capacity"], inplace=True)
+    transf["capacity_cum"] = transf.capacity.cumsum().div(1000)
+    return transf
 
 
 def get_merit_order_ewi():
@@ -147,32 +180,34 @@ def get_merit_order_ewi_raw():
     return pp
 
 
-def get_merit_order_reegis(year=2018):
+def get_merit_order_reegis(year=2014):
     fn = os.path.join(
         cfg.get("paths", "analyses"), "data", "merit_order_reegis_base.csv"
     )
     if not os.path.isfile(fn):
-        get_reegis_pp_for_merit_order("de01", year)
+        get_reegis_pp_for_merit_order("de02", year)
     pp = pd.read_csv(fn, header=[0], index_col=[0])
     ewi = download_ewi_data()
     ewi_table = pd.DataFrame(index=ewi.fuel_costs.index)
     for table in [
         "fuel_costs",
         "transport_costs",
-        "other_var_costs",
-        "downtime",
+        "variable_costs",
+        "downtime_factor",
+
         "emission",
     ]:
         ewi_table[table] = getattr(ewi, table).value
     pp = pp.merge(ewi_table, left_on="fuel", right_index=True)
     pp = pp.loc[pp.fillna(0).capacity != 0]
-    pp = pp.loc[pp.capacity >= 100]
-    pp["capacity"] = pp.capacity.multiply(1-pp.downtime.div(100))
+    # pp = pp.loc[pp.capacity >= 100]
+    pp["capacity"] = pp.capacity.multiply(1-pp.downtime_factor)
     pp["costs_total"] = (
-        pp.fuel_costs + pp.transport_costs + pp.emission * float(ewi.co2_price["value"])).div(pp.efficiency) + pp.other_var_costs
-    print(pp["costs_total"])
+        pp.fuel_costs + pp.transport_costs + pp.emission *
+        float(ewi.co2_price["value"])).div(pp.efficiency) + pp.variable_costs
     pp.sort_values(["costs_total", "capacity"], inplace=True)
     pp["capacity_cum"] = pp.capacity.cumsum().div(1000)
+    print(pp)
     return pp
 
 
@@ -184,8 +219,8 @@ def get_reegis_pp_for_merit_order(name, year, aggregated=None, zero=False):
     get_merit_order_ewi()
     if aggregated is None:
         aggregated = ["Solar", "Wind", "Bioenergy", "Hydro", "Geothermal"]
-    regions = geometries.deflex_regions("de01")
-    pp = dp.get_deflex_pp_by_year(regions, year, name, True, filename=filename)
+    regions = geometries.deflex_regions("de02")
+    pp = dp.get_deflex_pp_by_year(regions, year, name, True)
     pp.drop(
         [
             "chp",
@@ -241,6 +276,7 @@ def plot_merit_order(pp, ax):
         "solar": "#ffde32",
         "wind": "#335a8a",
         "other fossil fuels": "#312473",
+        "other": "#312473",
         "waste": "#547969",
         "geothermal": "#f32eb7",
     }
@@ -259,6 +295,8 @@ def plot_merit_order(pp, ax):
     # ax.ylabel("Brennstoffkosten [EUR/MWh]")
     # ax.ylim(0)
     # ax.xlim(0, pp["capacity_cum"].max())
+    print(pp["capacity_cum"].iloc[-1])
+    print(pp["capacity"].sum())
     ax.legend(loc=2)
     for leg in ax.get_legend().legendHandles:
         leg.set_color(cdict[leg.get_label()])
@@ -267,10 +305,14 @@ def plot_merit_order(pp, ax):
 
 
 if __name__ == "__main__":
-    f, ax_ar = plt.subplots(2, 2, figsize=(15, 10))
-    print(download_ewi_data())
-    my_pp = get_merit_order_reegis()
-    plot_merit_order(my_pp, ax_ar[0, 0])
+    # my_pp1 = get_merit_order_reegis(2014)
+    my_pp1 = get_merit_order_ewi()
+    my_pp1["capacity_cum"] /= 1000
+    my_pp2 = merit_order_from_scenario()
+    my_pp2.to_csv("/home/uwe/mypp2")
+    f, ax_ar = plt.subplots(2, 1, figsize=(15, 10))
+    plot_merit_order(my_pp1, ax=ax_ar[0])
+    plot_merit_order(my_pp2, ax=ax_ar[1])
     plt.show()
     exit(0)
     # my_pp = get_merit_order_ewi_raw()
