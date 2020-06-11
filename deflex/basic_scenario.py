@@ -254,9 +254,7 @@ def add_pp_limit(table_collection, year):
                 .multiply(limit)
                 + 0.5
             )
-        trsf["limit_elec_pp"] = trsf["limit_elec_pp"].fillna(
-            float("inf")
-        )
+        trsf["limit_elec_pp"] = trsf["limit_elec_pp"].fillna(float("inf"))
 
         table_collection["transformer"] = trsf
     return table_collection
@@ -682,7 +680,8 @@ def chp_table(heat_b, heat_demand, table_collection, regions=None):
     table_collection["chp_hp"] = chp_hp.transpose()
 
     table_collection = substract_chp_capacity_and_limit_from_pp(
-        table_collection, eta_heat_chp, eta_elec_chp)
+        table_collection, eta_heat_chp, eta_elec_chp
+    )
 
     return table_collection
 
@@ -697,8 +696,8 @@ def substract_chp_capacity_and_limit_from_pp(tc, eta_heat_chp, eta_elec_chp):
             # output of the chp plant has to be subtracted from the power plant
             # limit because this is related to the overall electricity output.
             limit_elec_pp = pp.loc[
-                (pp.index.get_level_values(0) == region) &
-                (pp.fuel == fuel), "limit_elec_pp"
+                (pp.index.get_level_values(0) == region) & (pp.fuel == fuel),
+                "limit_elec_pp",
             ].sum()
             if not limit_elec_pp == float("inf"):
                 limit_elec_chp = (
@@ -706,41 +705,49 @@ def substract_chp_capacity_and_limit_from_pp(tc, eta_heat_chp, eta_elec_chp):
                     / eta_heat_chp
                     * eta_elec_chp
                 )
-                factor = 1 - limit_elec_chp/limit_elec_pp
+                factor = 1 - limit_elec_chp / limit_elec_pp
                 pp.loc[
-                    (pp.index.get_level_values(0) == region) &
-                    (pp.fuel == fuel), "limit_elec_pp"
+                    (pp.index.get_level_values(0) == region)
+                    & (pp.fuel == fuel),
+                    "limit_elec_pp",
                 ] *= factor
 
             # Substract the electric capacity of the chp from the capacity
             # of the power plant.
             capacity_elec_pp = pp.loc[
-                (pp.index.get_level_values(0) == region) &
-                (pp.fuel == fuel), "capacity"
+                (pp.index.get_level_values(0) == region) & (pp.fuel == fuel),
+                "capacity",
             ].sum()
             capacity_elec_chp = chp_hp.loc[(region, fuel), "capacity_elec_chp"]
             if capacity_elec_chp < capacity_elec_pp:
-                factor = 1 - capacity_elec_chp/capacity_elec_pp
+                factor = 1 - capacity_elec_chp / capacity_elec_pp
             elif capacity_elec_chp == capacity_elec_pp:
                 factor = 0
             else:
                 factor = 0
                 diff += capacity_elec_chp - capacity_elec_pp
-                msg = ("Electricity capacity of chp plant it greater than "
-                       "existing electricity capacity in one region.\n"
-                       "Region: {0}, capacity_elec: {1}, capacity_elec_chp: "
-                       "{2}, fuel: {3}")
-                warn(msg.format(
-                        region, capacity_elec_pp, capacity_elec_chp, fuel),
-                     UserWarning)
+                msg = (
+                    "Electricity capacity of chp plant it greater than "
+                    "existing electricity capacity in one region.\n"
+                    "Region: {0}, capacity_elec: {1}, capacity_elec_chp: "
+                    "{2}, fuel: {3}"
+                )
+                warn(
+                    msg.format(
+                        region, capacity_elec_pp, capacity_elec_chp, fuel
+                    ),
+                    UserWarning,
+                )
             pp.loc[
-                    (pp.index.get_level_values(0) == region) &
-                    (pp.fuel == fuel), "capacity"
-                ] *= factor
+                (pp.index.get_level_values(0) == region) & (pp.fuel == fuel),
+                "capacity",
+            ] *= factor
     if diff > 0:
-        msg = ("Electricity capacity of some chp plants it greater than "
-               "existing electricity capacity.\n"
-               "Overall difference: {0}")
+        msg = (
+            "Electricity capacity of some chp plants it greater than "
+            "existing electricity capacity.\n"
+            "Overall difference: {0}"
+        )
         warn(msg.format(diff), UserWarning)
     return tc
 
@@ -767,9 +774,9 @@ def clean_time_series(table_collection):
     regions = list(vts.columns.get_level_values(0).unique())
     for reg in regions:
         for t in ["hydro", "solar", "wind", "geothermal"]:
-            # if the column does not exist or is 0 the corresponding column
-            # of the time_series table can be removed.
-            if vs.loc[reg].get(t) is None or vs.loc[reg].get(t).sum() == 0:
+            if (t not in vs.loc[reg].index) or (
+                vs.loc[(reg, t), "capacity"].sum() == 0
+            ):
                 if vts.get(reg) is not None:
                     if vts[reg].get(t) is not None:
                         msg = (
