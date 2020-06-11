@@ -21,11 +21,12 @@ addons:
 install:
   - pip install cython
   - pip install .
-  - pip install coveralls
+  - pip install coveralls pytest-cov
 
 # command to run tests
 script:
-  - nosetests --with-doctest --with-coverage -c nose.cfg
+  - coverage run --rcfile=.coveragerc --source windpowerlib -m py.test
+  - coverage report
 
 after_success:
   - coveralls
