@@ -25,7 +25,7 @@ install:
 
 # command to run tests
 script:
-  - coverage run --rcfile=.coveragerc --source windpowerlib -m py.test
+  - coverage run --rcfile=.coveragerc --source deflex -m py.test
   - coverage report
 
 after_success:
