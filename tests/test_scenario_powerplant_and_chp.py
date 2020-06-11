@@ -46,9 +46,6 @@ class TestScenarioPowerplantsAndCHP:
             self.pp, self.regions, "de22"
         )
         line = "DE07-DE05"
-        print("Copper", cfg.get("basic", "copperplate"))
-        print(lines)
-        print(lines.loc[line, ("electrical", "capacity")])
         eq_(int(lines.loc[line, ("electrical", "capacity")]), 1978)
         eq_(int(lines.loc[line, ("electrical", "distance")]), 199)
         eq_(float(lines.loc[line, ("electrical", "efficiency")]), 0.9)
