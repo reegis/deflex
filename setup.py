@@ -28,7 +28,7 @@ setup(
     install_requires=[
         "oemof.solph >= 0.3.0",
         "pandas >= 0.17.0",
-        "reegis > v0.1.1",
+        "reegis >= v0.2.0",
         "demandlib",
         "workalendar",
         "networkx",
