@@ -41,7 +41,7 @@ def setup_func():
 
 
 @with_setup(setup_func)
-def scenario_feedin_test():
+def test_scenario_feedin():
     """Test scenario feed-in."""
     cfg.tmp_set("init", "map", "de21")
     regions = geometries.deflex_regions(rmap="de21")

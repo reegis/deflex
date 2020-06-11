@@ -20,14 +20,14 @@ from nose.tools import assert_raises_regexp, eq_
 
 class TestMain:
     @classmethod
-    def setUpClass(cls):
+    def setup_class(cls):
         cls.date_time_index = pd.date_range("1/1/2014", periods=30, freq="H")
         cls.es = solph.EnergySystem(timeindex=cls.date_time_index)
         cls.base_path = os.path.join(os.path.dirname(__file__), "data")
         cfg.tmp_set("paths", "scenario", cls.base_path)
 
     @classmethod
-    def tearDownClass(cls):
+    def teardown_class(cls):
         base_path = os.path.join(os.path.dirname(__file__), "data")
         shutil.rmtree(os.path.join(base_path, "deflex", "2014", "results_cbc"))
         shutil.rmtree(os.path.join(base_path, "deflex", "2013", "results_cbc"))

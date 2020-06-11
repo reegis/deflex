@@ -1,0 +1,7 @@
+,,limit_heat_chp,capacity_heat_chp,capacity_elec_chp,limit_hp,capacity_hp,efficiency_hp,efficiency_heat_chp,efficiency_elec_chp,fuel
+DE01,bioenergy,10199351.0,3885.46,2369.18,6677743.0,2543.9,0.75,0.41,0.25,bioenergy
+DE01,hard coal,19377721.0,7381.98,4501.21,2714759.0,1034.2,0.75,0.41,0.25,hard coal
+DE01,lignite,7466151.0,2844.25,1734.3,656887.0,250.25,0.75,0.41,0.25,lignite
+DE01,natural gas,29532408.0,11250.42,6860.01,17784744.0,6775.13,0.75,0.41,0.25,natural gas
+DE01,oil,377617.0,143.86,87.72,997798.0,380.12,0.75,0.41,0.25,oil
+DE01,other,7003837.0,2668.13,1626.91,4316874.0,1644.53,0.75,0.41,0.25,other

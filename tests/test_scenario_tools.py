@@ -119,6 +119,9 @@ def test_corrupt_data():
         os.path.dirname(__file__), "data", "deflex_2014_de02_test_csv"
     )
     sc.load_csv(csv_path)
+    sc.table_collection["volatile_series"].drop(
+        ("DE02", "solar"), inplace=True, axis=1
+    )
     msg = "Missing time series for solar"
     with assert_raises_regexp(ValueError, msg):
         sc.table2es()

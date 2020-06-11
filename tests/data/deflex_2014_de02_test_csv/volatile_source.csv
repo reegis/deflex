@@ -1,4 +1,7 @@
-de02_region,DE01,DE01,DE01,DE01,DE02
-energy_source_level_2,geothermal,hydro,solar,wind,wind
-parameter,,,,,
-capacity,28.15875,4122.649355833321,34083.34483496653,29581.2243783317,115.3
+de02,energy_source_level_2,capacity,count
+DE01,geothermal,31.4,11.0
+DE01,hydro,8735.9,7233.0
+DE01,solar,36786.5,1675237.0
+DE01,wind,34007.9,27689.0
+DE02,solar,5.5,266.0
+DE02,wind,517.8,27.0

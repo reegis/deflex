@@ -58,7 +58,7 @@ def test_scenario_creation():
                 "storages",
                 "transformer",
                 "volatile_source",
-                "Storage",
+                "chp_hp",
                 "transmission",
                 "decentralised_heat",
                 "commodity_source",

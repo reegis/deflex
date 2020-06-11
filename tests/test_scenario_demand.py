@@ -32,9 +32,9 @@ def setup_func():
 
 
 @with_setup(setup_func)
-def scenario_demand_test():
+def test_scenario_demand():
     """Test scenario demand."""
     regions = geometries.deflex_regions(rmap="de21")
     d = basic_scenario.scenario_demand(regions, 2014, "de21")
     eq_(int(d["DE01", "district heating"].sum()), 18639262)
-    eq_(int(d["DE05", "electrical_load"].sum()), 10069)
+    eq_(int(d["DE05", "electrical_load"].sum()), 10069304)

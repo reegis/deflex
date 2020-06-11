@@ -26,7 +26,7 @@ def test_clean_time_series():
     ok_(("DE05", "solar") in sc.table_collection["volatile_series"])
     ok_(("DE04", "district heating") in sc.table_collection["demand_series"])
 
-    sc.table_collection["volatile_source"]["DE05", "solar"] = 0
+    sc.table_collection["volatile_source"].loc["DE05", "solar"] = 0
     sc.table_collection["demand_series"]["DE04", "district heating"] = 0
     basic_scenario.clean_time_series(sc.table_collection)
 
@@ -55,11 +55,23 @@ def test_scenario_creation_main():
 
     fn = basic_scenario.create_basic_scenario(2014, "de21", only_out="csv")
     ok_(fn.xls is None)
-    eq_(fn.csv[-52:], "deflex_tmp_test_dir/deflex/2014/deflex_2014_de21_csv")
+    eq_(
+        fn.csv[-70:],
+        (
+            "deflex_tmp_test_dir/deflex/2014/"
+            "deflex_2014_de21_heat_no-reg-merit_csv"
+        ),
+    )
 
     fn = basic_scenario.create_basic_scenario(2014, "de21", only_out="xls")
     ok_(fn.csv is None)
-    eq_(fn.xls[-52:], "deflex_tmp_test_dir/deflex/2014/deflex_2014_de21.xls")
+    eq_(
+        fn.xls[-70:],
+        (
+            "deflex_tmp_test_dir/deflex/2014/"
+            "deflex_2014_de21_heat_no-reg-merit.xls"
+        ),
+    )
 
     fn = basic_scenario.create_basic_scenario(
         2014, "de21", csv_dir="fancy_csv", xls_name="fancy.xls"

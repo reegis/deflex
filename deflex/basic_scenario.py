@@ -166,7 +166,7 @@ def create_powerplants(
         )
         power_plants["transformer"]["fuel"] = power_plants[
             "transformer"
-        ].index.get_level_index(1)
+        ].index.get_level_values(1)
     else:
         pp["efficiency"] = pp["efficiency"].round(2)
         power_plants["transformer"] = (
