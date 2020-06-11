@@ -27,7 +27,6 @@ import math
 
 # oemof libraries
 from oemof import solph
-from oemof.tools import logger
 from oemof.network import graph
 from deflex import config as cfg
 
