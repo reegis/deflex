@@ -306,6 +306,9 @@ class DeflexScenario(Scenario):
         if "storages" in self.table_collection:
             add_storages(self.table_collection, nodes)
 
+        if "mobility_mileage" in self.table_collection:
+            add_conventional_mobility(self.table_collection, nodes)
+
         # Add shortage excess to every bus
         add_shortage_excess(nodes)
         return nodes
@@ -716,6 +719,36 @@ def add_storages(table_collection, nodes):
             inflow_conversion_factor=params.pump_eff,
             outflow_conversion_factor=params.turbine_eff,
         )
+
+
+def add_conventional_mobility(table_collection, nodes):
+    """
+
+    Parameters
+    ----------
+    table_collection
+    nodes
+
+    Returns
+    -------
+
+    """
+    mileage = table_collection["mobility_mileage"]["DE"]
+    spec_demand = table_collection["mobility_spec_demand"]["DE"]
+    energy_content = table_collection["mobility_energy_content"]["DE"]
+    energy_tp = mileage.mul(spec_demand).mul(energy_content.iloc[0]) / 10 ** 6
+    energy = energy_tp.sum()
+    idx = table_collection["demand_series"].index
+    oil_key = Label("bus", "commodity", "oil", "DE")
+    for fuel in ["diesel", "petrol"]:
+        fix_value = pd.Series(energy / len(idx), index=idx, dtype=float)
+        fuel_label = Label("Usage", "mobility", fuel, "DE")
+        nodes[fuel_label] = Sink(
+            label=fuel_label,
+            inputs={nodes[oil_key]: Flow(actual_value=fix_value)},
+        )
+
+    return nodes
 
 
 def add_shortage_excess(nodes):
