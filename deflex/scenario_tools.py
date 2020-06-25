@@ -35,7 +35,7 @@ if sys.getrecursionlimit() < 3000:
 
 
 class NodeDict(dict):
-    __slots__ = ()
+    """Something."""
 
     def __setitem__(self, key, item):
         if super().get(key) is None:
@@ -49,6 +49,7 @@ class NodeDict(dict):
 
 
 class Scenario:
+    """Scenario class."""
     def __init__(self, **kwargs):
         self.name = kwargs.get("name", "unnamed_scenario")
         self.table_collection = kwargs.get("table_collection", {})
@@ -65,6 +66,12 @@ class Scenario:
         self.meta = kwargs.get("meta", None)
 
     def initialise_energy_system(self):
+        """
+
+        Returns
+        -------
+
+        """
         if self.debug is True:
             number_of_time_steps = 3
         else:
@@ -138,6 +145,16 @@ class Scenario:
         logging.info("Scenario saved as csv-collection to {0}".format(path))
 
     def check_table(self, table_name):
+        """
+
+        Parameters
+        ----------
+        table_name
+
+        Returns
+        -------
+
+        """
         if self.table_collection[table_name].isnull().values.any():
             c = []
             for column in self.table_collection[table_name].columns:
@@ -148,9 +165,26 @@ class Scenario:
         return self
 
     def create_nodes(self):
+        """
+
+        Returns
+        -------
+        dict
+
+        """
         pass
 
     def initialise_es(self, year=None):
+        """
+
+        Parameters
+        ----------
+        year
+
+        Returns
+        -------
+
+        """
         if year is not None:
             self.year = year
         self.es = self.initialise_energy_system()
@@ -175,6 +209,12 @@ class Scenario:
         return self
 
     def table2es(self):
+        """
+
+        Returns
+        -------
+
+        """
         if self.es is None:
             self.es = self.initialise_energy_system()
         nodes = self.create_nodes()
@@ -182,10 +222,26 @@ class Scenario:
         return self
 
     def create_model(self):
+        """
+
+        Returns
+        -------
+
+        """
         self.model = solph.Model(self.es)
         return self
 
     def dump_es(self, filename):
+        """
+
+        Parameters
+        ----------
+        filename
+
+        Returns
+        -------
+
+        """
         os.makedirs(os.path.dirname(filename), exist_ok=True)
         f = open(filename, "wb")
         if self.meta is None:
@@ -197,6 +253,16 @@ class Scenario:
         logging.info("Results dumped to {0}.".format(filename))
 
     def restore_es(self, filename=None):
+        """
+
+        Parameters
+        ----------
+        filename
+
+        Returns
+        -------
+
+        """
         if filename is None:
             filename = self.results_fn
         else:
@@ -211,6 +277,16 @@ class Scenario:
         logging.info("Results restored from {0}.".format(filename))
 
     def scenario_info(self, solver_name):
+        """
+
+        Parameters
+        ----------
+        solver_name
+
+        Returns
+        -------
+
+        """
         sc_info = {
             "name": self.name,
             "datetime": datetime.datetime.now(),
@@ -220,6 +296,19 @@ class Scenario:
         return sc_info
 
     def solve(self, with_duals=False, tee=True, logfile=None, solver=None):
+        """
+
+        Parameters
+        ----------
+        with_duals
+        tee
+        logfile
+        solver
+
+        Returns
+        -------
+
+        """
         logging.info("Optimising using {0}.".format(solver))
 
         if with_duals:
@@ -249,6 +338,18 @@ class Scenario:
         self.results = self.es.results["main"]
 
     def plot_nodes(self, show=None, filename=None, **kwargs):
+        """
+
+        Parameters
+        ----------
+        show
+        filename
+        kwargs
+
+        Returns
+        -------
+
+        """
 
         rm_nodes = kwargs.get("remove_nodes_with_substrings")
 
@@ -261,6 +362,7 @@ class Scenario:
 
 
 class Label(namedtuple("solph_label", ["cat", "tag", "subtag", "region"])):
+    """A label for deflex components."""
     __slots__ = ()
 
     def __str__(self):
@@ -268,11 +370,18 @@ class Label(namedtuple("solph_label", ["cat", "tag", "subtag", "region"])):
 
 
 class DeflexScenario(Scenario):
+    """Something"""
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.extra_regions = kwargs.get("extra_regions", list())
 
     def create_nodes(self):
+        """
+
+        Returns
+        -------
+
+        """
         # Create  a special dictionary that will raise an error if a key is
         # updated. This avoids the
         nodes = NodeDict()
@@ -315,6 +424,19 @@ class DeflexScenario(Scenario):
 
 
 def create_fuel_bus_with_source(nodes, fuel, region, data):
+    """
+
+    Parameters
+    ----------
+    nodes
+    fuel
+    region
+    data
+
+    Returns
+    -------
+
+    """
     bus_label = Label("bus", "commodity", fuel.replace(" ", "_"), region)
     if bus_label not in nodes:
         nodes[bus_label] = solph.Bus(label=bus_label)
@@ -374,6 +496,18 @@ def add_volatile_sources(table_collection, nodes):
 
 
 def add_decentralised_heating_systems(table_collection, nodes, extra_regions):
+    """
+
+    Parameters
+    ----------
+    table_collection
+    nodes
+    extra_regions
+
+    Returns
+    -------
+
+    """
     logging.debug("Add decentralised_heating_systems to nodes dictionary.")
     cs = table_collection["commodity_source"].loc["DE"]
     dts = table_collection["demand_series"]
@@ -434,6 +568,17 @@ def add_decentralised_heating_systems(table_collection, nodes, extra_regions):
 
 
 def add_electricity_demand(table_collection, nodes):
+    """
+
+    Parameters
+    ----------
+    table_collection
+    nodes
+
+    Returns
+    -------
+
+    """
     logging.debug("Add local electricity demand to nodes dictionary.")
     dts = table_collection["demand_series"]
     dts.columns = dts.columns.swaplevel()
@@ -454,6 +599,17 @@ def add_electricity_demand(table_collection, nodes):
 
 
 def add_district_heating_systems(table_collection, nodes):
+    """
+
+    Parameters
+    ----------
+    table_collection
+    nodes
+
+    Returns
+    -------
+
+    """
     logging.debug("Add district heating systems to nodes dictionary.")
     dts = table_collection["demand_series"]
     if "district heating" in ["demand_series"]:
@@ -476,6 +632,17 @@ def add_district_heating_systems(table_collection, nodes):
 
 
 def add_transmission_lines_between_electricity_nodes(table_collection, nodes):
+    """
+
+    Parameters
+    ----------
+    table_collection
+    nodes
+
+    Returns
+    -------
+
+    """
     logging.debug("Add transmission lines to nodes dictionary.")
     power_lines = table_collection["transmission"]["electrical"]
     for idx, values in power_lines.iterrows():
@@ -530,6 +697,18 @@ def add_transmission_lines_between_electricity_nodes(table_collection, nodes):
 
 
 def add_power_and_heat_plants(table_collection, nodes, extra_regions):
+    """
+
+    Parameters
+    ----------
+    table_collection
+    nodes
+    extra_regions
+
+    Returns
+    -------
+
+    """
     trsf = table_collection["transformer"]
     chp_hp = table_collection["chp_hp"]
     cs = table_collection["commodity_source"].loc["DE"]
@@ -591,13 +770,13 @@ def add_power_and_heat_plants(table_collection, nodes, extra_regions):
             if params.capacity > 0:
                 # if downtime_factor is in the parameters, use it
                 if hasattr(params, "downtime_factor"):
-                    if math.isnan(params.downtime_factor):
+                    if math.isnan(params["downtime_factor"]):
                         trsf.loc[(region, plant), "capacity"] *= 1 - cfg.get(
                             "model", "default_downtime_factor"
                         )
                     else:
                         trsf.loc[(region, plant), "capacity"] *= (
-                            1 - params.downtime_factor
+                            1 - params["downtime_factor"]
                         )
 
                 # Define output flow with or without summed_max attribute
@@ -611,7 +790,7 @@ def add_power_and_heat_plants(table_collection, nodes, extra_regions):
 
                 # if variable costs are defined add them to the outflow
                 if hasattr(params, "variable_costs"):
-                    if math.isnan(params.variable_costs):
+                    if math.isnan(params["variable_costs"]):
                         vc = cfg.get("model", "default_variable_costs_pp")
                     else:
                         vc = params.variable_costs
@@ -650,14 +829,14 @@ def add_power_and_heat_plants(table_collection, nodes, extra_regions):
             # Create chp plants as 1x2 Transformer
             if (
                 hasattr(params, "capacity_heat_chp")
-                and params.capacity_heat_chp > 0
+                and params["capacity_heat_chp"] > 0
             ):
                 trsf_label = Label(
                     "trsf", "chp", params.fuel.replace(" ", "_"), region
                 )
 
                 smax = (params.limit_heat_chp / params.efficiency_heat_chp) / (
-                    params.capacity_heat_chp / params.efficiency_heat_chp
+                    params["capacity_heat_chp"] / params.efficiency_heat_chp
                 )
 
                 nodes[trsf_label] = solph.Transformer(
@@ -665,7 +844,7 @@ def add_power_and_heat_plants(table_collection, nodes, extra_regions):
                     inputs={
                         nodes[fuel_bus]: solph.Flow(
                             nominal_value=(
-                                params.capacity_heat_chp
+                                params["capacity_heat_chp"]
                                 / params.efficiency_heat_chp
                             ),
                             summed_max=smax,
@@ -701,6 +880,17 @@ def add_power_and_heat_plants(table_collection, nodes, extra_regions):
 
 
 def add_storages(table_collection, nodes):
+    """
+
+    Parameters
+    ----------
+    table_collection
+    nodes
+
+    Returns
+    -------
+
+    """
     storages = table_collection["storages"]
     storages.index = storages.index.swaplevel()
     for region in storages.loc["phes"].index:
@@ -743,15 +933,25 @@ def add_conventional_mobility(table_collection, nodes):
     for fuel in ["diesel", "petrol"]:
         fix_value = pd.Series(energy / len(idx), index=idx, dtype=float)
         fuel_label = Label("Usage", "mobility", fuel, "DE")
-        nodes[fuel_label] = Sink(
+        nodes[fuel_label] = solph.Sink(
             label=fuel_label,
-            inputs={nodes[oil_key]: Flow(actual_value=fix_value)},
+            inputs={nodes[oil_key]: solph.Flow(actual_value=fix_value)},
         )
 
     return nodes
 
 
 def add_shortage_excess(nodes):
+    """
+
+    Parameters
+    ----------
+    nodes
+
+    Returns
+    -------
+
+    """
     bus_keys = [key for key in nodes.keys() if "bus" in key.cat]
     for key in bus_keys:
         excess_label = Label("excess", key.tag, key.subtag, key.region)

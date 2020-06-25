@@ -33,12 +33,26 @@ from reegis import (
     commodity_sources,
     demand_elec,
     energy_balance,
+    mobility,
 )
 from reegis import powerplants as reegis_powerplants
 from reegis import storages
 
 
 def create_scenario(regions, year, name, weather_year=None):
+    """
+
+    Parameters
+    ----------
+    regions
+    year
+    name
+    weather_year
+
+    Returns
+    -------
+
+    """
     table_collection = {}
 
     logging.info("BASIC SCENARIO - STORAGES")
@@ -211,6 +225,16 @@ def create_powerplants(
 
 
 def add_additional_values(table_collection):
+    """
+
+    Parameters
+    ----------
+    table_collection
+
+    Returns
+    -------
+
+    """
     transf = table_collection["transformer"]
     for values in ["variable_costs", "downtime_factor"]:
         if cfg.get("basic", "use_{0}".format(values)) is True:
@@ -371,6 +395,12 @@ def scenario_commodity_sources(year):
 
 
 def create_commodity_sources_ewi():
+    """
+
+    Returns
+    -------
+
+    """
     ewi = analyses.download_ewi_data()
     df = pd.DataFrame()
     df["costs"] = ewi.fuel_costs["value"] + ewi.transport_costs["value"]
@@ -467,6 +497,19 @@ def scenario_demand(regions, year, name, weather_year=None):
 
 
 def scenario_heat_demand(table, regions, year, weather_year=None):
+    """
+
+    Parameters
+    ----------
+    table
+    regions
+    year
+    weather_year
+
+    Returns
+    -------
+
+    """
     idx = table.index  # Use the index of the existing time series
     table = pd.concat(
         [
@@ -481,6 +524,20 @@ def scenario_heat_demand(table, regions, year, weather_year=None):
 
 
 def scenario_elec_demand(table, regions, year, name, weather_year=None):
+    """
+
+    Parameters
+    ----------
+    table
+    regions
+    year
+    name
+    weather_year
+
+    Returns
+    -------
+
+    """
     if weather_year is None:
         demand_year = year
     else:
@@ -536,6 +593,12 @@ def scenario_feedin(regions, year, name, weather_year=None):
 
 
 def scenario_decentralised_heat():
+    """
+
+    Returns
+    -------
+
+    """
     filename = os.path.join(
         cfg.get("paths", "data_deflex"), cfg.get("heating", "table")
     )
@@ -587,6 +650,19 @@ def scenario_chp(table_collection, regions, year, name, weather_year=None):
 
 
 def chp_table(heat_b, heat_demand, table_collection, regions=None):
+    """
+
+    Parameters
+    ----------
+    heat_b
+    heat_demand
+    table_collection
+    regions
+
+    Returns
+    -------
+
+    """
 
     chp_hp = pd.DataFrame(
         columns=pd.MultiIndex(levels=[[], []], codes=[[], []])
@@ -690,6 +766,18 @@ def chp_table(heat_b, heat_demand, table_collection, regions=None):
 
 
 def substract_chp_capacity_and_limit_from_pp(tc, eta_heat_chp, eta_elec_chp):
+    """
+
+    Parameters
+    ----------
+    tc
+    eta_heat_chp
+    eta_elec_chp
+
+    Returns
+    -------
+
+    """
     chp_hp = tc["chp_hp"]
     pp = tc["transformer"]
     diff = 0
@@ -754,6 +842,7 @@ def substract_chp_capacity_and_limit_from_pp(tc, eta_heat_chp, eta_elec_chp):
         warn(msg.format(diff), UserWarning)
     return tc
 
+
 def scenario_mobility(year, table):
     """
 
@@ -813,6 +902,16 @@ def scenario_mobility(year, table):
 
 
 def clean_time_series(table_collection):
+    """
+
+    Parameters
+    ----------
+    table_collection
+
+    Returns
+    -------
+
+    """
     dts = table_collection["demand_series"]
     vts = table_collection["volatile_series"]
     vs = table_collection["volatile_source"]
