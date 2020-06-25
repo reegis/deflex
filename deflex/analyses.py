@@ -80,8 +80,12 @@ def download_ewi_data():
         "fuel_costs": {"skiprows": 7, "usecols": "C:F", "nrows": 7},
         "transport_costs": {"skiprows": 21, "usecols": "C:F", "nrows": 7},
         "variable_costs": {"skiprows": 31, "usecols": "C:F", "nrows": 8},
-        "downtime_factor": {"skiprows": 31, "usecols": "H:K", "nrows": 8,
-                            "scale": 0.01},
+        "downtime_factor": {
+            "skiprows": 31,
+            "usecols": "H:K",
+            "nrows": 8,
+            "scale": 0.01,
+        },
         "emission": {"skiprows": 31, "usecols": "M:P", "nrows": 7},
         "co2_price": {"skiprows": 17, "usecols": "C:F", "nrows": 1},
     }
@@ -135,15 +139,18 @@ def merit_order_from_scenario():
     num_cols = ["capacity", "variable_costs", "efficiency", "count"]
     transf[num_cols] = transf[num_cols].astype(float)
     transf = transf.loc[transf["capacity"] != 0]
-    transf["capacity"] *= (
-            1 - pd.to_numeric(transf["downtime_factor"].fillna(0.1)))
+    transf["capacity"] *= 1 - pd.to_numeric(
+        transf["downtime_factor"].fillna(0.1)
+    )
     data = sc.table_collection["commodity_source"]["DE"].transpose()
     transf = transf.merge(data, right_index=True, how="left", left_on="fuel")
-    transf["costs_total"] = pd.to_numeric(transf["variable_costs"].fillna(1)) + transf["costs"].div(
-        transf["efficiency"])
+    transf["costs_total"] = pd.to_numeric(
+        transf["variable_costs"].fillna(1)
+    ) + transf["costs"].div(transf["efficiency"])
     if "co2_price" in transf:
         transf["costs_total"] += transf["co2_price"] * transf["emission"].div(
-            1000).div(transf["efficiency"])
+            1000
+        ).div(transf["efficiency"])
     transf.sort_values(["costs_total", "capacity"], inplace=True)
     transf = transf.loc[transf["fuel"] != "bioenergy"]
     transf = transf.loc[transf["fuel"] != "other"]
@@ -194,17 +201,18 @@ def get_merit_order_reegis(year=2014):
         "transport_costs",
         "variable_costs",
         "downtime_factor",
-
         "emission",
     ]:
         ewi_table[table] = getattr(ewi, table).value
     pp = pp.merge(ewi_table, left_on="fuel", right_index=True)
     pp = pp.loc[pp.fillna(0).capacity != 0]
     # pp = pp.loc[pp.capacity >= 100]
-    pp["capacity"] = pp.capacity.multiply(1-pp.downtime_factor)
+    pp["capacity"] = pp.capacity.multiply(1 - pp.downtime_factor)
     pp["costs_total"] = (
-        pp.fuel_costs + pp.transport_costs + pp.emission *
-        float(ewi.co2_price["value"])).div(pp.efficiency) + pp.variable_costs
+        pp.fuel_costs
+        + pp.transport_costs
+        + pp.emission * float(ewi.co2_price["value"])
+    ).div(pp.efficiency) + pp.variable_costs
     pp.sort_values(["costs_total", "capacity"], inplace=True)
     pp["capacity_cum"] = pp.capacity.cumsum().div(1000)
     print(pp)

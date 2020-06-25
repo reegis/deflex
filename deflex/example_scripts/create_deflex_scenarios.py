@@ -4,7 +4,7 @@ from oemof.tools import logger
 
 years = [2014, 2013, 2012]
 # years = [2013]
-rmaps = ['de21', 'de22', 'de17', 'de02']
+rmaps = ["de21", "de22", "de17", "de02"]
 # rmaps = ['de02']
 logger.define_logging()
 

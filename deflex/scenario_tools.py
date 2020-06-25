@@ -566,7 +566,8 @@ def add_power_and_heat_plants(table_collection, nodes, extra_regions):
                 )
                 if bus_fuel not in nodes:
                     create_fuel_bus_with_source(
-                        nodes, fuel.replace(" ", "_"), region, cs)
+                        nodes, fuel.replace(" ", "_"), region, cs
+                    )
             else:
                 bus_fuel = Label(
                     "bus", "commodity", fuel.replace(" ", "_"), "DE"
@@ -579,7 +580,8 @@ def add_power_and_heat_plants(table_collection, nodes, extra_regions):
         for plant in trsf_regions:
             idx = set(trsf.loc[region, plant].index).difference(("fuel",))
             trsf.loc[(region, plant), idx] = pd.to_numeric(
-                trsf.loc[(region, plant), idx])
+                trsf.loc[(region, plant), idx]
+            )
             params = trsf.loc[region, plant]
 
             # Create power plants as 1x1 Transformer if capacity > 0
@@ -592,7 +594,8 @@ def add_power_and_heat_plants(table_collection, nodes, extra_regions):
                         )
                     else:
                         trsf.loc[(region, plant), "capacity"] *= (
-                                1 - params.downtime_factor)
+                            1 - params.downtime_factor
+                        )
 
                 # Define output flow with or without summed_max attribute
                 if params.limit_elec_pp == float("inf"):
@@ -633,12 +636,13 @@ def add_power_and_heat_plants(table_collection, nodes, extra_regions):
         for plant in chp_hp_regions:
             idx = set(chp_hp.loc[region, plant].index).difference(("fuel",))
             chp_hp.loc[(region, plant), idx] = pd.to_numeric(
-                chp_hp.loc[(region, plant), idx])
+                chp_hp.loc[(region, plant), idx]
+            )
             params = chp_hp.loc[region, plant]
 
             fuel_bus = Label(
-                    "bus", "commodity", params.fuel.replace(" ", "_"), "DE"
-                )
+                "bus", "commodity", params.fuel.replace(" ", "_"), "DE"
+            )
 
             # Create chp plants as 1x2 Transformer
             if (
