@@ -24,7 +24,8 @@ setup(
     package_dir={"deflex": "deflex"},
     url="https://github.com/reegis/deflex",
     license="MIT",
-    extras_require={"dev": ["nose", "sphinx", "sphinx_rtd_theme", "requests"]},
+    extras_require={"dev": ["nose", "sphinx", "sphinx_rtd_theme", "requests"],
+                    "dummy": ["reegis"]},
     install_requires=[
         "oemof >= 0.3.0",
         "pandas >= 0.17.0",
