@@ -11,18 +11,18 @@ __license__ = "MIT"
 
 
 import os
-from collections import namedtuple
 
 import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
 
 from deflex import config as cfg
+from deflex import data
 from deflex import geometries
 from deflex import powerplants as dp
 from deflex import scenario_tools
 from reegis import commodity_sources
-from reegis.tools import download_file
+
 
 TRANS = {
     "Abfall": "waste",
@@ -60,90 +60,53 @@ EMISSIONS_EWI = {
 }
 
 
-def download_ewi_data():
+# def get_costs_and_emissions(source="ewi"):
+#     re_sources = ["geothermal", "solar", "wind", "hydro"]
+#     zeros = np.zeros(shape=(len(re_sources), 2))
+#     re = pd.DataFrame(zeros, columns=["costs", "emission"], index=re_sources)
+#     cs = commodity_sources.get_commodity_sources().loc[2014].unstack()
+#     converter = {
+#         "costs": ["costs", "EUR/J", 1e9 * 3.6, "EUR/MWh"],
+#         "emission": ["emission", "g/J", 1e6 * 3.6, "kg/MWh"],
+#     }
+#     for key in converter.keys():
+#         cs[key] = cs[key].multiply(converter[key][2])
+#     cs = pd.concat([re, cs])
+#
+#     # Add region level to be consistent to other tables
+#     cs.columns = pd.MultiIndex.from_product([["reegis"], cs.columns])
+#     cs["ewi", "costs"] = pd.Series(COSTS_EWI)
+#     cs["ewi", "emission"] = pd.Series(EMISSIONS_EWI).multiply(1000)
+#     if source == "all":
+#         return cs
+#     else:
+#         return cs[source]
+
+
+def merit_order_from_scenario(path):
     """
+    
+    Parameters
+    ----------
+    path
 
     Returns
     -------
-    namedtuple
+
     """
-    # Download file
-    url = (
-        "https://www.ewi.uni-koeln.de/cms/wp-content/uploads/2019/12"
-        "/EWI_Merit_Order_Tool_2019_1_4.xlsm"
-    )
-    fn = os.path.join(cfg.get("paths", "deflex_general"), "ewi.xlsm")
-    download_file(fn, url)
-
-    # Creat named tuple with all sub tables
-    ewi_tables = {
-        "fuel_costs": {"skiprows": 7, "usecols": "C:F", "nrows": 7},
-        "transport_costs": {"skiprows": 21, "usecols": "C:F", "nrows": 7},
-        "variable_costs": {"skiprows": 31, "usecols": "C:F", "nrows": 8},
-        "downtime_factor": {
-            "skiprows": 31,
-            "usecols": "H:K",
-            "nrows": 8,
-            "scale": 0.01,
-        },
-        "emission": {"skiprows": 31, "usecols": "M:P", "nrows": 7},
-        "co2_price": {"skiprows": 17, "usecols": "C:F", "nrows": 1},
-    }
-    ewi_data = {}
-    ewi = namedtuple("ewi_data", list(ewi_tables.keys()))
-    cols = ["fuel", "value", "unit", "source"]
-    xls = pd.ExcelFile(fn)
-    for table in ewi_tables.keys():
-        tmp = xls.parse("Start", header=[0], **ewi_tables[table]).replace(
-            TRANS
-        )
-        tmp.drop_duplicates(tmp.columns[0], keep="first", inplace=True)
-        tmp.columns = cols
-        ewi_data[table] = tmp.set_index("fuel")
-        if "scale" in ewi_tables[table]:
-            ewi_data[table]["value"] *= ewi_tables[table]["scale"]
-
-    return ewi(**ewi_data)
-
-
-def get_costs_and_emissions(source="ewi"):
-    re_sources = ["geothermal", "solar", "wind", "hydro"]
-    zeros = np.zeros(shape=(len(re_sources), 2))
-    re = pd.DataFrame(zeros, columns=["costs", "emission"], index=re_sources)
-    cs = commodity_sources.get_commodity_sources().loc[2014].unstack()
-    converter = {
-        "costs": ["costs", "EUR/J", 1e9 * 3.6, "EUR/MWh"],
-        "emission": ["emission", "g/J", 1e6 * 3.6, "kg/MWh"],
-    }
-    for key in converter.keys():
-        cs[key] = cs[key].multiply(converter[key][2])
-    cs = pd.concat([re, cs])
-
-    # Add region level to be consistent to other tables
-    cs.columns = pd.MultiIndex.from_product([["reegis"], cs.columns])
-    cs["ewi", "costs"] = pd.Series(COSTS_EWI)
-    cs["ewi", "emission"] = pd.Series(EMISSIONS_EWI).multiply(1000)
-    if source == "all":
-        return cs
-    else:
-        return cs[source]
-
-
-def merit_order_from_scenario():
-    name = "de02"
-    bas_path = "/home/uwe/reegis/scenarios/deflex/2014/"
-    csv_path = os.path.join(bas_path, "deflex_2014_de02_csv")
-    sc = scenario_tools.DeflexScenario(name=name, year=2014)
-    sc.load_csv(csv_path)
-    transf = sc.table_collection["transformer"].transpose()
+    sc = scenario_tools.DeflexScenario(year=2014)
+    sc.load_csv(path)
+    sc.name = sc.table_collection["meta"].loc["name", "value"]
+    transf = sc.table_collection["transformer"]
     num_cols = ["capacity", "variable_costs", "efficiency", "count"]
     transf[num_cols] = transf[num_cols].astype(float)
     transf = transf.loc[transf["capacity"] != 0]
     transf["capacity"] *= 1 - pd.to_numeric(
         transf["downtime_factor"].fillna(0.1)
     )
-    data = sc.table_collection["commodity_source"]["DE"].transpose()
-    transf = transf.merge(data, right_index=True, how="left", left_on="fuel")
+    my_data = sc.table_collection["commodity_source"].loc["DE"]
+    transf = transf.merge(my_data, right_index=True, how="left",
+                          left_on="fuel")
     transf["costs_total"] = pd.to_numeric(
         transf["variable_costs"].fillna(1)
     ) + transf["costs"].div(transf["efficiency"])
@@ -194,7 +157,7 @@ def get_merit_order_reegis(year=2014):
     if not os.path.isfile(fn):
         get_reegis_pp_for_merit_order("de02", year)
     pp = pd.read_csv(fn, header=[0], index_col=[0])
-    ewi = download_ewi_data()
+    ewi = data.get_ewi_data()
     ewi_table = pd.DataFrame(index=ewi.fuel_costs.index)
     for table in [
         "fuel_costs",
@@ -313,13 +276,16 @@ def plot_merit_order(pp, ax):
 
 
 if __name__ == "__main__":
+    # data.get_ewi_data()
     # my_pp1 = get_merit_order_reegis(2014)
-    my_pp1 = get_merit_order_ewi()
-    my_pp1["capacity_cum"] /= 1000
-    my_pp2 = merit_order_from_scenario()
+    # my_pp1 = get_merit_order_ewi()
+    # my_pp1["capacity_cum"] /= 1000
+    bas_path = "/home/uwe/reegis/scenarios/deflex/2014/"
+    csv_path = os.path.join(bas_path, "deflex_2014_de02_no-heat_reg-merit_csv")
+    my_pp2 = merit_order_from_scenario(csv_path)
     my_pp2.to_csv("/home/uwe/mypp2")
     f, ax_ar = plt.subplots(2, 1, figsize=(15, 10))
-    plot_merit_order(my_pp1, ax=ax_ar[0])
+    # plot_merit_order(my_pp1, ax=ax_ar[0])
     plot_merit_order(my_pp2, ax=ax_ar[1])
     plt.show()
     exit(0)
