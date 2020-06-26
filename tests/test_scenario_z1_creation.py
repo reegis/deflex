@@ -70,4 +70,4 @@ def test_scenario_creation():
             ]
         ),
     )
-    eq_(len(list(table_collection.keys())), 11)
+    eq_(len(list(table_collection.keys())), 12)

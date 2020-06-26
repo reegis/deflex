@@ -931,11 +931,11 @@ def add_conventional_mobility(table_collection, nodes):
     idx = table_collection["demand_series"].index
     oil_key = Label("bus", "commodity", "oil", "DE")
     for fuel in ["diesel", "petrol"]:
-        fix_value = pd.Series(energy / len(idx), index=idx, dtype=float)
+        fix_value = pd.Series(energy[fuel] / len(idx), index=idx, dtype=float)
         fuel_label = Label("Usage", "mobility", fuel, "DE")
         nodes[fuel_label] = solph.Sink(
             label=fuel_label,
-            inputs={nodes[oil_key]: solph.Flow(actual_value=fix_value)},
+            inputs={nodes[oil_key]: solph.Flow(fix=fix_value)},
         )
 
     return nodes
