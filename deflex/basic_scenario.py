@@ -17,24 +17,11 @@ from collections import namedtuple
 from warnings import warn
 
 import pandas as pd
-
-from deflex import analyses
 from deflex import config as cfg
 from deflex import (
-    demand,
-    geometries,
-    powerplants,
-    scenario_tools,
-    transmission,
-)
+    data, demand, geometries, powerplants, scenario_tools, transmission)
 from reegis import (
-    bmwi,
-    coastdat,
-    commodity_sources,
-    demand_elec,
-    energy_balance,
-    mobility,
-)
+    bmwi, coastdat, commodity_sources, demand_elec, energy_balance, mobility)
 from reegis import powerplants as reegis_powerplants
 from reegis import storages
 
@@ -95,6 +82,9 @@ def create_scenario(regions, year, name, weather_year=None):
 
     logging.info("BASIC SCENARIO - MOBILITY")
     table_collection = scenario_mobility(year, table_collection)
+
+    logging.info("ADD META DATA")
+    table_collection["meta"] = meta_data(year)
     return table_collection
 
 
@@ -238,7 +228,7 @@ def add_additional_values(table_collection):
     transf = table_collection["transformer"]
     for values in ["variable_costs", "downtime_factor"]:
         if cfg.get("basic", "use_{0}".format(values)) is True:
-            add_values = getattr(analyses.download_ewi_data(), values)
+            add_values = getattr(data.get_ewi_data(), values)
             transf = transf.merge(
                 add_values, right_index=True, how="left", left_on="fuel",
             )
@@ -401,7 +391,7 @@ def create_commodity_sources_ewi():
     -------
 
     """
-    ewi = analyses.download_ewi_data()
+    ewi = data.get_ewi_data()
     df = pd.DataFrame()
     df["costs"] = ewi.fuel_costs["value"] + ewi.transport_costs["value"]
     df["emission"] = ewi.emission["value"].multiply(1000)
@@ -901,6 +891,27 @@ def scenario_mobility(year, table):
     return table
 
 
+def meta_data(year):
+    meta = pd.DataFrame.from_dict(cfg.get_dict("basic"), orient="index",
+                                  columns=["value"])
+    meta.loc["year"] = year
+    meta.loc["map"] = cfg.get("init", "map")
+
+    # Create name
+    if cfg.get("basic", "heat"):
+        heat = "heat"
+    else:
+        heat = "no-heat"
+    if cfg.get("basic", "group_transformer"):
+        merit = "no-reg-merit"
+    else:
+        merit = "reg-merit"
+    meta.loc["name"] = "{0}_{1}_{2}_{3}_{4}".format(
+        "deflex", year, cfg.get("init", "map"), heat, merit
+    )
+    return meta
+
+
 def clean_time_series(table_collection):
     """
 
@@ -984,24 +995,14 @@ def create_basic_scenario(
     paths = namedtuple("paths", "xls, csv")
     if rmap is not None:
         cfg.tmp_set("init", "map", rmap)
-    name = cfg.get("init", "map")
+
     regions = geometries.deflex_regions(rmap=cfg.get("init", "map"))
 
-    table_collection = create_scenario(regions, year, name)
+    table_collection = create_scenario(regions, year, cfg.get("init", "map"))
+
     table_collection = clean_time_series(table_collection)
 
-    # Create name
-    if cfg.get("basic", "heat"):
-        heat = "heat"
-    else:
-        heat = "no-heat"
-    if cfg.get("basic", "group_transformer"):
-        merit = "no-reg-merit"
-    else:
-        merit = "reg-merit"
-    name = "{0}_{1}_{2}_{3}_{4}".format(
-        "deflex", year, cfg.get("init", "map"), heat, merit
-    )
+    name = table_collection["meta"].loc["name", "value"]
     sce = scenario_tools.Scenario(
         table_collection=table_collection, name=name, year=year
     )

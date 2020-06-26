@@ -1,0 +1,11 @@
+,value
+heat,1
+round,1
+group_transformer,1
+copperplate,False
+costs_source,ewi
+use_variable_costs,True
+use_downtime_factor,True
+year,2014
+map,de21
+name,deflex_2014_de21_heat_no-reg-merit
