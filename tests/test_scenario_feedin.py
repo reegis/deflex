@@ -36,10 +36,12 @@ class TestFeedin:
             os.makedirs(path, exist_ok=True)
             download_file(filename, url)
 
-        src = os.path.join(os.path.dirname(__file__), "data",
-                           "windzone_de21.csv")
-        trg = os.path.join(cfg.get("paths", "powerplants"),
-                           "windzone_de21.csv")
+        src = os.path.join(
+            os.path.dirname(__file__), "data", "windzone_de21.csv"
+        )
+        trg = os.path.join(
+            cfg.get("paths", "powerplants"), "windzone_de21.csv"
+        )
         copyfile(src, trg)
         cfg.tmp_set("init", "map", "de21")
         regions = geometries.deflex_regions(rmap="de21")
