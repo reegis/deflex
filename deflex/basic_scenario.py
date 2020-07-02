@@ -19,9 +19,21 @@ from warnings import warn
 import pandas as pd
 from deflex import config as cfg
 from deflex import (
-    data, demand, geometries, powerplants, scenario_tools, transmission)
+    data,
+    demand,
+    geometries,
+    powerplants,
+    scenario_tools,
+    transmission,
+)
 from reegis import (
-    bmwi, coastdat, commodity_sources, demand_elec, energy_balance, mobility)
+    bmwi,
+    coastdat,
+    commodity_sources,
+    demand_elec,
+    energy_balance,
+    mobility,
+)
 from reegis import powerplants as reegis_powerplants
 from reegis import storages
 
@@ -892,8 +904,9 @@ def scenario_mobility(year, table):
 
 
 def meta_data(year):
-    meta = pd.DataFrame.from_dict(cfg.get_dict("basic"), orient="index",
-                                  columns=["value"])
+    meta = pd.DataFrame.from_dict(
+        cfg.get_dict("basic"), orient="index", columns=["value"]
+    )
     meta.loc["year"] = year
     meta.loc["map"] = cfg.get("init", "map")
 
