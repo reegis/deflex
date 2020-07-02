@@ -105,8 +105,9 @@ def merit_order_from_scenario(path):
         transf["downtime_factor"].fillna(0.1)
     )
     my_data = sc.table_collection["commodity_source"].loc["DE"]
-    transf = transf.merge(my_data, right_index=True, how="left",
-                          left_on="fuel")
+    transf = transf.merge(
+        my_data, right_index=True, how="left", left_on="fuel"
+    )
     transf["costs_total"] = pd.to_numeric(
         transf["variable_costs"].fillna(1)
     ) + transf["costs"].div(transf["efficiency"])
