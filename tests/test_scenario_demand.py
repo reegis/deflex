@@ -32,7 +32,7 @@ def setup_func():
 
 
 @with_setup(setup_func)
-def scenario_demand_test():
+def test_scenario_demand():
     """Test scenario demand."""
     regions = geometries.deflex_regions(rmap="de21")
     d = basic_scenario.scenario_demand(regions, 2014, "de21")

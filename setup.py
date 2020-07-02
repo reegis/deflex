@@ -24,12 +24,14 @@ setup(
     package_dir={"deflex": "deflex"},
     url="https://github.com/reegis/deflex",
     license="MIT",
-    extras_require={"dev": ["nose", "sphinx", "sphinx_rtd_theme", "requests"],
-                    "dummy": ["reegis"]},
+    extras_require={
+        "dev": ["nose", "sphinx", "sphinx_rtd_theme", "requests"],
+        "dummy": ["oemof"],
+    },
     install_requires=[
-        "oemof >= 0.3.0",
+        "oemof.solph >= 0.4.0",
         "pandas >= 0.17.0",
-        "reegis@https://github.com/reegis/reegis/archive/master.zip",
+        "reegis >= v0.2.0",
         "demandlib",
         "workalendar",
         "networkx",

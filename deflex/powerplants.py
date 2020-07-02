@@ -17,7 +17,6 @@ from reegis import geometries as reegis_geometries
 from deflex import config as cfg
 from reegis import powerplants
 
-
 # Todo: Revise and test.
 
 
@@ -114,7 +113,9 @@ def process_pp_table(pp):
     return pp
 
 
-def get_deflex_pp_by_year(regions, year, name, overwrite_capacity=False):
+def get_deflex_pp_by_year(
+    regions, year, name, overwrite_capacity=False, filename=None
+):
     """
 
     Parameters
@@ -122,6 +123,7 @@ def get_deflex_pp_by_year(regions, year, name, overwrite_capacity=False):
     regions : GeoDataFrame
     year : int
     name : str
+    filename : str
     overwrite_capacity : bool
         By default (False) a new column "capacity_<year>" is created. If set to
         True the old capacity column will be overwritten.
@@ -130,15 +132,17 @@ def get_deflex_pp_by_year(regions, year, name, overwrite_capacity=False):
     -------
 
     """
-    filename = os.path.join(
-        cfg.get("paths", "powerplants"), cfg.get("powerplants", "deflex_pp")
-    ).format(map=name)
+    if filename is None:
+        filename = os.path.join(
+            cfg.get("paths", "powerplants"),
+            cfg.get("powerplants", "deflex_pp"),
+        ).format(map=name)
     logging.info("Get deflex power plants for {0}.".format(year))
     if not os.path.isfile(filename):
         msg = "File '{0}' does not exist. Will create it from reegis file."
         logging.debug(msg.format(filename))
-        filename = pp_reegis2deflex(regions, name)
-    pp = pd.DataFrame(pd.read_hdf(filename, "pp", mode="r"))
+        filename = pp_reegis2deflex(regions, name, filename_out=filename)
+    pp = pd.DataFrame(pd.read_hdf(filename, "pp"))
 
     # Remove unwanted data sets
     pp = process_pp_table(pp)

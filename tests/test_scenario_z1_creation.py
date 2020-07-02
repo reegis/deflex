@@ -55,9 +55,11 @@ def test_scenario_creation():
         sorted(list(table_collection.keys())),
         sorted(
             [
+                "meta",
                 "storages",
                 "transformer",
                 "volatile_source",
+                "chp_hp",
                 "transmission",
                 "decentralised_heat",
                 "commodity_source",
@@ -69,4 +71,4 @@ def test_scenario_creation():
             ]
         ),
     )
-    eq_(len(list(table_collection.keys())), 11)
+    eq_(len(list(table_collection.keys())), 13)

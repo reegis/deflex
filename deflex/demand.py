@@ -19,8 +19,9 @@ from deflex import config as cfg
 from reegis import demand_heat
 
 
-def get_heat_profiles_deflex(deflex_geo, year, time_index=None,
-                             weather_year=None, keep_unit=False):
+def get_heat_profiles_deflex(
+    deflex_geo, year, time_index=None, weather_year=None, keep_unit=False
+):
     """
 
     Parameters

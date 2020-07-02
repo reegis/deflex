@@ -1,0 +1,8 @@
+,,efficiency,source
+DE_demand,gas,0.85,natural gas
+DE_demand,hard coal,0.85,hard_coal
+DE_demand,lignite,0.85,lignite
+DE_demand,natural gas,0.85,natural gas
+DE_demand,oil,0.85,oil
+DE_demand,other,0.85,other
+DE_demand,re,0.85,other

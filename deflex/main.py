@@ -185,11 +185,13 @@ def model_scenario(
         logging.info(
             "Read scenario from csv collection: {0}".format(stopwatch())
         )
+        logging.info("Reading: {0}".format(csv_path))
         sc.load_csv(csv_path)
     elif xls_file is not None:
         if res_path is None:
             res_path = os.path.dirname(xls_file)
         logging.info("Read scenario from xls-file: {0}".format(stopwatch()))
+        logging.info("Reading: {0}".format(xls_file))
         sc.load_excel(xls_file)
 
     if extra_regions is not None:

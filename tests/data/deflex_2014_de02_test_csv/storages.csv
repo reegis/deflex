@@ -1,8 +1,2 @@
-,phes
-de02_region,DE01
-energy,37841.3
-energy_inflow,417961.0
-pump,6250.5
-turbine,6593.549999999999
-pump_eff,0.8625945649131268
-turbine_eff,0.8587555559635626
+de02,,energy,energy_inflow,pump,turbine,pump_eff,turbine_eff
+DE01,phes,37841.3,417961.0,6250.5,6593.549999999999,0.8625945649131268,0.8587555559635626
