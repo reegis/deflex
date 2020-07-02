@@ -623,9 +623,8 @@ def add_district_heating_systems(table_collection, nodes):
                     label=heat_demand_label,
                     inputs={
                         nodes[bus_label]: solph.Flow(
-                            actual_value=dts["district heating", region],
+                            fix=dts["district heating", region],
                             nominal_value=1,
-                            fixed=True,
                         )
                     },
                 )
