@@ -612,7 +612,7 @@ def add_district_heating_systems(table_collection, nodes):
     """
     logging.debug("Add district heating systems to nodes dictionary.")
     dts = table_collection["demand_series"]
-    if "district heating" in ["demand_series"]:
+    if "district heating" in dts:
         for region in dts["district heating"].columns:
             if dts["district heating"][region].sum() > 0:
                 bus_label = Label("bus", "heat", "district", region)
