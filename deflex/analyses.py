@@ -65,8 +65,9 @@ def merit_order_from_scenario(path, with_downtime=True, with_co2_price=True):
         )
     transf = transf.loc[transf["capacity"] != 0]
     my_data = sc.table_collection["commodity_source"].loc["DE"]
-    transf = transf.merge(my_data, right_index=True, how="left",
-                          left_on="fuel")
+    transf = transf.merge(
+        my_data, right_index=True, how="left", left_on="fuel"
+    )
     transf["costs_total"] = pd.to_numeric(
         transf["variable_costs"].fillna(1)
     ) + transf["costs"].div(transf["efficiency"])
