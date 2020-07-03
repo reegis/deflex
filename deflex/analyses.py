@@ -17,7 +17,7 @@ from deflex import scenario_tools
 def merit_order_from_scenario(path, with_downtime=True, with_co2_price=True):
     """
     Create a merit order from a deflex scenario.
-    
+
     Parameters
     ----------
     path : str
