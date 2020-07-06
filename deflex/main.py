@@ -194,6 +194,9 @@ def model_scenario(
         logging.info("Reading: {0}".format(xls_file))
         sc.load_excel(xls_file)
 
+    if "meta" in sc.table_collection:
+        meta.update(sc.table_collection.to_dict())
+
     if extra_regions is not None:
         sc.extra_regions = extra_regions
 
