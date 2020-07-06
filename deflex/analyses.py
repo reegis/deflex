@@ -18,6 +18,11 @@ def merit_order_from_scenario(path, with_downtime=True, with_co2_price=True):
     """
     Create a merit order from a deflex scenario.
 
+    TODO: Check transmission.
+    TODO: Add volatile sources as an optional feature
+    TODO: Check chp. Warn if chp are present. Add chp as an option
+    TODO: Or warn if no chp are present, installed capacity might be too high
+
     Parameters
     ----------
     path : str
@@ -48,11 +53,6 @@ def merit_order_from_scenario(path, with_downtime=True, with_co2_price=True):
     52.87
 
     """
-    # TODO: Check transmission.
-    # TODO: Add volatile sources as an optional feature
-    # TODO: Check chp. Warn if chp are present. Add chp as an option
-    # TODO: Or warn if no chp are present, because installed cap might be too
-    #       high
     sc = scenario_tools.DeflexScenario(year=2014)
     sc.load_csv(path)
     sc.name = sc.table_collection["meta"].loc["name", "value"]
