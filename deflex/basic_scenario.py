@@ -116,13 +116,13 @@ def scenario_storages(regions, year, name):
 
     Examples
     --------
-    >>> regions=geometries.deflex_regions(rmap='de17')
-    >>> deflex_storages=scenario_storages(regions, 2012, 'de17')
-    >>> list(deflex_storages.columns.get_level_values(0))
+    >>> regions=geometries.deflex_regions(rmap="de17")
+    >>> deflex_storages=scenario_storages(regions, 2012, "de17")
+    >>> list(deflex_storages.index.get_level_values(0))
     ['DE01', 'DE03', 'DE05', 'DE06', 'DE08', 'DE09', 'DE14', 'DE15', 'DE16']
-    >>> int(deflex_storages.loc['turbine', 'DE03'])
+    >>> int(deflex_storages.loc[("DE03", "phes"), "turbine"])
     220
-    >>> int(deflex_storages.loc['energy', 'DE16'])
+    >>> int(deflex_storages.loc[("DE16", "phes"), "energy"])
     12115
     """
     stor = storages.pumped_hydroelectric_storage_by_region(regions, year, name)
@@ -134,13 +134,14 @@ def scenario_powerplants(table_collection, regions, year, name):
 
     Examples
     --------
-    >>> regions=geometries.deflex_regions(rmap='de21')
+    >>> regions=geometries.deflex_regions(rmap="de21")
     >>> pp=scenario_powerplants(
-    ...     dict(), regions, 2014, 'de21', 1)  # doctest: +SKIP
-    >>> float(pp['volatile_source']['DE03', 'wind'])  # doctest: +SKIP
+    ...     dict(), regions, 2014, "de21")  # doctest: +SKIP
+    >>> pp["volatile_source"].loc[("DE03", "wind"), "capacity"
+    ...     ] # doctest: +SKIP
     3052.8
-    >>> float(pp['transformer'].loc[
-    ...     'capacity', ('DE03', 'lignite')])  # doctest: +SKIP
+    >>> pp["transformer"].loc[("DE03", "lignite"), "capacity"
+    ...     ] # doctest: +SKIP
     1135.6
     """
     pp = powerplants.get_deflex_pp_by_year(
@@ -294,28 +295,30 @@ def scenario_transmission(table_collection, regions, name):
 
     Examples
     --------
-    >>> regions=geometries.deflex_regions(rmap='de21')  # doctest: +SKIP
-    >>> pp=scenario_powerplants(dict(), regions, 2014, 'de21', 1
+    >>> regions=geometries.deflex_regions(rmap="de21")  # doctest: +SKIP
+    >>> pp=scenario_powerplants(dict(), regions, 2014, "de21"
     ...     )  # doctest: +SKIP
-    >>> lines=scenario_transmission(pp, regions, 'de21')  # doctest: +SKIP
-    >>> int(lines.loc['DE07-DE05', ('electrical', 'capacity')]
+    >>> lines=scenario_transmission(pp, regions, "de21")  # doctest: +SKIP
+    >>> int(lines.loc["DE07-DE05", ("electrical", "capacity")]
     ...     )  # doctest: +SKIP
     1978
-    >>> int(lines.loc['DE07-DE05', ('electrical', 'distance')]
+    >>> int(lines.loc["DE07-DE05", ("electrical", "distance")]
     ...     )  # doctest: +SKIP
     199
-    >>> float(lines.loc['DE07-DE05', ('electrical', 'efficiency')]
+    >>> float(lines.loc["DE07-DE05", ("electrical", "efficiency")]
     ...     )  # doctest: +SKIP
     0.9
-    >>> lines=scenario_transmission(pp, regions, 'de21', copperplate=True
+    >>> cfg.tmp_set("basic", "copperplate", "True")
+    >>> lines=scenario_transmission(pp, regions, "de21"
     ...     )  # doctest: +SKIP
-    >>> float(lines.loc['DE07-DE05', ('electrical', 'capacity')]
+    >>> cfg.tmp_set("basic", "copperplate", "False")
+    >>> float(lines.loc["DE07-DE05", ("electrical", "capacity")]
     ...     )  # doctest: +SKIP
     inf
-    >>> float(lines.loc['DE07-DE05', ('electrical', 'distance')]
+    >>> float(lines.loc["DE07-DE05", ("electrical", "distance")]
     ...     )  # doctest: +SKIP
     nan
-    >>> float(lines.loc['DE07-DE05', ('electrical', 'efficiency')]
+    >>> float(lines.loc["DE07-DE05", ("electrical", "efficiency")]
     ...     )  # doctest: +SKIP
     1.0
     """
@@ -369,15 +372,14 @@ def scenario_commodity_sources(year):
 
     Examples
     --------
-    >>> regions=geometries.deflex_regions(rmap='de21')  # doctest: +SKIP
-    >>> pp=scenario_powerplants(dict(), regions, 2014, 'de21', 1
+    >>> regions=geometries.deflex_regions(rmap="de21")  # doctest: +SKIP
+    >>> pp=scenario_powerplants(dict(), regions, 2014, "de21"
     ...     )  # doctest: +SKIP
-    >>> src=scenario_commodity_sources(pp, 2014)  # doctest: +SKIP
-    >>> src=src['commodity_source']  # doctest: +SKIP
-    >>> round(src.loc['costs', ('DE', 'hard coal')], 2)  # doctest: +SKIP
-    8.93
-    >>> round(src.loc['emission',  ('DE', 'natural gas')], 2)  # doctest: +SKIP
-    201.24
+    >>> src=scenario_commodity_sources(pp)  # doctest: +SKIP
+    >>> round(src.loc[("DE", "hard coal"), "costs"], 2)  # doctest: +SKIP
+    12.53
+    >>> round(src.loc[("DE", "natural gas"), "emission"], 2)  # doctest: +SKIP
+    201.0
     """
     if cfg.get("basic", "costs_source") == "reegis":
         commodity_src = create_commodity_sources_reegis(year)
@@ -480,12 +482,12 @@ def scenario_demand(regions, year, name, weather_year=None):
 
     Examples
     --------
-    >>> regions=geometries.deflex_regions(rmap='de21')  # doctest: +SKIP
-    >>> my_demand=scenario_demand(regions, 2014, 'de21')  # doctest: +SKIP
-    >>> int(my_demand['DE01', 'district heating'].sum())  # doctest: +SKIP
+    >>> regions=geometries.deflex_regions(rmap="de21")  # doctest: +SKIP
+    >>> my_demand=scenario_demand(regions, 2014, "de21")  # doctest: +SKIP
+    >>> int(my_demand["DE01", "district heating"].sum())  # doctest: +SKIP
     18639262
-    >>> int(my_demand['DE05', 'electrical_load'].sum())  # doctest: +SKIP
-    10069
+    >>> int(my_demand["DE05", "electrical_load"].sum())  # doctest: +SKIP
+    10069304
 
     """
     demand_series = scenario_elec_demand(
@@ -570,15 +572,15 @@ def scenario_feedin(regions, year, name, weather_year=None):
 
     Examples
     --------
-    >>> regions=geometries.deflex_regions(rmap='de21')  # doctest: +SKIP
-    >>> f=scenario_feedin(regions, 2014, 'de21')  # doctest: +SKIP
-    >>> f['DE01'].sum()  # doctest: +SKIP
+    >>> regions=geometries.deflex_regions(rmap="de21")  # doctest: +SKIP
+    >>> f=scenario_feedin(regions, 2014, "de21")  # doctest: +SKIP
+    >>> f["DE01"].sum()  # doctest: +SKIP
     geothermal    4380.000000
     hydro         1346.632529
     solar          913.652083
-    wind          2152.983589
+    wind          2159.475906
     dtype: float64
-    >>> f['DE16'].sum()  # doctest: +SKIP
+    >>> f["DE16"].sum()  # doctest: +SKIP
     geothermal    4380.000000
     hydro         1346.632529
     solar          903.527200
@@ -623,19 +625,20 @@ def scenario_chp(table_collection, regions, year, name, weather_year=None):
 
     Examples
     --------
-    >>> regions=geometries.deflex_regions(rmap='de21')  # doctest: +SKIP
-    >>> pp=scenario_powerplants(dict(), regions, 2014, 'de21', 1
+    >>> regions=geometries.deflex_regions(rmap="de21")  # doctest: +SKIP
+    >>> pp=scenario_powerplants(dict(), regions, 2014, "de21"
     ...     )  # doctest: +SKIP
-    >>> int(pp['transformer'].loc['capacity', ('DE01', 'hard coal')]
+    >>> int(pp["transformer"].loc[("DE01", "hard coal"), "capacity"]
     ...     )  # doctest: +SKIP
     1291
-    >>> transf=scenario_chp(pp, regions, 2014, 'de21')  # doctest: +SKIP
-    >>> transf=transf['transformer']  # doctest: +SKIP
-    >>> int(transf.loc['capacity', ('DE01', 'hard coal')])  # doctest: +SKIP
-    485
-    >>> int(transf.loc['capacity_elec_chp', ('DE01', 'hard coal')]
+    >>> table=scenario_chp(pp, regions, 2014, "de21")  # doctest: +SKIP
+    >>> transf=table["transformer"]  # doctest: +SKIP
+    >>> chp_hp=table["chp_hp"]  # doctest: +SKIP
+    >>> int(transf.loc[("DE01", "hard coal"), "capacity"])  # doctest: +SKIP
+    623
+    >>> int(chp_hp.loc[("DE01", "hard coal"), "capacity_elec_chp"]
     ...     )  # doctest: +SKIP
-    806
+    667
     """
     # values from heat balance
 
@@ -691,7 +694,7 @@ def chp_table(heat_b, heat_demand, table_collection, regions=None):
         out_share_factor_chp = heat_b[region]["out_share_factor_chp"]
         out_share_factor_hp = heat_b[region]["out_share_factor_hp"]
 
-        # Remove 'district heating' and 'electricity' and spread the share
+        # Remove "district heating" and "electricity" and spread the share
         # to the remaining columns.
         share = pd.DataFrame(columns=heat_b[region]["fuel_share"].columns)
         for row in rows:
@@ -785,7 +788,7 @@ def substract_chp_capacity_and_limit_from_pp(tc, eta_heat_chp, eta_elec_chp):
     diff = 0
     for region in chp_hp.index.get_level_values(0).unique():
         for fuel in chp_hp.loc[region].index:
-            # If the power plant limit is not 'inf' the limited electricity
+            # If the power plant limit is not "inf" the limited electricity
             # output of the chp plant has to be subtracted from the power plant
             # limit because this is related to the overall electricity output.
             limit_elec_pp = pp.loc[
@@ -994,7 +997,7 @@ def create_basic_scenario(
     Examples
     --------
     >>> year=2014  # doctest: +SKIP
-    >>> my_rmap='de21'  # doctest: +SKIP
+    >>> my_rmap="de21"  # doctest: +SKIP
     >>> p=create_basic_scenario(year, rmap=my_rmap)  # doctest: +SKIP
     >>> print("Xls path: {0}".format(p.xls))  # doctest: +SKIP
     >>> print("Csv path: {0}".format(p.csv))  # doctest: +SKIP
