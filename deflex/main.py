@@ -174,7 +174,7 @@ def model_scenario(
         "solver": cfg.get("general", "solver"),
         "start_time": datetime.now(),
         "external_name": name,
-        "extra_regions": extra_regions
+        "extra_regions": extra_regions,
     }
 
     sc = scenario_tools.DeflexScenario(name=name, year=2014, meta=meta)
@@ -199,7 +199,7 @@ def model_scenario(
     if "meta" in sc.table_collection:
         meta.update(sc.table_collection["meta"].to_dict()["value"])
         if sc.name is None and "name" in meta:
-            sc.name = meta['name']
+            sc.name = meta["name"]
 
     if extra_regions is not None:
         sc.extra_regions = extra_regions
