@@ -122,7 +122,7 @@ def model_scenario(
     xls_file=None,
     csv_path=None,
     res_path=None,
-    name="noname",
+    name=None,
     rmap=None,
     year="unknown",
     es=None,
@@ -173,6 +173,8 @@ def model_scenario(
         "map": rmap,
         "solver": cfg.get("general", "solver"),
         "start_time": datetime.now(),
+        "external_name": name,
+        "extra_regions": extra_regions
     }
 
     sc = scenario_tools.DeflexScenario(name=name, year=2014, meta=meta)
@@ -195,7 +197,9 @@ def model_scenario(
         sc.load_excel(xls_file)
 
     if "meta" in sc.table_collection:
-        meta.update(sc.table_collection.to_dict())
+        meta.update(sc.table_collection["meta"].to_dict()["value"])
+        if sc.name is None and "name" in meta:
+            sc.name = meta['name']
 
     if extra_regions is not None:
         sc.extra_regions = extra_regions
@@ -221,7 +225,11 @@ def model_scenario(
         res_path, "results_{0}".format(cfg.get("general", "solver"))
     )
     os.makedirs(res_path, exist_ok=True)
-    out_file = os.path.join(res_path, name + ".esys")
+
+    if sc.name is None:
+        sc.name = datetime.now().strftime("%Y%d%m_%H%M%S") + "_noname"
+
+    out_file = os.path.join(res_path, sc.name + ".esys")
     logging.info("Dump file to {0}".format(out_file))
     sc.meta["end_time"] = datetime.now()
     sc.dump_es(out_file)
