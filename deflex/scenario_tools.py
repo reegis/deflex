@@ -709,11 +709,16 @@ def add_power_and_heat_plants(table_collection, nodes, extra_regions):
 
     """
     trsf = table_collection["transformer"]
-    chp_hp = table_collection["chp_hp"]
+    if "chp_hp" in table_collection:
+        chp_hp = table_collection["chp_hp"]
+        chp_hp_index = chp_hp.index.get_level_values(0).unique()
+    else:
+        chp_hp = None
+        chp_hp_index = []
     cs = table_collection["commodity_source"].loc["DE"]
 
     regions = set(trsf.index.get_level_values(0).unique()).union(
-        set(chp_hp.index.get_level_values(0).unique())
+        set(chp_hp_index)
     )
 
     for region in regions:
@@ -723,7 +728,7 @@ def add_power_and_heat_plants(table_collection, nodes, extra_regions):
         if bus_heat not in nodes:
             nodes[bus_heat] = solph.Bus(label=bus_heat)
 
-        if region in chp_hp.index:
+        if region in chp_hp_index:
             chp_hp_fuels = set(chp_hp.loc[region, "fuel"].unique())
             chp_hp_regions = chp_hp.loc[region].index
         else:
