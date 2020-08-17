@@ -22,7 +22,9 @@ TEST_PATH = os.path.join(os.path.expanduser("~"), "tmp_test_32traffic_43")
 
 def download_example_results():
     """
-    Download example results to enable tests. Make sure that the examples will
+    Download example results to enable tests.
+
+    Make sure that the examples will
     have the same structure as the actual deflex results.
     """
     fn = namedtuple("test_results", ["de02", "de22"])
@@ -114,8 +116,7 @@ def restore_energy_system(path):
 
 def restore_results(file_names):
     """
-    Load results as a list of solph result dictionaries from a list of file
-    names or a single result dictionary from one file name.
+    Load results from a file or a list of files.
 
     Parameters
     ----------
@@ -125,7 +126,7 @@ def restore_results(file_names):
     Returns
     -------
     list : A list of results dictionaries or a single dictionary if one file
-        name were given.
+        name is given.
 
     Examples
     --------
@@ -162,7 +163,6 @@ def reshape_bus_view(results, buses, data=None, aggregate=None):
     """
     Create a MultiIndex DataFrame with all Flows around the given Bus objects.
 
-        Set filter always with
     Parameters
     ----------
     results: dict

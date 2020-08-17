@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
-"""Analyses of deflex.
+"""
+Analyses of deflex.
 
 SPDX-FileCopyrightText: 2016-2020 Uwe Krien <krien@uni-bremen.de>
 
@@ -39,19 +40,19 @@ def merit_order_from_scenario(path, with_downtime=True, with_co2_price=True):
     Examples
     --------
     >>> import os
-    >>> path = os.path.join(os.path.dirname(__file__), os.pardir, "tests",
-    ...                     "data", "deflex_2014_de02_test_csv")
-    >>> mo1 = merit_order_from_scenario(path)
+    >>> my_path = os.path.join(os.path.dirname(__file__), os.pardir, "tests",
+    ...                        "data", "deflex_2014_de02_test_csv")
+    >>> mo1 = merit_order_from_scenario(my_path)
     >>> round(mo1.capacity_cum.iloc[-1], 4)
     66.1328
     >>> round(mo1.capacity.sum(), 1)
     66132.8
     >>> round(mo1.loc[("DE01", "natural gas"), "costs_total"], 2)
     59.93
-    >>> mo2 = merit_order_from_scenario(path, with_downtime=False)
+    >>> mo2 = merit_order_from_scenario(my_path, with_downtime=False)
     >>> int(round(mo2.capacity.sum(), 0))
     77664
-    >>> mo3 = merit_order_from_scenario(path, with_co2_price=False)
+    >>> mo3 = merit_order_from_scenario(my_path, with_co2_price=False)
     >>> round(mo3.loc[("DE01", "natural gas"), "costs_total"], 2)
     52.87
 
