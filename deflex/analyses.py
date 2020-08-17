@@ -10,8 +10,6 @@ __copyright__ = "Uwe Krien <krien@uni-bremen.de>"
 __license__ = "MIT"
 
 
-import os
-
 import pandas as pd
 from deflex import scenario_tools
 
