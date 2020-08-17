@@ -239,9 +239,9 @@ def reshape_bus_view(results, buses, data=None, aggregate=None):
             if getattr(node.label, agg[0]) == agg[1]:
                 if isinstance(agg[2], int):
                     if agg[2] < 0:
-                        val = "_".join(node.label.subtag.split("_")[:agg[2]])
+                        val = "_".join(node.label.subtag.split("_")[: agg[2]])
                     elif agg[2] > 0:
-                        val = "_".join(node.label.subtag.split("_")[agg[2]:])
+                        val = "_".join(node.label.subtag.split("_")[agg[2] :])
                 else:
                     val = agg[2]
         return val
@@ -302,11 +302,12 @@ if __name__ == "__main__":
     res = restore_energy_system(filenames[0])
     busses = search_nodes(res.results, solph.Bus, tag="electricity")
 
-    a = [("cat", "line", "all"),
-         ("tag", "pp", "all"),
-         ("tag", "ee", "all"),
-         ("tag", "chp", "all")
-         ]
+    a = [
+        ("cat", "line", "all"),
+        ("tag", "pp", "all"),
+        ("tag", "ee", "all"),
+        ("tag", "chp", "all"),
+    ]
 
     df = reshape_bus_view(res.results, busses, aggregate=a)
     df = df.groupby(level=[1, 2, 3, 4], axis=1).sum()
@@ -324,10 +325,10 @@ if __name__ == "__main__":
         ("trsf", "chp", "all"),
         ("storage", "electricity", "phes"),
         ("storage", "electricity", "all"),
-        ('source', 'ee', 'geothermal'),
-        ('source', 'ee', 'hydro'),
-        ('source', 'ee', 'solar'),
-        ('source', 'ee', 'wind'),
+        ("source", "ee", "geothermal"),
+        ("source", "ee", "hydro"),
+        ("source", "ee", "solar"),
+        ("source", "ee", "wind"),
         ("source", "ee", "all"),
         ("line", "electricity", "all"),
         ("shortage", "electricity", "all"),
