@@ -10,6 +10,8 @@ __copyright__ = "Uwe Krien <krien@uni-bremen.de>"
 __license__ = "MIT"
 
 
+import os
+
 import pandas as pd
 from deflex import scenario_tools
 
@@ -26,8 +28,11 @@ def merit_order_from_scenario(path, with_downtime=True, with_co2_price=True):
     Parameters
     ----------
     path : str
+        Path of the directory where the csv files of the scenario are located.
     with_downtime : bool
+        Use down time factor to reduce the installed capacity.
     with_co2_price : bool
+        Consider the CO2 price to calculate the merit order.
 
     Returns
     -------
@@ -81,7 +86,3 @@ def merit_order_from_scenario(path, with_downtime=True, with_co2_price=True):
     transf.sort_values(["costs_total", "capacity"], inplace=True)
     transf["capacity_cum"] = transf.capacity.cumsum().div(1000)
     return transf
-
-
-if __name__ == "__main__":
-    pass
