@@ -443,12 +443,16 @@ def create_fuel_bus_with_source(nodes, fuel, region, data):
 
     cs_label = Label("source", "commodity", fuel.replace(" ", "_"), region)
 
+    variable_costs = (data.loc[fuel.replace("_", " "), "emission"] / 1000 *
+                      data.loc[fuel.replace("_", " ")].get("co2_price", 0) +
+                      data.loc[fuel.replace("_", " "), "costs"])
+
     if cs_label not in nodes:
         nodes[cs_label] = solph.Source(
             label=cs_label,
             outputs={
                 nodes[bus_label]: solph.Flow(
-                    variable_costs=data.loc[fuel.replace("_", " "), "costs"],
+                    variable_costs=variable_costs,
                     emission=data.loc[fuel.replace("_", " "), "emission"],
                 )
             },
