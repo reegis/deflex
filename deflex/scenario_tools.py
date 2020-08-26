@@ -802,11 +802,11 @@ def add_power_and_heat_plants(table_collection, nodes, extra_regions):
                 # if downtime_factor is in the parameters, use it
                 if hasattr(params, "downtime_factor"):
                     if math.isnan(params["downtime_factor"]):
-                        trsf.loc[(region, plant), "capacity"] *= 1 - cfg.get(
+                        params.capacity *= 1 - cfg.get(
                             "model", "default_downtime_factor"
                         )
                     else:
-                        trsf.loc[(region, plant), "capacity"] *= (
+                        params.capacity *= (
                             1 - params["downtime_factor"]
                         )
 
