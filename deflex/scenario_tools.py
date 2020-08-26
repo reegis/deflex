@@ -278,13 +278,28 @@ class Scenario:
 
     def scenario_info(self, solver_name):
         """
+        Add scenario information to the results dictionary.
 
         Parameters
         ----------
         solver_name
 
         Returns
-        -------
+        ------
+
+        Examples
+        --------
+        >>> dfx = DeflexScenario()
+        >>> info = dfx.scenario_info("cbc")
+        >>> info["default_values"]["downtime_factor"]
+        0.1
+        >>> info["solver"]
+        'cbc'
+        >>> info["year"]
+        >>> dfx.year = 2017
+        >>> info_re = dfx.scenario_info("cbc")
+        >>> info_re["year"]
+        2017
 
         """
         sc_info = {
@@ -292,7 +307,15 @@ class Scenario:
             "datetime": datetime.datetime.now(),
             "year": self.year,
             "solver": solver_name,
+            "scenario": self.table_collection,
+            "default_values": {}
         }
+
+        for key in cfg.get_dict("model"):
+            sc_info["default_values"][key.replace("default_", "")] = cfg.get(
+                "model", key
+            )
+
         return sc_info
 
     def solve(self, with_duals=False, tee=True, logfile=None, solver=None):
