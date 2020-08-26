@@ -809,9 +809,7 @@ def add_power_and_heat_plants(table_collection, nodes, extra_regions):
                             "model", "default_downtime_factor"
                         )
                     else:
-                        params.capacity *= (
-                            1 - params["downtime_factor"]
-                        )
+                        params.capacity *= 1 - params["downtime_factor"]
 
                 # Define output flow with or without summed_max attribute
                 if params.limit_elec_pp == float("inf"):
