@@ -308,7 +308,7 @@ class Scenario:
             "year": self.year,
             "solver": solver_name,
             "scenario": self.table_collection,
-            "default_values": {}
+            "default_values": {},
         }
 
         for key in cfg.get_dict("model"):
@@ -466,9 +466,12 @@ def create_fuel_bus_with_source(nodes, fuel, region, data):
 
     cs_label = Label("source", "commodity", fuel.replace(" ", "_"), region)
 
-    variable_costs = (data.loc[fuel.replace("_", " "), "emission"] / 1000 *
-                      data.loc[fuel.replace("_", " ")].get("co2_price", 0) +
-                      data.loc[fuel.replace("_", " "), "costs"])
+    variable_costs = (
+        data.loc[fuel.replace("_", " "), "emission"]
+        / 1000
+        * data.loc[fuel.replace("_", " ")].get("co2_price", 0)
+        + data.loc[fuel.replace("_", " "), "costs"]
+    )
 
     if cs_label not in nodes:
         nodes[cs_label] = solph.Source(
