@@ -45,14 +45,14 @@ def merit_order_from_scenario(path, with_downtime=True, with_co2_price=True):
     ...                        "data", "deflex_2014_de02_test_csv")
     >>> mo1 = merit_order_from_scenario(my_path)
     >>> round(mo1.capacity_cum.iloc[-1], 4)
-    66.1328
+    71.9878
     >>> round(mo1.capacity.sum(), 1)
-    66132.8
+    71987.8
     >>> round(mo1.loc[("DE01", "natural gas"), "costs_total"], 2)
     59.93
     >>> mo2 = merit_order_from_scenario(my_path, with_downtime=False)
     >>> int(round(mo2.capacity.sum(), 0))
-    77664
+    84225
     >>> mo3 = merit_order_from_scenario(my_path, with_co2_price=False)
     >>> round(mo3.loc[("DE01", "natural gas"), "costs_total"], 2)
     52.87
@@ -99,7 +99,7 @@ def merit_order_from_results(result):
     >>> from deflex import results
     >>> fn = results.fetch_example_results("de02_no_heat_reg_merit")
     >>> my_results = results.restore_results(fn)
-    >>> merit_order_from_results(my_results)
+    >>> a = merit_order_from_results(my_results)
     """
     # TODO: If there is a transmission limit or transmission losses
     #       the merit order cannot be calculated!!!!
