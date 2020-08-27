@@ -79,12 +79,14 @@ def merit_order_from_scenario(path, with_downtime=True, with_co2_price=True):
         transf["costs_total"] += transf["co2_price"] * transf["emission"].div(
             1000
         ).div(transf["efficiency"])
-    transf.sort_values(["costs_total", "capacity"], inplace=True)
-    transf = transf.loc[transf["fuel"] != "bioenergy"]
-    transf = transf.loc[transf["fuel"] != "other"]
+    # transf.sort_values(["costs_total", "capacity"], inplace=True)
+    # transf = transf.loc[transf["fuel"] != "bioenergy"]
+    # transf = transf.loc[transf["fuel"] != "other"]
     transf.sort_values(["costs_total", "capacity"], inplace=True)
     transf["capacity_cum"] = transf.capacity.cumsum().div(1000)
     return transf
+
+
 def merit_order_from_results(result):
     """
 
