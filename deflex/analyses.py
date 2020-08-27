@@ -10,9 +10,11 @@ SPDX-License-Identifier: MIT
 __copyright__ = "Uwe Krien <krien@uni-bremen.de>"
 __license__ = "MIT"
 
+import os
 
 import pandas as pd
-from deflex import scenario_tools
+from deflex import results, scenario_tools
+from oemof import solph
 
 
 def merit_order_from_scenario(path, with_downtime=True, with_co2_price=True):
