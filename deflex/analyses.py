@@ -12,7 +12,7 @@ __license__ = "MIT"
 
 
 import pandas as pd
-from deflex import results, scenario_tools
+from deflex import scenario_tools
 from oemof import solph
 
 
@@ -96,6 +96,7 @@ def merit_order_from_results(result):
 
     Examples
     --------
+    >>> from deflex import results
     >>> fn = results.fetch_example_results("de02_no_heat_reg_merit")
     >>> my_results = results.restore_results(fn)
     >>> merit_order_from_results(my_results)
