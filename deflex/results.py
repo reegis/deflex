@@ -10,37 +10,37 @@ __copyright__ = "Uwe Krien <krien@uni-bremen.de>"
 __license__ = "MIT"
 
 import os
-from collections import namedtuple
 
 import dill as pickle
 import pandas as pd
 import requests
 from oemof import solph
 
-TEST_PATH = os.path.join(os.path.expanduser("~"), "tmp_test_32traffic_43")
+TEST_PATH = os.path.join(os.path.expanduser("~"), ".tmp_test_32traffic_43")
 
 
-def download_example_results():
+def fetch_example_results(key):
     """
     Download example results to enable tests.
 
     Make sure that the examples will
     have the same structure as the actual deflex results.
     """
-    fn = namedtuple("test_results", ["de02", "de22"])
     urls = {
-        "de02": "https://osf.io/4ujv6/download",
-        "de22": "https://osf.io/umvny/download",
+        "de02_no_heat_reg_merit": "https://osf.io/4ujv6/download",
+        "de02_heat_reg_merit": "https://osf.io/69mnu/download",
+        "de22_no_heat_no_reg_merit": "https://osf.io/k4fdt/download",
+        "de22_no_heat_reg_merit": "https://osf.io/3642z/download",
+        "de22_heat_no_reg_merit": "https://osf.io/umvny/download",
+        "de22_heat_reg_merit": "https://osf.io/yj4tm/download",
     }
-    file_names = {"de02": "de02.esys", "de22": "de22.esys"}
     os.makedirs(TEST_PATH, exist_ok=True)
-    for name, url in urls.items():
-        file_names[name] = os.path.join(TEST_PATH, file_names[name])
-        if not os.path.isfile(file_names[name]):
-            req = requests.get(url)
-            with open(file_names[name], "wb") as f_out:
-                f_out.write(req.content)
-    return fn(**file_names)
+    file_name = os.path.join(TEST_PATH, key + ".esys")
+    if not os.path.isfile(file_name):
+        req = requests.get(urls[key])
+        with open(file_name, "wb") as f_out:
+            f_out.write(req.content)
+    return file_name
 
 
 def search_results(path=None, extension=".esys", **parameter_filter):
@@ -64,9 +64,9 @@ def search_results(path=None, extension=".esys", **parameter_filter):
 
     Examples
     --------
-    >>> my_file_names = download_example_results()
+    >>> my_file_name = fetch_example_results("de22_no_heat_reg_merit")
     >>> search_results(path=TEST_PATH, map=["de22"])[0].split(os.sep)[-1]
-    'de22.esys'
+    'de22_no_heat_reg_merit.esys'
     """
     if path is None:
         path = os.path.expanduser("~")
@@ -102,8 +102,8 @@ def restore_energy_system(path):
 
     Examples
     --------
-    >>> fn = download_example_results()
-    >>> type(restore_energy_system(fn.de22))
+    >>> fn = fetch_example_results("de02_no_heat_reg_merit")
+    >>> type(restore_energy_system(fn))
     <class 'oemof.solph.network.EnergySystem'>
     """
     es = solph.EnergySystem()
@@ -130,10 +130,11 @@ def restore_results(file_names):
 
     Examples
     --------
-    >>> fn = download_example_results()
-    >>> restore_results(fn.de22).keys()
+    >>> fn1 = fetch_example_results("de22_no_heat_reg_merit")
+    >>> fn2 = fetch_example_results("de02_no_heat_reg_merit")
+    >>> restore_results(fn1).keys()
     ['Problem', 'Solver', 'Solution', 'Main', 'Meta', 'Param']
-    >>> restore_results([fn.de02, fn.de22])[0].keys()
+    >>> restore_results([fn1, fn2])[0].keys()
     ['Problem', 'Solver', 'Solution', 'Main', 'Meta', 'Param']
     """
     if not isinstance(file_names, list):
@@ -195,8 +196,8 @@ def reshape_bus_view(results, buses, data=None, aggregate=None):
 
     Examples
     --------
-    >>> fn = download_example_results()
-    >>> my_es = restore_energy_system(fn.de22)
+    >>> fn = fetch_example_results("de22_no_heat_reg_merit")
+    >>> my_es = restore_energy_system(fn)
     >>> my_buses = search_nodes(
     ...     my_es.results, node_type=solph.Bus, tag="electricity")
     >>> # aggregate lines for all regions and remove suffix of power plants
@@ -215,9 +216,9 @@ def reshape_bus_view(results, buses, data=None, aggregate=None):
     >>> list(df2["in", "trsf", "pp"].columns[:4])
     ['bioenergy_038', 'bioenergy_042', 'bioenergy_045', 'hard_coal_023']
     >>> int(df1.sum().sum())
-    1523155291
+    1426925322
     >>> int(df2.sum().sum())
-    1523155291
+    1426925322
 
     """
     if aggregate is None:
