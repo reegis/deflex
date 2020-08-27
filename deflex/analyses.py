@@ -10,7 +10,6 @@ SPDX-License-Identifier: MIT
 __copyright__ = "Uwe Krien <krien@uni-bremen.de>"
 __license__ = "MIT"
 
-import os
 
 import pandas as pd
 from deflex import results, scenario_tools
@@ -97,17 +96,21 @@ def merit_order_from_results(result):
 
     Examples
     --------
-    >>> fn = results.download_example_results()
-    >>> my_results = results.restore_results(fn.de02)
+    >>> fn = results.fetch_example_results("de02_no_heat_reg_merit")
+    >>> my_results = results.restore_results(fn)
     >>> merit_order_from_results(my_results)
     """
     # TODO: If there is a transmission limit or transmission losses
     #       the merit order cannot be calculated!!!!
 
     # Fetch all flows into any electricity bus
-    inflows = [x for x in result["Main"].keys() if
-               isinstance(x[1], solph.Bus) and x[1].label.tag == "electricity"
-               and not x[0].label.cat == "line"]
+    inflows = [
+        x
+        for x in result["Main"].keys()
+        if isinstance(x[1], solph.Bus)
+        and x[1].label.tag == "electricity"
+        and not x[0].label.cat == "line"
+    ]
 
     # Create a DataFrame for the costs
     costs = pd.DataFrame()
@@ -118,40 +121,53 @@ def merit_order_from_results(result):
         electricity_bus = inflow[1]
 
         # Variable costs of the outflow of the component
-        costs.loc[label, "variable_costs_out"] = (
-            result["Param"][inflow]["scalars"].variable_costs)
+        costs.loc[label, "variable_costs_out"] = result["Param"][inflow][
+            "scalars"
+        ].variable_costs
 
         # Capacity of the component
-        costs.loc[label, "capacity"] = (
-            result["Param"][inflow]["scalars"].get(
-                "nominal_value", 10000))
+        costs.loc[label, "capacity"] = result["Param"][inflow]["scalars"].get(
+            "nominal_value", 10000
+        )
 
-        srcbus2component = [x for x in result["Main"].keys()
-                            if x[1] == component and x[0] != electricity_bus]
+        srcbus2component = [
+            x
+            for x in result["Main"].keys()
+            if x[1] == component and x[0] != electricity_bus
+        ]
 
         if len(srcbus2component) > 0:
             srcbus = srcbus2component[0][0]
             # Variable costs of the inflow of the component
-            costs.loc[label, "variable_costs_in"] = (
-                result["Param"][srcbus2component[0]]["scalars"].variable_costs)
+            costs.loc[label, "variable_costs_in"] = result["Param"][
+                srcbus2component[0]
+            ]["scalars"].variable_costs
 
             # Efficiency of the component if component is a transformer.
             parameter_name = "conversion_factors_{0}".format(electricity_bus)
-            costs.loc[label, "efficiency"] = (
-                result["Param"][(component, None)]["scalars"][parameter_name])
+            costs.loc[label, "efficiency"] = result["Param"][
+                (component, None)
+            ]["scalars"][parameter_name]
 
-            src2srcbus = [x for x in result["Main"].keys() if x[1] == srcbus
-                          and x[0].label.cat != "shortage"]
+            src2srcbus = [
+                x
+                for x in result["Main"].keys()
+                if x[1] == srcbus and x[0].label.cat != "shortage"
+            ]
             if len(src2srcbus) > 1:
-                msg = ("More than one source found for {0}. "
-                       "Source costs will be ambiguous.")
+                msg = (
+                    "More than one source found for {0}. "
+                    "Source costs will be ambiguous."
+                )
                 raise ValueError(msg.format(srcbus))
 
             # Variable costs of the fuel source.
-            costs.loc[label, "fuel_costs"] = (
-                result["Param"][src2srcbus[0]]["scalars"].variable_costs)
-            costs.loc[label, "fuel_emissions"] = (
-                result["Param"][src2srcbus[0]]["scalars"].emission)
+            costs.loc[label, "fuel_costs"] = result["Param"][src2srcbus[0]][
+                "scalars"
+            ].variable_costs
+            costs.loc[label, "fuel_emissions"] = result["Param"][
+                src2srcbus[0]
+            ]["scalars"].emission
             costs.loc[label, "fuel"] = src2srcbus[0][0].label.subtag.replace(
                 "_", " "
             )
@@ -163,11 +179,12 @@ def merit_order_from_results(result):
             costs.loc[label, "fuel"] = "no fuel"
 
         costs.loc[label, "costs_total"] = (
-            costs.loc[label, "variable_costs_out"] +
-            (costs.loc[label, "variable_costs_in"] +
-             costs.loc[label, "fuel_costs"]
-             ) /
-            costs.loc[label, "efficiency"]
+            costs.loc[label, "variable_costs_out"]
+            + (
+                costs.loc[label, "variable_costs_in"]
+                + costs.loc[label, "fuel_costs"]
+            )
+            / costs.loc[label, "efficiency"]
         )
 
     # for c in costs.iterrows():
@@ -180,3 +197,12 @@ def merit_order_from_results(result):
     costs["capacity_cum"] = costs.capacity.cumsum().div(1000)
     return costs
 
+
+# base = "/home/uwe/Dokumente/q100/scenarios/deflex/2014/"
+# result_file = os.path.join(
+#     base, "results_cbc", "deflex_2014_de02_no-heat_reg-merit_csv.esys")
+# my_results = results.restore_results(result_file)
+# print(merit_order_from_results(my_results))
+# p = os.path.join(base, "deflex_2014_de02_no-heat_reg-merit_csv")
+# print(merit_order_from_scenario(p))
+# # print(p)
