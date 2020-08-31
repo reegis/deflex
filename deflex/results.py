@@ -11,7 +11,7 @@ __license__ = "MIT"
 
 import os
 
-import dill as pickle
+import pickle
 import pandas as pd
 import requests
 from oemof import solph
@@ -20,8 +20,7 @@ TEST_PATH = os.path.join(os.path.expanduser("~"), ".tmp_test_32traffic_43")
 
 
 def fetch_example_results(key):
-    """
-    Download example results to enable tests.
+    """Download example results to enable tests.
 
     Make sure that the examples will
     have the same structure as the actual deflex results.
@@ -44,8 +43,7 @@ def fetch_example_results(key):
 
 
 def search_results(path=None, extension=".esys", **parameter_filter):
-    """
-    Filter results by extension and meta data.
+    """Filter results by extension and meta data.
 
     The function will search the $HOME folder recursively for files with the
     '.esys' extension. Afterwards all files will filtered by the meta data.
@@ -97,8 +95,7 @@ def search_results(path=None, extension=".esys", **parameter_filter):
 
 
 def restore_energy_system(path):
-    """
-    Restore EnergySystem with results from file with the given path.
+    """Restore EnergySystem with results from file with the given path.
 
     Examples
     --------
@@ -115,8 +112,7 @@ def restore_energy_system(path):
 
 
 def restore_results(file_names):
-    """
-    Load results from a file or a list of files.
+    """Load results from a file or a list of files.
 
     Parameters
     ----------
@@ -161,8 +157,7 @@ def search_nodes(results, node_type, **label_filter):
 
 
 def reshape_bus_view(results, buses, data=None, aggregate=None):
-    """
-    Create a MultiIndex DataFrame with all Flows around the given Bus objects.
+    """Create a MultiIndex DataFrame with all Flows around the Bus objects.
 
     Parameters
     ----------
