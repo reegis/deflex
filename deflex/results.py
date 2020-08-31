@@ -144,9 +144,9 @@ def restore_results(file_names):
 
 
 def search_nodes(results, node_type, **label_filter):
-    nodes = set(
-        [x[0] for x in results["Main"].keys() if isinstance(x[0], node_type)]
-    )
+    nodes = {
+        x[0] for x in results["Main"].keys() if isinstance(x[0], node_type)}
+
     for filter_key, filter_value in label_filter.items():
         if not isinstance(filter_value, list):
             filter_value = list((filter_value,))
@@ -226,8 +226,6 @@ def reshape_bus_view(results, buses, data=None, aggregate=None):
 
     if not isinstance(buses, list):
         buses = [buses]
-    else:
-        buses = buses
 
     def change_subtag(node, changes):
         val = node.label.subtag
@@ -247,7 +245,7 @@ def reshape_bus_view(results, buses, data=None, aggregate=None):
         node_flows = [
             x
             for x in results["Main"].keys()
-            if (x[1] == bus or x[0] == bus) and x[1] is not None
+            if bus in (x[1], x[0]) and x[1] is not None
         ]
 
         # Add all flow time series to a MultiIndex DataFrame using in/out
