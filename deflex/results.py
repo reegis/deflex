@@ -145,7 +145,8 @@ def restore_results(file_names):
 
 def search_nodes(results, node_type, **label_filter):
     nodes = {
-        x[0] for x in results["Main"].keys() if isinstance(x[0], node_type)}
+        x[0] for x in results["Main"].keys() if isinstance(x[0], node_type)
+    }
 
     for filter_key, filter_value in label_filter.items():
         if not isinstance(filter_value, list):
