@@ -205,3 +205,59 @@ def merit_order_from_results(result):
     values["capacity_cum"] = values.capacity.cumsum().div(1000)
     return values
 
+
+def check_comparision_of_merit_order(path):
+    """Comparison of two different ways to calculate the merit order.
+
+    1. Calculate the merit order from scenario
+    2. Calculate the merit order from the results
+
+    The resulting tables are not exactly the same because they will have some
+    additional columns. The following columns should be the same.
+
+    "capacity", "efficiency", "fuel_emission", "fuel", "costs_total",
+    "capacity_cum"
+
+    Parameters
+    ----------
+    path : str
+        Full path of results file.
+
+    Examples
+    --------
+    >>> from deflex import results
+    >>> name = "de02_no_heat_reg_merit"
+    >>> my_path = results.fetch_example_results(name)
+    >>> check_comparision_of_merit_order(my_path)
+    Check passed! Both merit order DataFrame tables are the same.
+    """
+
+    tmp_path = os.path.join(os.path.expanduser("~"), ".deflex", "tmp_dx34_f")
+
+    # Fetch Results and store
+    my_results = results.restore_results(path)
+    deflex_scenario = scenario_tools.DeflexScenario(results=my_results)
+    deflex_scenario.results2scenario(tmp_path)
+    mo_scenario = merit_order_from_scenario(tmp_path)
+    mo_results = merit_order_from_results(my_results)
+
+    mo_results.index = mo_scenario.index
+
+    compare_columns = [
+        "capacity",
+        "efficiency",
+        "fuel_emission",
+        "fuel",
+        "costs_total",
+        "capacity_cum",
+    ]
+    assert_frame_equal(
+        mo_scenario[compare_columns], mo_results[compare_columns]
+    )
+    print("Check passed! Both merit order DataFrame tables are the same.")
+
+    rmtree(tmp_path)
+
+
+if __name__ == "__main__":
+    check_comparision_of_merit_order()
