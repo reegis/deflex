@@ -50,6 +50,7 @@ class NodeDict(dict):
 
 class Scenario:
     """Scenario class."""
+
     def __init__(self, **kwargs):
         self.name = kwargs.get("name", "unnamed_scenario")
         self.table_collection = kwargs.get("table_collection", {})
@@ -58,7 +59,7 @@ class Scenario:
         self.round_values = kwargs.get("round_values", 0)
         self.model = kwargs.get("model", None)
         self.es = kwargs.get("es", None)
-        self.results = None
+        self.results = kwargs.get("results", None)
         self.results_fn = kwargs.get("results_fn", None)
         self.debug = kwargs.get("debug", None)
         self.location = None
@@ -386,6 +387,7 @@ class Scenario:
 
 class Label(namedtuple("solph_label", ["cat", "tag", "subtag", "region"])):
     """A label for deflex components."""
+
     __slots__ = ()
 
     def __str__(self):
@@ -394,9 +396,25 @@ class Label(namedtuple("solph_label", ["cat", "tag", "subtag", "region"])):
 
 class DeflexScenario(Scenario):
     """Something"""
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.extra_regions = kwargs.get("extra_regions", list())
+
+    def results2scenario(self, csv_path=None, xls_path=None):
+        """
+        
+        Parameters
+        ----------
+        csv_path : str
+        xls_path : str
+
+        """
+        self.table_collection = self.results["Meta"]["scenario"]["scenario"]
+        if csv_path is not None:
+            self.to_csv(csv_path)
+        if xls_path is not None:
+            self.to_excel(xls_path)
 
     def create_nodes(self):
         """
