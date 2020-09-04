@@ -402,8 +402,8 @@ class DeflexScenario(Scenario):
         self.extra_regions = kwargs.get("extra_regions", list())
 
     def results2scenario(self, csv_path=None, xls_path=None):
-        """
-        
+        """Extract the input scenario from a result file.
+
         Parameters
         ----------
         csv_path : str
