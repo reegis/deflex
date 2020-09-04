@@ -10,10 +10,14 @@ SPDX-License-Identifier: MIT
 __copyright__ = "Uwe Krien <krien@uni-bremen.de>"
 __license__ = "MIT"
 
-
+import os
+from shutil import rmtree
 import pandas as pd
-from deflex import scenario_tools
 from oemof import solph
+from pandas.testing import assert_frame_equal
+
+from deflex import results
+from deflex import scenario_tools
 
 
 def merit_order_from_scenario(path, with_downtime=True, with_co2_price=True):
@@ -73,16 +77,15 @@ def merit_order_from_scenario(path, with_downtime=True, with_co2_price=True):
     transf = transf.merge(
         my_data, right_index=True, how="left", left_on="fuel"
     )
+    transf.rename(columns={"emission": "fuel_emission"}, inplace=True)
     transf["costs_total"] = pd.to_numeric(
         transf["variable_costs"].fillna(1)
     ) + transf["costs"].div(transf["efficiency"])
     if with_co2_price and "co2_price" in transf:
-        transf["costs_total"] += transf["co2_price"] * transf["emission"].div(
-            1000
-        ).div(transf["efficiency"])
-    # transf.sort_values(["costs_total", "capacity"], inplace=True)
-    # transf = transf.loc[transf["fuel"] != "bioenergy"]
-    # transf = transf.loc[transf["fuel"] != "other"]
+        transf["costs_total"] += transf["co2_price"] * transf[
+            "fuel_emission"
+        ].div(1000).div(transf["efficiency"])
+
     transf.sort_values(["costs_total", "capacity"], inplace=True)
     transf["capacity_cum"] = transf.capacity.cumsum().div(1000)
     return transf
@@ -90,9 +93,16 @@ def merit_order_from_scenario(path, with_downtime=True, with_co2_price=True):
 
 def merit_order_from_results(result):
     """
+    Create a merit order from deflex results.
+
+    Parameters
+    ----------
+    result : dict
+        A deflex results dictionary.
 
     Returns
     -------
+    pandas.DataFrame
 
     Examples
     --------
@@ -114,20 +124,22 @@ def merit_order_from_results(result):
     ]
 
     # Create a DataFrame for the costs
-    costs = pd.DataFrame()
+    values = pd.DataFrame(index=pd.MultiIndex(levels=[[], []], codes=[[], []]))
     for inflow in inflows:
-        label = inflow[0]  # str(inflow[0])
-        # print(repr(inflow[0].label))
+        label = (
+            inflow[0].label.region,
+            inflow[0].label.subtag.replace("_0", " - 0."),
+        )
         component = inflow[0]
         electricity_bus = inflow[1]
 
         # Variable costs of the outflow of the component
-        costs.loc[label, "variable_costs_out"] = result["Param"][inflow][
+        values.loc[label, "variable_costs_out"] = result["Param"][inflow][
             "scalars"
         ].variable_costs
 
         # Capacity of the component
-        costs.loc[label, "capacity"] = result["Param"][inflow]["scalars"].get(
+        values.loc[label, "capacity"] = result["Param"][inflow]["scalars"].get(
             "nominal_value", 10000
         )
 
@@ -140,13 +152,13 @@ def merit_order_from_results(result):
         if len(srcbus2component) > 0:
             srcbus = srcbus2component[0][0]
             # Variable costs of the inflow of the component
-            costs.loc[label, "variable_costs_in"] = result["Param"][
+            values.loc[label, "variable_costs_in"] = result["Param"][
                 srcbus2component[0]
             ]["scalars"].variable_costs
 
             # Efficiency of the component if component is a transformer.
             parameter_name = "conversion_factors_{0}".format(electricity_bus)
-            costs.loc[label, "efficiency"] = result["Param"][
+            values.loc[label, "efficiency"] = result["Param"][
                 (component, None)
             ]["scalars"][parameter_name]
 
@@ -163,47 +175,33 @@ def merit_order_from_results(result):
                 raise ValueError(msg.format(srcbus))
 
             # Variable costs of the fuel source.
-            costs.loc[label, "fuel_costs"] = result["Param"][src2srcbus[0]][
+            values.loc[label, "fuel_costs"] = result["Param"][src2srcbus[0]][
                 "scalars"
             ].variable_costs
-            costs.loc[label, "fuel_emissions"] = result["Param"][
+            values.loc[label, "fuel_emission"] = result["Param"][
                 src2srcbus[0]
             ]["scalars"].emission
-            costs.loc[label, "fuel"] = src2srcbus[0][0].label.subtag.replace(
+            values.loc[label, "fuel"] = src2srcbus[0][0].label.subtag.replace(
                 "_", " "
             )
         else:
-            costs.loc[label, "efficiency"] = 1
-            costs.loc[label, "variable_costs_in"] = 0
-            costs.loc[label, "fuel_costs"] = 0
-            costs.loc[label, "fuel_emissions"] = 0
-            costs.loc[label, "fuel"] = "no fuel"
+            values.loc[label, "efficiency"] = 1
+            values.loc[label, "variable_costs_in"] = 0
+            values.loc[label, "fuel_costs"] = 0
+            values.loc[label, "fuel_emission"] = 0
+            values.loc[label, "fuel"] = "no fuel"
 
-        costs.loc[label, "costs_total"] = (
-            costs.loc[label, "variable_costs_out"]
+        values.loc[label, "costs_total"] = (
+            values.loc[label, "variable_costs_out"]
             + (
-                costs.loc[label, "variable_costs_in"]
-                + costs.loc[label, "fuel_costs"]
+                values.loc[label, "variable_costs_in"]
+                + values.loc[label, "fuel_costs"]
             )
-            / costs.loc[label, "efficiency"]
+            / values.loc[label, "efficiency"]
         )
 
-    # for c in costs.iterrows():
-    #     print(c)
-    # print(costs)
-    # costs = costs.loc[costs["fuel"] != "bioenergy"]
-    # costs = costs.loc[costs["fuel"] != "other"]
-    costs = costs.loc[costs["fuel"] != "no fuel"]
-    costs.sort_values(["costs_total", "capacity"], inplace=True)
-    costs["capacity_cum"] = costs.capacity.cumsum().div(1000)
-    return costs
+    values = values.loc[values["fuel"] != "no fuel"]
+    values.sort_values(["costs_total", "capacity"], inplace=True)
+    values["capacity_cum"] = values.capacity.cumsum().div(1000)
+    return values
 
-
-# base = "/home/uwe/Dokumente/q100/scenarios/deflex/2014/"
-# result_file = os.path.join(
-#     base, "results_cbc", "deflex_2014_de02_no-heat_reg-merit_csv.esys")
-# my_results = results.restore_results(result_file)
-# print(merit_order_from_results(my_results))
-# p = os.path.join(base, "deflex_2014_de02_no-heat_reg-merit_csv")
-# print(merit_order_from_scenario(p))
-# # print(p)
