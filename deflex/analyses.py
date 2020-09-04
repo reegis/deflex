@@ -260,4 +260,4 @@ def check_comparision_of_merit_order(path):
 
 
 if __name__ == "__main__":
-    check_comparision_of_merit_order()
+    pass
