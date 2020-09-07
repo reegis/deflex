@@ -12,6 +12,7 @@ __license__ = "MIT"
 
 import os
 from shutil import rmtree
+
 import pandas as pd
 from oemof import solph
 from pandas.testing import assert_frame_equal

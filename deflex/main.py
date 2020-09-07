@@ -29,8 +29,9 @@ def stopwatch():
     return str(datetime.now() - stopwatch.start)[:-7]
 
 
-def main_secure(year, rmap, csv=True, es=None, plot_graph=False,
-                extra_regions=None):
+def main_secure(
+    year, rmap, csv=True, es=None, plot_graph=False, extra_regions=None
+):
     """
 
     Parameters
@@ -57,8 +58,14 @@ def main_secure(year, rmap, csv=True, es=None, plot_graph=False,
     >>> main_secure(2014, 'de21')  # doctest: +SKIP
     """
     try:
-        main(year, rmap, csv=csv, es=es, plot_graph=plot_graph,
-             extra_regions=extra_regions)
+        main(
+            year,
+            rmap,
+            csv=csv,
+            es=es,
+            plot_graph=plot_graph,
+            extra_regions=extra_regions,
+        )
     except Exception as e:
         logging.error(traceback.format_exc())
         time.sleep(0.5)
