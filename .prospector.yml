@@ -1,0 +1,16 @@
+max-line-length: 79
+
+ignore-paths:
+  - docs/
+
+pep257:
+  disable:
+    - D213
+
+pydocstyle:
+  disable:
+    - D213
+
+pylint:
+  disable:
+    - import-error

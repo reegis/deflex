@@ -50,6 +50,7 @@ class NodeDict(dict):
 
 class Scenario:
     """Scenario class."""
+
     def __init__(self, **kwargs):
         self.name = kwargs.get("name", "unnamed_scenario")
         self.table_collection = kwargs.get("table_collection", {})
@@ -58,7 +59,7 @@ class Scenario:
         self.round_values = kwargs.get("round_values", 0)
         self.model = kwargs.get("model", None)
         self.es = kwargs.get("es", None)
-        self.results = None
+        self.results = kwargs.get("results", None)
         self.results_fn = kwargs.get("results_fn", None)
         self.debug = kwargs.get("debug", None)
         self.location = None
@@ -278,13 +279,28 @@ class Scenario:
 
     def scenario_info(self, solver_name):
         """
+        Add scenario information to the results dictionary.
 
         Parameters
         ----------
         solver_name
 
         Returns
-        -------
+        ------
+
+        Examples
+        --------
+        >>> dfx = DeflexScenario()
+        >>> info = dfx.scenario_info("cbc")
+        >>> info["default_values"]["downtime_factor"]
+        0.1
+        >>> info["solver"]
+        'cbc'
+        >>> info["year"]
+        >>> dfx.year = 2017
+        >>> info_re = dfx.scenario_info("cbc")
+        >>> info_re["year"]
+        2017
 
         """
         sc_info = {
@@ -292,7 +308,15 @@ class Scenario:
             "datetime": datetime.datetime.now(),
             "year": self.year,
             "solver": solver_name,
+            "scenario": self.table_collection,
+            "default_values": {},
         }
+
+        for key in cfg.get_dict("model"):
+            sc_info["default_values"][key.replace("default_", "")] = cfg.get(
+                "model", key
+            )
+
         return sc_info
 
     def solve(self, with_duals=False, tee=True, logfile=None, solver=None):
@@ -363,6 +387,7 @@ class Scenario:
 
 class Label(namedtuple("solph_label", ["cat", "tag", "subtag", "region"])):
     """A label for deflex components."""
+
     __slots__ = ()
 
     def __str__(self):
@@ -371,9 +396,25 @@ class Label(namedtuple("solph_label", ["cat", "tag", "subtag", "region"])):
 
 class DeflexScenario(Scenario):
     """Something"""
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.extra_regions = kwargs.get("extra_regions", list())
+
+    def results2scenario(self, csv_path=None, xls_path=None):
+        """Extract the input scenario from a result file.
+
+        Parameters
+        ----------
+        csv_path : str
+        xls_path : str
+
+        """
+        self.table_collection = self.results["Meta"]["scenario"]["scenario"]
+        if csv_path is not None:
+            self.to_csv(csv_path)
+        if xls_path is not None:
+            self.to_excel(xls_path)
 
     def create_nodes(self):
         """
@@ -443,12 +484,19 @@ def create_fuel_bus_with_source(nodes, fuel, region, data):
 
     cs_label = Label("source", "commodity", fuel.replace(" ", "_"), region)
 
+    variable_costs = (
+        data.loc[fuel.replace("_", " "), "emission"]
+        / 1000
+        * data.loc[fuel.replace("_", " ")].get("co2_price", 0)
+        + data.loc[fuel.replace("_", " "), "costs"]
+    )
+
     if cs_label not in nodes:
         nodes[cs_label] = solph.Source(
             label=cs_label,
             outputs={
                 nodes[bus_label]: solph.Flow(
-                    variable_costs=data.loc[fuel.replace("_", " "), "costs"],
+                    variable_costs=variable_costs,
                     emission=data.loc[fuel.replace("_", " "), "emission"],
                 )
             },
@@ -709,11 +757,16 @@ def add_power_and_heat_plants(table_collection, nodes, extra_regions):
 
     """
     trsf = table_collection["transformer"]
-    chp_hp = table_collection["chp_hp"]
+    if "chp_hp" in table_collection:
+        chp_hp = table_collection["chp_hp"]
+        chp_hp_index = chp_hp.index.get_level_values(0).unique()
+    else:
+        chp_hp = None
+        chp_hp_index = []
     cs = table_collection["commodity_source"].loc["DE"]
 
     regions = set(trsf.index.get_level_values(0).unique()).union(
-        set(chp_hp.index.get_level_values(0).unique())
+        set(chp_hp_index)
     )
 
     for region in regions:
@@ -723,7 +776,7 @@ def add_power_and_heat_plants(table_collection, nodes, extra_regions):
         if bus_heat not in nodes:
             nodes[bus_heat] = solph.Bus(label=bus_heat)
 
-        if region in chp_hp.index:
+        if region in chp_hp_index:
             chp_hp_fuels = set(chp_hp.loc[region, "fuel"].unique())
             chp_hp_regions = chp_hp.loc[region].index
         else:
@@ -770,13 +823,11 @@ def add_power_and_heat_plants(table_collection, nodes, extra_regions):
                 # if downtime_factor is in the parameters, use it
                 if hasattr(params, "downtime_factor"):
                     if math.isnan(params["downtime_factor"]):
-                        trsf.loc[(region, plant), "capacity"] *= 1 - cfg.get(
+                        params.capacity *= 1 - cfg.get(
                             "model", "default_downtime_factor"
                         )
                     else:
-                        trsf.loc[(region, plant), "capacity"] *= (
-                            1 - params["downtime_factor"]
-                        )
+                        params.capacity *= 1 - params["downtime_factor"]
 
                 # Define output flow with or without summed_max attribute
                 if params.limit_elec_pp == float("inf"):

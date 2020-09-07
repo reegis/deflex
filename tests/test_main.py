@@ -12,10 +12,13 @@ __license__ = "MIT"
 
 import os
 import shutil
+
 import pandas as pd
 from oemof import solph
-from deflex import main, config as cfg, scenario_tools
-from nose.tools import assert_raises_regexp, eq_
+
+import pytest
+from deflex import config as cfg
+from deflex import main, scenario_tools
 
 
 class TestMain:
@@ -56,7 +59,7 @@ class TestMain:
             and x[1].label.cat == "bus"
             and x[0].label.cat == "source"
         ]
-        eq_(commodity_regions, ["DE", "DE03", "DE07"])
+        assert commodity_regions == ["DE", "DE03", "DE07"]
 
     def test_main_secure_with_xls_file(self):
         my_es = solph.EnergySystem(timeindex=self.date_time_index)
@@ -88,5 +91,5 @@ class TestMain:
 
 def test_duplicate_input():
     msg = "It is not allowed to define more than one input."
-    with assert_raises_regexp(ValueError, msg):
+    with pytest.raises(ValueError, match=msg):
         main.model_scenario(xls_file="something", csv_path="something")

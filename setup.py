@@ -25,7 +25,7 @@ setup(
     url="https://github.com/reegis/deflex",
     license="MIT",
     extras_require={
-        "dev": ["nose", "sphinx", "sphinx_rtd_theme", "requests"],
+        "dev": ["pytest", "sphinx", "sphinx_rtd_theme", "requests"],
         "dummy": ["oemof"],
     },
     install_requires=[
