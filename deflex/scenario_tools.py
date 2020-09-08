@@ -66,14 +66,19 @@ class Scenario:
         self.map = None
         self.meta = kwargs.get("meta", None)
 
-    def initialise_energy_system(self):
+    def initialise_energy_system(self, number_of_time_steps=None):
         """
 
         Returns
         -------
 
         """
-        if self.debug is True:
+        if self.year is None:
+            self.year = int(self.table_collection["meta"].loc["year"])
+
+        if isinstance(number_of_time_steps, int):
+            pass
+        elif self.debug is True:
             number_of_time_steps = 3
         else:
             try:
@@ -81,6 +86,7 @@ class Scenario:
                     number_of_time_steps = 8784
                 else:
                     number_of_time_steps = 8760
+
             except TypeError:
                 msg = (
                     "You cannot create an EnergySystem with self.year={0}, "
@@ -88,9 +94,17 @@ class Scenario:
                 )
                 raise TypeError(msg.format(self.year, type(self.year)))
 
+        if (
+            "demand_series" in self.table_collection
+            and len(self.table_collection["demand_series"])
+            < number_of_time_steps
+        ):
+            number_of_time_steps = len(self.table_collection["demand_series"])
+
         date_time_index = pd.date_range(
             "1/1/{0}".format(self.year), periods=number_of_time_steps, freq="H"
         )
+
         return solph.EnergySystem(timeindex=date_time_index)
 
     def load_excel(self, filename=None):

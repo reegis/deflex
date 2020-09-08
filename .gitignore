@@ -100,6 +100,9 @@ ENV/
 # mypy
 .mypy_cache/
 
-#IDEs
+# IDEs
 .idea/
 
+# test results
+tests/data/results_cbc/*.esys
+/tests/data/my_log_file.csv

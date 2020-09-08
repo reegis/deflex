@@ -11,14 +11,11 @@ __copyright__ = "Uwe Krien <krien@uni-bremen.de>"
 __license__ = "MIT"
 
 import os
-import shutil
 
 import pandas as pd
 from oemof import solph
 
-import pytest
 from deflex import config as cfg
-from deflex import main, scenario_tools
 
 
 class TestMain:
@@ -31,65 +28,7 @@ class TestMain:
 
     @classmethod
     def teardown_class(cls):
-        base_path = os.path.join(os.path.dirname(__file__), "data")
-        shutil.rmtree(os.path.join(base_path, "deflex", "2014", "results_cbc"))
-        shutil.rmtree(os.path.join(base_path, "deflex", "2013", "results_cbc"))
+        pass
 
-    def test_main_secure(self):
-        main.main_secure(1910, "de55")
-
-    def test_main_secure_with_es(self):
-        main.main(2014, "de21", es=self.es, extra_regions=["DE03", "DE07"])
-        fn = os.path.join(
-            self.base_path,
-            "deflex",
-            "2014",
-            "results_cbc",
-            "deflex_2014_de21.esys",
-        )
-        assert os.path.isfile(fn)
-        sc = scenario_tools.Scenario()
-        sc.restore_es(fn)
-        flows = [x for x in sc.es.results["main"].keys() if x[1] is not None]
-        commodity_regions = [
-            x[0].label.region
-            for x in flows
-            if x[1].label.tag == "commodity"
-            and x[1].label.subtag == "natural_gas"
-            and x[1].label.cat == "bus"
-            and x[0].label.cat == "source"
-        ]
-        assert commodity_regions == ["DE", "DE03", "DE07"]
-
-    def test_main_secure_with_xls_file(self):
-        my_es = solph.EnergySystem(timeindex=self.date_time_index)
-        main.main(2013, "de02", csv=False, es=my_es)
-        assert os.path.isfile(
-            os.path.join(
-                self.base_path,
-                "deflex",
-                "2013",
-                "results_cbc",
-                "deflex_2013_de02.esys",
-            )
-        )
-
-    def test_model_scenario(self):
-        ip = os.path.join(
-            self.base_path, "deflex", "2013", "deflex_2013_de02.xls"
-        )
-        my_es = solph.EnergySystem(timeindex=self.date_time_index)
-        main.model_scenario(
-            xls_file=ip, name="test_02", rmap="de", year=2025, es=my_es
-        )
-        assert os.path.isfile(
-            os.path.join(
-                self.base_path, "deflex", "2013", "results_cbc", "test_02.esys"
-            )
-        )
-
-
-def test_duplicate_input():
-    msg = "It is not allowed to define more than one input."
-    with pytest.raises(ValueError, match=msg):
-        main.model_scenario(xls_file="something", csv_path="something")
+    def test_something(self):
+        pass
