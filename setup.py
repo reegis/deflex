@@ -32,6 +32,7 @@ setup(
         "oemof.solph >= 0.4.0",
         "pandas >= 0.17.0",
         "reegis >= v0.2.0",
+        "dill",
         "demandlib",
         "workalendar",
         "networkx",
