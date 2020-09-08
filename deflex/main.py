@@ -257,7 +257,9 @@ def batch_model_scenario(path, named=True, file_type=None, ignore_errors=True):
     >>> r.trace  # doctest: +ELLIPSIS
     'Traceback (most recent call last):...
     """
-    out = namedtuple("out", ["name", "return_value", "trace", "result_file", "start_time"])
+    out = namedtuple(
+        "out", ["name", "return_value", "trace", "result_file", "start_time"]
+    )
     name = os.path.basename(path)
     logging.info("Next scenario: {0}".format(name))
     start_time = datetime.now()
@@ -281,7 +283,7 @@ def batch_model_scenario(path, named=True, file_type=None, ignore_errors=True):
             return_value=return_value,
             trace=trace,
             result_file=result_file,
-            start_time=start_time
+            start_time=start_time,
         )
     else:
         return name, return_value, trace, result_file, start_time
