@@ -181,7 +181,11 @@ def model_multi_scenarios(scenarios, cpu_fraction=0.2, log_file=None):
     nan
     """
     start = datetime.now()
-    p = multiprocessing.Pool(int(multiprocessing.cpu_count() * cpu_fraction))
+    maximal_number_of_cores = int(
+        round(multiprocessing.cpu_count() * cpu_fraction + 0.4999)
+    )
+
+    p = multiprocessing.Pool(maximal_number_of_cores)
 
     logs = p.starmap(
         batch_model_scenario, zip(scenarios, [False] * len(scenarios))
