@@ -74,8 +74,7 @@ def load_scenario(path, file_type=None):
                 file_type = "csv"
             else:
                 file_type = None
-        logging.info("Start modelling: {0}".format(stopwatch()))
-        logging.info("Reading file: {0}".format(path))
+        logging.info("Reading file: {}", path)
         if file_type == "excel":
             sc.load_excel(path)
         elif file_type == "csv":
@@ -147,6 +146,7 @@ def model_multi_scenarios(scenarios, cpu_fraction=0.2, log_file=None):
         Multiple scenarios to be modelled in parallel.
     cpu_fraction : float
         Fraction of available cpu cores to use for the parallel modelling.
+        A resulting dezimal number of cores will be rounded up to an integer.
     log_file : str
         Filename to store the log file.
 
@@ -229,6 +229,8 @@ def batch_model_scenario(path, named=True, file_type=None, ignore_errors=True):
     file_type : str or None
         Type of the input data. Valid values are 'csv', 'excel', None. If the
         input is non the path schould end on 'csv', '.xls', '.xlsx'.
+    named : bool
+        If True a named tuple with the following fields will be returned
     ignore_errors : bool
         Set True to stop the script if an error occurs for debugging. By
         default errors are ignored and returned.
@@ -264,7 +266,7 @@ def batch_model_scenario(path, named=True, file_type=None, ignore_errors=True):
         "out", ["name", "return_value", "trace", "result_file", "start_time"]
     )
     name = os.path.basename(path)
-    logging.info("Next scenario: {0}".format(name))
+    logging.info("Next scenario: {}", name)
     start_time = datetime.now()
     if ignore_errors:
         try:
@@ -280,16 +282,16 @@ def batch_model_scenario(path, named=True, file_type=None, ignore_errors=True):
         return_value = str(datetime.now())
         trace = None
 
-    if named:
-        return out(
-            name=name,
-            return_value=return_value,
-            trace=trace,
-            result_file=result_file,
-            start_time=start_time,
-        )
-    else:
+    if not named:
         return name, return_value, trace, result_file, start_time
+
+    return out(
+        name=name,
+        return_value=return_value,
+        trace=trace,
+        result_file=result_file,
+        start_time=start_time,
+    )
 
 
 def model_scenario(
@@ -331,7 +333,7 @@ def model_scenario(
         "solver": cfg.get("general", "solver"),
         "start_time": datetime.now(),
     }
-    logging.info("Start modelling: {0}".format(stopwatch()))
+    logging.info("Start modelling: {}", stopwatch())
 
     sc = load_scenario(path, file_type)
     sc.meta = meta
@@ -361,26 +363,26 @@ def model_scenario(
     if es is not None:
         sc.es = es
     else:
-        logging.info("Add nodes to the EnergySystem: {0}".format(stopwatch()))
+        logging.info("Add nodes to the EnergySystem: {}", stopwatch())
         sc.table2es()
 
-    logging.info("Create the concrete model: {0}".format(stopwatch()))
+    logging.info("Create the concrete model: {}", stopwatch())
     sc.create_model()
 
-    logging.info("Solve the optimisation model: {0}".format(stopwatch()))
+    logging.info("Solve the optimisation model: {}", stopwatch())
     sc.solve(solver=cfg.get("general", "solver"))
 
-    logging.info("Solved. Dump results: {0}".format(stopwatch()))
+    logging.info("Solved. Dump results: {}", stopwatch())
     os.makedirs(os.path.dirname(result_path), exist_ok=True)
 
-    logging.info("Dump file to {0}".format(result_path))
+    logging.info("Dump file to {}", result_path)
     sc.meta["end_time"] = datetime.now()
     sc.dump_es(result_path)
 
     logging.info(
-        "{0} - deflex scenario finished without errors: {1}".format(
-            stopwatch(), sc.name
-        )
+        "{time} - deflex scenario finished without errors: {name}",
+        time=stopwatch(),
+        name=sc.name,
     )
     return result_path
 
@@ -388,10 +390,7 @@ def model_scenario(
 def plot_scenario(path, file_type=None, graphml_file=None):
     sc = load_scenario(path, file_type)
 
-    if graphml_file is None:
-        show = True
-    else:
-        show = False
+    show = graphml_file is None
 
     sc.plot_nodes(
         filename=graphml_file,
