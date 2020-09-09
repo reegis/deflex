@@ -173,8 +173,8 @@ def model_multi_scenarios(scenarios, cpu_fraction=0.2, log_file=None):
     >>> os.path.basename(good["result_file"])
     'deflex_test_scenario_alpha.esys'
     >>> broken = my_log.loc["deflex_test_scenario_broken.xls"]
-    >>> broken["return_value"].replace("'", "")
-    'ValueError(Missing time series for geothermal (capacity: 31.4) in DE01.)'
+    >>> broken["return_value"].replace("'", "")  # doctest: +ELLIPSIS
+    'ValueError(Missing time series for geothermal (capacity: 31.4) in DE01...
     >>> broken["trace"]  # doctest: +ELLIPSIS
     'Traceback (most recent call last)...
     >>> broken["result_file"]
