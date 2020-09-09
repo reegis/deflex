@@ -389,7 +389,7 @@ class Scenario:
 
         """
 
-        rm_nodes = kwargs.get("remove_nodes_with_substrings")
+        rm_nodes = kwargs.pop("remove_nodes_with_substrings")
 
         g = graph.create_nx_graph(
             self.es, filename=filename, remove_nodes_with_substrings=rm_nodes
@@ -1076,7 +1076,6 @@ def draw_graph(
 
     # set drawing options
     options = {
-        "prog": "dot",
         "with_labels": with_labels,
         "node_color": node_color,
         "edge_color": edge_color,
