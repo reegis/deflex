@@ -50,7 +50,7 @@ def load_scenario(path, file_type=None):
     Examples
     --------
     >>> fn = os.path.join(os.path.dirname(__file__), os.pardir,
-    ...      "tests", "data", "deflex_test_scenario.xls")
+    ...                   "tests", "data", "deflex_test_scenario.xls")
     >>> s = load_scenario(fn, file_type="excel")
     >>> type(s)
     <class 'deflex.scenario_tools.DeflexScenario'>
@@ -156,11 +156,11 @@ def model_multi_scenarios(scenarios, cpu_fraction=0.2, log_file=None):
     Examples
     --------
     >>> fn1 = os.path.join(os.path.dirname(__file__), os.pardir,
-    ...      "tests", "data", "deflex_test_scenario.xls")
+    ...                    "tests", "data", "deflex_test_scenario.xls")
     >>> fn2 = os.path.join(os.path.dirname(__file__), os.pardir,
-    ...      "tests", "data", "deflex_test_scenario_broken.xls")
+    ...                    "tests", "data", "deflex_test_scenario_broken.xls")
     >>> my_log_file = os.path.join(os.path.dirname(__file__), os.pardir,
-    ...      "tests", "data", "my_log_file.csv")
+    ...                            "tests", "data", "my_log_file.csv")
     >>> my_scenarios = [fn1, fn2]
     >>> model_multi_scenarios(my_scenarios, log_file=my_log_file)
     >>> my_log = pd.read_csv(my_log_file, index_col=[0])
@@ -242,7 +242,7 @@ def batch_model_scenario(path, named=True, file_type=None, ignore_errors=True):
     Examples
     --------
     >>> fn = os.path.join(os.path.dirname(__file__), os.pardir,
-    ...      "tests", "data", "deflex_test_scenario.xls")
+    ...                   "tests", "data", "deflex_test_scenario.xls")
     >>> r = batch_model_scenario(fn)  # doctest: +ELLIPSIS
     Welcome to the CBC MILP ...
     >>> r.name
