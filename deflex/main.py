@@ -388,7 +388,39 @@ def model_scenario(
 
 
 def plot_scenario(path, file_type=None, graphml_file=None):
+    """
+    Plot the graph of an energy system. If no filename is given the plot will
+    be shown on the screen but not writen to an image file
+
+    Parameters
+    ----------
+    path : str
+        A valid deflex scenario file.
+    file_type : str or None
+        Type of the input data. Valid values are 'csv', 'excel', None. If the
+        input is non the path schould end on 'csv', '.xls', '.xlsx'.
+    graphml_file : str
+        The image file with a valid suffix (e.g. png, pdf, svg).
+
+    Returns
+    -------
+
+    Examples
+    --------
+    >>> fn = os.path.join(os.path.dirname(__file__), os.pardir,
+    ...      "tests", "data", "deflex_test_scenario.xls")
+    >>> fn_img = os.path.join(os.path.dirname(__file__), os.pardir,
+    ...                       "tests", "data", "test_es.graphml")
+    >>> plot_scenario(fn, file_type="excel")
+    >>> plot_scenario(fn, "excel", fn_img)
+    >>> os.path.isfile(fn_img)
+    True
+    >>> os.remove(fn_img)
+    >>> os.path.isfile(fn_img)
+    False
+    """
     sc = load_scenario(path, file_type)
+    sc.table2es()
 
     show = graphml_file is None
 
