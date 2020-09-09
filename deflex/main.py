@@ -295,7 +295,7 @@ def batch_model_scenario(path, named=True, file_type=None, ignore_errors=True):
 
 
 def model_scenario(
-    path=None, file_type=None, es=None, result_path=None,
+    path=None, file_type=None, result_path=None,
 ):
     """
     Compute a deflex scenario.
@@ -308,9 +308,6 @@ def model_scenario(
     file_type : str or None
         Type of the input data. Valid values are 'csv', 'excel', None. If the
         input is non the path schould end on 'csv', '.xls', '.xlsx'.
-    es : oemof.solph.EnergySystem
-        A valid deflex energy system. If an energy system is defined the path
-        parameter will be ignored.
     result_path : str or None
         Path to store the output file. If None the results will be stored along
         with the scenarios.
@@ -321,10 +318,9 @@ def model_scenario(
     Examples
     --------
     >>> fn = os.path.join(os.path.dirname(__file__), os.pardir,
-    ...      "tests", "data", "deflex_test_scenario.xls")
+    ...                   "tests", "data", "deflex_test_scenario.xls")
     >>> r = model_scenario(fn, file_type="excel")  # doctest: +ELLIPSIS
     Welcome to the CBC MILP ...
-
     """
     stopwatch()
 
@@ -336,6 +332,8 @@ def model_scenario(
     logging.info("Start modelling: %s", stopwatch())
 
     sc = load_scenario(path, file_type)
+    logging.info("Add nodes to the EnergySystem: %s", stopwatch())
+    sc.table2es()
     sc.meta = meta
 
     # If a meta table exists in the table collection update meta dict
@@ -359,12 +357,6 @@ def model_scenario(
             "results_{0}".format(cfg.get("general", "solver")),
             sc.name + ".esys",
         )
-
-    if es is not None:
-        sc.es = es
-    else:
-        logging.info("Add nodes to the EnergySystem: %s", stopwatch())
-        sc.table2es()
 
     logging.info("Create the concrete model: %s", stopwatch())
     sc.create_model()
