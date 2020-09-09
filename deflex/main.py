@@ -74,7 +74,7 @@ def load_scenario(path, file_type=None):
                 file_type = "csv"
             else:
                 file_type = None
-        logging.info("Reading file: {}", path)
+        logging.info("Reading file: %s", path)
         if file_type == "excel":
             sc.load_excel(path)
         elif file_type == "csv":
@@ -132,8 +132,8 @@ def fetch_scenarios_from_dir(path, csv=True, xls=False):
             csv_scenarios.append(os.path.join(path, name))
     csv_scenarios = sorted(csv_scenarios)
     xls_scenarios = sorted(xls_scenarios)
-    logging.info(str(xls_scenarios))
-    logging.info(str(csv_scenarios))
+    logging.debug("Found xls(x) scenario: %s", str(xls_scenarios))
+    logging.debug("Found csv scenario: %s", str(csv_scenarios))
     return csv_scenarios + xls_scenarios
 
 
@@ -266,7 +266,7 @@ def batch_model_scenario(path, named=True, file_type=None, ignore_errors=True):
         "out", ["name", "return_value", "trace", "result_file", "start_time"]
     )
     name = os.path.basename(path)
-    logging.info("Next scenario: {}", name)
+    logging.info("Next scenario: %s", name)
     start_time = datetime.now()
     if ignore_errors:
         try:
@@ -333,7 +333,7 @@ def model_scenario(
         "solver": cfg.get("general", "solver"),
         "start_time": datetime.now(),
     }
-    logging.info("Start modelling: {}", stopwatch())
+    logging.info("Start modelling: %s", stopwatch())
 
     sc = load_scenario(path, file_type)
     sc.meta = meta
@@ -363,19 +363,19 @@ def model_scenario(
     if es is not None:
         sc.es = es
     else:
-        logging.info("Add nodes to the EnergySystem: {}", stopwatch())
+        logging.info("Add nodes to the EnergySystem: %s", stopwatch())
         sc.table2es()
 
-    logging.info("Create the concrete model: {}", stopwatch())
+    logging.info("Create the concrete model: %s", stopwatch())
     sc.create_model()
 
-    logging.info("Solve the optimisation model: {}", stopwatch())
+    logging.info("Solve the optimisation model: %s", stopwatch())
     sc.solve(solver=cfg.get("general", "solver"))
 
-    logging.info("Solved. Dump results: {}", stopwatch())
+    logging.info("Solved. Dump results: %s", stopwatch())
     os.makedirs(os.path.dirname(result_path), exist_ok=True)
 
-    logging.info("Dump file to {}", result_path)
+    logging.info("Dump file to %s", result_path)
     sc.meta["end_time"] = datetime.now()
     sc.dump_es(result_path)
 
