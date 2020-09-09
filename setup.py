@@ -25,6 +25,7 @@ setup(
     license="MIT",
     extras_require={
         "dev": ["pytest", "sphinx", "sphinx_rtd_theme", "requests"],
+        "plot": ["pygraphviz"],
         "dummy": ["oemof"],
     },
     install_requires=[

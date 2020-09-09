@@ -50,7 +50,7 @@ def load_scenario(path, file_type=None):
     Examples
     --------
     >>> fn = os.path.join(os.path.dirname(__file__), os.pardir,
-    ...      "tests", "data", "deflex_test_scenario.xls")
+    ...                   "tests", "data", "deflex_test_scenario.xls")
     >>> s = load_scenario(fn, file_type="excel")
     >>> type(s)
     <class 'deflex.scenario_tools.DeflexScenario'>
@@ -156,11 +156,11 @@ def model_multi_scenarios(scenarios, cpu_fraction=0.2, log_file=None):
     Examples
     --------
     >>> fn1 = os.path.join(os.path.dirname(__file__), os.pardir,
-    ...      "tests", "data", "deflex_test_scenario.xls")
+    ...                    "tests", "data", "deflex_test_scenario.xls")
     >>> fn2 = os.path.join(os.path.dirname(__file__), os.pardir,
-    ...      "tests", "data", "deflex_test_scenario_broken.xls")
+    ...                    "tests", "data", "deflex_test_scenario_broken.xls")
     >>> my_log_file = os.path.join(os.path.dirname(__file__), os.pardir,
-    ...      "tests", "data", "my_log_file.csv")
+    ...                            "tests", "data", "my_log_file.csv")
     >>> my_scenarios = [fn1, fn2]
     >>> model_multi_scenarios(my_scenarios, log_file=my_log_file)
     >>> my_log = pd.read_csv(my_log_file, index_col=[0])
@@ -242,7 +242,7 @@ def batch_model_scenario(path, named=True, file_type=None, ignore_errors=True):
     Examples
     --------
     >>> fn = os.path.join(os.path.dirname(__file__), os.pardir,
-    ...      "tests", "data", "deflex_test_scenario.xls")
+    ...                   "tests", "data", "deflex_test_scenario.xls")
     >>> r = batch_model_scenario(fn)  # doctest: +ELLIPSIS
     Welcome to the CBC MILP ...
     >>> r.name
@@ -295,7 +295,7 @@ def batch_model_scenario(path, named=True, file_type=None, ignore_errors=True):
 
 
 def model_scenario(
-    path=None, file_type=None, es=None, result_path=None,
+    path=None, file_type=None, result_path=None,
 ):
     """
     Compute a deflex scenario.
@@ -308,9 +308,6 @@ def model_scenario(
     file_type : str or None
         Type of the input data. Valid values are 'csv', 'excel', None. If the
         input is non the path schould end on 'csv', '.xls', '.xlsx'.
-    es : oemof.solph.EnergySystem
-        A valid deflex energy system. If an energy system is defined the path
-        parameter will be ignored.
     result_path : str or None
         Path to store the output file. If None the results will be stored along
         with the scenarios.
@@ -321,10 +318,9 @@ def model_scenario(
     Examples
     --------
     >>> fn = os.path.join(os.path.dirname(__file__), os.pardir,
-    ...      "tests", "data", "deflex_test_scenario.xls")
+    ...                   "tests", "data", "deflex_test_scenario.xls")
     >>> r = model_scenario(fn, file_type="excel")  # doctest: +ELLIPSIS
     Welcome to the CBC MILP ...
-
     """
     stopwatch()
 
@@ -336,6 +332,8 @@ def model_scenario(
     logging.info("Start modelling: %s", stopwatch())
 
     sc = load_scenario(path, file_type)
+    logging.info("Add nodes to the EnergySystem: %s", stopwatch())
+    sc.table2es()
     sc.meta = meta
 
     # If a meta table exists in the table collection update meta dict
@@ -360,12 +358,6 @@ def model_scenario(
             sc.name + ".esys",
         )
 
-    if es is not None:
-        sc.es = es
-    else:
-        logging.info("Add nodes to the EnergySystem: %s", stopwatch())
-        sc.table2es()
-
     logging.info("Create the concrete model: %s", stopwatch())
     sc.create_model()
 
@@ -388,7 +380,39 @@ def model_scenario(
 
 
 def plot_scenario(path, file_type=None, graphml_file=None):
+    """
+    Plot the graph of an energy system. If no filename is given the plot will
+    be shown on the screen but not writen to an image file
+
+    Parameters
+    ----------
+    path : str
+        A valid deflex scenario file.
+    file_type : str or None
+        Type of the input data. Valid values are 'csv', 'excel', None. If the
+        input is non the path schould end on 'csv', '.xls', '.xlsx'.
+    graphml_file : str
+        The image file with a valid suffix (e.g. png, pdf, svg).
+
+    Returns
+    -------
+
+    Examples
+    --------
+    >>> fn = os.path.join(os.path.dirname(__file__), os.pardir,
+    ...      "tests", "data", "deflex_test_scenario.xls")
+    >>> fn_img = os.path.join(os.path.dirname(__file__), os.pardir,
+    ...                       "tests", "data", "test_es.graphml")
+    >>> plot_scenario(fn, file_type="excel")
+    >>> plot_scenario(fn, "excel", fn_img)
+    >>> os.path.isfile(fn_img)
+    True
+    >>> os.remove(fn_img)
+    >>> os.path.isfile(fn_img)
+    False
+    """
     sc = load_scenario(path, file_type)
+    sc.table2es()
 
     show = graphml_file is None
 
