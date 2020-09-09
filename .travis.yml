@@ -19,7 +19,7 @@ addons:
 # install python dependencies
 install:
   - pip install cython
-  - pip install .
+  - pip install .[plot]
   - pip install coveralls pytest-cov
 
 # command to run tests
