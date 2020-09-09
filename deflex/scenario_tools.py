@@ -389,7 +389,10 @@ class Scenario:
 
         """
 
-        rm_nodes = kwargs.pop("remove_nodes_with_substrings")
+        if "remove_nodes_with_substrings" in kwargs:
+            rm_nodes = kwargs.pop("remove_nodes_with_substrings")
+        else:
+            rm_nodes = None
 
         g = graph.create_nx_graph(
             self.es, filename=filename, remove_nodes_with_substrings=rm_nodes
