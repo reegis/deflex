@@ -10,14 +10,15 @@ __copyright__ = "Uwe Krien <krien@uni-bremen.de>"
 __license__ = "MIT"
 
 
-# Python libraries
-import os
 import logging
-from datetime import datetime
-import time
+import multiprocessing
+import os
 import traceback
+from collections import namedtuple
+from datetime import datetime
 
-# internal modules
+import pandas as pd
+
 from deflex import config as cfg
 from deflex import scenario_tools
 
@@ -29,220 +30,372 @@ def stopwatch():
     return str(datetime.now() - stopwatch.start)[:-7]
 
 
-def main_secure(
-    year, rmap, csv=True, es=None, plot_graph=False, extra_regions=None
-):
+def load_scenario(path, file_type=None):
+    """
+    Create a deflex scenario object from file.
+
+    Parameters
+    ----------
+    path : str
+        A valid deflex scenario file.
+    file_type : str or None
+        Type of the input data. Valid values are 'csv', 'excel', None. If the
+        input is non the path should end on 'csv', '.xls', '.xlsx' to allow
+        auto-detection.
+
+    Returns
+    -------
+    deflex.DeflexScenario
+
+    Examples
+    --------
+    >>> fn = os.path.join(os.path.dirname(__file__), os.pardir,
+    ...      "tests", "data", "deflex_test_scenario.xls")
+    >>> s = load_scenario(fn, file_type="excel")
+    >>> type(s)
+    <class 'deflex.scenario_tools.DeflexScenario'>
+    >>> int(s.table_collection["volatile_source"]["capacity"]["DE02", "wind"])
+    517
+    >>> type(load_scenario(fn))
+    <class 'deflex.scenario_tools.DeflexScenario'>
+    >>> load_scenario(fn, file_type="csv")  # doctest: +IGNORE_EXCEPTION_DETAIL
+    Traceback (most recent call last):
+     ...
+    NotADirectoryError: [Errno 20] Not a directory:
+
+    """
+    sc = scenario_tools.DeflexScenario()
+
+    if path is not None:
+        if file_type is None:
+            if "xls" in path[-4:]:
+                file_type = "excel"
+            elif "csv" in path[-4:]:
+                file_type = "csv"
+            else:
+                file_type = None
+        logging.info("Reading file: %s", path)
+        if file_type == "excel":
+            sc.load_excel(path)
+        elif file_type == "csv":
+            sc.load_csv(path)
+    return sc
+
+
+def fetch_scenarios_from_dir(path, csv=True, xls=False):
+    """
+    Search for files with an excel extension or directories ending with '_csv'.
+
+    By now it is not possible to distinguish between valid deflex scenarios and
+    other excel files or directories ending with 'csv'. Therefore, the given
+    directory should only contain valid scenarios.
+
+    The function will not search recursively.
+
+    Parameters
+    ----------
+    path : str
+        Directory with valid deflex scenarios.
+    csv : bool
+        Search for csv directories.
+    xls : bool
+        Search for xls files.
+
+    Returns
+    -------
+    list : Scenarios found in the given directory.
+
+    Examples
+    --------
+    >>> test_data = os.path.join(os.path.dirname(__file__), os.pardir, "tests",
+    ...                          "data")
+    >>> my_csv = fetch_scenarios_from_dir(test_data)
+    >>> len(my_csv)
+    2
+    >>> os.path.basename(my_csv[0])
+    'deflex_2014_de02_test_csv'
+    >>> my_excel = fetch_scenarios_from_dir(test_data, csv=False, xls=True)
+    >>> len(my_excel)
+    3
+    >>> os.path.basename(my_excel[0])
+    'deflex_2013_de02_test.xls'
+    >>> len(fetch_scenarios_from_dir(test_data, xls=True))
+    5
+
+    """
+    xls_scenarios = []
+    csv_scenarios = []
+    for name in os.listdir(path):
+        if (name[-4:] == ".xls" or name[-5:] == "xlsx") and xls is True:
+            xls_scenarios.append(os.path.join(path, name))
+        if name[-4:] == "_csv" and csv is True:
+            csv_scenarios.append(os.path.join(path, name))
+    csv_scenarios = sorted(csv_scenarios)
+    xls_scenarios = sorted(xls_scenarios)
+    logging.debug("Found xls(x) scenario: %s", str(xls_scenarios))
+    logging.debug("Found csv scenario: %s", str(csv_scenarios))
+    return csv_scenarios + xls_scenarios
+
+
+def model_multi_scenarios(scenarios, cpu_fraction=0.2, log_file=None):
     """
 
     Parameters
     ----------
-    ----------
-    year : int
-        Year of an existing  basic scenario.
-    rmap : str
-        A valid deflex map id (de02, de17, de21, de22) of an existing scenario.
-    csv : bool
-        Use csv collection. If set to False the xls-file is used.
-    es : oemof.solph.EnergySystem
-        A valid energy system if needed.
-    plot_graph : bool
-        Set to True to plot the energy system.
-    extra_regions : list
-        Use separate resource buses for these regions.
+    scenarios : iterable
+        Multiple scenarios to be modelled in parallel.
+    cpu_fraction : float
+        Fraction of available cpu cores to use for the parallel modelling.
+        A resulting dezimal number of cores will be rounded up to an integer.
+    log_file : str
+        Filename to store the log file.
 
     Returns
     -------
 
     Examples
     --------
-    >>> main_secure(2014, 'de21')  # doctest: +SKIP
+    >>> fn1 = os.path.join(os.path.dirname(__file__), os.pardir,
+    ...      "tests", "data", "deflex_test_scenario.xls")
+    >>> fn2 = os.path.join(os.path.dirname(__file__), os.pardir,
+    ...      "tests", "data", "deflex_test_scenario_broken.xls")
+    >>> my_log_file = os.path.join(os.path.dirname(__file__), os.pardir,
+    ...      "tests", "data", "my_log_file.csv")
+    >>> my_scenarios = [fn1, fn2]
+    >>> model_multi_scenarios(my_scenarios, log_file=my_log_file)
+    >>> my_log = pd.read_csv(my_log_file, index_col=[0])
+    >>> good = my_log.loc["deflex_test_scenario.xls"]
+    >>> rv = good["return_value"]
+    >>> datetime.strptime(rv, "%Y-%m-%d %H:%M:%S.%f").year > 2019
+    True
+    >>> good["trace"]
+    nan
+    >>> os.path.basename(good["result_file"])
+    'deflex_test_scenario_alpha.esys'
+    >>> broken = my_log.loc["deflex_test_scenario_broken.xls"]
+    >>> broken["return_value"].replace("'", "")  # doctest: +ELLIPSIS
+    'ValueError(Missing time series for geothermal (capacity: 31.4) in DE01...
+    >>> broken["trace"]  # doctest: +ELLIPSIS
+    'Traceback (most recent call last)...
+    >>> broken["result_file"]
+    nan
     """
-    try:
-        main(
-            year,
-            rmap,
-            csv=csv,
-            es=es,
-            plot_graph=plot_graph,
-            extra_regions=extra_regions,
+    start = datetime.now()
+    maximal_number_of_cores = int(
+        round(multiprocessing.cpu_count() * cpu_fraction + 0.4999)
+    )
+
+    p = multiprocessing.Pool(maximal_number_of_cores)
+
+    logs = p.starmap(
+        batch_model_scenario, zip(scenarios, [False] * len(scenarios))
+    )
+    p.close()
+    p.join()
+    failing = {n: r for n, r, t, f, s in logs if isinstance(r, BaseException)}
+
+    logger = pd.DataFrame()
+    for log in logs:
+        logger.loc[log[0], "start"] = start
+        if isinstance(log[1], BaseException):
+            logger.loc[log[0], "return_value"] = repr(log[1])
+        else:
+            logger.loc[log[0], "return_value"] = log[1]
+        logger.loc[log[0], "trace"] = log[2]
+        logger.loc[log[0], "result_file"] = log[3]
+
+    if log_file is None:
+        log_file = os.path.join(
+            os.path.expanduser("~"), ".deflex", "log_deflex.csv"
         )
-    except Exception as e:
-        logging.error(traceback.format_exc())
-        time.sleep(0.5)
-        logging.error(e)
-        time.sleep(0.5)
+
+    logger.to_csv(log_file)
+
+    if len(failing) < 1:
+        logging.info("Finished all scenarios without errors")
+    else:
+        logging.info(failing)
 
 
-def main(year, rmap, csv=True, es=None, plot_graph=False, extra_regions=None):
+def batch_model_scenario(path, named=True, file_type=None, ignore_errors=True):
     """
+    Model a single scenario in batch mode. By default errors will be ignored
+    and returned together with the traceback.
 
     Parameters
     ----------
-    year : int
-        Year of an existing  basic scenario.
-    rmap : str
-        A valid deflex map id (de02, de17, de21, de22) of an existing scenario.
-    csv : bool
-        Use csv collection. If set to False the xls-file is used.
-    es : oemof.solph.EnergySystem
-        A valid energy system if needed.
-    plot_graph : bool
-        Set to True to plot the energy system.
-    extra_regions : list
-        Use separate resource buses for these regions.
+    path : str
+        A valid deflex scenario.
+    file_type : str or None
+        Type of the input data. Valid values are 'csv', 'excel', None. If the
+        input is non the path schould end on 'csv', '.xls', '.xlsx'.
+    named : bool
+        If True a named tuple with the following fields will be returned
+    ignore_errors : bool
+        Set True to stop the script if an error occurs for debugging. By
+        default errors are ignored and returned.
 
     Returns
     -------
+    namedtuple
 
     Examples
     --------
-    >>> main(2014, 'de21')  # doctest: +SKIP
+    >>> fn = os.path.join(os.path.dirname(__file__), os.pardir,
+    ...      "tests", "data", "deflex_test_scenario.xls")
+    >>> r = batch_model_scenario(fn)  # doctest: +ELLIPSIS
+    Welcome to the CBC MILP ...
+    >>> r.name
+    'deflex_test_scenario.xls'
+    >>> os.path.basename(r.result_file)
+    'deflex_test_scenario_alpha.esys'
+    >>> r.trace
+    >>> r.return_value.year > 2019
+    True
+    >>> fn = os.path.join("wrong_file.xls")
+    >>> r = batch_model_scenario(fn)
+    >>> r.name
+    'wrong_file.xls'
+    >>> repr(r.return_value)
+    "FileNotFoundError(2, 'No such file or directory')"
+    >>> r.result_file
+    >>> r.trace  # doctest: +ELLIPSIS
+    'Traceback (most recent call last):...
     """
-    stopwatch()
-    cfg.tmp_set("init", "map", rmap)
-    name = "{0}_{1}_{2}".format("deflex", year, cfg.get("init", "map"))
-
-    path = os.path.join(cfg.get("paths", "scenario"), "deflex", str(year))
-
-    if csv is True:
-        csv_dir = name + "_csv"
-        csv_path = os.path.join(path, csv_dir)
-        excel_path = None
+    out = namedtuple(
+        "out", ["name", "return_value", "trace", "result_file", "start_time"]
+    )
+    name = os.path.basename(path)
+    logging.info("Next scenario: %s", name)
+    start_time = datetime.now()
+    if ignore_errors:
+        try:
+            result_file = model_scenario(path, file_type)
+            return_value = datetime.now()
+            trace = None
+        except Exception as e:
+            trace = traceback.format_exc()
+            return_value = e
+            result_file = None
     else:
-        excel_path = os.path.join(path, name + ".xls")
-        csv_path = None
+        result_file = model_scenario(path, file_type)
+        return_value = str(datetime.now())
+        trace = None
 
-    model_scenario(
-        xls_file=excel_path,
-        csv_path=csv_path,
-        res_path=path,
+    if not named:
+        return name, return_value, trace, result_file, start_time
+
+    return out(
         name=name,
-        rmap=rmap,
-        year=year,
-        es=es,
-        plot_graph=plot_graph,
-        extra_regions=extra_regions,
+        return_value=return_value,
+        trace=trace,
+        result_file=result_file,
+        start_time=start_time,
     )
 
 
 def model_scenario(
-    xls_file=None,
-    csv_path=None,
-    res_path=None,
-    name=None,
-    rmap=None,
-    year="unknown",
-    es=None,
-    plot_graph=False,
-    extra_regions=None,
+    path=None, file_type=None, es=None, result_path=None,
 ):
     """
     Compute a deflex scenario.
 
     Parameters
     ----------
-    xls_file : str
-        Full filename to a valid xls-file.
-    csv_path : str
-        Full path to a valid csv-collection.
-    res_path : str
+    path : str or None
+        File or directory with a valid deflex scenario. If no path is given an
+        energy system (es) has to be passed.
+    file_type : str or None
+        Type of the input data. Valid values are 'csv', 'excel', None. If the
+        input is non the path schould end on 'csv', '.xls', '.xlsx'.
+    es : oemof.solph.EnergySystem
+        A valid deflex energy system. If an energy system is defined the path
+        parameter will be ignored.
+    result_path : str or None
         Path to store the output file. If None the results will be stored along
         with the scenarios.
-    name : str
-        The name of the scenario.
-    year : int
-        The year or year-range of the scenario.
-    rmap : str
-        The name of the used region map.
-    es : oemof.solph.EnergySystem
-        A valid energy system if needed.
-    plot_graph : bool
-        Set to True to plot the energy system.
-    extra_regions : list
-        Use separate resource buses for these regions.
 
     Returns
     -------
 
     Examples
     --------
-    >>> model_scenario('/my/path/to/scenario.xls', name='my_scenario',
-    ...                rmap='deXX', year=2025)  # doctest: +SKIP
+    >>> fn = os.path.join(os.path.dirname(__file__), os.pardir,
+    ...      "tests", "data", "deflex_test_scenario.xls")
+    >>> r = model_scenario(fn, file_type="excel")  # doctest: +ELLIPSIS
+    Welcome to the CBC MILP ...
+
     """
     stopwatch()
 
-    if xls_file is not None and csv_path is not None:
-        raise ValueError("It is not allowed to define more than one input.")
-
     meta = {
-        "year": year,
         "model_base": "deflex",
-        "map": rmap,
         "solver": cfg.get("general", "solver"),
         "start_time": datetime.now(),
-        "external_name": name,
-        "extra_regions": extra_regions,
     }
+    logging.info("Start modelling: %s", stopwatch())
 
-    sc = scenario_tools.DeflexScenario(name=name, year=2014, meta=meta)
-    if es is not None:
-        sc.es = es
+    sc = load_scenario(path, file_type)
+    sc.meta = meta
 
-    if csv_path is not None:
-        if res_path is None:
-            res_path = os.path.dirname(csv_path)
-        logging.info(
-            "Read scenario from csv collection: {0}".format(stopwatch())
-        )
-        logging.info("Reading: {0}".format(csv_path))
-        sc.load_csv(csv_path)
-    elif xls_file is not None:
-        if res_path is None:
-            res_path = os.path.dirname(xls_file)
-        logging.info("Read scenario from xls-file: {0}".format(stopwatch()))
-        logging.info("Reading: {0}".format(xls_file))
-        sc.load_excel(xls_file)
-
+    # If a meta table exists in the table collection update meta dict
     if "meta" in sc.table_collection:
         meta.update(sc.table_collection["meta"].to_dict()["value"])
-        if sc.name is None and "name" in meta:
-            sc.name = meta["name"]
 
-    if extra_regions is not None:
-        sc.extra_regions = extra_regions
+    # Use name from meta or from filename
+    if "name" in meta:
+        sc.name = meta["name"]
+    else:
+        meta["name"] = (
+            os.path.basename(path)
+            + "_"
+            + datetime.now().strftime("%Y%d%m_%H%M%S")
+        )
+        sc.name = meta["name"]
 
-    logging.info("Add nodes to the EnergySystem: {0}".format(stopwatch()))
-    sc.table2es()
-
-    # Save energySystem to '.graphml' file if plot_graph is True
-    if plot_graph:
-        sc.plot_nodes(
-            filename=os.path.join(res_path, name),
-            remove_nodes_with_substrings=["bus_cs"],
+    if result_path is None:
+        result_path = os.path.join(
+            os.path.dirname(path),
+            "results_{0}".format(cfg.get("general", "solver")),
+            sc.name + ".esys",
         )
 
-    logging.info("Create the concrete model: {0}".format(stopwatch()))
+    if es is not None:
+        sc.es = es
+    else:
+        logging.info("Add nodes to the EnergySystem: %s", stopwatch())
+        sc.table2es()
+
+    logging.info("Create the concrete model: %s", stopwatch())
     sc.create_model()
 
-    logging.info("Solve the optimisation model: {0}".format(stopwatch()))
+    logging.info("Solve the optimisation model: %s", stopwatch())
     sc.solve(solver=cfg.get("general", "solver"))
 
-    logging.info("Solved. Dump results: {0}".format(stopwatch()))
-    res_path = os.path.join(
-        res_path, "results_{0}".format(cfg.get("general", "solver"))
-    )
-    os.makedirs(res_path, exist_ok=True)
+    logging.info("Solved. Dump results: %s", stopwatch())
+    os.makedirs(os.path.dirname(result_path), exist_ok=True)
 
-    if sc.name is None:
-        sc.name = datetime.now().strftime("%Y%d%m_%H%M%S") + "_noname"
-
-    out_file = os.path.join(res_path, sc.name + ".esys")
-    logging.info("Dump file to {0}".format(out_file))
+    logging.info("Dump file to %s", result_path)
     sc.meta["end_time"] = datetime.now()
-    sc.dump_es(out_file)
+    sc.dump_es(result_path)
 
     logging.info(
-        "All done. deflex finished without errors: {0}".format(stopwatch())
+        "{time} - deflex scenario finished without errors: {name}",
+        time=stopwatch(),
+        name=sc.name,
+    )
+    return result_path
+
+
+def plot_scenario(path, file_type=None, graphml_file=None):
+    sc = load_scenario(path, file_type)
+
+    show = graphml_file is None
+
+    sc.plot_nodes(
+        filename=graphml_file,
+        show=show,
+        remove_nodes_with_substrings=["bus_cs"],
     )
 
 

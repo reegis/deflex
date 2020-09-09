@@ -2,7 +2,6 @@
 
 from setuptools import setup, find_packages
 import os
-import deflex
 
 
 def read(fname):
@@ -11,7 +10,7 @@ def read(fname):
 
 setup(
     name="deflex",
-    version=deflex.__version__,
+    version="v0.0.1",
     author="Uwe Krien",
     author_email="krien@uni-bremen.de",
     description=(
