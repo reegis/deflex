@@ -79,6 +79,9 @@ def merit_order_from_scenario(path, with_downtime=True, with_co2_price=True):
         my_data, right_index=True, how="left", left_on="fuel"
     )
     transf.rename(columns={"emission": "fuel_emission"}, inplace=True)
+    transf["spec_emission"] = (
+        transf["fuel_emission"].div(transf["efficiency"])
+    )
     transf["costs_total"] = pd.to_numeric(
         transf["variable_costs"].fillna(1)
     ) + transf["costs"].div(transf["efficiency"])
@@ -184,6 +187,10 @@ def merit_order_from_results(result):
             values.loc[label, "fuel"] = src2srcbus[0][0].label.subtag.replace(
                 "_", " "
             )
+            values.loc[label, "spec_emission"] = (
+                values.loc[label, "fuel_emission"]
+                / values.loc[label, "efficiency"]
+            )
         else:
             values.loc[label, "efficiency"] = 1
             values.loc[label, "variable_costs_in"] = 0
@@ -247,6 +254,7 @@ def check_comparision_of_merit_order(path):
         "capacity",
         "efficiency",
         "fuel_emission",
+        "spec_emission",
         "fuel",
         "costs_total",
         "capacity_cum",
@@ -261,6 +269,7 @@ def check_comparision_of_merit_order(path):
 
 def get_flow_results(result):
     """
+    Extract values from the flows and calculate key values.
 
     Parameters
     ----------
@@ -269,6 +278,7 @@ def get_flow_results(result):
 
     Returns
     -------
+    pandas.DataFrame
 
     """
     inflows = [
@@ -296,7 +306,7 @@ def get_flow_results(result):
     seq = pd.concat([seq], axis=1, keys=["values"])
 
     mo.rename(
-        columns={"fuel_emission": "emission", "costs_total": "cost"},
+        columns={"spec_emission": "emission", "costs_total": "cost"},
         inplace=True,
     )
 
