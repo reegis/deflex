@@ -79,9 +79,7 @@ def merit_order_from_scenario(path, with_downtime=True, with_co2_price=True):
         my_data, right_index=True, how="left", left_on="fuel"
     )
     transf.rename(columns={"emission": "fuel_emission"}, inplace=True)
-    transf["spec_emission"] = (
-        transf["fuel_emission"].div(transf["efficiency"])
-    )
+    transf["spec_emission"] = transf["fuel_emission"].div(transf["efficiency"])
     transf["costs_total"] = pd.to_numeric(
         transf["variable_costs"].fillna(1)
     ) + transf["costs"].div(transf["efficiency"])
