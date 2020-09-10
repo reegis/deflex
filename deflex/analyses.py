@@ -125,12 +125,11 @@ def merit_order_from_results(result):
     ]
 
     # Create a DataFrame for the costs
-    values = pd.DataFrame(index=pd.MultiIndex(levels=[[], []], codes=[[], []]))
+    levels = [[], [], [], []]
+    values = pd.DataFrame(index=pd.MultiIndex(levels=levels, codes=levels))
     for inflow in inflows:
-        label = (
-            inflow[0].label.region,
-            inflow[0].label.subtag.replace("_0", " - 0."),
-        )
+        label = inflow[0].label
+
         component = inflow[0]
         electricity_bus = inflow[1]
 
