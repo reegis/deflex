@@ -259,5 +259,56 @@ def check_comparision_of_merit_order(path):
     rmtree(tmp_path)
 
 
+def get_flow_results(result):
+    """
+
+    Parameters
+    ----------
+    result : dict
+        A deflex results dictionary.
+
+    Returns
+    -------
+
+    """
+    inflows = [
+        x
+        for x in result["Main"].keys()
+        if isinstance(x[1], solph.Bus)
+        and x[1].label.tag == "electricity"
+        and not x[0].label.cat == "line"
+    ]
+    levels = [[], [], [], []]
+    seq = pd.DataFrame(
+        columns=pd.MultiIndex(levels=levels, codes=levels),
+        index=range(len(result["Main"][inflows[0]]["sequences"])),
+    )
+
+    for flow in inflows:
+        seq[flow[0].label] = (
+            result["Main"][flow]["sequences"].reset_index(drop=True).flow
+        )
+    mo = merit_order_from_results(result)
+
+    seq = pd.concat(
+        [seq, seq.div(seq).fillna(0)], axis=1, keys=["absolute", "specific"]
+    )
+    seq = pd.concat([seq], axis=1, keys=["values"])
+
+    mo.rename(
+        columns={"fuel_emission": "emission", "costs_total": "cost"},
+        inplace=True,
+    )
+
+    for weight in ["emission", "cost"]:
+        for mode in ["absolute", "specific"]:
+            temp = seq["values", mode].mul(mo[weight])
+            temp = pd.concat([temp], axis=1, keys=[(weight, mode)])
+            seq = pd.concat([seq, temp], axis=1)
+            seq.sort_index(1, inplace=True)
+
+    return seq
+
+
 if __name__ == "__main__":
     pass
