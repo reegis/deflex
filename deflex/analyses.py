@@ -79,6 +79,7 @@ def merit_order_from_scenario(path, with_downtime=True, with_co2_price=True):
         my_data, right_index=True, how="left", left_on="fuel"
     )
     transf.rename(columns={"emission": "fuel_emission"}, inplace=True)
+    transf["spec_emission"] = transf["fuel_emission"].div(transf["efficiency"])
     transf["costs_total"] = pd.to_numeric(
         transf["variable_costs"].fillna(1)
     ) + transf["costs"].div(transf["efficiency"])
@@ -125,12 +126,11 @@ def merit_order_from_results(result):
     ]
 
     # Create a DataFrame for the costs
-    values = pd.DataFrame(index=pd.MultiIndex(levels=[[], []], codes=[[], []]))
+    levels = [[], [], [], []]
+    values = pd.DataFrame(index=pd.MultiIndex(levels=levels, codes=levels))
     for inflow in inflows:
-        label = (
-            inflow[0].label.region,
-            inflow[0].label.subtag.replace("_0", " - 0."),
-        )
+        label = inflow[0].label
+
         component = inflow[0]
         electricity_bus = inflow[1]
 
@@ -184,6 +184,10 @@ def merit_order_from_results(result):
             ]["scalars"].emission
             values.loc[label, "fuel"] = src2srcbus[0][0].label.subtag.replace(
                 "_", " "
+            )
+            values.loc[label, "spec_emission"] = (
+                values.loc[label, "fuel_emission"]
+                / values.loc[label, "efficiency"]
             )
         else:
             values.loc[label, "efficiency"] = 1
@@ -248,6 +252,7 @@ def check_comparision_of_merit_order(path):
         "capacity",
         "efficiency",
         "fuel_emission",
+        "spec_emission",
         "fuel",
         "costs_total",
         "capacity_cum",
@@ -258,6 +263,59 @@ def check_comparision_of_merit_order(path):
     print("Check passed! Both merit order DataFrame tables are the same.")
 
     rmtree(tmp_path)
+
+
+def get_flow_results(result):
+    """
+    Extract values from the flows and calculate key values.
+
+    Parameters
+    ----------
+    result : dict
+        A deflex results dictionary.
+
+    Returns
+    -------
+    pandas.DataFrame
+
+    """
+    inflows = [
+        x
+        for x in result["Main"].keys()
+        if isinstance(x[1], solph.Bus)
+        and x[1].label.tag == "electricity"
+        and not x[0].label.cat == "line"
+    ]
+    levels = [[], [], [], []]
+    seq = pd.DataFrame(
+        columns=pd.MultiIndex(levels=levels, codes=levels),
+        index=range(len(result["Main"][inflows[0]]["sequences"])),
+    )
+
+    for flow in inflows:
+        seq[flow[0].label] = (
+            result["Main"][flow]["sequences"].reset_index(drop=True).flow
+        )
+    mo = merit_order_from_results(result)
+
+    seq = pd.concat(
+        [seq, seq.div(seq).fillna(0)], axis=1, keys=["absolute", "specific"]
+    )
+    seq = pd.concat([seq], axis=1, keys=["values"])
+
+    mo.rename(
+        columns={"spec_emission": "emission", "costs_total": "cost"},
+        inplace=True,
+    )
+
+    for weight in ["emission", "cost"]:
+        for mode in ["absolute", "specific"]:
+            temp = seq["values", mode].mul(mo[weight])
+            temp = pd.concat([temp], axis=1, keys=[(weight, mode)])
+            seq = pd.concat([seq, temp], axis=1)
+            seq.sort_index(1, inplace=True)
+
+    return seq
 
 
 if __name__ == "__main__":
