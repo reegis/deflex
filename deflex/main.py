@@ -373,9 +373,8 @@ def model_scenario(
     sc.dump_es(result_path)
 
     logging.info(
-        "{time} - deflex scenario finished without errors: {name}",
-        time=stopwatch(),
-        name=sc.name,
+        "%s - deflex scenario finished without errors: %s" %
+        (stopwatch(), sc.name)
     )
     return result_path
 
