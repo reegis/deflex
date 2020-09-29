@@ -176,7 +176,7 @@ def create_powerplants(
         .loc["volatile_source"]
     }
 
-    if cfg.get("basic", "group_transformer") is True:
+    if cfg.get("basic", "group_transformer"):
         power_plants["transformer"] = (
             pp.groupby(
                 ["model_classes", region_column, "energy_source_level_2"]
