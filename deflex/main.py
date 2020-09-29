@@ -208,6 +208,7 @@ def model_multi_scenarios(scenarios, cpu_fraction=0.2, log_file=None):
         log_file = os.path.join(
             os.path.expanduser("~"), ".deflex", "log_deflex.csv"
         )
+    os.makedirs(os.path.dirname(log_file), exist_ok=True)
 
     logger.to_csv(log_file)
 
