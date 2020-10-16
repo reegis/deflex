@@ -221,5 +221,75 @@ def get_electrical_transmission_renpass(both_directions=False):
     return df
 
 
+def scenario_transmission(table_collection, regions, name):
+    """Get power plants for the scenario year
+
+    Examples
+    --------
+    >>> regions=geometries.deflex_regions(rmap="de21")  # doctest: +SKIP
+    >>> pp=scenario_powerplants(dict(), regions, 2014, "de21"
+    ...     )  # doctest: +SKIP
+    >>> lines=scenario_transmission(pp, regions, "de21")  # doctest: +SKIP
+    >>> int(lines.loc["DE07-DE05", ("electrical", "capacity")]
+    ...     )  # doctest: +SKIP
+    1978
+    >>> int(lines.loc["DE07-DE05", ("electrical", "distance")]
+    ...     )  # doctest: +SKIP
+    199
+    >>> float(lines.loc["DE07-DE05", ("electrical", "efficiency")]
+    ...     )  # doctest: +SKIP
+    0.9
+    >>> cfg.tmp_set("basic", "copperplate", "True")
+    >>> lines=scenario_transmission(pp, regions, "de21"
+    ...     )  # doctest: +SKIP
+    >>> cfg.tmp_set("basic", "copperplate", "False")
+    >>> float(lines.loc["DE07-DE05", ("electrical", "capacity")]
+    ...     )  # doctest: +SKIP
+    inf
+    >>> float(lines.loc["DE07-DE05", ("electrical", "distance")]
+    ...     )  # doctest: +SKIP
+    nan
+    >>> float(lines.loc["DE07-DE05", ("electrical", "efficiency")]
+    ...     )  # doctest: +SKIP
+    1.0
+    """
+    vs = table_collection["volatile_source"]
+
+    # This should be done automatic e.g. if representative point outside the
+    # landmass polygon.
+    offshore_regions = geometries.divide_off_and_onshore(regions).offshore
+
+    if name in ["de21", "de22"] and not cfg.get("basic", "copperplate"):
+        elec_trans = transmission.get_electrical_transmission_renpass()
+        general_efficiency = cfg.get("transmission", "general_efficiency")
+        if general_efficiency is not None:
+            elec_trans["efficiency"] = general_efficiency
+        else:
+            msg = (
+                "The calculation of the efficiency by distance is not yet "
+                "implemented"
+            )
+            raise NotImplementedError(msg)
+    else:
+        elec_trans = transmission.get_electrical_transmission_default()
+
+    # Set transmission capacity of offshore power lines to installed capacity
+    # Multiply the installed capacity with 1.1 to get a buffer of 10%.
+    for offreg in offshore_regions:
+        elec_trans.loc[elec_trans.index.str.contains(offreg), "capacity"] = (
+            vs.loc[offreg].sum().sum() * 1.1
+        )
+
+    elec_trans = pd.concat(
+        [elec_trans], axis=1, keys=["electrical"]
+    ).sort_index(1)
+    if cfg.get("init", "map") == "de22" and not cfg.get(
+        "basic", "copperplate"
+    ):
+        elec_trans.loc["DE22-DE01", ("electrical", "efficiency")] = 0.9999
+        elec_trans.loc["DE22-DE01", ("electrical", "capacity")] = 9999999
+    return elec_trans
+
+
 if __name__ == "__main__":
     pass
