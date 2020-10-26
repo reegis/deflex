@@ -107,13 +107,13 @@ class Scenario:
 
         return solph.EnergySystem(timeindex=date_time_index)
 
-    def load_excel(self, filename=None):
+    def load_excel(self, filename=None, index_header="table_index_header"):
         """Load scenario from an excel-file."""
         if filename is not None:
             self.location = filename
         xls = pd.ExcelFile(self.location)
         for sheet in xls.sheet_names:
-            table_index_header = cfg.get_list("table_index_header", sheet)
+            table_index_header = cfg.get_list(index_header, sheet)
             self.table_collection[sheet] = xls.parse(
                 sheet,
                 index_col=list(range(int(table_index_header[0]))),
@@ -121,14 +121,14 @@ class Scenario:
             )
         return self
 
-    def load_csv(self, path=None):
+    def load_csv(self, path=None, index_header="table_index_header"):
         """Load scenario from a csv-collection."""
         if path is not None:
             self.location = path
         for file in os.listdir(self.location):
             if file[-4:] == ".csv":
                 name = file[:-4]
-                table_index_header = cfg.get_list("table_index_header", name)
+                table_index_header = cfg.get_list(index_header, name)
                 filename = os.path.join(self.location, file)
                 self.table_collection[name] = pd.read_csv(
                     filename,
@@ -432,6 +432,12 @@ class DeflexScenario(Scenario):
             self.to_csv(csv_path)
         if xls_path is not None:
             self.to_excel(xls_path)
+
+    def load_excel(self, filename=None, index_header="deflex_index_header"):
+        super().load_excel(filename, index_header=index_header)
+
+    def load_csv(self, filename=None, index_header="deflex_index_header"):
+        super().load_csv(filename, index_header=index_header)
 
     def create_nodes(self):
         """

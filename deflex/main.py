@@ -373,8 +373,8 @@ def model_scenario(
     sc.dump_es(result_path)
 
     logging.info(
-        "%s - deflex scenario finished without errors: %s" %
-        (stopwatch(), sc.name)
+        "%s - deflex scenario finished without errors: %s"
+        % (stopwatch(), sc.name)
     )
     return result_path
 
@@ -424,4 +424,9 @@ def plot_scenario(path, file_type=None, graphml_file=None):
 
 
 if __name__ == "__main__":
-    pass
+    from oemof.tools import logger
+    logger.define_logging()
+    model_scenario(
+        "/home/uwe/reegis/phd.neu/deflex_2014_de21_without_berlin.xls",
+        file_type="excel",
+    )
