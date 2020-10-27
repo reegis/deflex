@@ -62,7 +62,7 @@ class Scenario:
         self.results = kwargs.get("results", None)
         self.results_fn = kwargs.get("results_fn", None)
         self.debug = kwargs.get("debug", None)
-        self.location = None
+        self.location = kwargs.get("location", None)
         self.map = None
         self.meta = kwargs.get("meta", None)
 
