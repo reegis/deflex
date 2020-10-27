@@ -77,8 +77,10 @@ def load_scenario(path, file_type=None):
         logging.info("Reading file: %s", path)
         if file_type == "excel":
             sc.load_excel(path)
+            sc.name = os.path.basename(path).split(".")[0]
         elif file_type == "csv":
             sc.load_csv(path)
+            sc.name = os.path.basename(path).replace("_csv", "")
     return sc
 
 
