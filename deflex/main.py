@@ -82,7 +82,7 @@ def load_scenario(path, file_type=None):
     return sc
 
 
-def fetch_scenarios_from_dir(path, csv=True, xls=False):
+def fetch_scenarios_from_dir(path, csv=True, xls=False, recursive=False):
     """
     Search for files with an excel extension or directories ending with '_csv'.
 
@@ -100,6 +100,8 @@ def fetch_scenarios_from_dir(path, csv=True, xls=False):
         Search for csv directories.
     xls : bool
         Search for xls files.
+    recursive : bool
+        Search recursively.
 
     Returns
     -------
@@ -125,7 +127,22 @@ def fetch_scenarios_from_dir(path, csv=True, xls=False):
     """
     xls_scenarios = []
     csv_scenarios = []
-    for name in os.listdir(path):
+
+    if recursive is True:
+        names = []
+        for sets in os.walk(path):
+            root = sets[0]
+            for d in sets[1]:
+                if "csv" in d:
+                    names.append(os.path.join(root, d))
+            for f in sets[2]:
+                if "xls" in f:
+                    names.append(os.path.join(root, f))
+            names.append(os.path.join(root, ))
+    else:
+        names = os.listdir(path)
+
+    for name in names:
         if (name[-4:] == ".xls" or name[-5:] == "xlsx") and xls is True:
             xls_scenarios.append(os.path.join(path, name))
         if name[-4:] == "_csv" and csv is True:
