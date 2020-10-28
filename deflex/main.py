@@ -443,9 +443,4 @@ def plot_scenario(path, file_type=None, graphml_file=None):
 
 
 if __name__ == "__main__":
-    from oemof.tools import logger
-    logger.define_logging()
-    model_scenario(
-        "/home/uwe/reegis/phd.neu/deflex_2014_de21_without_berlin.xls",
-        file_type="excel",
-    )
+    pass
