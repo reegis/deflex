@@ -354,7 +354,10 @@ def model_scenario(
     sc = load_scenario(path, file_type)
     logging.info("Add nodes to the EnergySystem: %s", stopwatch())
     sc.table2es()
-    sc.meta = meta
+    if sc.meta is None:
+        sc.meta = meta
+    else:
+        sc.meta.update(meta)
 
     # If a meta table exists in the table collection update meta dict
     if "meta" in sc.table_collection:
