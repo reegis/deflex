@@ -76,7 +76,8 @@ def search_results(path=None, extension=".esys", **parameter_filter):
         dirs[:] = [d for d in dirs if not d[0] == "."]
         if extension in str(files):
             for f in files:
-                result_files.append(os.path.join(root, f))
+                if extension in str(f):
+                    result_files.append(os.path.join(root, f))
     files = {}
 
     # filter by meta data.
