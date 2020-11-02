@@ -136,10 +136,13 @@ def restore_results(file_names):
     """
     if not isinstance(file_names, list):
         file_names = list((file_names,))
+        single = True
+    else:
+        single = False
     results = []
     for path in file_names:
         results.append(restore_energy_system(path).results)
-    if len(results) < 2:
+    if single is True:
         results = results[0]
     return results
 
