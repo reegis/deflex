@@ -815,24 +815,20 @@ def add_power_and_heat_plants(table_collection, nodes, extra_regions):
 
         fuels = trsf_fuels.union(chp_hp_fuels)
 
+        # Connect to global fuel bus if not defined as extra region
+        if region in extra_regions:
+            commodity_region = region
+        else:
+            commodity_region = "DE"
+
         for fuel in fuels:
-            # Connect to global fuel bus if not defined as extra region
-            if region in extra_regions:
-                bus_fuel = Label(
-                    "bus", "commodity", fuel.replace(" ", "_"), region
+            bus_fuel = Label(
+                "bus", "commodity", fuel.replace(" ", "_"), commodity_region
+            )
+            if bus_fuel not in nodes:
+                create_fuel_bus_with_source(
+                    nodes, fuel.replace(" ", "_"), commodity_region, cs
                 )
-                if bus_fuel not in nodes:
-                    create_fuel_bus_with_source(
-                        nodes, fuel.replace(" ", "_"), region, cs
-                    )
-            else:
-                bus_fuel = Label(
-                    "bus", "commodity", fuel.replace(" ", "_"), "DE"
-                )
-                if bus_fuel not in nodes:
-                    create_fuel_bus_with_source(
-                        nodes, fuel.replace(" ", "_"), "DE", cs
-                    )
 
         for plant in trsf_regions:
             idx = set(trsf.loc[region, plant].index).difference(("fuel",))
@@ -878,7 +874,10 @@ def add_power_and_heat_plants(table_collection, nodes, extra_regions):
                 trsf_label = Label("trsf", "pp", plant_name, region)
 
                 fuel_bus = Label(
-                    "bus", "commodity", params.fuel.replace(" ", "_"), "DE"
+                    "bus",
+                    "commodity",
+                    params.fuel.replace(" ", "_"),
+                    commodity_region,
                 )
 
                 nodes[trsf_label] = solph.Transformer(
@@ -896,7 +895,10 @@ def add_power_and_heat_plants(table_collection, nodes, extra_regions):
             params = chp_hp.loc[region, plant]
 
             fuel_bus = Label(
-                "bus", "commodity", params.fuel.replace(" ", "_"), "DE"
+                "bus",
+                "commodity",
+                params.fuel.replace(" ", "_"),
+                commodity_region,
             )
 
             # Create chp plants as 1x2 Transformer
