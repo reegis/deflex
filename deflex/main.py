@@ -403,7 +403,7 @@ def model_scenario(
     return result_path
 
 
-def plot_scenario(path, file_type=None, graphml_file=None):
+def plot_scenario(path, file_type=None, graphml_file=None, extra_regions=None):
     """
     Plot the graph of an energy system. If no filename is given the plot will
     be shown on the screen but not writen to an image file
@@ -436,6 +436,10 @@ def plot_scenario(path, file_type=None, graphml_file=None):
     False
     """
     sc = load_scenario(path, file_type)
+
+    if extra_regions is not None:
+        sc.extra_regions = extra_regions
+
     sc.table2es()
 
     show = graphml_file is None
