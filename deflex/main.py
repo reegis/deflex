@@ -352,7 +352,9 @@ def model_scenario(
     logging.info("Start modelling: %s", stopwatch())
 
     sc = load_scenario(path, file_type)
-    if sc.table_collection["meta"].loc["map", "value"] == "de22":
+    if "DE22" in sc.table_collection["demand_series"].columns.get_level_values(
+        0
+    ):
         sc.extra_regions = ["DE22"]
     logging.info("Add nodes to the EnergySystem: %s", stopwatch())
     sc.table2es()
