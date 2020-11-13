@@ -39,7 +39,8 @@ setup(
         "numpy == 1.19.4",
         "rtree == 0.9.4",
         "xlrd == 1.2.0",
-        "xlwt == 1.3.0" "dill == 0.3.3",
+        "xlwt == 1.3.0",
+        "dill == 0.3.3",
         "matplotlib == 3.3.3",
     ],
     package_data={
