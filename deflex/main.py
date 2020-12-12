@@ -156,6 +156,37 @@ def fetch_scenarios_from_dir(path, csv=True, xls=False, recursive=False):
     return csv_scenarios + xls_scenarios
 
 
+def remove_solved_scenarios_from_list(scenarios, result_dir):
+    """
+
+    Parameters
+    ----------
+    scenarios
+    result_dir : str
+        The path relative to the path of the scenario file.
+
+    Returns
+    -------
+
+    Examples
+    --------
+    >>> test_data = os.path.join(os.path.dirname(__file__), os.pardir, "tests",
+    ...                          "data")
+    >>> my_sc = fetch_scenarios_from_dir(test_data, xls=True)
+    >>> len(my_sc)
+    5
+    >>> len(remove_solved_scenarios_from_list(my_sc, "results_cbc"))
+    4
+    """
+    scenarios_new = []
+    for scenario in scenarios:
+        name = os.path.basename(scenario).split(".")[0]
+        path = os.path.join(os.path.dirname(scenario), result_dir)
+        if not name + ".esys" in os.listdir(path):
+            scenarios_new.append(scenario)
+    return scenarios_new
+
+
 def model_multi_scenarios(scenarios, cpu_fraction=0.2, log_file=None):
     """
 
