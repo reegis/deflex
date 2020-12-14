@@ -465,11 +465,6 @@ class DeflexScenario(Scenario):
         # Local district heating demand
         add_district_heating_systems(self.table_collection, nodes)
 
-        # Connect electricity buses with transmission
-        add_transmission_lines_between_electricity_nodes(
-            self.table_collection, nodes
-        )
-
         # Local power plants as Transformer and ExtractionTurbineCHP (chp)
         add_power_and_heat_plants(
             self.table_collection, nodes, self.extra_regions
@@ -479,8 +474,13 @@ class DeflexScenario(Scenario):
         if "storages" in self.table_collection:
             add_storages(self.table_collection, nodes)
 
-        if "mobility_mileage" in self.table_collection:
-            add_conventional_mobility(self.table_collection, nodes)
+        if "mobility" in self.table_collection:
+            add_mobility(self.table_collection, nodes)
+
+        # Connect electricity buses with transmission
+        add_transmission_lines_between_electricity_nodes(
+            self.table_collection, nodes
+        )
 
         # Add shortage excess to every bus
         add_shortage_excess(nodes)
@@ -986,7 +986,7 @@ def add_storages(table_collection, nodes):
         )
 
 
-def add_conventional_mobility(table_collection, nodes):
+def add_mobility(table_collection, nodes):
     """
 
     Parameters
@@ -998,21 +998,44 @@ def add_conventional_mobility(table_collection, nodes):
     -------
 
     """
-    mileage = table_collection["mobility_mileage"]["DE"]
-    spec_demand = table_collection["mobility_spec_demand"]["DE"]
-    energy_content = table_collection["mobility_energy_content"]["DE"]
-    energy_tp = mileage.mul(spec_demand).mul(energy_content.iloc[0]) / 10 ** 6
-    energy = energy_tp.sum()
-    idx = table_collection["demand_series"].index
-    oil_key = Label("bus", "commodity", "oil", "DE")
-    for fuel in ["diesel", "petrol"]:
-        fix_value = pd.Series(energy[fuel] / len(idx), index=idx, dtype=float)
-        fuel_label = Label("Usage", "mobility", fuel, "DE")
-        nodes[fuel_label] = solph.Sink(
-            label=fuel_label,
-            inputs={nodes[oil_key]: solph.Flow(fix=fix_value)},
-        )
-
+    mseries = table_collection["mobility_series"]
+    mtable = table_collection["mobility"]
+    for region in mseries.columns.get_level_values(0).unique():
+        for fuel in mseries[region].columns:
+            source = mtable.loc[(region, fuel), "source"]
+            source_region = mtable.loc[(region, fuel), "source_region"]
+            if mseries[region, fuel].sum() > 0:
+                fuel_transformer = Label("process", "fuel", fuel, region)
+                fuel_demand = Label("demand", "mobility", fuel, region)
+                bus_label = Label("bus", "mobility", fuel, region)
+                if fuel != "electricity":
+                    com_bus_label = Label(
+                        "bus", "commodity", source, source_region
+                    )
+                else:
+                    com_bus_label = Label(
+                        "bus", "electricity", "all", source_region
+                    )
+                if bus_label not in nodes:
+                    nodes[bus_label] = solph.Bus(label=bus_label)
+                if com_bus_label not in nodes:
+                    nodes[com_bus_label] = solph.Bus(label=com_bus_label)
+                cf = mtable.loc[(region, fuel), "efficiency"]
+                nodes[fuel_transformer] = solph.Transformer(
+                    label=fuel_transformer,
+                    inputs={nodes[com_bus_label]: solph.Flow()},
+                    outputs={nodes[bus_label]: solph.Flow()},
+                    conversion_factors={nodes[bus_label]: cf},
+                )
+                fix_value = mseries[region, fuel]
+                nodes[fuel_demand] = solph.Sink(
+                    label=fuel_demand,
+                    inputs={
+                        nodes[bus_label]: solph.Flow(
+                            nominal_value=1, fix=fix_value
+                        )
+                    },
+                )
     return nodes
 
 
