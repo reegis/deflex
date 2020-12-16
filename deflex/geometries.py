@@ -20,7 +20,7 @@ from deflex import config as cfg
 from reegis import geometries as geo
 
 
-def deflex_regions(rmap=None, rtype='polygons'):
+def deflex_regions(rmap=None, rtype="polygons"):
     """
 
     Parameters
@@ -134,7 +134,9 @@ def divide_off_and_onshore(regions):
     """
     region_type = namedtuple("RegionType", "offshore onshore")
     regions_centroid = regions.copy()
-    regions_centroid.geometry = regions_centroid.centroid
+    regions_centroid.geometry = regions_centroid.to_crs(
+        epsg=25832
+    ).centroid.to_crs(epsg="4326")
 
     germany_onshore = geo.load(
         cfg.get("paths", "geometry"), cfg.get("geometry", "germany_polygon")
