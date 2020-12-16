@@ -62,7 +62,9 @@ def create_scenario(regions, year, name, weather_year=None):
     table_collection = {}
 
     logging.info("BASIC SCENARIO - STORAGES")
-    table_collection["storages"] = storages.scenario_storages(regions, year, name)
+    table_collection["storages"] = storages.scenario_storages(
+        regions, year, name
+    )
 
     logging.info("BASIC SCENARIO - POWER PLANTS")
     table_collection = powerplants.scenario_powerplants(
@@ -89,7 +91,9 @@ def create_scenario(regions, year, name, weather_year=None):
         logging.info("...skipped")
 
     logging.info("BASIC SCENARIO - SOURCES")
-    table_collection["commodity_source"] = commodity.scenario_commodity_sources(year)
+    table_collection[
+        "commodity_source"
+    ] = commodity.scenario_commodity_sources(year)
     table_collection["volatile_series"] = feedin.scenario_feedin(
         regions, year, name, weather_year=weather_year
     )
