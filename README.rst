@@ -1,7 +1,7 @@
 .. deflex documentation master file
 
-.. image:: https://travis-ci.org/reegis/deflex.svg?branch=master
-    :target: https://travis-ci.org/reegis/deflex
+.. image:: https://travis-ci.com/reegis/deflex.svg?branch=master
+    :target: https://travis-ci.com/reegis/deflex
 
 .. image:: https://coveralls.io/repos/github/reegis/deflex/badge.svg?branch=master
     :target: https://coveralls.io/github/reegis/deflex?branch=master
