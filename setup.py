@@ -8,6 +8,7 @@ def read(fname):
     return open(os.path.join(os.path.dirname(__file__), fname)).read()
 
 
+github = "@https://github.com/"
 setup(
     name="deflex",
     version="v0.0.1",
@@ -29,18 +30,15 @@ setup(
         "dummy": ["oemof"],
     },
     install_requires=[
-        "oemof.solph >= 0.4.0",
-        "pandas >= 0.17.0",
-        "reegis >= v0.2.0",
-        "demandlib",
-        "workalendar",
-        "networkx",
-        "numpy",
-        "rtree",
-        "xlrd",
-        "xlwt",
-        "dill",
-        "matplotlib",
+        "oemof.solph > 0.4",
+        "pandas > 1.0",
+        "requests"
+        "networkx > 2.0",
+        "numpy >= 1.19.4",
+        "rtree >= 0.9.4",
+        "xlrd >= 1.2.0",
+        "xlwt >= 1.3.0",
+        "dill >= 0.3.3",
     ],
     package_data={
         "deflex": [
