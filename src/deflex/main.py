@@ -296,7 +296,9 @@ def batch_model_scenario(path, named=True, file_type=None, ignore_errors=True):
 
 
 def model_scenario(
-    path=None, file_type=None, result_path=None,
+    path=None,
+    file_type=None,
+    result_path=None,
 ):
     """
     Compute a deflex scenario.
@@ -373,8 +375,8 @@ def model_scenario(
     sc.dump_es(result_path)
 
     logging.info(
-        "%s - deflex scenario finished without errors: %s" %
-        (stopwatch(), sc.name)
+        "%s - deflex scenario finished without errors: %s"
+        % (stopwatch(), sc.name)
     )
     return result_path
 
