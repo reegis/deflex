@@ -95,8 +95,7 @@ def has_section(section):
 
 
 def get(section, key):
-    """Returns the value of a given key in a given section.
-    """
+    """Returns the value of a given key in a given section."""
     if not _loaded:
         init()
     try:
@@ -131,8 +130,7 @@ def get_list(section, parameter, sep=",", string=False):
 
 
 def get_dict(section):
-    """Returns the values of a section as dictionary
-    """
+    """Returns the values of a section as dictionary"""
     if not _loaded:
         init()
     dc = {}
