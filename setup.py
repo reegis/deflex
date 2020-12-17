@@ -32,7 +32,7 @@ setup(
     install_requires=[
         "oemof.solph > 0.4",
         "pandas > 1.0",
-        "requests"
+        "requests",
         "networkx > 2.0",
         "numpy >= 1.19.4",
         "rtree >= 0.9.4",
