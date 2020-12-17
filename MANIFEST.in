@@ -3,10 +3,15 @@ graft src
 graft ci
 graft tests
 
-include .bumpversion.cfg
-include .coveragerc
-include .cookiecutterrc
-include .editorconfig
+include *.yml
+include VERSION
+include pytest.ini
+recursive-include deflex *.csv
+recursive-include deflex *.geojson
+recursive-include deflex *.ini
+recursive-include deflex *.ini_backup
+recursive-include deflex *.py
+recursive-include deflex *.txt
 
 include AUTHORS.rst
 include CHANGELOG.rst
@@ -14,6 +19,6 @@ include CONTRIBUTING.rst
 include LICENSE
 include README.rst
 
-include tox.ini .travis.yml .appveyor.yml .readthedocs.yml .pre-commit-config.yaml
+include tox.ini .travis.yml
 
 global-exclude *.py[cod] __pycache__/* *.so *.dylib
