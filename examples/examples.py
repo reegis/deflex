@@ -697,9 +697,12 @@ def shape_tuple_legend(reverse=False, up=1.0, **kwargs):
     return axes
 
 
-def main_deflex(path):
+def main_deflex(path, name=None):
     logger.define_logging()
     scenarios = main.fetch_scenarios_from_dir(path, xls=True)
+    if name is not None:
+        scenarios = [s for s in scenarios if name in s]
+    print(scenarios)
     for scenario in scenarios:
         n = "de" + str(scenario.split("_de")[-1].split(".")[0])
         main.plot_scenario(
@@ -709,14 +712,11 @@ def main_deflex(path):
 
 
 logger.define_logging()
-my_path = "/home/uwe/reegis/scenarios/paper"
+my_path = "/home/uwe/frauke"
 # download_example_scenarios(my_path)
-my_mcp = fetch_mcp(my_path)
-
+# main_deflex(my_path, name="de02")
+# my_mcp = fetch_mcp(my_path)
 # show_relation(my_mcp, name="deflex_2014_de02")
-compare_different_mcp(my_mcp)
-# main_deflex(my_path)
-# exit(0)
+# compare_different_mcp(my_mcp)
 # compare_emission_types(my_path, name="deflex_2014_de02")
-
 # show_transmission(my_path, name="de21_transmission-losses")
