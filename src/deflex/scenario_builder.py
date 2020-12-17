@@ -66,7 +66,9 @@ def create_scenario(regions, year, name, weather_year=None):
     table_collection = {}
 
     logging.info("BASIC SCENARIO - STORAGES")
-    table_collection["storages"] = storages.scenario_storages(regions, year, name)
+    table_collection["storages"] = storages.scenario_storages(
+        regions, year, name
+    )
 
     logging.info("BASIC SCENARIO - POWER PLANTS")
     table_collection = powerplants.scenario_powerplants(
@@ -93,7 +95,9 @@ def create_scenario(regions, year, name, weather_year=None):
         logging.info("...skipped")
 
     logging.info("BASIC SCENARIO - SOURCES")
-    table_collection["commodity_source"] = commodity.scenario_commodity_sources(year)
+    table_collection[
+        "commodity_source"
+    ] = commodity.scenario_commodity_sources(year)
     table_collection["volatile_series"] = feedin.scenario_feedin(
         regions, year, name, weather_year=weather_year
     )
@@ -181,7 +185,12 @@ def clean_time_series(table_collection):
 
 
 def create_basic_scenario(
-    year, rmap=None, path=None, csv_dir=None, xls_name=None, only_out=None,
+    year,
+    rmap=None,
+    path=None,
+    csv_dir=None,
+    xls_name=None,
+    only_out=None,
 ):
     """
     Create a basic scenario for a given year and region-set.
