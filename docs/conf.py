@@ -12,9 +12,11 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
-import sys
 import os
+import sys
 from unittest.mock import MagicMock
+
+import sphinx_rtd_theme
 
 
 class Mock(MagicMock):
@@ -146,7 +148,7 @@ pygments_style = "sphinx"
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 # html_theme='bizstyle'
-import sphinx_rtd_theme
+
 
 html_theme = "sphinx_rtd_theme"
 
@@ -324,10 +326,10 @@ epub_copyright = my_copyleft
 # The basename for the epub file. It defaults to the project name.
 # epub_basename=u'pahesmf'
 
-# The HTML theme for the epub output. Since the default themes are not optimized
-# for small screen space, using the same theme for HTML and epub output is
-# usually not wise. This defaults to 'epub', a theme designed to save visual
-# space.
+# The HTML theme for the epub output. Since the default themes are not
+# optimized for small screen space, using the same theme for HTML and epub
+# output is usually not wise. This defaults to 'epub', a theme designed to save
+# visual space.
 # epub_theme='epub'
 
 # The language of the text. It defaults to the language option
