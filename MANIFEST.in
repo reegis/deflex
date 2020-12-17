@@ -3,22 +3,25 @@ graft src
 graft ci
 graft tests
 
-include *.yml
-include VERSION
-include pytest.ini
 recursive-include deflex *.csv
 recursive-include deflex *.geojson
 recursive-include deflex *.ini
 recursive-include deflex *.ini_backup
 recursive-include deflex *.py
 recursive-include deflex *.txt
+recursive-include tests *.esys
+recursive-include tests *.csv
 
 include AUTHORS.rst
 include CHANGELOG.rst
 include CONTRIBUTING.rst
 include LICENSE
 include README.rst
+include .coveragerc
+include *.yml
+include VERSION
+include pytest.ini
 
 include tox.ini .travis.yml
 
-global-exclude *.py[cod] __pycache__/* *.so *.dylib
+global-exclude *.py[cod] __pycache__/*
