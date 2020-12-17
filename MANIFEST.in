@@ -2,15 +2,7 @@ graft docs
 graft src
 graft ci
 graft tests
-
-recursive-include deflex *.csv
-recursive-include deflex *.geojson
-recursive-include deflex *.ini
-recursive-include deflex *.ini_backup
-recursive-include deflex *.py
-recursive-include deflex *.txt
-recursive-include tests *.esys
-recursive-include tests *.csv
+graft examples
 
 include AUTHORS.rst
 include CHANGELOG.rst
