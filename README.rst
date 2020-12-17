@@ -1,4 +1,63 @@
-.. deflex documentation master file
+========
+Overview
+========
+
+.. start-badges
+
+.. list-table::
+    :stub-columns: 1
+
+    * - docs
+      - |docs|
+    * - tests
+      - | |travis| |requires|
+        | |coveralls| |codecov|
+    * - package
+      - | |version| |wheel| |supported-versions| |supported-implementations|
+        | |commits-since|
+.. |docs| image:: https://readthedocs.org/projects/deflex/badge/?style=flat
+    :target: https://readthedocs.org/projects/deflex
+    :alt: Documentation Status
+
+.. |travis| image:: https://api.travis-ci.org/reegis/deflex.svg?branch=master
+    :alt: Travis-CI Build Status
+    :target: https://travis-ci.org/reegis/deflex
+
+.. |requires| image:: https://requires.io/github/reegis/deflex/requirements.svg?branch=master
+    :alt: Requirements Status
+    :target: https://requires.io/github/reegis/deflex/requirements/?branch=master
+
+.. |coveralls| image:: https://coveralls.io/repos/reegis/deflex/badge.svg?branch=master&service=github
+    :alt: Coverage Status
+    :target: https://coveralls.io/r/reegis/deflex
+
+.. |codecov| image:: https://codecov.io/gh/reegis/deflex/branch/master/graphs/badge.svg?branch=master
+    :alt: Coverage Status
+    :target: https://codecov.io/github/reegis/deflex
+
+.. |version| image:: https://img.shields.io/pypi/v/deflex.svg
+    :alt: PyPI Package latest release
+    :target: https://pypi.org/project/deflex
+
+.. |wheel| image:: https://img.shields.io/pypi/wheel/deflex.svg
+    :alt: PyPI Wheel
+    :target: https://pypi.org/project/deflex
+
+.. |supported-versions| image:: https://img.shields.io/pypi/pyversions/deflex.svg
+    :alt: Supported versions
+    :target: https://pypi.org/project/deflex
+
+.. |supported-implementations| image:: https://img.shields.io/pypi/implementation/deflex.svg
+    :alt: Supported implementations
+    :target: https://pypi.org/project/deflex
+
+.. |commits-since| image:: https://img.shields.io/github/commits-since/reegis/deflex/v0.2.0b0.svg
+    :alt: Commits since latest release
+    :target: https://github.com/reegis/deflex/compare/v0.2.0b0...master
+
+
+
+.. end-badges
 
 .. image:: https://travis-ci.org/reegis/deflex.svg?branch=master
     :target: https://travis-ci.org/reegis/deflex
@@ -21,94 +80,33 @@
 .. image:: https://zenodo.org/badge/DOI/10.5281/zenodo.3572594.svg
    :target: https://doi.org/10.5281/zenodo.3572594
 
-Introduction
-=============
+deflex - flexible multi-regional energy system model forheat, power and mobility
 
-The deflex library provides a simple heat and power model of Germany. Some
-basic scenarios with all data are included.
-
-Documentation
-~~~~~~~~~~~~~
-
-The `documentation of deflex <https://deflex.readthedocs.io/en/latest/>`_ is powered by readthedocs.
-
-Go to the `download page <http://readthedocs.org/projects/deflex/downloads/>`_ to download different versions and formats (pdf, html, epub) of the documentation.
-
+* Free software: MIT license
 
 Installation
 ============
-
-On a Linux Debian system you can use the following command to solve all
-requirements beforehand.
-
-.. code-block::
-
-    sudo apt-get install python3-dev proj-bin libproj-dev libgeos-dev python3-tk libspatialindex-dev virtualenv
-
-If you have a working Python 3 environment, use pypi to install the latest deflex version:
 
 ::
 
     pip install deflex
 
-The deflex library is designed for Python 3 and tested on Python >= 3.6. We highly recommend to use virtual environments.
-Please see the `installation page <http://oemof.readthedocs.io/en/stable/installation_and_setup.html>`_ of the oemof documentation for complete instructions on how to install python and a virtual environment on your operating system.
+You can also install the in-development version with::
 
+    pip install https://github.com/reegis/deflex/archive/master.zip
 
 Basic usage
 ===========
 
-Create a basic scenario as xls-file or collection of csv-files using the following lines.
-
-.. NOTE::
-
-    The first run of the following lines may take some hours, because all
-    needed data will be downloaded, processed and stored locally. On the next
-    run the stored files will be used.
-
-    Use the logger to see the state of the script.
-
-.. code-block:: python
-
-    import logging
-    from deflex import basic_scenario
-    logging.getLogger()
-    logger.setLevel(logging.INFO)
-    basic_scenario.create_basic_scenario(2014, 'de21')
-
-Use the following lines to optimise an existing basic scenario:
-
-.. code-block:: python
-
-    import logging
-    from deflex import main
-    logging.getLogger()
-    logger.setLevel(logging.INFO)
-    main.main(2014, 'de21')
-
-To optimise a user scenario one has to pass the path to the scenario file(s).
-
-.. code-block:: python
-
-    import logging
-    from deflex import main
-    logging.getLogger()
-    logger.setLevel(logging.INFO)
-    main.model_scenario(xls_file='/my/path/to/scenario.xls',
-                        name='my_scenario', rmap='deXX', year=2025)
-
-It is faster to use csv-files!
-
-.. code-block:: python
-
-    import logging
-    from deflex import main
-    logging.getLogger()
-    logger.setLevel(logging.INFO)
-    main.model_scenario(csv_path='/my/path/to/my_csv_files',
-                        name='my_scenario', rmap='deXX', year=2025)
+Documentation
+=============
 
 
+https://deflex.readthedocs.io/
+
+The `documentation of deflex <https://deflex.readthedocs.io/en/latest/>`_ is powered by readthedocs.
+
+Go to the `download page <http://readthedocs.org/projects/deflex/downloads/>`_ to download different versions and formats (pdf, html, epub) of the documentation.
 
 
 
@@ -126,25 +124,26 @@ Go to the `Zenodo page of deflex <https://doi.org/10.5281/zenodo.3572594>`_ to f
 .. image:: https://zenodo.org/badge/DOI/10.5281/zenodo.3572594.svg
    :target: https://doi.org/10.5281/zenodo.3572594
 
-License
-============
+Development
+===========
 
-Copyright (c) 2019 Uwe Krien
+To run all the tests run::
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+    tox
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+Note, to combine the coverage data from all the tox environments run:
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+.. list-table::
+    :widths: 10 90
+    :stub-columns: 1
+
+    - - Windows
+      - ::
+
+            set PYTEST_ADDOPTS=--cov-append
+            tox
+
+    - - Other
+      - ::
+
+            PYTEST_ADDOPTS=--cov-append tox
