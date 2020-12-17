@@ -165,50 +165,51 @@ def tmp_set(section, key, value):
 
 def set_reegis_paths(paths=None):
     """Create directories according to the values given in the config files."""
-    # initialise de21 configuration
-    logging.info("Loading reegis configuration....")
-
-    # Set default paths for 'basic' and 'data' if set to 'None' in the ini-file
-    basicpath = get("root_paths", "package_data")
-    if basicpath is None:
-        basicpath = os.path.join(os.path.dirname(__file__), "data")
-        logging.debug("Set default path for basic path: {0}".format(basicpath))
-    cfg.set("paths", "package_data", basicpath)
-
-    datapath = get("root_paths", "local_root")
-    if datapath is None:
-        datapath = os.path.join(os.path.expanduser("~"), "reegis")
-        logging.debug("Set default path for data path: {0}".format(datapath))
-    cfg.set("paths", "local_root", datapath)
-
-    if (
-        IMPORTER != os.path.join(os.path.dirname(__file__))
-        and IMPORTER is not None
-    ):
-        importer_name = IMPORTER.split(os.sep)[-1]
-        cfg.set("paths", "{0}".format(importer_name), IMPORTER)
-
-    if paths is not None:
-        for p in paths:
-            package_name = p.split(os.sep)[-1]
-            cfg.set("paths", "{0}".format(package_name), p)
-
-    # *************************************************************************
-    # ********* Set sub-paths according to ini-file ***************************
-    # *************************************************************************
-    for key in get_dict("path_names").keys():
-        names = get_list("path_names", key)
-        pathname = os.path.join(get("paths", names[0]), *names[1:])
-        cfg.set("paths", key, pathname)
-        os.makedirs(pathname, exist_ok=True)
-
-    if not cfg.has_section("paths_pattern"):
-        cfg.add_section("paths_pattern")
-
-    for key in get_dict("path_pattern_names").keys():
-        names = get_list("path_pattern_names", key)
-        pathname = os.path.join(get("paths", names[0]), *names[1:])
-        cfg.set("paths_pattern", key, pathname)
+    pass
+    # # initialise de21 configuration
+    # logging.info("Loading reegis configuration....")
+    #
+    # # Set default paths for 'basic' and 'data' if set to 'None' in the ini-file
+    # basicpath = get("root_paths", "package_data")
+    # if basicpath is None:
+    #     basicpath = os.path.join(os.path.dirname(__file__), "data")
+    #     logging.debug("Set default path for basic path: {0}".format(basicpath))
+    # cfg.set("paths", "package_data", basicpath)
+    #
+    # datapath = get("root_paths", "local_root")
+    # if datapath is None:
+    #     datapath = os.path.join(os.path.expanduser("~"), "reegis")
+    #     logging.debug("Set default path for data path: {0}".format(datapath))
+    # cfg.set("paths", "local_root", datapath)
+    #
+    # if (
+    #     IMPORTER != os.path.join(os.path.dirname(__file__))
+    #     and IMPORTER is not None
+    # ):
+    #     importer_name = IMPORTER.split(os.sep)[-1]
+    #     cfg.set("paths", "{0}".format(importer_name), IMPORTER)
+    #
+    # if paths is not None:
+    #     for p in paths:
+    #         package_name = p.split(os.sep)[-1]
+    #         cfg.set("paths", "{0}".format(package_name), p)
+    #
+    # # *************************************************************************
+    # # ********* Set sub-paths according to ini-file ***************************
+    # # *************************************************************************
+    # for key in get_dict("path_names").keys():
+    #     names = get_list("path_names", key)
+    #     pathname = os.path.join(get("paths", names[0]), *names[1:])
+    #     cfg.set("paths", key, pathname)
+    #     os.makedirs(pathname, exist_ok=True)
+    #
+    # if not cfg.has_section("paths_pattern"):
+    #     cfg.add_section("paths_pattern")
+    #
+    # for key in get_dict("path_pattern_names").keys():
+    #     names = get_list("path_pattern_names", key)
+    #     pathname = os.path.join(get("paths", names[0]), *names[1:])
+    #     cfg.set("paths_pattern", key, pathname)
 
 
 if __name__ == "__main__":
