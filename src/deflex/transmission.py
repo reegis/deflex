@@ -1,5 +1,5 @@
---> Kann in deflex bleiben, das es mit geometries zusammenpasst!!!
---> DOKU !!!!!
+# --> Kann in deflex bleiben, das es mit geometries zusammenpasst!!!
+# --> DOKU !!!!!
 
 
 # -*- coding: utf-8 -*-
@@ -14,16 +14,12 @@ __copyright__ = "Uwe Krien <krien@uni-bremen.de>"
 __license__ = "MIT"
 
 
-# Python libraries
 import os
 
-# External libraries
 import pandas as pd
 import math
 
-# internal modules
 from deflex import config as cfg
-
 from deflex import geometries
 
 
@@ -114,15 +110,15 @@ def get_electrical_transmission_default(
     if power_lines is None:
         power_lines = pd.DataFrame(geometries.deflex_power_lines(rmap)).index
 
-    df = pd.DataFrame()
-    for l in power_lines:
-        df.loc[l, "capacity"] = float("inf")
-        df.loc[l, "distance"] = float("nan")
-        df.loc[l, "efficiency"] = 1
+    trans = pd.DataFrame()
+    for length in power_lines:
+        trans.loc[length, "capacity"] = float("inf")
+        trans.loc[length, "distance"] = float("nan")
+        trans.loc[length, "efficiency"] = 1
 
     if both_directions is True:
-        df = add_reverse_direction(df)
-    return df
+        trans = add_reverse_direction(trans)
+    return trans
 
 
 def get_electrical_transmission_renpass(both_directions=False):
@@ -162,19 +158,19 @@ def get_electrical_transmission_renpass(both_directions=False):
 
     Examples
     --------
-    >>> df=get_electrical_transmission_renpass()
-    >>> int(df.loc['DE11-DE17', 'capacity'])
+    >>> translines=get_electrical_transmission_renpass()
+    >>> int(translines.loc['DE11-DE17', 'capacity'])
     2506
-    >>> int(df.loc['DE18-DE17', 'distance'])
+    >>> int(translines.loc['DE18-DE17', 'distance'])
     119
-    >>> df.loc['DE08-DE06']
+    >>> translines.loc['DE08-DE06']
     capacity    7519.040402
     distance     257.000000
     Name: DE08-DE06, dtype: float64
-    >>> df=get_electrical_transmission_renpass(both_directions=True)
-    >>> int(df.loc['DE11-DE17', 'capacity'])
+    >>> translines=get_electrical_transmission_renpass(both_directions=True)
+    >>> int(translines.loc['DE11-DE17', 'capacity'])
     2506
-    >>> int(df.loc['DE17-DE11', 'capacity'])
+    >>> int(translines.loc['DE17-DE11', 'capacity'])
     2506
     """
     f_security = cfg.get("transmission", "security_factor")
@@ -198,8 +194,8 @@ def get_electrical_transmission_renpass(both_directions=False):
 
     pwr_lines = pd.DataFrame(geometries.deflex_power_lines())
 
-    for l in pwr_lines.index:
-        split = l.split("-")
+    for idx in pwr_lines.index:
+        split = idx.split("-")
         a = int("110{0}".format(split[0][2:]))
         b = int("110{0}".format(split[1][2:]))
         # print(a, b)
@@ -207,14 +203,14 @@ def get_electrical_transmission_renpass(both_directions=False):
         cap2, dist2 = get_grid_capacity(grid, b, a)
 
         if cap1 == 0 and cap2 == 0:
-            pwr_lines.loc[l, "capacity"] = 0
-            pwr_lines.loc[l, "distance"] = 0
+            pwr_lines.loc[idx, "capacity"] = 0
+            pwr_lines.loc[idx, "distance"] = 0
         elif cap1 == 0:
-            pwr_lines.loc[l, "capacity"] = cap2
-            pwr_lines.loc[l, "distance"] = dist2
+            pwr_lines.loc[idx, "capacity"] = cap2
+            pwr_lines.loc[idx, "distance"] = dist2
         elif cap2 == 0:
-            pwr_lines.loc[l, "capacity"] = cap1
-            pwr_lines.loc[l, "distance"] = dist1
+            pwr_lines.loc[idx, "capacity"] = cap1
+            pwr_lines.loc[idx, "distance"] = dist1
 
     # plot_grid(pwr_lines)
     df = pwr_lines[["capacity", "distance"]]
@@ -230,10 +226,10 @@ def scenario_transmission(table_collection, regions, name):
 
     Examples
     --------
-    >>> regions=geometries.deflex_regions(rmap="de21")  # doctest: +SKIP
-    >>> pp=scenario_powerplants(dict(), regions, 2014, "de21"
+    >>> my_regions=geometries.deflex_regions(rmap="de21")  # doctest: +SKIP
+    >>> pp=scenario_powerplants(dict(), my_regions, 2014, "de21"
     ...     )  # doctest: +SKIP
-    >>> lines=scenario_transmission(pp, regions, "de21")  # doctest: +SKIP
+    >>> lines=scenario_transmission(pp, my_regions, "de21")  # doctest: +SKIP
     >>> int(lines.loc["DE07-DE05", ("electrical", "capacity")]
     ...     )  # doctest: +SKIP
     1978
@@ -264,7 +260,7 @@ def scenario_transmission(table_collection, regions, name):
     offshore_regions = geometries.divide_off_and_onshore(regions).offshore
 
     if name in ["de21", "de22"] and not cfg.get("basic", "copperplate"):
-        elec_trans = transmission.get_electrical_transmission_renpass()
+        elec_trans = get_electrical_transmission_renpass()
         general_efficiency = cfg.get("transmission", "general_efficiency")
         if general_efficiency is not None:
             elec_trans["efficiency"] = general_efficiency
@@ -275,7 +271,7 @@ def scenario_transmission(table_collection, regions, name):
             )
             raise NotImplementedError(msg)
     else:
-        elec_trans = transmission.get_electrical_transmission_default()
+        elec_trans = get_electrical_transmission_default()
 
     # Set transmission capacity of offshore power lines to installed capacity
     # Multiply the installed capacity with 1.1 to get a buffer of 10%.

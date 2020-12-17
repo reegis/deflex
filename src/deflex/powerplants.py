@@ -1,4 +1,4 @@
---> move to scenario_builder
+# --> move to scenario_builder
 
 # -*- coding: utf-8 -*-
 
@@ -15,9 +15,9 @@ __license__ = "MIT"
 import pandas as pd
 import os
 import logging
-from reegis import geometries as reegis_geometries
+# from reegis import geometries as reegis_geometries
 from deflex import config as cfg
-from reegis import powerplants
+# from reegis import powerplants
 
 # Todo: Revise and test.
 

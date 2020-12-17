@@ -1,4 +1,4 @@
---> scenario builder
+# --> scenario builder
 
 # -*- coding: utf-8 -*-
 
@@ -18,7 +18,7 @@ import logging
 
 # internal modules
 from deflex import config as cfg
-from reegis import demand_heat
+# from reegis import demand_heat
 
 
 def get_heat_profiles_deflex(

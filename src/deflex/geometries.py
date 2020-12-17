@@ -1,5 +1,3 @@
---> Remove reegis
-
 # -*- coding: utf-8 -*-
 
 """
@@ -13,16 +11,15 @@ __copyright__ = "Uwe Krien <krien@uni-bremen.de>"
 __license__ = "MIT"
 
 
-# Python libraries
 import os
 from collections import namedtuple
 
-# Internal libraries
+import geopandas as gpd
+
 from deflex import config as cfg
-from reegis import geometries as geo
 
 
-def deflex_regions(rmap=None, rtype='polygons'):
+def deflex_regions(rmap=None, rtype="polygons"):
     """
 
     Parameters
@@ -38,10 +35,10 @@ def deflex_regions(rmap=None, rtype='polygons'):
 
     Examples
     --------
-    >>> regions=deflex_regions('de17')
+    >>> my_regions=deflex_regions('de17')
     >>> len(regions)
     17
-    >>> regions.geometry.iloc[0].geom_type
+    >>> my_regions.geometry.iloc[0].geom_type
     'MultiPolygon'
     >>> l=deflex_regions('de21', 'labels').loc['DE04', 'geometry']
     >>> l.geom_type
@@ -64,7 +61,7 @@ def deflex_regions(rmap=None, rtype='polygons'):
             suffix=".geojson", map=rmap, type=rtype
         ),
     )
-    regions = geo.load(fullname=name)
+    regions = gpd.read_file(name)
     regions.set_index("region", inplace=True)
     regions.name = rmap
     return regions
@@ -85,8 +82,8 @@ def deflex_power_lines(rmap=None, rtype="lines"):
 
     Examples
     --------
-    >>> lines=deflex_power_lines('de17')
-    >>> lines.geometry.iloc[0].geom_type
+    >>> my_lines=deflex_power_lines('de17')
+    >>> my_lines.geometry.iloc[0].geom_type
     'LineString'
     >>> len(lines)
     31
@@ -104,7 +101,7 @@ def deflex_power_lines(rmap=None, rtype="lines"):
             map=rmap, type=rtype, suffix=".geojson"
         ),
     )
-    lines = geo.load(fullname=name)
+    lines = gpd.read_file(name)
     lines.set_index("name", inplace=True)
     lines.name = rmap
     return lines
@@ -136,17 +133,21 @@ def divide_off_and_onshore(regions):
     """
     region_type = namedtuple("RegionType", "offshore onshore")
     regions_centroid = regions.copy()
-    regions_centroid.geometry = regions_centroid.centroid
-
-    germany_onshore = geo.load(
-        cfg.get("paths", "geometry"), cfg.get("geometry", "germany_polygon")
+    regions_centroid.geometry = (
+        regions_centroid.to_crs(epsg=25832)
+        .centroid.to_crs(epsg="4326")
     )
 
-    gdf = geo.spatial_join_with_buffer(
-        regions_centroid, germany_onshore, "onshore", limit=0
+    germany_onshore = gpd.read_file(
+        os.path.join(
+            cfg.get("paths", "geometry"),
+            cfg.get("geometry", "germany_polygon"),
+        )
     )
 
-    onshore = list(gdf.loc[gdf.onshore == 0].index)
-    offshore = list(gdf.loc[gdf.onshore == "unknown"].index)
+    gdf = gpd.sjoin(regions_centroid, germany_onshore, how="left", op="within")
+
+    onshore = list(gdf.loc[~gdf.gid.isnull()].index)
+    offshore = list(gdf.loc[gdf.gid.isnull()].index)
 
     return region_type(offshore=offshore, onshore=onshore)

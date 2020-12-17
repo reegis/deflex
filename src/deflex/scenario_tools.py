@@ -1,6 +1,6 @@
---> Überprüfe, ob hier wirklich alle Import notwendig ist!!!
+# --> Überprüfe, ob hier wirklich alle Import notwendig ist!!!
 
---> Mehr DOKU !!!!!!!!!!!!!
+# --> Mehr DOKU !!!!!!!!!!!!!
 
 # -*- coding: utf-8 -*-
 

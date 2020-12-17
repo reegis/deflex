@@ -1,6 +1,6 @@
---> kein reegis nur scenario_builder und den als optional requirement
+# --> kein reegis nur scenario_builder und den als optional requirement
 
---> Nutze try except beim Import von scenariobuilder mit INst. hinweis
+# --> Nutze try except beim Import von scenariobuilder mit INst. hinweis
 
 # -*- coding: utf-8 -*-
 
