@@ -1,32 +1,45 @@
 language: python
-
+dist: xenial
+virt: lxd
+cache: false
+env:
+  global:
+    - LD_PRELOAD=/lib/x86_64-linux-gnu/libSegFault.so
+    - SEGFAULT_SIGNALS=all
+    - LANG=en_US.UTF-8
 matrix:
   include:
-    - python: 3.6
-    - python: 3.8
-
-# install os dependencies
-addons:
-  apt:
-    packages:
-      - coinor-cbc
-      - libhdf5-serial-dev
-      - proj-bin
-      - libproj-dev
-      - libgeos-dev
-      - libspatialindex-dev
-      - graphviz
-
-# install python dependencies
+    - python: '3.6'
+      env:
+        - TOXENV=check
+    - python: '3.6'
+      env:
+        - TOXENV=docs
+    - env:
+        - TOXENV=py37-cover,codecov,coveralls
+      python: '3.7'
+    - env:
+        - TOXENV=py37-nocov
+      python: '3.7'
+    - env:
+        - TOXENV=py39-cover,codecov,coveralls
+      python: '3.9'
+before_install:
+  - python --version
+  - uname -a
+  - lsb_release -a || true
 install:
-  - pip install cython
-  - pip install .[plot]
-  - pip install coveralls pytest-cov
-
-# command to run tests
+  - python -mpip install --progress-bar=off tox -rci/requirements.txt
+  - virtualenv --version
+  - easy_install --version
+  - pip --version
+  - tox --version
 script:
-  - coverage run --rcfile=.coveragerc --source deflex -m py.test
-  - coverage report
-
-after_success:
-  - coveralls
+  - tox -v
+after_failure:
+  - cat .tox/log/*
+  - cat .tox/*/log/*
+notifications:
+  email:
+    on_success: never
+    on_failure: always
