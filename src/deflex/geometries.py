@@ -56,7 +56,9 @@ def deflex_regions(rmap=None, rtype="polygons"):
     if rmap is None:
         rmap = cfg.get("init", "map")
     name = os.path.join(
-        cfg.get("paths", "geo_deflex"),
+        os.path.dirname(__file__),
+        "data",
+        "geometries",
         cfg.get("geometry", "deflex_polygon").format(
             suffix=".geojson", map=rmap, type=rtype
         ),
@@ -96,7 +98,9 @@ def deflex_power_lines(rmap=None, rtype="lines"):
     if rmap is None:
         rmap = cfg.get("init", "map")
     name = os.path.join(
-        cfg.get("paths", "geo_deflex"),
+        os.path.dirname(__file__),
+        "data",
+        "geometries",
         cfg.get("geometry", "powerlines").format(
             map=rmap, type=rtype, suffix=".geojson"
         ),
@@ -133,14 +137,15 @@ def divide_off_and_onshore(regions):
     """
     region_type = namedtuple("RegionType", "offshore onshore")
     regions_centroid = regions.copy()
-    regions_centroid.geometry = (
-        regions_centroid.to_crs(epsg=25832)
-        .centroid.to_crs(epsg="4326")
-    )
+    regions_centroid.geometry = regions_centroid.to_crs(
+        epsg=25832
+    ).centroid.to_crs(epsg="4326")
 
     germany_onshore = gpd.read_file(
         os.path.join(
-            cfg.get("paths", "geometry"),
+            os.path.dirname(__file__),
+            "data",
+            "geometries",
             cfg.get("geometry", "germany_polygon"),
         )
     )

@@ -330,10 +330,10 @@ class Scenario:
             "default_values": {},
         }
 
-        for key in cfg.get_dict("model"):
-            sc_info["default_values"][key.replace("default_", "")] = cfg.get(
-                "model", key
-            )
+        # for key in cfg.get_dict("model"):
+        #     sc_info["default_values"][key.replace("default_", "")] = cfg.get(
+        #         "model", key
+        #     )
 
         return sc_info
 
@@ -844,9 +844,8 @@ def add_power_and_heat_plants(table_collection, nodes, extra_regions):
                 # if downtime_factor is in the parameters, use it
                 if hasattr(params, "downtime_factor"):
                     if math.isnan(params["downtime_factor"]):
-                        params.capacity *= 1 - cfg.get(
-                            "model", "default_downtime_factor"
-                        )
+                        params.capacity *= 1 - 0
+                        # TODO: Raise Warning
                     else:
                         params.capacity *= 1 - params["downtime_factor"]
 
