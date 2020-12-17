@@ -62,7 +62,7 @@ class Scenario:
         self.results = kwargs.get("results", None)
         self.results_fn = kwargs.get("results_fn", None)
         self.debug = kwargs.get("debug", None)
-        self.location = None
+        self.location = kwargs.get("location", None)
         self.map = None
         self.meta = kwargs.get("meta", None)
 
@@ -107,13 +107,13 @@ class Scenario:
 
         return solph.EnergySystem(timeindex=date_time_index)
 
-    def load_excel(self, filename=None):
+    def load_excel(self, filename=None, index_header="table_index_header"):
         """Load scenario from an excel-file."""
         if filename is not None:
             self.location = filename
         xls = pd.ExcelFile(self.location)
         for sheet in xls.sheet_names:
-            table_index_header = cfg.get_list("table_index_header", sheet)
+            table_index_header = cfg.get_list(index_header, sheet)
             self.table_collection[sheet] = xls.parse(
                 sheet,
                 index_col=list(range(int(table_index_header[0]))),
@@ -121,14 +121,14 @@ class Scenario:
             )
         return self
 
-    def load_csv(self, path=None):
+    def load_csv(self, path=None, index_header="table_index_header"):
         """Load scenario from a csv-collection."""
         if path is not None:
             self.location = path
         for file in os.listdir(self.location):
             if file[-4:] == ".csv":
                 name = file[:-4]
-                table_index_header = cfg.get_list("table_index_header", name)
+                table_index_header = cfg.get_list(index_header, name)
                 filename = os.path.join(self.location, file)
                 self.table_collection[name] = pd.read_csv(
                     filename,
@@ -433,6 +433,12 @@ class DeflexScenario(Scenario):
         if xls_path is not None:
             self.to_excel(xls_path)
 
+    def load_excel(self, filename=None, index_header="deflex_index_header"):
+        super().load_excel(filename, index_header=index_header)
+
+    def load_csv(self, filename=None, index_header="deflex_index_header"):
+        super().load_csv(filename, index_header=index_header)
+
     def create_nodes(self):
         """
 
@@ -459,11 +465,6 @@ class DeflexScenario(Scenario):
         # Local district heating demand
         add_district_heating_systems(self.table_collection, nodes)
 
-        # Connect electricity buses with transmission
-        add_transmission_lines_between_electricity_nodes(
-            self.table_collection, nodes
-        )
-
         # Local power plants as Transformer and ExtractionTurbineCHP (chp)
         add_power_and_heat_plants(
             self.table_collection, nodes, self.extra_regions
@@ -473,8 +474,13 @@ class DeflexScenario(Scenario):
         if "storages" in self.table_collection:
             add_storages(self.table_collection, nodes)
 
-        if "mobility_mileage" in self.table_collection:
-            add_conventional_mobility(self.table_collection, nodes)
+        if "mobility" in self.table_collection:
+            add_mobility(self.table_collection, nodes)
+
+        # Connect electricity buses with transmission
+        add_transmission_lines_between_electricity_nodes(
+            self.table_collection, nodes
+        )
 
         # Add shortage excess to every bus
         add_shortage_excess(nodes)
@@ -809,24 +815,20 @@ def add_power_and_heat_plants(table_collection, nodes, extra_regions):
 
         fuels = trsf_fuels.union(chp_hp_fuels)
 
+        # Connect to global fuel bus if not defined as extra region
+        if region in extra_regions:
+            commodity_region = region
+        else:
+            commodity_region = "DE"
+
         for fuel in fuels:
-            # Connect to global fuel bus if not defined as extra region
-            if region in extra_regions:
-                bus_fuel = Label(
-                    "bus", "commodity", fuel.replace(" ", "_"), region
+            bus_fuel = Label(
+                "bus", "commodity", fuel.replace(" ", "_"), commodity_region
+            )
+            if bus_fuel not in nodes:
+                create_fuel_bus_with_source(
+                    nodes, fuel.replace(" ", "_"), commodity_region, cs
                 )
-                if bus_fuel not in nodes:
-                    create_fuel_bus_with_source(
-                        nodes, fuel.replace(" ", "_"), region, cs
-                    )
-            else:
-                bus_fuel = Label(
-                    "bus", "commodity", fuel.replace(" ", "_"), "DE"
-                )
-                if bus_fuel not in nodes:
-                    create_fuel_bus_with_source(
-                        nodes, fuel.replace(" ", "_"), "DE", cs
-                    )
 
         for plant in trsf_regions:
             idx = set(trsf.loc[region, plant].index).difference(("fuel",))
@@ -872,7 +874,10 @@ def add_power_and_heat_plants(table_collection, nodes, extra_regions):
                 trsf_label = Label("trsf", "pp", plant_name, region)
 
                 fuel_bus = Label(
-                    "bus", "commodity", params.fuel.replace(" ", "_"), "DE"
+                    "bus",
+                    "commodity",
+                    params.fuel.replace(" ", "_"),
+                    commodity_region,
                 )
 
                 nodes[trsf_label] = solph.Transformer(
@@ -890,7 +895,10 @@ def add_power_and_heat_plants(table_collection, nodes, extra_regions):
             params = chp_hp.loc[region, plant]
 
             fuel_bus = Label(
-                "bus", "commodity", params.fuel.replace(" ", "_"), "DE"
+                "bus",
+                "commodity",
+                params.fuel.replace(" ", "_"),
+                commodity_region,
             )
 
             # Create chp plants as 1x2 Transformer
@@ -978,7 +986,7 @@ def add_storages(table_collection, nodes):
         )
 
 
-def add_conventional_mobility(table_collection, nodes):
+def add_mobility(table_collection, nodes):
     """
 
     Parameters
@@ -990,21 +998,44 @@ def add_conventional_mobility(table_collection, nodes):
     -------
 
     """
-    mileage = table_collection["mobility_mileage"]["DE"]
-    spec_demand = table_collection["mobility_spec_demand"]["DE"]
-    energy_content = table_collection["mobility_energy_content"]["DE"]
-    energy_tp = mileage.mul(spec_demand).mul(energy_content.iloc[0]) / 10 ** 6
-    energy = energy_tp.sum()
-    idx = table_collection["demand_series"].index
-    oil_key = Label("bus", "commodity", "oil", "DE")
-    for fuel in ["diesel", "petrol"]:
-        fix_value = pd.Series(energy[fuel] / len(idx), index=idx, dtype=float)
-        fuel_label = Label("Usage", "mobility", fuel, "DE")
-        nodes[fuel_label] = solph.Sink(
-            label=fuel_label,
-            inputs={nodes[oil_key]: solph.Flow(fix=fix_value)},
-        )
-
+    mseries = table_collection["mobility_series"]
+    mtable = table_collection["mobility"]
+    for region in mseries.columns.get_level_values(0).unique():
+        for fuel in mseries[region].columns:
+            source = mtable.loc[(region, fuel), "source"]
+            source_region = mtable.loc[(region, fuel), "source_region"]
+            if mseries[region, fuel].sum() > 0:
+                fuel_transformer = Label("process", "fuel", fuel, region)
+                fuel_demand = Label("demand", "mobility", fuel, region)
+                bus_label = Label("bus", "mobility", fuel, region)
+                if fuel != "electricity":
+                    com_bus_label = Label(
+                        "bus", "commodity", source, source_region
+                    )
+                else:
+                    com_bus_label = Label(
+                        "bus", "electricity", "all", source_region
+                    )
+                if bus_label not in nodes:
+                    nodes[bus_label] = solph.Bus(label=bus_label)
+                if com_bus_label not in nodes:
+                    nodes[com_bus_label] = solph.Bus(label=com_bus_label)
+                cf = mtable.loc[(region, fuel), "efficiency"]
+                nodes[fuel_transformer] = solph.Transformer(
+                    label=fuel_transformer,
+                    inputs={nodes[com_bus_label]: solph.Flow()},
+                    outputs={nodes[bus_label]: solph.Flow()},
+                    conversion_factors={nodes[bus_label]: cf},
+                )
+                fix_value = mseries[region, fuel]
+                nodes[fuel_demand] = solph.Sink(
+                    label=fuel_demand,
+                    inputs={
+                        nodes[bus_label]: solph.Flow(
+                            nominal_value=1, fix=fix_value
+                        )
+                    },
+                )
     return nodes
 
 

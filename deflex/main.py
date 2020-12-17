@@ -77,12 +77,14 @@ def load_scenario(path, file_type=None):
         logging.info("Reading file: %s", path)
         if file_type == "excel":
             sc.load_excel(path)
+            sc.name = os.path.basename(path).split(".")[0]
         elif file_type == "csv":
             sc.load_csv(path)
+            sc.name = os.path.basename(path).replace("_csv", "")
     return sc
 
 
-def fetch_scenarios_from_dir(path, csv=True, xls=False):
+def fetch_scenarios_from_dir(path, csv=True, xls=False, recursive=False):
     """
     Search for files with an excel extension or directories ending with '_csv'.
 
@@ -100,6 +102,8 @@ def fetch_scenarios_from_dir(path, csv=True, xls=False):
         Search for csv directories.
     xls : bool
         Search for xls files.
+    recursive : bool
+        Search recursively.
 
     Returns
     -------
@@ -125,7 +129,22 @@ def fetch_scenarios_from_dir(path, csv=True, xls=False):
     """
     xls_scenarios = []
     csv_scenarios = []
-    for name in os.listdir(path):
+
+    if recursive is True:
+        names = []
+        for sets in os.walk(path):
+            root = sets[0]
+            for d in sets[1]:
+                if "csv" in d:
+                    names.append(os.path.join(root, d))
+            for f in sets[2]:
+                if "xls" in f:
+                    names.append(os.path.join(root, f))
+            names.append(os.path.join(root, ))
+    else:
+        names = os.listdir(path)
+
+    for name in names:
         if (name[-4:] == ".xls" or name[-5:] == "xlsx") and xls is True:
             xls_scenarios.append(os.path.join(path, name))
         if name[-4:] == "_csv" and csv is True:
@@ -135,6 +154,37 @@ def fetch_scenarios_from_dir(path, csv=True, xls=False):
     logging.debug("Found xls(x) scenario: %s", str(xls_scenarios))
     logging.debug("Found csv scenario: %s", str(csv_scenarios))
     return csv_scenarios + xls_scenarios
+
+
+def remove_solved_scenarios_from_list(scenarios, result_dir):
+    """
+
+    Parameters
+    ----------
+    scenarios
+    result_dir : str
+        The path relative to the path of the scenario file.
+
+    Returns
+    -------
+
+    Examples
+    --------
+    >>> test_data = os.path.join(os.path.dirname(__file__), os.pardir, "tests",
+    ...                          "data")
+    >>> my_sc = fetch_scenarios_from_dir(test_data, xls=True)
+    >>> len(my_sc)
+    5
+    >>> len(remove_solved_scenarios_from_list(my_sc, "results_cbc"))
+    4
+    """
+    scenarios_new = []
+    for scenario in scenarios:
+        name = os.path.basename(scenario).split(".")[0]
+        path = os.path.join(os.path.dirname(scenario), result_dir)
+        if not name + ".esys" in os.listdir(path):
+            scenarios_new.append(scenario)
+    return scenarios_new
 
 
 def model_multi_scenarios(scenarios, cpu_fraction=0.2, log_file=None):
@@ -333,9 +383,16 @@ def model_scenario(
     logging.info("Start modelling: %s", stopwatch())
 
     sc = load_scenario(path, file_type)
+    if "DE22" in sc.table_collection["demand_series"].columns.get_level_values(
+        0
+    ):
+        sc.extra_regions = ["DE22"]
     logging.info("Add nodes to the EnergySystem: %s", stopwatch())
     sc.table2es()
-    sc.meta = meta
+    if sc.meta is None:
+        sc.meta = meta
+    else:
+        sc.meta.update(meta)
 
     # If a meta table exists in the table collection update meta dict
     if "meta" in sc.table_collection:
@@ -373,13 +430,13 @@ def model_scenario(
     sc.dump_es(result_path)
 
     logging.info(
-        "%s - deflex scenario finished without errors: %s" %
-        (stopwatch(), sc.name)
+        "%s - deflex scenario finished without errors: %s"
+        % (stopwatch(), sc.name)
     )
     return result_path
 
 
-def plot_scenario(path, file_type=None, graphml_file=None):
+def plot_scenario(path, file_type=None, graphml_file=None, extra_regions=None):
     """
     Plot the graph of an energy system. If no filename is given the plot will
     be shown on the screen but not writen to an image file
@@ -412,6 +469,10 @@ def plot_scenario(path, file_type=None, graphml_file=None):
     False
     """
     sc = load_scenario(path, file_type)
+
+    if extra_regions is not None:
+        sc.extra_regions = extra_regions
+
     sc.table2es()
 
     show = graphml_file is None

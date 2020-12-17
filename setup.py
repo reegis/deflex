@@ -84,9 +84,9 @@ setup(
         "dill >= 0.3.3",
     ],
     extras_require={
-        # eg:
-        #   'rst': ['docutils>=0.11'],
-        #   ':python_version=="2.6"': ['argparse'],
+        "dev": ["pytest", "sphinx", "sphinx_rtd_theme", "requests"],
+        "plot": ["pygraphviz"],
+        "dummy": ["oemof"],
     },
     package_data={
         "deflex": [
