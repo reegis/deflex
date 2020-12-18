@@ -81,7 +81,7 @@ setup(
         "requests",
         "networkx > 2.0",
         "numpy >= 1.19.4",
-        "rtree >= 0.9.4",
+        # "rtree >= 0.9.4",
         "xlrd >= 1.2.0",
         "xlwt >= 1.3.0",
         "dill >= 0.3.3",
