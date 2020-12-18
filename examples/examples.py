@@ -8,18 +8,23 @@ from zipfile import ZipFile
 
 import pandas as pd
 import pytz
-import requests
-from deflex import analyses
-from deflex import config as cfg
-from deflex import geometries, results, main
-from matplotlib import patches, patheffects
+from matplotlib import patches
+from matplotlib import patheffects
 from matplotlib import pyplot as plt
 from matplotlib.colors import LinearSegmentedColormap
-from matplotlib.dates import DateFormatter, HourLocator, DayLocator
+from matplotlib.dates import DateFormatter
+from matplotlib.dates import HourLocator
 from oemof import solph
 from oemof.tools import logger
-from oemof_visio.plot import io_plot, set_datetime_ticks
+from oemof_visio.plot import io_plot
+from oemof_visio.plot import set_datetime_ticks
 
+from deflex import analyses
+from deflex import config as cfg
+from deflex import geometries
+from deflex import main
+from deflex import results
+from deflex import tools
 
 OPSD_URL = ("https://data.open-power-system-data.org/index.php?package="
             "time_series&version=2019-06-05&action=customDownload&resource=3"
@@ -29,35 +34,33 @@ OPSD_URL = ("https://data.open-power-system-data.org/index.php?package="
             "%5D=price_day_ahead&downloadCSV=Download+CSV")
 
 EXAMPLE_URL = ("https://files.de-1.osf.io/v1/resources/a5xrj/providers/"
-               "osfstorage/5fd51dcc149e750239029311/?zip=")
+               "osfstorage/5fdc7e0bf0df5405452ef6f0/?zip=")
 
-
-def _download(fn, url):
-    if not os.path.isfile(fn):
-        logging.info(
-            "Downloading '{0}' from {1}".format(os.path.basename(fn), url)
-        )
-        req = requests.get(url)
-        with open(fn, "wb") as fout:
-            fout.write(req.content)
-            logging.info("{1} downloaded from {0}.".format(url, fn))
+GITHUB_BASE_URL = "https://raw.githubusercontent.com/reegis/deflex/master/{0}"
 
 
 def download_example_scenarios(path):
-    """Download example data from OSF."""
-    os.makedirs(path, exist_ok=True)
-    fn = os.path.join(path, "software_x_scenario_examples.zip")
-    _download(fn, EXAMPLE_URL)
+    """Download example data from OSF and other files."""
 
-    with ZipFile(fn, "r") as zip_ref:
+    # Examples from OSF
+    os.makedirs(path, exist_ok=True)
+    fn_zip = os.path.join(path, "software_x_scenario_examples.zip")
+    tools.download(fn_zip, EXAMPLE_URL)
+
+    # plot.ini from github
+    url = GITHUB_BASE_URL.format("examples/plot.ini")
+    fn_ini = os.path.join(path, "plot.ini")
+    tools.download(fn_ini, url)
+
+    with ZipFile(fn_zip, "r") as zip_ref:
         zip_ref.extractall(path)
     logging.info("All SoftwareX scenarios extracted to {}".format(path))
 
 
 def get_price_from_opsd(path):
-    """TODO: Avoid dependency from reegis."""
+    """Get day ahead prices from opsd time series."""
     fn = os.path.join(path, "opsd_day_ahead_prices.csv")
-    _download(fn, OPSD_URL)
+    tools.download(fn, OPSD_URL)
 
     de_ts = pd.read_csv(
         fn,
@@ -712,11 +715,11 @@ def main_deflex(path, name=None):
 
 
 logger.define_logging()
-my_path = "/home/uwe/frauke"
-# download_example_scenarios(my_path)
+my_path = "/path/to/store/example/files"
+download_example_scenarios(my_path)
 # main_deflex(my_path, name="de02")
-# my_mcp = fetch_mcp(my_path)
-# show_relation(my_mcp, name="deflex_2014_de02")
-# compare_different_mcp(my_mcp)
-# compare_emission_types(my_path, name="deflex_2014_de02")
-# show_transmission(my_path, name="de21_transmission-losses")
+my_mcp = fetch_mcp(my_path)
+show_relation(my_mcp, name="deflex_2014_de02")
+compare_different_mcp(my_mcp)
+compare_emission_types(my_path, name="deflex_2014_de02")
+show_transmission(my_path, name="de21_transmission-losses")
