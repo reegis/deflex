@@ -51,11 +51,9 @@ Overview
     :alt: Supported implementations
     :target: https://pypi.org/project/deflex
 
-.. |commits-since| image:: https://img.shields.io/github/commits-since/reegis/deflex/v0.2.0b0.svg
+.. |commits-since| image:: https://img.shields.io/github/commits-since/reegis/deflex/v0.1.1.svg
     :alt: Commits since latest release
     :target: https://github.com/reegis/deflex/compare/v0.2.0b0...master
-
-
 
 .. end-badges
 
@@ -84,19 +82,45 @@ deflex - flexible multi-regional energy system model forheat, power and mobility
 
 * Free software: MIT license
 
+.. warning::
+
+    deflex is currently under revision. If you are planning to use deflex in
+    the future you should install the upcoming version (see below)!
+
 Installation
 ============
 
-::
+We recommend to install the already working beta version::
 
-    pip install deflex
+    pip install https://github.com/reegis/deflex/archive/revise_deflex.zip
 
-You can also install the in-development version with::
 
-    pip install https://github.com/reegis/deflex/archive/master.zip
+Use the latest stable (PhD) version of deflex if to run older scenarios::
+
+    pip install https://github.com/reegis/deflex/archive/phd.zip
 
 Basic usage
 ===========
+
+.. code-block:: python
+
+    scenario = "/path/to/my/scenario.xls"
+    main.model_scenario(scenario)
+
+
+Use example
+===========
+
+1. Create a local directory (e.g. /home/user/my_example).
+2. Download the
+   `example <https://raw.githubusercontent.com/reegis/deflex/revise_deflex/examples/examples.py>`_
+   to this new directory.
+3. Open the example file and scroll down to the bottom.
+4. Replace "/path/to/store/example/files" with the path of your new directory
+   (e.g. my_path = /home/user/my_example).
+
+5. Now execute the example file. The script will download some example
+   scenarios with results and show some exemplary plots.
 
 Documentation
 =============
