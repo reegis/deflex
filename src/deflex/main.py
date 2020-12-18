@@ -242,9 +242,9 @@ def batch_model_scenario(path, named=True, file_type=None, ignore_errors=True):
 
     Examples
     --------
-    >>> fn = os.path.join(os.path.dirname(__file__), os.pardir,
+    >>> fn = os.path.join(os.path.dirname(__file__), os.pardir, os.pardir,
     ...                   "tests", "data", "deflex_test_scenario.xls")
-    >>> r = batch_model_scenario(fn)  # doctest: +ELLIPSIS
+    >>> r = batch_model_scenario(fn, ignore_errors=False)  # doctest: +ELLIPSIS
     Welcome to the CBC MILP ...
     >>> r.name
     'deflex_test_scenario.xls'

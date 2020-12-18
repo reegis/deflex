@@ -12,8 +12,7 @@ __license__ = "MIT"
 
 import os
 from shutil import copyfile
-from deflex import config as cfg, basic_scenario, geometries
-from reegis.tools import download_file
+from deflex import config as cfg, geometries
 
 
 class TestFeedin:

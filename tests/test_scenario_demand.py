@@ -12,7 +12,7 @@ __license__ = "MIT"
 
 import os
 from nose.tools import eq_, with_setup
-from deflex import config as cfg, basic_scenario, geometries
+from deflex import config as cfg, geometries
 from reegis.tools import download_file
 
 

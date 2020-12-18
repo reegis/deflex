@@ -13,7 +13,7 @@ __license__ = "MIT"
 from unittest.mock import MagicMock
 from nose.tools import ok_, eq_
 import os
-from deflex import scenario_tools, basic_scenario, config as cfg
+from deflex import scenario_tools, config as cfg
 
 
 def test_clean_time_series():

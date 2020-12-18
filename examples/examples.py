@@ -714,12 +714,13 @@ def main_deflex(path, name=None):
         main.model_scenario(scenario)
 
 
-logger.define_logging()
-my_path = "/path/to/store/example/files"
-download_example_scenarios(my_path)
-# main_deflex(my_path, name="de02")
-my_mcp = fetch_mcp(my_path)
-show_relation(my_mcp, name="deflex_2014_de02")
-compare_different_mcp(my_mcp)
-compare_emission_types(my_path, name="deflex_2014_de02")
-show_transmission(my_path, name="de21_transmission-losses")
+if __name__ == "__main__":
+    logger.define_logging()
+    my_path = "/path/to/store/example/files"
+    download_example_scenarios(my_path)
+    # main_deflex(my_path, name="de02")
+    my_mcp = fetch_mcp(my_path)
+    show_relation(my_mcp, name="deflex_2014_de02")
+    compare_different_mcp(my_mcp)
+    compare_emission_types(my_path, name="deflex_2014_de02")
+    show_transmission(my_path, name="de21_transmission-losses")

@@ -36,7 +36,7 @@ def deflex_regions(rmap=None, rtype="polygons"):
     Examples
     --------
     >>> my_regions=deflex_regions('de17')
-    >>> len(regions)
+    >>> len(my_regions)
     17
     >>> my_regions.geometry.iloc[0].geom_type
     'MultiPolygon'
@@ -87,7 +87,7 @@ def deflex_power_lines(rmap=None, rtype="lines"):
     >>> my_lines=deflex_power_lines('de17')
     >>> my_lines.geometry.iloc[0].geom_type
     'LineString'
-    >>> len(lines)
+    >>> len(my_lines)
     31
     >>> deflex_power_lines('de02').index[0]
     'DE01-DE02'

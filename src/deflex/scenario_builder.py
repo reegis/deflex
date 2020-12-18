@@ -19,21 +19,21 @@ import os
 from collections import namedtuple
 
 import pandas as pd
-from deflex import config as cfg
-from deflex import (
-    geometries,
-    scenario_tools,
-    transmission,
-)
 
-from scenario_builder import (
-    demand,
-    powerplants,
-    storages,
-    mobility,
-    feedin,
-    commodity,
-)
+from deflex import config as cfg
+from deflex import geometries
+from deflex import scenario_tools
+from deflex import transmission
+
+try:
+    from scenario_builder import commodity
+    from scenario_builder import demand
+    from scenario_builder import feedin
+    from scenario_builder import mobility
+    from scenario_builder import powerplants
+    from scenario_builder import storages
+except ModuleNotFoundError:
+    scenario_builer = None
 
 
 def scenario_decentralised_heat():
@@ -185,12 +185,7 @@ def clean_time_series(table_collection):
 
 
 def create_basic_scenario(
-    year,
-    rmap=None,
-    path=None,
-    csv_dir=None,
-    xls_name=None,
-    only_out=None,
+    year, rmap=None, path=None, csv_dir=None, xls_name=None, only_out=None,
 ):
     """
     Create a basic scenario for a given year and region-set.
