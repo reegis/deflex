@@ -39,11 +39,13 @@ def get_ewi_data():
     -------
     namedtuple
 
+    TODO: Keep this in deflex???
+
     Examples
     --------
-    >>> ewi_data = get_ewi_data()
-    >>> round(ewi_data.fuel_costs.loc["hard coal", "value"], 2)
-    11.28
+    # >>> ewi_data = get_ewi_data()
+    # >>> round(ewi_data.fuel_costs.loc["hard coal", "value"], 2)
+    # 11.28
 
     """
     # Download file

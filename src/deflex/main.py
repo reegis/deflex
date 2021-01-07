@@ -49,7 +49,7 @@ def load_scenario(path, file_type=None):
 
     Examples
     --------
-    >>> fn = os.path.join(os.path.dirname(__file__), os.pardir,
+    >>> fn = os.path.join(os.path.dirname(__file__), os.pardir, os.pardir,
     ...                   "tests", "data", "deflex_test_scenario.xls")
     >>> s = load_scenario(fn, file_type="excel")
     >>> type(s)
@@ -107,8 +107,8 @@ def fetch_scenarios_from_dir(path, csv=True, xls=False):
 
     Examples
     --------
-    >>> test_data = os.path.join(os.path.dirname(__file__), os.pardir, "tests",
-    ...                          "data")
+    >>> test_data = os.path.join(os.path.dirname(__file__), os.pardir,
+    ...                          os.pardir, "tests", "data")
     >>> my_csv = fetch_scenarios_from_dir(test_data)
     >>> len(my_csv)
     2
@@ -155,12 +155,13 @@ def model_multi_scenarios(scenarios, cpu_fraction=0.2, log_file=None):
 
     Examples
     --------
-    >>> fn1 = os.path.join(os.path.dirname(__file__), os.pardir,
+    >>> fn1 = os.path.join(os.path.dirname(__file__), os.pardir, os.pardir,
     ...                    "tests", "data", "deflex_test_scenario.xls")
-    >>> fn2 = os.path.join(os.path.dirname(__file__), os.pardir,
+    >>> fn2 = os.path.join(os.path.dirname(__file__), os.pardir, os.pardir,
     ...                    "tests", "data", "deflex_test_scenario_broken.xls")
     >>> my_log_file = os.path.join(os.path.dirname(__file__), os.pardir,
-    ...                            "tests", "data", "my_log_file.csv")
+    ...                            os.pardir, "tests", "data",
+    ...                            "my_log_file.csv")
     >>> my_scenarios = [fn1, fn2]
     >>> model_multi_scenarios(my_scenarios, log_file=my_log_file)
     >>> my_log = pd.read_csv(my_log_file, index_col=[0])
@@ -280,7 +281,7 @@ def batch_model_scenario(path, named=True, file_type=None, ignore_errors=True):
             result_file = None
     else:
         result_file = model_scenario(path, file_type)
-        return_value = str(datetime.now())
+        return_value = datetime.now()
         trace = None
 
     if not named:
@@ -320,7 +321,7 @@ def model_scenario(
 
     Examples
     --------
-    >>> fn = os.path.join(os.path.dirname(__file__), os.pardir,
+    >>> fn = os.path.join(os.path.dirname(__file__), os.pardir, os.pardir,
     ...                   "tests", "data", "deflex_test_scenario.xls")
     >>> r = model_scenario(fn, file_type="excel")  # doctest: +ELLIPSIS
     Welcome to the CBC MILP ...
@@ -398,12 +399,12 @@ def plot_scenario(path, file_type=None, graphml_file=None):
 
     Returns
     -------
-
+    TODO: Keep this test? It does not work without graphviz-dev and python3-dev
     Examples
     --------
-    >>> fn = os.path.join(os.path.dirname(__file__), os.pardir,
+    >>> fn = os.path.join(os.path.dirname(__file__), os.pardir, os.pardir,
     ...      "tests", "data", "deflex_test_scenario.xls")
-    >>> fn_img = os.path.join(os.path.dirname(__file__), os.pardir,
+    >>> fn_img = os.path.join(os.path.dirname(__file__), os.pardir, os.pardir,
     ...                       "tests", "data", "test_es.graphml")
     >>> plot_scenario(fn, file_type="excel")
     >>> plot_scenario(fn, "excel", fn_img)

@@ -26,7 +26,7 @@ def fetch_example_results(key):
     have the same structure as the actual deflex results.
     """
     urls = {
-        "de02_no_heat_reg_merit": "https://osf.io/4ujv6/download",
+        "de02_no_heat_reg_merit": "https://osf.io/9qt4a/download",
         "de02_heat_reg_merit": "https://osf.io/69mnu/download",
         "de22_no_heat_no_reg_merit": "https://osf.io/k4fdt/download",
         "de22_no_heat_reg_merit": "https://osf.io/3642z/download",

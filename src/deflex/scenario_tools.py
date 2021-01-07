@@ -310,14 +310,14 @@ class Scenario:
         --------
         >>> dfx = DeflexScenario()
         >>> info = dfx.scenario_info("cbc")
-        >>> info["default_values"]["downtime_factor"]
-        0.1
         >>> info["solver"]
         'cbc'
+        >>> type(info["datetime"].year)
+        <class 'int'>
         >>> info["year"]
         >>> dfx.year = 2017
-        >>> info_re = dfx.scenario_info("cbc")
-        >>> info_re["year"]
+        >>> info_new = dfx.scenario_info("cbc")
+        >>> info_new["year"]
         2017
 
         """
@@ -329,11 +329,6 @@ class Scenario:
             "scenario": self.table_collection,
             "default_values": {},
         }
-
-        # for key in cfg.get_dict("model"):
-        #     sc_info["default_values"][key.replace("default_", "")] = cfg.get(
-        #         "model", key
-        #     )
 
         return sc_info
 
@@ -861,7 +856,7 @@ def add_power_and_heat_plants(table_collection, nodes, extra_regions):
                 # if variable costs are defined add them to the outflow
                 if hasattr(params, "variable_costs"):
                     if math.isnan(params["variable_costs"]):
-                        vc = cfg.get("model", "default_variable_costs_pp")
+                        raise ValueError("Variable costs should not be Nan. Use zero but do not leave it empty.")
                     else:
                         vc = params.variable_costs
                     outflow.variable_costs = solph.sequence(vc)
