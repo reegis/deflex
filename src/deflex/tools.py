@@ -13,11 +13,11 @@ import os
 try:
     import requests
 except ModuleNotFoundError:
-    request = None
+    requests = None
 
 
 def download(fn, url):
-    if request is None:
+    if requests is None:
         raise ModuleNotFoundError(
             "You cannot download a file without >requests< installed."
             "Use:\n pip install requests"
