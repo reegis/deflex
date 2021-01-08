@@ -16,7 +16,7 @@ import os
 from deflex import scenario_tools, config as cfg
 
 
-def test_clean_time_series():
+def clean_time_series():
     sc = scenario_tools.DeflexScenario(name="test", year=2014)
     csv_path = os.path.join(
         os.path.dirname(__file__), "data", "deflex_2014_de21_test_csv"
@@ -38,7 +38,7 @@ def test_clean_time_series():
     )
 
 
-def test_scenario_creation_main():
+def scenario_creation_main():
     sc = scenario_tools.DeflexScenario(name="test", year=2014)
     csv_path = os.path.join(
         os.path.dirname(__file__), "data", "deflex_2014_de21_test_csv"

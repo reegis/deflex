@@ -553,7 +553,9 @@ def add_volatile_sources(table_collection, nodes):
                     label=vs_label,
                     outputs={
                         nodes[bus_label]: solph.Flow(
-                            fix=feedin, nominal_value=capacity, emission=0,
+                            fix=feedin,
+                            nominal_value=capacity,
+                            emission=0,
                         )
                     },
                 )
@@ -625,7 +627,8 @@ def add_decentralised_heating_systems(table_collection, nodes, extra_regions):
                 label=d_heat_demand_label,
                 inputs={
                     nodes[heat_bus_label]: solph.Flow(
-                        fix=dts[d_region, fuel], nominal_value=1,
+                        fix=dts[d_region, fuel],
+                        nominal_value=1,
                     )
                 },
             )
@@ -656,7 +659,8 @@ def add_electricity_demand(table_collection, nodes):
                 label=elec_demand_label,
                 inputs={
                     nodes[bus_label]: solph.Flow(
-                        fix=dts["electrical_load", region], nominal_value=1,
+                        fix=dts["electrical_load", region],
+                        nominal_value=1,
                     )
                 },
             )
@@ -838,9 +842,12 @@ def add_power_and_heat_plants(table_collection, nodes, extra_regions):
             if params.capacity > 0:
                 # if downtime_factor is in the parameters, use it
                 if hasattr(params, "downtime_factor"):
+                    # Todo: test exception
                     if math.isnan(params["downtime_factor"]):
-                        params.capacity *= 1 - 0
-                        # TODO: Raise Warning
+                        raise ValueError(
+                            "Downtime factor should not be Nan. Use zero but "
+                            "do not leave it empty."
+                        )
                     else:
                         params.capacity *= 1 - params["downtime_factor"]
 
@@ -855,8 +862,12 @@ def add_power_and_heat_plants(table_collection, nodes, extra_regions):
 
                 # if variable costs are defined add them to the outflow
                 if hasattr(params, "variable_costs"):
+                    # Todo: test exception
                     if math.isnan(params["variable_costs"]):
-                        raise ValueError("Variable costs should not be Nan. Use zero but do not leave it empty.")
+                        raise ValueError(
+                            "Variable costs should not be Nan. Use zero but "
+                            "do not leave it empty."
+                        )
                     else:
                         vc = params.variable_costs
                     outflow.variable_costs = solph.sequence(vc)

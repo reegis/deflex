@@ -395,7 +395,8 @@ def show_transmission(path, name=None, number=0):
         exist="exist",
     )
     plt.subplots_adjust(right=1, left=0, bottom=0.02, top=0.98)
-    plt.savefig("/home/uwe/transmission.eps")
+    home_dir = os.path.expanduser("~")
+    plt.savefig(os.path.join(home_dir, "mcp.eps"))
     plt.show()
 
 
@@ -504,7 +505,8 @@ def compare_different_mcp(mcp):
     print("*****Standard deviation of difference (Entsoe - Scenario *******")
     print(diff.std())
     print("**************************************************************")
-    plt.savefig("/home/uwe/mcp.eps")
+    home_dir = os.path.expanduser("~")
+    plt.savefig(os.path.join(home_dir, "mcp.eps"))
     plt.show()
 
 
@@ -641,7 +643,8 @@ def emission_multiplot(res, kv):
     plt.subplots_adjust(
         right=0.817, left=0.05, hspace=0.08, bottom=0.06, top=0.98
     )
-    plt.savefig("/home/uwe/emissions.eps")
+    home_dir = os.path.expanduser("~")
+    plt.savefig(os.path.join(home_dir, "mcp.eps"))
     plt.show()
 
 

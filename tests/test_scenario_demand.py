@@ -12,7 +12,7 @@ __license__ = "MIT"
 
 import os
 from nose.tools import eq_, with_setup
-from deflex import config as cfg, geometries
+from deflex import config as cfg, geometries, scenario_builder
 from reegis.tools import download_file
 
 
@@ -32,9 +32,9 @@ def setup_func():
 
 
 @with_setup(setup_func)
-def test_scenario_demand():
+def scenario_demand():
     """Test scenario demand."""
     regions = geometries.deflex_regions(rmap="de21")
-    d = basic_scenario.scenario_demand(regions, 2014, "de21")
+    d = scenario_builder.scenario_demand(regions, 2014, "de21")
     eq_(int(d["DE01", "district heating"].sum()), 18639262)
     eq_(int(d["DE05", "electrical_load"].sum()), 10069304)
