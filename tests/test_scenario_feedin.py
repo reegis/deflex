@@ -12,7 +12,10 @@ __license__ = "MIT"
 
 import os
 from shutil import copyfile
-from deflex import config as cfg, geometries, scenario_builder, tools
+
+from deflex import config as cfg
+from deflex import geometries
+from deflex import tools
 
 
 class TestFeedin:
@@ -45,6 +48,7 @@ class TestFeedin:
         cfg.tmp_set("init", "map", "de21")
         regions = geometries.deflex_regions(rmap="de21")
         cls.f = dict()
+        print(regions)
         # cls.f = scenario_builder.scenario_feedin(regions, 2014, "de21")
 
     def scenario_feedin_wind1(self):

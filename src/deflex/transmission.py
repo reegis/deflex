@@ -14,10 +14,10 @@ __copyright__ = "Uwe Krien <krien@uni-bremen.de>"
 __license__ = "MIT"
 
 
+import math
 import os
 
 import pandas as pd
-import math
 
 from deflex import config as cfg
 from deflex import geometries

@@ -10,8 +10,8 @@ __copyright__ = "Uwe Krien <krien@uni-bremen.de>"
 __license__ = "MIT"
 
 import os
-
 import pickle
+
 import pandas as pd
 import requests
 from oemof import solph
@@ -236,7 +236,7 @@ def reshape_bus_view(results, buses, data=None, aggregate=None):
                     if agg[2] < 0:
                         val = "_".join(node.label.subtag.split("_")[: agg[2]])
                     elif agg[2] > 0:
-                        val = "_".join(node.label.subtag.split("_")[agg[2] :])
+                        val = "_".join(node.label.subtag.split("_")[agg[2]:])
                 else:
                     val = agg[2]
         return val

@@ -13,25 +13,25 @@ SPDX-License-Identifier: MIT
 __copyright__ = "Uwe Krien <krien@uni-bremen.de>"
 __license__ = "MIT"
 
-# Python libraries
-import os
-import sys
 import calendar
 import datetime
-import shutil
-import dill as pickle
-from collections import namedtuple
 import logging
+import math
+# Python libraries
+import os
+import shutil
+import sys
+from collections import namedtuple
 
+import dill as pickle
 # External libraries
 import networkx as nx
 import pandas as pd
 from matplotlib import pyplot as plt
-import math
-
 # oemof libraries
 from oemof import solph
 from oemof.network import graph
+
 from deflex import config as cfg
 
 if sys.getrecursionlimit() < 3000:

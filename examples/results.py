@@ -3,12 +3,12 @@ import os
 from datetime import datetime
 
 import pandas as pd
+import reegis.config as cfg
 from oemof import solph
-from oemof.solph import views
 from oemof.network import graph
+from oemof.solph import views
 from oemof.tools import logger
 
-import reegis.config as cfg
 from deflex.scenario_tools import Label as Label
 from deflex.scenario_tools import Scenario
 
@@ -235,7 +235,7 @@ def get_nodes_by_label(es, label_args):
     --------
     # >>> fn1, fn2 = get_file_name_doctests()
     # >>> my_es = load_es(fn1)
-    # >>> my_bus = get_nodes_by_label(my_es, ('bus', 'electricity', None, None))
+    #>>> my_bus = get_nodes_by_label(my_es, ('bus', 'electricity', None, None))
     # >>> len(my_bus)
     # 21
     # >>> my_bus = get_nodes_by_label(
@@ -476,10 +476,10 @@ def load_es(fn=None):
     Load EnergySystem with the given filename (full path). If no file name
     is given a GUI window is popping up.
     """
-    if fn is None:
-        fn = gui.select_filename(work_dir=cfg.get('paths', 'scenario'),
-                                 title='Select results file',
-                                 extension='esys')
+    # if fn is None:
+    #     fn = gui.select_filename(work_dir=cfg.get('paths', 'scenario'),
+    #                              title='Select results file',
+    #                              extension='esys')
 
     sc = Scenario()
     logging.debug("Restoring file from {0}".format(fn))

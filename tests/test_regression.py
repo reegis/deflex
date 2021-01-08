@@ -11,6 +11,7 @@ __copyright__ = "Uwe Krien <krien@uni-bremen.de>"
 __license__ = "MIT"
 
 from nose.tools import eq_
+
 from deflex import geometries
 
 

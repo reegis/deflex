@@ -11,9 +11,14 @@ __copyright__ = "Uwe Krien <krien@uni-bremen.de>"
 __license__ = "MIT"
 
 import os
-from nose.tools import eq_, with_setup
-from deflex import config as cfg, geometries, scenario_builder
+
+from nose.tools import eq_
+from nose.tools import with_setup
 from reegis.tools import download_file
+
+from deflex import config as cfg
+from deflex import geometries
+from deflex import scenario_builder
 
 
 def setup_func():

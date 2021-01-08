@@ -15,8 +15,6 @@ import os
 import pandas as pd
 from oemof import solph
 
-from deflex import config as cfg
-
 
 class TestMain:
     @classmethod
