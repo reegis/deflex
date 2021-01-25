@@ -10,11 +10,11 @@ Overview
     * - docs
       - |docs|
     * - tests
-      - | |travis| |requires|
-        | |coveralls| |codecov|
+      - | |travis| |requires| |lgt_general|
+        | |lgt_alerts| |coveralls| |codecov|
     * - package
-      - | |version| |wheel| |supported-versions| |supported-implementations|
-        | |commits-since|
+      - | |version| |wheel| |supported-versions|
+        | |supported-implementations| |commits-since| |licence| |code_Style| |zenodo|
 .. |docs| image:: https://readthedocs.org/projects/deflex/badge/?style=flat
     :target: https://readthedocs.org/projects/deflex
     :alt: Documentation Status
@@ -55,21 +55,19 @@ Overview
     :alt: Commits since latest release
     :target: https://github.com/reegis/deflex/compare/v0.2.0...master
 
-.. end-badges
-
-.. image:: https://img.shields.io/lgtm/grade/python/g/reegis/deflex.svg?logo=lgtm&logoWidth=18
+.. |lgt_general| image:: https://img.shields.io/lgtm/grade/python/g/reegis/deflex.svg?logo=lgtm&logoWidth=18
     :target: https://lgtm.com/projects/g/reegis/deflex/context:python
 
-.. image:: https://img.shields.io/lgtm/alerts/g/reegis/deflex.svg?logo=lgtm&logoWidth=18
+.. |lgt_alerts| image:: https://img.shields.io/lgtm/alerts/g/reegis/deflex.svg?logo=lgtm&logoWidth=18
     :target: https://lgtm.com/projects/g/reegis/deflex/alerts/
 
-.. image:: https://img.shields.io/badge/automatic%20code%20style-black-blueviolet
+.. |code_style| image:: https://img.shields.io/badge/automatic%20code%20style-black-blueviolet
     :target: https://black.readthedocs.io/en/stable/
 
-.. image:: https://img.shields.io/badge/licence-MIT-blue
+.. |licence| image:: https://img.shields.io/badge/licence-MIT-blue
     :target: https://spdx.org/licenses/MIT.html
 
-.. image:: https://zenodo.org/badge/DOI/10.5281/zenodo.3572594.svg
+.. |zenodo| image:: https://zenodo.org/badge/DOI/10.5281/zenodo.3572594.svg
    :target: https://doi.org/10.5281/zenodo.3572594
 
 deflex - flexible multi-regional energy system model forheat, power and mobility
