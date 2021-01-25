@@ -329,6 +329,9 @@ def model_scenario(
     ...                   "tests", "data", "deflex_test_scenario.xls")
     >>> r = model_scenario(fn, file_type="excel")  # doctest: +ELLIPSIS
     Welcome to the CBC MILP ...
+    >>> rf = os.path.join(os.path.dirname(fn), "results_cbc",
+    ...                   "deflex_test_scenario_alpha.esys")
+    >>> os.remove(rf)
     """
     stopwatch()
 
