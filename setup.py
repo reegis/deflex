@@ -23,7 +23,7 @@ def read(*names, **kwargs):
 
 setup(
     name="deflex",
-    version="0.2.0b0",
+    version="0.2.0",
     license="MIT",
     description=(
         "deflex - flexible multi-regional energy system model for "
@@ -78,7 +78,7 @@ setup(
     keywords=[
         # eg: 'keyword1', 'keyword2', 'keyword3',
     ],
-    python_requires=">=3.6",
+    python_requires=">=3.7",
     install_requires=[
         "oemof.solph > 0.4",
         "oemof.network",

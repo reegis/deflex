@@ -147,7 +147,7 @@ Use example
 
 1. Create a local directory (e.g. /home/user/my_example).
 2. Download the
-   `example <https://raw.githubusercontent.com/reegis/deflex/revise_deflex/examples/examples.py>`_
+   `example <https://raw.githubusercontent.com/reegis/deflex/master/examples/examples.py>`_
    to this new directory.
 3. Now execute the example file. The script will download some example
    scenarios with results and show some exemplary plots.
