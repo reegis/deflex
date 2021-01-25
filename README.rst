@@ -19,9 +19,9 @@ Overview
     :target: https://readthedocs.org/projects/deflex
     :alt: Documentation Status
 
-.. |travis| image:: https://api.travis-ci.org/reegis/deflex.svg?branch=master
+.. |travis| image:: https://api.travis-ci.com/reegis/deflex.svg?branch=master
     :alt: Travis-CI Build Status
-    :target: https://travis-ci.org/reegis/deflex
+    :target: https://travis-ci.com/reegis/deflex
 
 .. |requires| image:: https://requires.io/github/reegis/deflex/requirements.svg?branch=master
     :alt: Requirements Status
