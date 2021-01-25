@@ -17,20 +17,25 @@ import calendar
 import datetime
 import logging
 import math
-# Python libraries
 import os
 import shutil
 import sys
 from collections import namedtuple
 
 import dill as pickle
-# External libraries
 import networkx as nx
 import pandas as pd
-from matplotlib import pyplot as plt
-# oemof libraries
 from oemof import solph
-from oemof.network import graph
+
+try:
+    from matplotlib import pyplot as plt
+except ModuleNotFoundError:
+    plt = None
+
+try:
+    from oemof.network import graph
+except ModuleNotFoundError:
+    graph = None
 
 from deflex import config as cfg
 

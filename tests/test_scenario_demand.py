@@ -14,7 +14,7 @@ import os
 
 from nose.tools import eq_
 from nose.tools import with_setup
-from reegis.tools import download_file
+from deflex.tools import download
 
 from deflex import config as cfg
 from deflex import geometries
@@ -28,12 +28,12 @@ def setup_func():
     path = cfg.get("paths", "demand")
     file = "heat_profile_state_2014_weather_2014.csv"
     filename = os.path.join(path, file)
-    download_file(filename, url)
+    download(filename, url)
 
     url = "https://osf.io/6vmdh/download"
     file = "oep_ego_demand_combined.h5"
     filename = os.path.join(path, file)
-    download_file(filename, url)
+    download(filename, url)
 
 
 @with_setup(setup_func)

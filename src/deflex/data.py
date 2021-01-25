@@ -14,9 +14,9 @@ import os
 from types import SimpleNamespace
 
 import pandas as pd
-from reegis.tools import download_file
 
 from deflex import config as cfg
+from deflex import tools
 
 TRANSLATION_FUEL = {
     "Abfall": "waste",
@@ -54,7 +54,7 @@ def get_ewi_data():
         "/EWI_Merit_Order_Tool_2019_1_4.xlsm"
     )
     fn = os.path.join(cfg.get("paths", "deflex_general"), "ewi.xlsm")
-    download_file(fn, url)
+    tools.download(fn, url)
 
     # Create named tuple with all sub tables
     ewi_tables = {

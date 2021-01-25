@@ -12,9 +12,13 @@ __license__ = "MIT"
 
 
 import os
+import warnings
 from collections import namedtuple
 
-import geopandas as gpd
+try:
+    import geopandas as gpd
+except ModuleNotFoundError:
+    gpd = None
 
 from deflex import config as cfg
 
@@ -53,19 +57,25 @@ def deflex_regions(rmap=None, rtype="polygons"):
     >>> list(deflex_regions('de02').index)
     ['DE01', 'DE02']
     """
-    if rmap is None:
-        rmap = cfg.get("init", "map")
-    name = os.path.join(
-        os.path.dirname(__file__),
-        "data",
-        "geometries",
-        cfg.get("geometry", "deflex_polygon").format(
-            suffix=".geojson", map=rmap, type=rtype
-        ),
-    )
-    regions = gpd.read_file(name)
-    regions.set_index("region", inplace=True)
-    regions.name = rmap
+    if gpd is not None:
+        if rmap is None:
+            rmap = cfg.get("init", "map")
+        name = os.path.join(
+            os.path.dirname(__file__),
+            "data",
+            "geometries",
+            cfg.get("geometry", "deflex_polygon").format(
+                suffix=".geojson", map=rmap, type=rtype
+            ),
+        )
+        regions = gpd.read_file(name)
+        regions.set_index("region", inplace=True)
+        regions.name = rmap
+    else:
+        msg = ("\nTo read a deflex map you need to install 'geopandas' "
+               "\n\n pip install geopandas\n")
+        warnings.warn(msg, UserWarning)
+        regions = None
     return regions
 
 
@@ -95,19 +105,25 @@ def deflex_power_lines(rmap=None, rtype="lines"):
     >>> deflex_power_lines().name
     'de21'
     """
-    if rmap is None:
-        rmap = cfg.get("init", "map")
-    name = os.path.join(
-        os.path.dirname(__file__),
-        "data",
-        "geometries",
-        cfg.get("geometry", "powerlines").format(
-            map=rmap, type=rtype, suffix=".geojson"
-        ),
-    )
-    lines = gpd.read_file(name)
-    lines.set_index("name", inplace=True)
-    lines.name = rmap
+    if gpd is not None:
+        if rmap is None:
+            rmap = cfg.get("init", "map")
+        name = os.path.join(
+            os.path.dirname(__file__),
+            "data",
+            "geometries",
+            cfg.get("geometry", "powerlines").format(
+                map=rmap, type=rtype, suffix=".geojson"
+            ),
+        )
+        lines = gpd.read_file(name)
+        lines.set_index("name", inplace=True)
+        lines.name = rmap
+    else:
+        msg = ("\nTo read a deflex map you need to install 'geopandas' "
+               "\n\n pip install geopandas\n")
+        warnings.warn(msg, UserWarning)
+        lines = None
     return lines
 
 

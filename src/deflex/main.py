@@ -382,7 +382,7 @@ def model_scenario(
     return result_path
 
 
-def plot_scenario(path, file_type=None, graphml_file=None):
+def plot_scenario(path, file_type=None, image_file=None):
     """
     Plot the graph of an energy system. If no filename is given the plot will
     be shown on the screen but not writen to an image file
@@ -393,8 +393,9 @@ def plot_scenario(path, file_type=None, graphml_file=None):
         A valid deflex scenario file.
     file_type : str or None
         Type of the input data. Valid values are 'csv', 'excel', None. If the
-        input is non the path schould end on 'csv', '.xls', '.xlsx'.
-    graphml_file : str
+        input is none the path should end on 'csv', '.xls', '.xlsx' to allow
+        auto detection.
+    image_file : str
         The image file with a valid suffix (e.g. png, pdf, svg).
 
     Returns
@@ -406,7 +407,6 @@ def plot_scenario(path, file_type=None, graphml_file=None):
     ...      "tests", "data", "deflex_test_scenario.xls")
     >>> fn_img = os.path.join(os.path.dirname(__file__), os.pardir, os.pardir,
     ...                       "tests", "data", "test_es.graphml")
-    >>> plot_scenario(fn, file_type="excel")
     >>> plot_scenario(fn, "excel", fn_img)
     >>> os.path.isfile(fn_img)
     True
@@ -417,10 +417,10 @@ def plot_scenario(path, file_type=None, graphml_file=None):
     sc = load_scenario(path, file_type)
     sc.table2es()
 
-    show = graphml_file is None
+    show = image_file is None
 
     sc.plot_nodes(
-        filename=graphml_file,
+        filename=image_file,
         show=show,
         remove_nodes_with_substrings=["bus_cs"],
     )

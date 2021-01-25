@@ -23,7 +23,6 @@ If you have a working Python 3 environment, use pypi to install the latest defle
     pip install deflex
 
 The deflex library is designed for Python 3 and tested on Python >= 3.6. We highly recommend to use virtual environments.
-Please see the `installation page <http://oemof.readthedocs.io/en/stable/installation_and_setup.html>`_ of the oemof documentation for complete instructions on how to install python and a virtual environment on your operating system.
 
 
 Basic usage
