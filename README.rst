@@ -1,6 +1,9 @@
 ========
-Overview
+deflex
 ========
+
+**flexible multi-regional energy system model for heat, power and mobility**
+
 
 .. start-badges
 
@@ -70,24 +73,15 @@ Overview
 .. |zenodo| image:: https://zenodo.org/badge/DOI/10.5281/zenodo.3572594.svg
    :target: https://doi.org/10.5281/zenodo.3572594
 
-deflex - flexible multi-regional energy system model forheat, power and mobility
-
-* Free software: MIT license
-
-.. warning::
-
-    deflex is currently under revision. If you are planning to use deflex in
-    the future you should install the upcoming version (see below)!
 
 Installation
 ============
 
-We will publish a stable version soon. Until then we recommend to install the already working beta version::
+The following line will install the basic version. Some functions depend on further packages, see below to install additional requirements::
 
-    pip install https://github.com/reegis/deflex/archive/revise_deflex.zip
+    pip install deflex
 
-
-Use the latest stable (PhD) version of deflex to run older scenarios::
+To run older scenarios you can install the old stable phd version::
 
     pip install https://github.com/reegis/deflex/archive/phd.zip
 
