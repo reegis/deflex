@@ -1,5 +1,5 @@
-API
-~~~
+Reference
+=========
 
 
 deflex.demand module

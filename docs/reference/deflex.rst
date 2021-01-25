@@ -1,5 +1,0 @@
-deflex
-======
-
-.. automodule:: deflex
-    :members:
