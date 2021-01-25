@@ -185,7 +185,12 @@ def clean_time_series(table_collection):
 
 
 def create_basic_scenario(
-    year, rmap=None, path=None, csv_dir=None, xls_name=None, only_out=None,
+    year,
+    rmap=None,
+    path=None,
+    csv_dir=None,
+    xls_name=None,
+    only_out=None,
 ):
     """
     Create a basic scenario for a given year and region-set.
