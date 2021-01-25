@@ -251,7 +251,8 @@ def batch_model_scenario(path, named=True, file_type=None, ignore_errors=True):
     Welcome to the CBC MILP ...
     >>> r.name
     'deflex_test_scenario.xls'
-    >>> os.path.basename(r.result_file)
+    >>> result_file = r.result_file
+    >>> os.path.basename(result_file)
     'deflex_test_scenario_alpha.esys'
     >>> r.trace
     >>> r.return_value.year > 2019
@@ -265,6 +266,8 @@ def batch_model_scenario(path, named=True, file_type=None, ignore_errors=True):
     >>> r.result_file
     >>> r.trace  # doctest: +ELLIPSIS
     'Traceback (most recent call last):...
+    >>> print(result_file)
+    >>> os.remove(result_file)
     """
     out = namedtuple(
         "out", ["name", "return_value", "trace", "result_file", "start_time"]
