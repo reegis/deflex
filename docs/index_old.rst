@@ -33,7 +33,6 @@ The deflex library....
    :glob:
 
    getting_started
-   deflex
 
 
 Indices and tables
