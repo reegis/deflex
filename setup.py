@@ -91,9 +91,15 @@ setup(
         "dill >= 0.3.3",
     ],
     extras_require={
-        "dev": ["pytest", "sphinx", "sphinx_rtd_theme", "requests"],
+        "dev": [
+            "pytest",
+            "sphinx",
+            "sphinx_rtd_theme",
+            "requests",
+            "pygeos==0.8",
+            "geopandas",
+        ],
         "plot": ["pygraphviz", "matplotlib"],
-        "test": ["pygeos==0.8", "geopandas"],
         "geo": ["pygeos", "geopandas", "descartes"],
         "example": [
             "pygeos",

@@ -90,14 +90,48 @@ deflex - flexible multi-regional energy system model forheat, power and mobility
 Installation
 ============
 
-We recommend to install the already working beta version::
+We will publish a stable version soon. Until then we recommend to install the already working beta version::
 
     pip install https://github.com/reegis/deflex/archive/revise_deflex.zip
 
 
-Use the latest stable (PhD) version of deflex if to run older scenarios::
+Use the latest stable (PhD) version of deflex to run older scenarios::
 
     pip install https://github.com/reegis/deflex/archive/phd.zip
+
+
+Additional requirements
+-----------------------
+
+The basic installation can be used to compute scenarios (csv, xls, xlsx). For
+some functions additional packages are needed.
+
+1. To run the example with all plots you need the following packages:
+    * pygeos (spatial operations)
+    * geopandas (maps)
+    * descartes (plot maps with matplotlib)
+    * lmfit (linear fit)
+    * matplotlib (plotting)
+    * requests (download example files)
+
+    ``pip install deflex[example]``
+
+2. To use the maps of the polygons, transmission lines etc.:
+    * pygeos (spatial operations)
+    * geopandas (maps)
+
+    ``pip install deflex[map]``
+
+3. To develop deflex:
+    * pytest
+    * sphinx
+    * sphinx_rtd_theme
+    * pygeos
+    * geopandas
+    * requests
+
+    ``pip install deflex[dev]``
+
 
 Basic usage
 ===========
@@ -115,12 +149,16 @@ Use example
 2. Download the
    `example <https://raw.githubusercontent.com/reegis/deflex/revise_deflex/examples/examples.py>`_
    to this new directory.
-3. Open the example file and scroll down to the bottom.
-4. Replace "/path/to/store/example/files" with the path of your new directory
-   (e.g. my_path = /home/user/my_example).
-
-5. Now execute the example file. The script will download some example
+3. Now execute the example file. The script will download some example
    scenarios with results and show some exemplary plots.
+4. A directory "deflex_examples" will be created in you home directory. Use
+   ``print(os.path.expanduser("~"))`` to find out where your home directory is
+   located. If you want to change it replace the base path in the example:
+
+.. code-block:: diff
+
+    - BASEPATH = os.path.join(os.path.expanduser("~"), "deflex_examples")
+    + BASEPATH = "/your/favoured/path/"
 
 Documentation
 =============
