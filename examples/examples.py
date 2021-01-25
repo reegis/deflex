@@ -2,22 +2,15 @@ import datetime
 import logging
 import math
 import os
+import warnings
 from collections import namedtuple
 from pprint import pprint
 from zipfile import ZipFile
-
+from time import sleep
 import pandas as pd
 import pytz
-from matplotlib import patches
-from matplotlib import patheffects
-from matplotlib import pyplot as plt
-from matplotlib.colors import LinearSegmentedColormap
-from matplotlib.dates import DateFormatter
-from matplotlib.dates import HourLocator
 from oemof import solph
 from oemof.tools import logger
-from oemof_visio.plot import io_plot
-from oemof_visio.plot import set_datetime_ticks
 
 from deflex import analyses
 from deflex import config as cfg
@@ -26,17 +19,48 @@ from deflex import main
 from deflex import results
 from deflex import tools
 
-OPSD_URL = ("https://data.open-power-system-data.org/index.php?package="
-            "time_series&version=2019-06-05&action=customDownload&resource=3"
-            "&filter%5B_contentfilter_cet_cest_timestamp%5D%5Bfrom%5D="
-            "2005-01-01&filter%5B_contentfilter_cet_cest_timestamp%5D%5Bto%5D"
-            "=2019-05-01&filter%5BRegion%5D%5B%5D=DE&filter%5BVariable%5D%5B"
-            "%5D=price_day_ahead&downloadCSV=Download+CSV")
+try:
+    from lmfit.models import LinearModel
+except ModuleNotFoundError:
+    LinearModel = None
+try:
+    from oemof_visio.plot import io_plot
+    from oemof_visio.plot import set_datetime_ticks
+except ModuleNotFoundError:
+    io_plot = None
 
-EXAMPLE_URL = ("https://files.de-1.osf.io/v1/resources/a5xrj/providers/"
-               "osfstorage/5fdc7e0bf0df5405452ef6f0/?zip=")
+try:
+    from matplotlib import patches
+    from matplotlib import patheffects
+    from matplotlib import pyplot as plt
+    from matplotlib.colors import LinearSegmentedColormap
+    from matplotlib.dates import DateFormatter
+    from matplotlib.dates import HourLocator
+except ModuleNotFoundError:
+    plt = None
+
+
+MISSING_MODULES = []
+
+OPSD_URL = (
+    "https://data.open-power-system-data.org/index.php?package="
+    "time_series&version=2019-06-05&action=customDownload&resource=3"
+    "&filter%5B_contentfilter_cet_cest_timestamp%5D%5Bfrom%5D="
+    "2005-01-01&filter%5B_contentfilter_cet_cest_timestamp%5D%5Bto%5D"
+    "=2019-05-01&filter%5BRegion%5D%5B%5D=DE&filter%5BVariable%5D%5B"
+    "%5D=price_day_ahead&downloadCSV=Download+CSV"
+)
+
+EXAMPLE_URL = (
+    "https://files.de-1.osf.io/v1/resources/a5xrj/providers/"
+    "osfstorage/5fdc7e0bf0df5405452ef6f0/?zip="
+)
 
 GITHUB_BASE_URL = "https://raw.githubusercontent.com/reegis/deflex/master/{0}"
+
+BASEPATH = os.path.join(os.path.expanduser("~"), "deflex_examples")
+
+IMAGETYPE = "png"  # svg, pdf, png, eps
 
 
 def download_example_scenarios(path):
@@ -182,6 +206,12 @@ def plot_power_lines(
         label_unit = ""
     lines = geometries.deflex_power_lines("de21")
     polygons = geometries.deflex_regions("de21")
+    if lines is None:
+        msg = (
+            "\nTo plot a map you need to install 'geopandas', 'descartes' and "
+            "'pygeos'\n\n pip install geopandas descartes pygeos\n"
+        )
+        raise ModuleNotFoundError(msg)
 
     lines = lines.merge(data.div(divide), left_index=True, right_index=True)
     lines["centroid"] = lines.to_crs(epsg=25832).centroid.to_crs(epsg="4326")
@@ -317,8 +347,7 @@ def show_transmission(path, name=None, number=0):
     -------
 
     """
-    f, ax = plt.subplots(1, 1, sharex=True, figsize=(8, 5))
-    plt.rcParams.update({"font.size": 11})
+    global MISSING_MODULES
     if name is not None:
         sc = [s for s in get_scenario(path).ls if name in s][0]
     else:
@@ -333,7 +362,11 @@ def show_transmission(path, name=None, number=0):
     ]
     transmission = pd.DataFrame()
     trk = pd.DataFrame()
+
     lines = geometries.deflex_power_lines("de21")
+
+    if lines is None:
+        lines = pd.DataFrame(index=["DE13-DE15", "DE08-DE09"])
 
     for flow in flows:
         name = "-".join([flow[0].label.subtag, flow[1].label.region])
@@ -383,43 +416,92 @@ def show_transmission(path, name=None, number=0):
             trk.loc[name, "avg"] = transmission[name].abs().mean()
             trk.loc[name, "sum"] = transmission[name].abs().sum()
 
-    plot_power_lines(
-        trk,
-        "hours_90_prz_frac",
-        direction=False,
-        vmax=25,
-        label_min=1,
-        unit_to_label=True,
-        unit="%",
-        ax=ax,
-        exist="exist",
-    )
-    plt.subplots_adjust(right=1, left=0, bottom=0.02, top=0.98)
-    home_dir = os.path.expanduser("~")
-    plt.savefig(os.path.join(home_dir, "mcp.eps"))
-    plt.show()
+    if plt is not None:
+        f, ax = plt.subplots(1, 1, sharex=True, figsize=(8, 5))
+        plt.rcParams.update({"font.size": 11})
+        try:
+            plot_power_lines(
+                trk,
+                "hours_90_prz_frac",
+                direction=False,
+                vmax=25,
+                label_min=1,
+                unit_to_label=True,
+                unit="%",
+                ax=ax,
+                exist="exist",
+            )
+        except ModuleNotFoundError:
+            MISSING_MODULES.extend(["geopandas", "descartes", "pygeos"])
+            msg = (
+                "'geopandas', 'descartes' and 'pygeos' are missing. To show "
+                "the plot use:\n pip install geopandas descartes pygeos"
+            )
+            ax.text(0.2, 0.5, msg, fontsize=12)
+        plt.subplots_adjust(right=1, left=0, bottom=0.02, top=0.98)
+        figure_path = os.path.join(BASEPATH, "figures")
+        os.makedirs(figure_path, exist_ok=True)
+        plt.savefig(
+            os.path.join(figure_path, "transmission.{}".format(IMAGETYPE))
+        )
+        plt.show()
+    else:
+        print(
+            "Fraction of time [%] in which the use of the line is greater "
+            "than 90%"
+        )
+        print(trk["hours_90_prz_frac"].round(1).sort_values())
+        sleep(1)
+        MISSING_MODULES.extend(
+            ["matplotlib", "geopandas", "descartes", "pygeos"]
+        )
+        msg = (
+            "\nTo see the mcp plot you need to install 'matplotlib' "
+            "\n\n pip install matplotlib\n"
+        )
+        warnings.warn(msg, UserWarning)
 
 
 def show_relation(mcp, name="deflex_2014_de02"):
     """Show relation between OPSD price and scenario prices."""
-    from lmfit.models import LinearModel
-    mean = mcp["opsd"].mean()
-    mcp = mcp.groupby("opsd").mean().loc[0:90]
-    model = LinearModel()
-    result = model.fit(mcp[name], x=mcp.index)
-    ax = result.plot_fit()
-    ax.set_xlabel("price from opsd data")
-    ax.set_ylabel("price from {0} data".format(name))
+    if LinearModel is not None and plt is not None:
+        mean = mcp["opsd"].mean()
+        mcp = mcp.groupby("opsd").mean().loc[0:90]
 
-    # line x=y to get an orientation
-    x = pd.Series([0, 40, 100])
-    ax.plot(x, x)
+        model = LinearModel()
+        result = model.fit(mcp[name], x=mcp.index)
+        ax = result.plot_fit()
+        ax.set_xlabel("price from opsd data")
+        ax.set_ylabel("price from {0} data".format(name))
 
-    # mean price of opsd data
-    g1 = pd.Series([mean, mean])
-    g2 = pd.Series([0, 100])
-    ax.plot(g1, g2)
-    plt.show()
+        # line x=y to get an orientation
+        x = pd.Series([0, 40, 100])
+        ax.plot(x, x)
+
+        # mean price of opsd data
+        g1 = pd.Series([mean, mean])
+        g2 = pd.Series([0, 100])
+        ax.plot(g1, g2)
+        figure_path = os.path.join(BASEPATH, "figures")
+        os.makedirs(figure_path, exist_ok=True)
+        plt.savefig(
+            os.path.join(
+                figure_path, "mcp_comparison_detailed.{}".format(IMAGETYPE)
+            )
+        )
+        plt.show()
+    else:
+        global MISSING_MODULES
+        if plt is None:
+            MISSING_MODULES.append("matplotlib")
+        if LinearModel is None:
+            MISSING_MODULES.append("lmfit")
+
+        msg = (
+            "\nTo see the relation plot you need to install 'matplotlib' "
+            "and lmfit.\n\n pip install matplotlib lmfit\n"
+        )
+        warnings.warn(msg, UserWarning)
 
 
 def fetch_mcp(path):
@@ -438,8 +520,6 @@ def fetch_mcp(path):
 
 
 def compare_different_mcp(mcp):
-    plt.rcParams.update({"font.size": 16})
-    f, ax = plt.subplots(3, 1, sharey=True, figsize=(15, 6))
     res_dict = {
         k: v for v, k in zip(sorted(mcp.columns), range(len(mcp.columns)))
     }
@@ -449,7 +529,8 @@ def compare_different_mcp(mcp):
         # "deflex_2014_de17_heat",
         # "deflex_2014_de21_copperplate",
         # "deflex_2014_de21_transmission-losses",
-        "opsd"]
+        "opsd",
+    ]
 
     choice = [v for k, v in res_dict.items() if v in s]
     mcp = mcp[choice]
@@ -457,41 +538,41 @@ def compare_different_mcp(mcp):
 
     iv = [("8.1.", "25.1."), ("8.4.", "25.4."), ("8.7.", "25.7.")]
 
-    n = -1
-    for interval in iv:
-        n += 1
-        start = datetime.datetime.strptime(interval[0] + year, "%d.%m.%Y")
-        start += datetime.timedelta(hours=12)
-        end = datetime.datetime.strptime(interval[1] + year, "%d.%m.%Y")
-        end += datetime.timedelta(hours=12)
-        mcp[start:end].plot(ax=ax[n], legend=False, x_compat=True)
-        ax[n].set_xlim(start, end)
-        ax[n].xaxis.set_major_locator(HourLocator(interval=72))
-        ax[n].xaxis.set_major_formatter(DateFormatter("%b-%d %H:%M"))
-        ax[n].tick_params(axis="x", rotation=0)
-        [
-            label.set_horizontalalignment("center")
-            for label in ax[n].xaxis.get_ticklabels()
-        ]
-        ax[n].set_ylabel("[EUR/MWh]")
-    sc = []
-    # ax[0].set_title(
-    #     "The Market Clearing Price (MCP) in different periods in 2014"
-    # )
-    for c in mcp.columns:
-        c = c.replace("deflex_2014_", "")
-        c = c.replace("_no-heat_reg-merit_no-co2-costs_no-var-costs", "")
-        c = c.replace("_no-heat_reg-merit_no-co2-prices_no-var-costs", "")
-        c = c.replace("copperplate", "cp")
-        c = c.replace("opsd", "Entsoe")
-        sc.append(c)
-    ax[n].legend(
-        sc, bbox_to_anchor=(1.135, 1), loc="upper right",
-    )
-
-    plt.subplots_adjust(
-        right=0.892, left=0.045, hspace=0.22, bottom=0.06, top=0.99
-    )
+    if plt is not None:
+        plt.rcParams.update({"font.size": 16})
+        f, ax = plt.subplots(3, 1, sharey=True, figsize=(15, 6))
+        n = -1
+        for interval in iv:
+            n += 1
+            start = datetime.datetime.strptime(interval[0] + year, "%d.%m.%Y")
+            start += datetime.timedelta(hours=12)
+            end = datetime.datetime.strptime(interval[1] + year, "%d.%m.%Y")
+            end += datetime.timedelta(hours=12)
+            mcp[start:end].plot(ax=ax[n], legend=False, x_compat=True)
+            ax[n].set_xlim(start, end)
+            ax[n].xaxis.set_major_locator(HourLocator(interval=72))
+            ax[n].xaxis.set_major_formatter(DateFormatter("%b-%d %H:%M"))
+            ax[n].tick_params(axis="x", rotation=0)
+            [
+                label.set_horizontalalignment("center")
+                for label in ax[n].xaxis.get_ticklabels()
+            ]
+            ax[n].set_ylabel("[EUR/MWh]")
+        sc = []
+        # ax[0].set_title(
+        #     "The Market Clearing Price (MCP) in different periods in 2014"
+        # )
+        for c in mcp.columns:
+            c = c.replace("deflex_2014_", "")
+            c = c.replace("_no-heat_reg-merit_no-co2-costs_no-var-costs", "")
+            c = c.replace("_no-heat_reg-merit_no-co2-prices_no-var-costs", "")
+            c = c.replace("copperplate", "cp")
+            c = c.replace("opsd", "Entsoe")
+            sc.append(c)
+        ax[n].legend(sc, bbox_to_anchor=(1.135, 1), loc="upper right")
+        plt.subplots_adjust(
+            right=0.892, left=0.045, hspace=0.22, bottom=0.06, top=0.99
+        )
     print("*****Standard deviation of the MCP ***************************")
     print(mcp.std())
     print("**************************************************************")
@@ -505,9 +586,20 @@ def compare_different_mcp(mcp):
     print("*****Standard deviation of difference (Entsoe - Scenario *******")
     print(diff.std())
     print("**************************************************************")
-    home_dir = os.path.expanduser("~")
-    plt.savefig(os.path.join(home_dir, "mcp.eps"))
-    plt.show()
+
+    if plt is not None:
+        figure_path = os.path.join(BASEPATH, "figures")
+        os.makedirs(figure_path, exist_ok=True)
+        plt.savefig(os.path.join(figure_path, "mcp.{}".format(IMAGETYPE)))
+        plt.show()
+    else:
+        global MISSING_MODULES
+        MISSING_MODULES.append("matplotlib")
+        msg = (
+            "\nTo see the mcp plot you need to install 'matplotlib' "
+            "\n\n pip install matplotlib\n"
+        )
+        warnings.warn(msg, UserWarning)
 
 
 def compare_emission_types(path, name=None, number=0):
@@ -518,7 +610,16 @@ def compare_emission_types(path, name=None, number=0):
     logging.info("Scenario to compare emissions: {}".format(sc))
     res = results.restore_results(sc)
     kv = get_key_values_from_results([res])
-    emission_multiplot(res, kv)
+    if plt is not None:
+        emission_multiplot(res, kv)
+    else:
+        global MISSING_MODULES
+        MISSING_MODULES.append("matplotlib")
+        msg = (
+            "\nTo see the mcp plot you need to install 'matplotlib' "
+            "\n\n pip install matplotlib\n"
+        )
+        warnings.warn(msg, UserWarning)
 
 
 def emission_multiplot(res, kv):
@@ -526,15 +627,13 @@ def emission_multiplot(res, kv):
     name = res["meta"]["scenario"]["name"]
     f, ax = plt.subplots(2, 1, sharex=True, figsize=(15, 6))
     region = "all"
-    busses = results.search_nodes(
-        res, solph.Bus, tag="electricity"
-    )
+    buses = results.search_nodes(res, solph.Bus, tag="electricity")
     interval = ("5.8.", "26.8.")
     year = str(2014)
     start_year = datetime.datetime(2014, 1, 1)
     start = datetime.datetime.strptime(interval[0] + year, "%d.%m.%Y")
     start += datetime.timedelta(hours=12)
-    start = (start - start_year).days*24
+    start = (start - start_year).days * 24
     end = datetime.datetime.strptime(interval[1] + year, "%d.%m.%Y")
     end += datetime.timedelta(hours=12)
     end = (end - start_year).days * 24
@@ -560,10 +659,6 @@ def emission_multiplot(res, kv):
     )
     ax[0].set_ylabel("Emissions [tons/MWh]")
 
-    busses = results.search_nodes(
-        res, solph.Bus, tag="electricity"
-    )
-
     am = [
         ("cat", "line", "all"),
         ("tag", "ee", "all"),
@@ -573,7 +668,7 @@ def emission_multiplot(res, kv):
     if "no-reg-merit" not in name:
         am.append(("tag", "pp", -1))
 
-    df = results.reshape_bus_view(res, busses, aggregate=am)
+    df = results.reshape_bus_view(res, buses, aggregate=am)
     idx = df.index
 
     if region == "all":
@@ -625,26 +720,36 @@ def emission_multiplot(res, kv):
     cd = get_cdict_df(df["in"])
     cd.update(get_cdict_df(df["out"]))
 
-    ioplot = io_plot(
-        df_in=df["in"].div(1000),
-        df_out=df["out"].div(1000),
-        inorder=in_order,
-        outorder=out_order,
-        smooth=True,
-        ax=ax[1],
-        cdict=cd,
-    )
-    ax[1].set_xlim(start, end)
-    ax[1] = set_datetime_ticks(ax[1], idx, tick_distance=96, offset=12,
-                               date_format="%b-%d %H:%M")
-    ax[1].set_ylabel("Power [GW]")
-    ioplot["ax"] = shape_tuple_legend(reverse=False, up=0.8, **ioplot)
-    ax[1].set_xlim(start, end)
+    if io_plot is not None:
+        ioplot = io_plot(
+            df_in=df["in"].div(1000),
+            df_out=df["out"].div(1000),
+            inorder=in_order,
+            outorder=out_order,
+            smooth=True,
+            ax=ax[1],
+            cdict=cd,
+        )
+        ax[1].set_xlim(start, end)
+        ax[1] = set_datetime_ticks(
+            ax[1], idx, tick_distance=96, offset=12, date_format="%b-%d %H:%M"
+        )
+        ax[1].set_ylabel("Power [GW]")
+        ioplot["ax"] = shape_tuple_legend(reverse=False, up=0.8, **ioplot)
+        ax[1].set_xlim(start, end)
+    else:
+        x = start + 100
+        msg = (
+            " oemof_visio is missing. To show the plot use:\n pip install "
+            "https://github.com/oemof/oemof_visio/archive/master.zip"
+        )
+        ax[1].text(x, 0.5, msg, fontsize=12)
     plt.subplots_adjust(
         right=0.817, left=0.05, hspace=0.08, bottom=0.06, top=0.98
     )
-    home_dir = os.path.expanduser("~")
-    plt.savefig(os.path.join(home_dir, "mcp.eps"))
+    figure_path = os.path.join(BASEPATH, "figures")
+    os.makedirs(figure_path, exist_ok=True)
+    plt.savefig(os.path.join(figure_path, "emissions.{}".format(IMAGETYPE)))
     plt.show()
 
 
@@ -717,9 +822,27 @@ def main_deflex(path, name=None):
         main.model_scenario(scenario)
 
 
+def check_modules():
+    mm = set(MISSING_MODULES)
+    if len(mm) > 0:
+        print("\nMissing modules:")
+        pip = "\nUse: pip install"
+        for m in mm:
+            print(" * {0}".format(m))
+            pip += " {0}".format(m)
+        print(pip)
+
+    if io_plot is None:
+        print(
+            "\nTo see the balance plot you additionally need to install "
+            "oemof visio:\npip install "
+            "https://github.com/oemof/oemof_visio/archive/master.zip"
+        )
+
+
 if __name__ == "__main__":
     logger.define_logging()
-    my_path = "/path/to/store/example/files"
+    my_path = BASEPATH  # change the BASEPATH at the top of the file
     download_example_scenarios(my_path)
     # main_deflex(my_path, name="de02")
     my_mcp = fetch_mcp(my_path)
@@ -727,3 +850,4 @@ if __name__ == "__main__":
     compare_different_mcp(my_mcp)
     compare_emission_types(my_path, name="deflex_2014_de02")
     show_transmission(my_path, name="de21_transmission-losses")
+    check_modules()
