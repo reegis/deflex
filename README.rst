@@ -131,13 +131,14 @@ Basic usage
 Use example
 ===========
 
-1. Create a local directory (e.g. /home/user/my_example).
-2. Download the
+1. Run ``pip install deflex[example]``
+2. Create a local directory (e.g. /home/user/deflex_examples).
+3. Download the
    `example <https://raw.githubusercontent.com/reegis/deflex/master/examples/examples.py>`_
    to this new directory.
-3. Now execute the example file. The script will download some example
+4. Now execute the example file. The script will download some example
    scenarios with results and show some exemplary plots.
-4. A directory "deflex_examples" will be created in you home directory. Use
+5. A directory "deflex_examples" will be created in you home directory. Use
    ``print(os.path.expanduser("~"))`` to find out where your home directory is
    located. If you want to change it replace the base path in the example:
 
