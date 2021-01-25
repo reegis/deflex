@@ -15,8 +15,6 @@ import os
 import pandas as pd
 from oemof import solph
 
-from deflex import config as cfg
-
 
 class TestMain:
     @classmethod
@@ -24,7 +22,6 @@ class TestMain:
         cls.date_time_index = pd.date_range("1/1/2014", periods=30, freq="H")
         cls.es = solph.EnergySystem(timeindex=cls.date_time_index)
         cls.base_path = os.path.join(os.path.dirname(__file__), "data")
-        cfg.tmp_set("paths", "scenario", cls.base_path)
 
     @classmethod
     def teardown_class(cls):

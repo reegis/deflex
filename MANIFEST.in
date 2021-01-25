@@ -1,0 +1,21 @@
+graft docs
+graft src
+graft ci
+graft tests
+graft examples
+
+include AUTHORS.rst
+include CHANGELOG.rst
+include CONTRIBUTING.rst
+include LICENSE
+include README.rst
+include .coveragerc
+include *.yml
+include VERSION
+include pytest.ini
+
+include tox.ini .travis.yml
+
+recursive-include tests *.csv
+
+global-exclude *.py[cod] __pycache__/*
