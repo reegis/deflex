@@ -5,8 +5,9 @@ import os
 import warnings
 from collections import namedtuple
 from pprint import pprint
-from zipfile import ZipFile
 from time import sleep
+from zipfile import ZipFile
+
 import pandas as pd
 import pytz
 from oemof import solph

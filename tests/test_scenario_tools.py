@@ -59,7 +59,7 @@ def test_scenario_es_init():
     es2 = sc.initialise_energy_system()
     sc = scenario_tools.DeflexScenario(name="test", year=2013)
     es3 = sc.initialise_energy_system()
-    assert len(es1.timeindex)== 3
+    assert len(es1.timeindex) == 3
     assert len(es2.timeindex) == 8784
     assert len(es3.timeindex) == 8760
 

@@ -14,11 +14,11 @@ import os
 
 from nose.tools import eq_
 from nose.tools import with_setup
-from deflex.tools import download
 
 from deflex import config as cfg
 from deflex import geometries
 from deflex import scenario_builder
+from deflex.tools import download
 
 
 def setup_func():
