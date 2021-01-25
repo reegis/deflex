@@ -180,6 +180,8 @@ def model_multi_scenarios(scenarios, cpu_fraction=0.2, log_file=None):
     'Traceback (most recent call last)...
     >>> broken["result_file"]
     nan
+    >>> os.remove(my_log_file)
+    >>> os.remove(good["result_file"])
     """
     start = datetime.now()
     maximal_number_of_cores = int(
