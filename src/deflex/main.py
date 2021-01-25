@@ -266,7 +266,6 @@ def batch_model_scenario(path, named=True, file_type=None, ignore_errors=True):
     >>> r.result_file
     >>> r.trace  # doctest: +ELLIPSIS
     'Traceback (most recent call last):...
-    >>> print(result_file)
     >>> os.remove(result_file)
     """
     out = namedtuple(
