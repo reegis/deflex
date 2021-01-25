@@ -16,4 +16,6 @@ include pytest.ini
 
 include tox.ini .travis.yml
 
+recursive-include tests *.csv
+
 global-exclude *.py[cod] __pycache__/*

@@ -10,9 +10,11 @@ SPDX-License-Identifier: MIT
 __copyright__ = "Uwe Krien <krien@uni-bremen.de>"
 __license__ = "MIT"
 
-from nose.tools import eq_, assert_raises_regexp
-import shutil
 import os
+import shutil
+
+import pytest
+
 from deflex import scenario_tools
 
 
@@ -32,8 +34,8 @@ def test_scenario_building():
     sc.table_collection["volatile_series"].loc[5, ("DE01", "wind")] = float(
         "nan"
     )
-    with assert_raises_regexp(
-        ValueError, "Nan Values in the volatile_series table"
+    with pytest.raises(
+        ValueError, match=r"Nan Values in the volatile_series table"
     ):
         sc.check_table("volatile_series")
 
@@ -46,7 +48,7 @@ def test_node_dict():
         "Key 'g' already exists. Duplicate keys are not allowed in a "
         "node dictionary."
     )
-    with assert_raises_regexp(KeyError, msg):
+    with pytest.raises(KeyError, match=msg):
         nc["g"] = 7
 
 
@@ -57,9 +59,9 @@ def test_scenario_es_init():
     es2 = sc.initialise_energy_system()
     sc = scenario_tools.DeflexScenario(name="test", year=2013)
     es3 = sc.initialise_energy_system()
-    eq_(len(es1.timeindex), 3)
-    eq_(len(es2.timeindex), 8784)
-    eq_(len(es3.timeindex), 8760)
+    assert len(es1.timeindex) == 3
+    assert len(es2.timeindex) == 8784
+    assert len(es3.timeindex) == 8760
 
 
 def test_scenario_es_init_error():
@@ -68,7 +70,7 @@ def test_scenario_es_init_error():
         "You cannot create an EnergySystem with self.year=2012, of type"
         " <class 'str'"
     )
-    with assert_raises_regexp(TypeError, msg):
+    with pytest.raises(TypeError, match=msg):
         sc.initialise_es("2012")
 
 
@@ -104,12 +106,12 @@ def test_build_model_manually():
     sc.dump_es(dump_fn)
     sc.create_model()
     sc.solve(solver="cbc", with_duals=True)
-    eq_(sc.es.results["meta"]["scenario"]["name"], "my_test")
+    assert sc.es.results["meta"]["scenario"]["name"] == "my_test"
     sc.dump_es(dump_fn)
     sc.plot_nodes()
     sc.results_fn = dump_fn
     sc.restore_es(dump_fn)
-    eq_(sc.meta["scenario"]["year"], 2014)
+    assert sc.meta["scenario"]["year"] == 2014
     os.remove(dump_fn)
 
 
@@ -123,5 +125,5 @@ def test_corrupt_data():
         ("DE02", "solar"), inplace=True, axis=1
     )
     msg = "Missing time series for solar"
-    with assert_raises_regexp(ValueError, msg):
+    with pytest.raises(ValueError, match=msg):
         sc.table2es()

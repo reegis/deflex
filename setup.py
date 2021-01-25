@@ -25,7 +25,10 @@ setup(
     name="deflex",
     version="0.2.0b0",
     license="MIT",
-    description="deflex - flexible multi-regional energy system model forheat, power and mobility",
+    description=(
+        "deflex - flexible multi-regional energy system model for "
+        "heat, power and mobility"
+    ),
     long_description="%s\n%s"
     % (
         re.compile("^.. start-badges.*^.. end-badges", re.M | re.S).sub(
@@ -43,7 +46,8 @@ setup(
     include_package_data=True,
     zip_safe=False,
     classifiers=[
-        # complete classifier list: http://pypi.python.org/pypi?%3Aaction=list_classifiers
+        # complete classifier list:
+        # http://pypi.python.org/pypi?%3Aaction=list_classifiers
         "Development Status :: 5 - Production/Stable",
         "Intended Audience :: Developers",
         "License :: OSI Approved :: MIT License",
@@ -77,18 +81,28 @@ setup(
     python_requires=">=3.6",
     install_requires=[
         "oemof.solph > 0.4",
+        "oemof.network",
         "pandas > 1.0",
         "requests",
         "networkx > 2.0",
         "numpy >= 1.19.4",
-        # "rtree >= 0.9.4",
         "xlrd >= 1.2.0",
         "xlwt >= 1.3.0",
         "dill >= 0.3.3",
     ],
     extras_require={
         "dev": ["pytest", "sphinx", "sphinx_rtd_theme", "requests"],
-        "plot": ["pygraphviz"],
+        "plot": ["pygraphviz", "matplotlib"],
+        "test": ["pygeos==0.8", "geopandas"],
+        "geo": ["pygeos", "geopandas", "descartes"],
+        "example": [
+            "pygeos",
+            "geopandas",
+            "descartes",
+            "lmfit",
+            "matplotlib",
+            "requests",
+        ],
         "dummy": ["oemof"],
     },
     package_data={

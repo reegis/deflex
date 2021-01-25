@@ -49,7 +49,7 @@ def load_scenario(path, file_type=None):
 
     Examples
     --------
-    >>> fn = os.path.join(os.path.dirname(__file__), os.pardir,
+    >>> fn = os.path.join(os.path.dirname(__file__), os.pardir, os.pardir,
     ...                   "tests", "data", "deflex_test_scenario.xls")
     >>> s = load_scenario(fn, file_type="excel")
     >>> type(s)
@@ -107,8 +107,8 @@ def fetch_scenarios_from_dir(path, csv=True, xls=False):
 
     Examples
     --------
-    >>> test_data = os.path.join(os.path.dirname(__file__), os.pardir, "tests",
-    ...                          "data")
+    >>> test_data = os.path.join(os.path.dirname(__file__), os.pardir,
+    ...                          os.pardir, "tests", "data")
     >>> my_csv = fetch_scenarios_from_dir(test_data)
     >>> len(my_csv)
     2
@@ -155,12 +155,13 @@ def model_multi_scenarios(scenarios, cpu_fraction=0.2, log_file=None):
 
     Examples
     --------
-    >>> fn1 = os.path.join(os.path.dirname(__file__), os.pardir,
+    >>> fn1 = os.path.join(os.path.dirname(__file__), os.pardir, os.pardir,
     ...                    "tests", "data", "deflex_test_scenario.xls")
-    >>> fn2 = os.path.join(os.path.dirname(__file__), os.pardir,
+    >>> fn2 = os.path.join(os.path.dirname(__file__), os.pardir, os.pardir,
     ...                    "tests", "data", "deflex_test_scenario_broken.xls")
     >>> my_log_file = os.path.join(os.path.dirname(__file__), os.pardir,
-    ...                            "tests", "data", "my_log_file.csv")
+    ...                            os.pardir, "tests", "data",
+    ...                            "my_log_file.csv")
     >>> my_scenarios = [fn1, fn2]
     >>> model_multi_scenarios(my_scenarios, log_file=my_log_file)
     >>> my_log = pd.read_csv(my_log_file, index_col=[0])
@@ -179,6 +180,8 @@ def model_multi_scenarios(scenarios, cpu_fraction=0.2, log_file=None):
     'Traceback (most recent call last)...
     >>> broken["result_file"]
     nan
+    >>> os.remove(my_log_file)
+    >>> os.remove(good["result_file"])
     """
     start = datetime.now()
     maximal_number_of_cores = int(
@@ -248,7 +251,8 @@ def batch_model_scenario(path, named=True, file_type=None, ignore_errors=True):
     Welcome to the CBC MILP ...
     >>> r.name
     'deflex_test_scenario.xls'
-    >>> os.path.basename(r.result_file)
+    >>> result_file = r.result_file
+    >>> os.path.basename(result_file)
     'deflex_test_scenario_alpha.esys'
     >>> r.trace
     >>> r.return_value.year > 2019
@@ -262,6 +266,7 @@ def batch_model_scenario(path, named=True, file_type=None, ignore_errors=True):
     >>> r.result_file
     >>> r.trace  # doctest: +ELLIPSIS
     'Traceback (most recent call last):...
+    >>> os.remove(result_file)
     """
     out = namedtuple(
         "out", ["name", "return_value", "trace", "result_file", "start_time"]
@@ -280,7 +285,7 @@ def batch_model_scenario(path, named=True, file_type=None, ignore_errors=True):
             result_file = None
     else:
         result_file = model_scenario(path, file_type)
-        return_value = str(datetime.now())
+        return_value = datetime.now()
         trace = None
 
     if not named:
@@ -320,7 +325,7 @@ def model_scenario(
 
     Examples
     --------
-    >>> fn = os.path.join(os.path.dirname(__file__), os.pardir,
+    >>> fn = os.path.join(os.path.dirname(__file__), os.pardir, os.pardir,
     ...                   "tests", "data", "deflex_test_scenario.xls")
     >>> r = model_scenario(fn, file_type="excel")  # doctest: +ELLIPSIS
     Welcome to the CBC MILP ...
@@ -381,7 +386,7 @@ def model_scenario(
     return result_path
 
 
-def plot_scenario(path, file_type=None, graphml_file=None):
+def plot_scenario(path, file_type=None, image_file=None):
     """
     Plot the graph of an energy system. If no filename is given the plot will
     be shown on the screen but not writen to an image file
@@ -392,20 +397,20 @@ def plot_scenario(path, file_type=None, graphml_file=None):
         A valid deflex scenario file.
     file_type : str or None
         Type of the input data. Valid values are 'csv', 'excel', None. If the
-        input is non the path schould end on 'csv', '.xls', '.xlsx'.
-    graphml_file : str
+        input is none the path should end on 'csv', '.xls', '.xlsx' to allow
+        auto detection.
+    image_file : str
         The image file with a valid suffix (e.g. png, pdf, svg).
 
     Returns
     -------
-
+    TODO: Keep this test? It does not work without graphviz-dev and python3-dev
     Examples
     --------
-    >>> fn = os.path.join(os.path.dirname(__file__), os.pardir,
+    >>> fn = os.path.join(os.path.dirname(__file__), os.pardir, os.pardir,
     ...      "tests", "data", "deflex_test_scenario.xls")
-    >>> fn_img = os.path.join(os.path.dirname(__file__), os.pardir,
+    >>> fn_img = os.path.join(os.path.dirname(__file__), os.pardir, os.pardir,
     ...                       "tests", "data", "test_es.graphml")
-    >>> plot_scenario(fn, file_type="excel")
     >>> plot_scenario(fn, "excel", fn_img)
     >>> os.path.isfile(fn_img)
     True
@@ -416,10 +421,10 @@ def plot_scenario(path, file_type=None, graphml_file=None):
     sc = load_scenario(path, file_type)
     sc.table2es()
 
-    show = graphml_file is None
+    show = image_file is None
 
     sc.plot_nodes(
-        filename=graphml_file,
+        filename=image_file,
         show=show,
         remove_nodes_with_substrings=["bus_cs"],
     )

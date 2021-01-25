@@ -2,14 +2,6 @@ API
 ~~~
 
 
-deflex.basic_scenario module
-----------------------------
-
-.. automodule:: deflex.basic_scenario
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 deflex.demand module
 ----------------------------
 
@@ -46,14 +38,6 @@ deflex.transmission module
 --------------------------
 
 .. automodule:: deflex.transmission
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-deflex.powerplants module
--------------------------
-
-.. automodule:: deflex.powerplants
     :members:
     :undoc-members:
     :show-inheritance:

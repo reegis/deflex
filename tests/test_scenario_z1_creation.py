@@ -10,10 +10,10 @@ SPDX-License-Identifier: MIT
 __copyright__ = "Uwe Krien <krien@uni-bremen.de>"
 __license__ = "MIT"
 
-import os
-from unittest.mock import MagicMock
-import pandas as pd
-from deflex import scenario_builder, geometries, demand
+# import os
+# from unittest.mock import MagicMock
+# import pandas as pd
+# from deflex import scenario_builder, geometries, demand
 
 
 # def test_scenario_creation():

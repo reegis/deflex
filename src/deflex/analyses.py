@@ -46,8 +46,8 @@ def merit_order_from_scenario(path, with_downtime=True, with_co2_price=True):
     Examples
     --------
     >>> import os
-    >>> my_path = os.path.join(os.path.dirname(__file__), os.pardir, "tests",
-    ...                        "data", "deflex_2014_de02_test_csv")
+    >>> my_path = os.path.join(os.path.dirname(__file__), os.pardir, os.pardir,
+    ...                        "tests", "data", "deflex_2014_de02_test_csv")
     >>> mo1 = merit_order_from_scenario(my_path)
     >>> round(mo1.capacity_cum.iloc[-1], 4)
     71.9878

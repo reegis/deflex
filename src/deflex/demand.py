@@ -11,18 +11,20 @@ SPDX-License-Identifier: MIT
 __copyright__ = "Uwe Krien <krien@uni-bremen.de>"
 __license__ = "MIT"
 
-
+import logging
 # Python libraries
 import os
-import logging
+
+import pandas as pd
 
 # internal modules
 from deflex import config as cfg
+
 # from reegis import demand_heat
 
 
 def get_heat_profiles_deflex(
-    deflex_geo, year, time_index=None, weather_year=None, keep_unit=False
+    deflex_geo, year, time_index=None, keep_unit=False
 ):
     """
 
@@ -31,7 +33,6 @@ def get_heat_profiles_deflex(
     year
     deflex_geo
     time_index
-    weather_year
     keep_unit
 
     Returns
@@ -54,14 +55,15 @@ def get_heat_profiles_deflex(
         cfg.get("paths", "demand"),
         "heat_profiles_{year}_{map}".format(year=year, map=deflex_geo.name),
     )
-
-    demand_region = (
-        demand_heat.get_heat_profiles_by_region(
-            deflex_geo, year, to_csv=fn, weather_year=weather_year
-        )
-        .groupby(level=[0, 1], axis=1)
-        .sum()
-    )
+    print(fn)
+    demand_region = pd.DataFrame()
+    # demand_region = (
+    #     demand_heat.get_heat_profiles_by_region(
+    #         deflex_geo, year, to_csv=fn, weather_year=weather_year
+    #     )
+    #     .groupby(level=[0, 1], axis=1)
+    #     .sum()
+    # )
 
     # Decentralised demand is combined to a nation-wide demand if not part
     # of region_fuels.

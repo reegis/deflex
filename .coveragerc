@@ -1,3 +1,15 @@
+[paths]
+source = src
+
 [run]
-omit =
-    *snippets*
+branch = true
+source =
+    src
+    tests
+parallel = true
+omit = *snippets*
+
+[report]
+show_missing = true
+precision = 2
+omit = *migrations*

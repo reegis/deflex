@@ -14,10 +14,10 @@ __copyright__ = "Uwe Krien <krien@uni-bremen.de>"
 __license__ = "MIT"
 
 
+import math
 import os
 
 import pandas as pd
-import math
 
 from deflex import config as cfg
 from deflex import geometries
@@ -173,26 +173,25 @@ def get_electrical_transmission_renpass(both_directions=False):
     >>> int(translines.loc['DE17-DE11', 'capacity'])
     2506
     """
-    f_security = cfg.get("transmission", "security_factor")
-    current_max = cfg.get("transmission", "current_max")
+    # from [1] Wiese, Frauke (2015) (s. above)
+    security_factor = 0.7
+    current_max = 2720
 
     grid = pd.read_csv(
         os.path.join(
-            cfg.get("paths", "data_deflex"),
-            cfg.get("transmission", "transmission_renpass"),
-        )
-    )
+            os.path.dirname(__file__), "data", "static",
+            "renpass_transmission.csv"))
 
     grid["capacity_calc"] = (
         grid.circuits
         * current_max
         * grid.voltage
-        * f_security
+        * security_factor
         * math.sqrt(3)
         / 1000
     )
 
-    pwr_lines = pd.DataFrame(geometries.deflex_power_lines())
+    pwr_lines = pd.DataFrame(geometries.deflex_power_lines(rmap="de21"))
 
     for idx in pwr_lines.index:
         split = idx.split("-")

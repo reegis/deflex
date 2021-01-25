@@ -13,25 +13,30 @@ SPDX-License-Identifier: MIT
 __copyright__ = "Uwe Krien <krien@uni-bremen.de>"
 __license__ = "MIT"
 
-# Python libraries
-import os
-import sys
 import calendar
 import datetime
-import shutil
-import dill as pickle
-from collections import namedtuple
 import logging
+import math
+import os
+import shutil
+import sys
+from collections import namedtuple
 
-# External libraries
+import dill as pickle
 import networkx as nx
 import pandas as pd
-from matplotlib import pyplot as plt
-import math
-
-# oemof libraries
 from oemof import solph
-from oemof.network import graph
+
+try:
+    from matplotlib import pyplot as plt
+except ModuleNotFoundError:
+    plt = None
+
+try:
+    from oemof.network import graph
+except ModuleNotFoundError:
+    graph = None
+
 from deflex import config as cfg
 
 if sys.getrecursionlimit() < 3000:
@@ -310,14 +315,14 @@ class Scenario:
         --------
         >>> dfx = DeflexScenario()
         >>> info = dfx.scenario_info("cbc")
-        >>> info["default_values"]["downtime_factor"]
-        0.1
         >>> info["solver"]
         'cbc'
+        >>> type(info["datetime"].year)
+        <class 'int'>
         >>> info["year"]
         >>> dfx.year = 2017
-        >>> info_re = dfx.scenario_info("cbc")
-        >>> info_re["year"]
+        >>> info_new = dfx.scenario_info("cbc")
+        >>> info_new["year"]
         2017
 
         """
@@ -329,11 +334,6 @@ class Scenario:
             "scenario": self.table_collection,
             "default_values": {},
         }
-
-        # for key in cfg.get_dict("model"):
-        #     sc_info["default_values"][key.replace("default_", "")] = cfg.get(
-        #         "model", key
-        #     )
 
         return sc_info
 
@@ -558,7 +558,9 @@ def add_volatile_sources(table_collection, nodes):
                     label=vs_label,
                     outputs={
                         nodes[bus_label]: solph.Flow(
-                            fix=feedin, nominal_value=capacity, emission=0,
+                            fix=feedin,
+                            nominal_value=capacity,
+                            emission=0,
                         )
                     },
                 )
@@ -630,7 +632,8 @@ def add_decentralised_heating_systems(table_collection, nodes, extra_regions):
                 label=d_heat_demand_label,
                 inputs={
                     nodes[heat_bus_label]: solph.Flow(
-                        fix=dts[d_region, fuel], nominal_value=1,
+                        fix=dts[d_region, fuel],
+                        nominal_value=1,
                     )
                 },
             )
@@ -661,7 +664,8 @@ def add_electricity_demand(table_collection, nodes):
                 label=elec_demand_label,
                 inputs={
                     nodes[bus_label]: solph.Flow(
-                        fix=dts["electrical_load", region], nominal_value=1,
+                        fix=dts["electrical_load", region],
+                        nominal_value=1,
                     )
                 },
             )
@@ -843,9 +847,12 @@ def add_power_and_heat_plants(table_collection, nodes, extra_regions):
             if params.capacity > 0:
                 # if downtime_factor is in the parameters, use it
                 if hasattr(params, "downtime_factor"):
+                    # Todo: test exception
                     if math.isnan(params["downtime_factor"]):
-                        params.capacity *= 1 - 0
-                        # TODO: Raise Warning
+                        raise ValueError(
+                            "Downtime factor should not be Nan. Use zero but "
+                            "do not leave it empty."
+                        )
                     else:
                         params.capacity *= 1 - params["downtime_factor"]
 
@@ -860,8 +867,12 @@ def add_power_and_heat_plants(table_collection, nodes, extra_regions):
 
                 # if variable costs are defined add them to the outflow
                 if hasattr(params, "variable_costs"):
+                    # Todo: test exception
                     if math.isnan(params["variable_costs"]):
-                        vc = cfg.get("model", "default_variable_costs_pp")
+                        raise ValueError(
+                            "Variable costs should not be Nan. Use zero but "
+                            "do not leave it empty."
+                        )
                     else:
                         vc = params.variable_costs
                     outflow.variable_costs = solph.sequence(vc)
