@@ -10,88 +10,64 @@ SPDX-License-Identifier: MIT
 __copyright__ = "Uwe Krien <krien@uni-bremen.de>"
 __license__ = "MIT"
 
-from nose.tools import eq_, ok_, assert_raises_regexp
-from configparser import NoOptionError, NoSectionError
+
 import os
-from reegis import config
+from configparser import NoOptionError
+from configparser import NoSectionError
+
+import pytest
+
+from deflex import config
 
 
 def test_ini_filenames_basic():
-    files = config.get_ini_filenames(use_importer=False, local=False)
-    fn = sorted([f.split(os.sep)[-1] for f in files])
-    eq_(
-        fn,
-        [
-            "dictionary.ini",
-            "mobility.ini",
-            "reegis.ini",
-            "solar.ini",
-            "wind.ini",
-        ],
-    )
+    files = config.get_ini_filenames()
+    local_path = os.path.join(os.path.expanduser("~"), ".deflex")
+    fn = sorted([f.split(os.sep)[-1] for f in files if local_path not in f])
+    assert fn == ["deflex.ini"]
 
 
 def test_ini_filenames_local_path():
-    local_path = os.path.join(os.path.expanduser("~"), ".reegis")
+    local_path = os.path.join(os.path.expanduser("~"), ".deflex")
     os.makedirs(local_path, exist_ok=True)
-    new_file = os.path.join(local_path, "test_ini_file.ini")
+    new_file = os.path.join(local_path, "test_ini_file_34RTXX.ini")
     f = open(new_file, "w+")
     f.close()
     files = config.get_ini_filenames()
     fn = sorted([f.split(os.sep)[-1] for f in files])
-    ok_("test_ini_file.ini" in fn)
+    assert "test_ini_file_34RTXX.ini" in fn
     os.remove(new_file)
 
 
 def test_ini_filenames_additional_path():
-    additional_path = [os.path.join(os.path.dirname(__file__), "data")]
-    files = config.get_ini_filenames(
-        use_importer=False, local=False, additional_paths=additional_path
-    )
-    fn = sorted([f.split(os.sep)[-1] for f in files])
-    assert (
-        fn ==
-        [
-            "config_test.ini",
-            "dictionary.ini",
-            "mobility.ini",
-            "reegis.ini",
-            "solar.ini",
-            "wind.ini",
-        ]
-    )
+    additional_path = [
+        os.path.join(os.path.dirname(__file__), "data"),
+        os.path.join(os.path.dirname(__file__), os.pardir, "examples"),
+        "",
+    ]
+    files = config.get_ini_filenames(additional_paths=additional_path)
+    local_path = os.path.join(os.path.expanduser("~"), ".deflex")
+    fn = sorted([f.split(os.sep)[-1] for f in files if local_path not in f])
+    assert fn == ["config_test.ini", "deflex.ini", "plot.ini"]
 
 
 def test_init_basic():
     config.init()
-    fn = sorted([f.split(os.sep)[-1] for f in config.FILES])
-    eq_(
-        fn,
-        [
-            "dictionary.ini",
-            "mobility.ini",
-            "reegis.ini",
-            "solar.ini",
-            "wind.ini",
-        ],
+    local_path = os.path.join(os.path.expanduser("~"), ".deflex")
+    fn = sorted(
+        [f.split(os.sep)[-1] for f in config.FILES if local_path not in f]
     )
+    assert fn == ["deflex.ini"]
 
 
 def test_init_additional_path():
     additional_path = [os.path.join(os.path.dirname(__file__), "data")]
     config.init(paths=additional_path)
-    fn = sorted([f.split(os.sep)[-1] for f in config.FILES])
-    eq_(
-        fn,
-        [
-            "config_test.ini",
-            "dictionary.ini",
-            "mobility.ini",
-            "reegis.ini",
-            "solar.ini",
-            "wind.ini",
-        ],
+    local_path = os.path.join(os.path.expanduser("~"), ".deflex")
+    fn = sorted(
+        [f.split(os.sep)[-1] for f in config.FILES if local_path not in f]
     )
+    assert fn == ["config_test.ini", "deflex.ini"]
 
 
 def test_init_own_file_list():
@@ -100,8 +76,8 @@ def test_init_own_file_list():
     ]
     config.init(files=files)
     fn = sorted([f.split(os.sep)[-1] for f in config.FILES])
-    eq_(fn, ["config_test.ini"])
-    eq_(config.get("tester", "my_test"), "my_value")
+    assert fn == ["config_test.ini"]
+    assert config.get("tester", "my_test") == "my_value"
 
 
 def test_check_functions():
@@ -109,9 +85,9 @@ def test_check_functions():
         os.path.join(os.path.dirname(__file__), "data", "config_test.ini")
     ]
     config.init(files=files)
-    ok_(config.has_section("tester"))
-    ok_(not (config.has_section("teste")))
-    ok_(config.has_option("tester", "my_test"))
+    assert config.has_section("tester")
+    assert not (config.has_section("teste"))
+    assert config.has_option("tester", "my_test")
 
 
 def test_get_function():
@@ -120,13 +96,13 @@ def test_get_function():
         os.path.join(os.path.dirname(__file__), "data", "config_test.ini")
     ]
     config.init(files=files)
-    ok_(config.get("type_tester", "my_bool"))
-    ok_(isinstance(config.get("type_tester", "my_int"), int))
-    ok_(isinstance(config.get("type_tester", "my_float"), float))
-    ok_(isinstance(config.get("type_tester", "my_string"), str))
-    ok_(isinstance(config.get("type_tester", "my_None"), type(None)))
-    ok_(isinstance(config.get("type_tester", "my_list"), str))
-    eq_(int(config.get_list("type_tester", "my_list")[2]), 7)
+    assert config.get("type_tester", "my_bool")
+    assert isinstance(config.get("type_tester", "my_int"), int)
+    assert isinstance(config.get("type_tester", "my_float"), float)
+    assert isinstance(config.get("type_tester", "my_string"), str)
+    assert isinstance(config.get("type_tester", "my_None"), type(None))
+    assert isinstance(config.get("type_tester", "my_list"), str)
+    assert int(config.get_list("type_tester", "my_list")[2]) == 7
 
 
 def test_missing_value():
@@ -134,11 +110,11 @@ def test_missing_value():
         os.path.join(os.path.dirname(__file__), "data", "config_test.ini")
     ]
     config.init(files=files)
-    with assert_raises_regexp(
-        NoOptionError, "No option 'blubb' in section: 'type_tester'"
+    with pytest.raises(
+        NoOptionError, match="No option 'blubb' in section: 'type_tester'"
     ):
         config.get("type_tester", "blubb")
-    with assert_raises_regexp(NoSectionError, "No section: 'typetester'"):
+    with pytest.raises(NoSectionError, match="No section: 'typetester'"):
         config.get("typetester", "blubb")
 
 
@@ -149,15 +125,15 @@ def test_dicts():
     ]
     config.init(files=files)
     d = config.get_dict("type_tester")
-    eq_(d["my_list"], "4,6,7,9")
+    assert d["my_list"] == "4,6,7,9"
     d = config.get_dict_list("type_tester")
-    eq_(d["my_list"][1], "6")
-    eq_(d["my_None"][0], None)
-    eq_(d["my_int"][0], 5)
+    assert d["my_list"][1] == "6"
+    assert d["my_None"][0] is None
+    assert d["my_int"][0] == 5
     d = config.get_dict_list("type_tester", string=True)
-    eq_(d["my_list"][1], "6")
-    eq_(d["my_None"][0], "None")
-    eq_(d["my_int"][0], "5")
+    assert d["my_list"][1] == "6"
+    assert d["my_None"][0] == "None"
+    assert d["my_int"][0] == "5"
 
 
 def test_set_temp_value():
@@ -165,14 +141,14 @@ def test_set_temp_value():
         os.path.join(os.path.dirname(__file__), "data", "config_test.ini")
     ]
     config.init(files=files)
-    with assert_raises_regexp(
-        NoOptionError, "No option 'blubb' in section: 'type_tester'"
+    with pytest.raises(
+        NoOptionError, match="No option 'blubb' in section: 'type_tester'"
     ):
         config.get("type_tester", "blubb")
     config.tmp_set("type_tester", "blubb", "None")
-    eq_(config.get("type_tester", "blubb"), None)
+    assert config.get("type_tester", "blubb") is None
     config.tmp_set("type_tester", "blubb", "5.5")
-    eq_(config.get("type_tester", "blubb"), 5.5)
+    assert config.get("type_tester", "blubb") == 5.5
 
 
 def test_set_temp_without_init():

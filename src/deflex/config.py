@@ -73,6 +73,11 @@ def init(files=None, paths=None):
     _loaded = True
 
 
+def load():
+    if not _loaded:
+        init()
+
+
 def has_option(section, option):
     """Returns True if the given option exists in the given section."""
     return cfg.has_option(section, option)
@@ -85,8 +90,7 @@ def has_section(section):
 
 def get(section, key):
     """Returns the value of a given key in a given section."""
-    if not _loaded:
-        init()
+    load()
     try:
         return cfg.getint(section, key)
     except ValueError:
@@ -120,8 +124,7 @@ def get_list(section, parameter, sep=",", string=False):
 
 def get_dict(section):
     """Returns the values of a section as dictionary"""
-    if not _loaded:
-        init()
+    load()
     dc = {}
     for key, value in cfg.items(section):
         dc[key] = get(section, key)
@@ -133,8 +136,7 @@ def get_dict_list(section, string=False):
     Returns the values of a section as dictionary. The values will be
     interpreted as list.
     """
-    if not _loaded:
-        init()
+    load()
     dc = {}
     for key, value in cfg.items(section):
         dc[key] = get_list(section, key, string=string)
@@ -145,8 +147,7 @@ def tmp_set(section, key, value):
     """
     Set/Overwrite a value temporarily for the actual section.
     """
-    if not _loaded:
-        init()
+    load()
     return cfg.set(section, key, value)
 
 
