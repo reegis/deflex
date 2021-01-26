@@ -22,6 +22,3 @@ def download(fn, url):
         with open(fn, "wb") as fout:
             fout.write(req.content)
             logging.info("{1} downloaded from {0}.".format(url, fn))
-
-
-
