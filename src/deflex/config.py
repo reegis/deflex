@@ -149,7 +149,3 @@ def tmp_set(section, key, value):
     """
     load()
     return cfg.set(section, key, value)
-
-
-if __name__ == "__main__":
-    pass
