@@ -219,8 +219,8 @@ def create_basic_scenario(
     """
     configuration = json.dumps(cfg.get_dict("basic"), indent=4, sort_keys=True)
     logging.info(
-        "The following configuration is used to build the scenario:"
-        " %s", configuration
+        "The following configuration is used to build the scenario:" " %s",
+        configuration,
     )
     paths = namedtuple("paths", "xls, csv")
     if rmap is not None:
