@@ -14,7 +14,7 @@ deflex
       - |docs|
     * - tests
       - | |travis|  |coveralls| |codecov|
-        | |lgt_general| |lgt_alerts| |requires|
+        | |lgt_general| |lgt_alerts| |codacy| |requires|
     * - package
       - | |version| |wheel| |supported-versions| |supported-implementations|
         | |commits-since| |licence| |code_Style| |zenodo|
@@ -66,6 +66,9 @@ deflex
 
 .. |code_style| image:: https://img.shields.io/badge/automatic%20code%20style-black-blueviolet
     :target: https://black.readthedocs.io/en/stable/
+
+.. |codacy| image:: https://api.codacy.com/project/badge/Grade/b91ed03ffa8e407ab3e69a10c5115efa
+   :target: https://app.codacy.com/gh/reegis/deflex?utm_source=github.com&utm_medium=referral&utm_content=reegis/deflex&utm_campaign=Badge_Grade
 
 .. |licence| image:: https://img.shields.io/badge/licence-MIT-blue
     :target: https://spdx.org/licenses/MIT.html
