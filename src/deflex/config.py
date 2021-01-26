@@ -26,21 +26,14 @@ __all__ = [
 
 import configparser as cp
 import os
-import sys
 
 cfg = cp.RawConfigParser()
 cfg.optionxform = str
 _loaded = False
 FILES = []
 
-# Path of the package that imports this package.
-try:
-    IMPORTER = os.path.dirname(sys.modules["__main__"].__file__)
-except AttributeError:
-    IMPORTER = None
 
-
-def get_ini_filenames(additional_paths=None, use_importer=True, local=True):
+def get_ini_filenames(additional_paths=None):
     """Returns a list of ini files to use."""
     paths = []
     files = []
@@ -48,11 +41,9 @@ def get_ini_filenames(additional_paths=None, use_importer=True, local=True):
     paths.append(os.path.join(os.path.dirname(__file__)))
     if additional_paths is not None:
         paths.extend(additional_paths)
-    if IMPORTER is not None and use_importer is True:
-        paths.append(IMPORTER)
-    local_reegis = os.path.join(os.path.expanduser("~"), ".deflex")
-    if os.path.isdir(local_reegis) and local is True:
-        paths.append(local_reegis)
+    local_path = os.path.join(os.path.expanduser("~"), ".deflex")
+    if os.path.isdir(local_path):
+        paths.append(local_path)
 
     for p in paths:
         if p == "":  # Empty path string must be ignored
@@ -63,18 +54,18 @@ def get_ini_filenames(additional_paths=None, use_importer=True, local=True):
     return files
 
 
-def init(files=None, paths=None, **kwargs):
+def init(files=None, paths=None):
     """Read config file(s).
 
     Parameters
     ----------
     files : list or None
         Absolute path to config file (incl. filename)
-    paths : list
+    paths : list or None
         List of paths where it is searched for .ini files.
     """
     if files is None:
-        files = get_ini_filenames(paths, **kwargs)
+        files = get_ini_filenames(paths)
     global FILES
     FILES = files
     cfg.read(files, encoding="utf-8")
