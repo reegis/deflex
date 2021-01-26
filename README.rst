@@ -2,6 +2,10 @@
 deflex
 ========
 
+.. image:: https://api.codacy.com/project/badge/Grade/b91ed03ffa8e407ab3e69a10c5115efa
+   :alt: Codacy Badge
+   :target: https://app.codacy.com/gh/reegis/deflex?utm_source=github.com&utm_medium=referral&utm_content=reegis/deflex&utm_campaign=Badge_Grade
+
 **flexible multi-regional energy system model for heat, power and mobility**
 
 
