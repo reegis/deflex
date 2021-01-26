@@ -90,7 +90,7 @@ setup(
             "sphinx",
             "sphinx_rtd_theme",
             "requests",
-            "pygeos==0.8",
+            "pygeos",
             "geopandas",
         ],
         "plot": ["pygraphviz", "matplotlib"],
