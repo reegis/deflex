@@ -30,6 +30,7 @@ MOCK_MODULES = [
     "gtk",
     "gobject",
     "argparse",
+    "geopandas",
     "numpy",
     "pandas",
     "pvlib",
