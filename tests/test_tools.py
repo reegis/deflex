@@ -25,7 +25,7 @@ def test_download(caplog, monkeypatch):
     caplog.set_level(logging.DEBUG)
     assert not os.path.isfile(fn)
     tools.download(fn, url)
-    assert "Downloading" in caplog.text
+    assert ".tmp_test_x456FG6" in caplog.text
     assert os.path.isfile(fn)
     caplog.clear()
     tools.download(fn, url)
