@@ -752,9 +752,7 @@ def add_transmission_lines_between_electricity_nodes(table_collection, nodes):
                     },
                 )
             else:
-                logging.debug(
-                    "Line %s has no capacity limit", line_label
-                )
+                logging.debug("Line %s has no capacity limit", line_label)
                 nodes[line_label] = solph.Transformer(
                     label=line_label,
                     inputs={nodes[bus_label_in]: solph.Flow()},
