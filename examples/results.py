@@ -865,4 +865,3 @@ if __name__ == "__main__":
     )
     myes = load_my_es(fn=myfn)
     print(fetch_cost_emission(myes))
-    pass
