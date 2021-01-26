@@ -93,6 +93,16 @@ def merit_order_from_scenario(path, with_downtime=True, with_co2_price=True):
     return transf
 
 
+def get_line_inflows(result):
+    return [
+        x
+        for x in result["Main"].keys()
+        if isinstance(x[1], solph.Bus)
+        and x[1].label.tag == "electricity"
+        and not x[0].label.cat == "line"
+    ]
+
+
 def merit_order_from_results(result):
     """
     Create a merit order from deflex results.
@@ -117,13 +127,7 @@ def merit_order_from_results(result):
     #       the merit order cannot be calculated!!!!
 
     # Fetch all flows into any electricity bus
-    inflows = [
-        x
-        for x in result["Main"].keys()
-        if isinstance(x[1], solph.Bus)
-        and x[1].label.tag == "electricity"
-        and not x[0].label.cat == "line"
-    ]
+    inflows = get_line_inflows(result)
 
     # Create a DataFrame for the costs
     levels = [[], [], [], []]
@@ -279,13 +283,7 @@ def get_flow_results(result):
     pandas.DataFrame
 
     """
-    inflows = [
-        x
-        for x in result["Main"].keys()
-        if isinstance(x[1], solph.Bus)
-        and x[1].label.tag == "electricity"
-        and not x[0].label.cat == "line"
-    ]
+    inflows = get_line_inflows(result)
     levels = [[], [], [], []]
     seq = pd.DataFrame(
         columns=pd.MultiIndex(levels=levels, codes=levels),

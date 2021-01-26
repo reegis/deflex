@@ -160,10 +160,10 @@ def clean_time_series(table_collection):
             if dts[reg].get(load) is not None:
                 if dts[reg, load].sum() == 0:
                     msg = (
-                        "Removing {0} time series of region {1} because"
-                        "sum of time series is {2}"
+                        "Removing %s time series of region %s because"
+                        "sum of time series is %s"
                     )
-                    logging.debug(msg.format(load, reg, dts[reg, load].sum()))
+                    logging.debug(msg, load, reg, dts[reg, load].sum())
                     del dts[reg, load]
 
     regions = list(vts.columns.get_level_values(0).unique())
@@ -175,10 +175,10 @@ def clean_time_series(table_collection):
                 if vts.get(reg) is not None:
                     if vts[reg].get(t) is not None:
                         msg = (
-                            "Removing {0} time series of region {1} "
-                            "because installed capacity is {2}"
+                            "Removing %s time series of region %s "
+                            "because installed capacity is %s"
                         )
-                        logging.debug(msg.format(t, reg, vs.loc[reg].get(t)))
+                        logging.debug(msg, t, reg, vs.loc[reg].get(t))
                         vts.drop((reg, t), axis=1, inplace=True)
 
     return table_collection
@@ -220,7 +220,7 @@ def create_basic_scenario(
     configuration = json.dumps(cfg.get_dict("basic"), indent=4, sort_keys=True)
     logging.info(
         "The following configuration is used to build the scenario:"
-        " {0}".format(configuration)
+        " %s", configuration
     )
     paths = namedtuple("paths", "xls, csv")
     if rmap is not None:

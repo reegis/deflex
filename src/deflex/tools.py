@@ -16,9 +16,9 @@ import requests
 def download(fn, url):
     if not os.path.isfile(fn):
         logging.info(
-            "Downloading '%s' from %s" % (os.path.basename(fn), url)
+            "Downloading '%s' from %s", os.path.basename(fn), url
         )
         req = requests.get(url)
         with open(fn, "wb") as fout:
             fout.write(req.content)
-            logging.info("%s downloaded from %s." % (url, fn))
+            logging.info("%s downloaded from %s.", url, fn)
