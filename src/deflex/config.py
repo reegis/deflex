@@ -127,7 +127,7 @@ def get_dict(section):
     load()
     dc = {}
     for key, value in cfg.items(section):
-        dc[key] = get(section, key)
+        dc[key] = value
     return dc
 
 
