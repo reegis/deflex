@@ -13,11 +13,11 @@ deflex
     * - docs
       - |docs|
     * - tests
-      - | |travis| |requires| |lgt_general|
-        | |lgt_alerts| |coveralls| |codecov|
+      - | |travis|  |coveralls| |codecov|
+        | |lgt_general| |lgt_alerts| |requires|
     * - package
-      - | |version| |wheel| |supported-versions|
-        | |supported-implementations| |commits-since| |licence| |code_Style| |zenodo|
+      - | |version| |wheel| |supported-versions| |supported-implementations|
+        | |commits-since| |licence| |code_Style| |zenodo|
 .. |docs| image:: https://readthedocs.org/projects/deflex/badge/?style=flat
     :target: https://readthedocs.org/projects/deflex
     :alt: Documentation Status
