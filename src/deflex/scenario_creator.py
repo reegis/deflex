@@ -1,6 +1,5 @@
 # --> kein reegis nur scenario_builder und den als optional requirement
 
-# --> Nutze try except beim Import von scenariobuilder mit INst. hinweis
 
 # -*- coding: utf-8 -*-
 
@@ -10,8 +9,7 @@ SPDX-FileCopyrightText: 2016-2019 Uwe Krien <krien@uni-bremen.de>
 
 SPDX-License-Identifier: MIT
 """
-__copyright__ = "Uwe Krien <krien@uni-bremen.de>"
-__license__ = "MIT"
+
 
 import json
 import logging
@@ -21,19 +19,15 @@ from collections import namedtuple
 import pandas as pd
 
 from deflex import config as cfg
-from deflex import geometries
 from deflex import scenario_tools
 from deflex import transmission
 
-try:
-    from scenario_builder import commodity
-    from scenario_builder import demand
-    from scenario_builder import feedin
-    from scenario_builder import mobility
-    from scenario_builder import powerplants
-    from scenario_builder import storages
-except ModuleNotFoundError:
-    scenario_builer = None
+from scenario_builder import commodity
+from scenario_builder import demand
+from scenario_builder import feedin
+from scenario_builder import mobility
+from scenario_builder import powerplants
+from scenario_builder import storages
 
 
 def scenario_decentralised_heat():
@@ -186,11 +180,9 @@ def clean_time_series(table_collection):
 
 def create_basic_scenario(
     year,
-    rmap=None,
-    path=None,
-    csv_dir=None,
-    xls_name=None,
-    only_out=None,
+    regions,
+    csv_path=None,
+    excel_path=None,
 ):
     """
     Create a basic scenario for a given year and region-set.
@@ -198,11 +190,18 @@ def create_basic_scenario(
     Parameters
     ----------
     year : int
-    rmap : str
-    path : str
-    csv_dir : str
-    xls_name : str
-    only_out : str
+        Year of the scenario.
+    regions : geopandas.geoDataFrame
+        Set of region polygons.
+    csv_path : str
+        A directory to store the scenario as csv collection. If None no csv
+        collection will be created. Either csv_path or excel_path must not be
+        'None'.
+    excel_path : str
+        A file to store the scenario as an excel map. If None no excel file
+        will be created. Both suffixes 'xls' or 'xlsx' are possible. The excel
+        format can be used in most spreadsheet programs such as LibreOffice or
+        Gnumeric. Either csv_path or excel_path must not be 'None'.
 
     Returns
     -------
@@ -210,23 +209,19 @@ def create_basic_scenario(
 
     Examples
     --------
-    >>> year=2014  # doctest: +SKIP
-    >>> my_rmap="de21"  # doctest: +SKIP
-    >>> p=create_basic_scenario(year, rmap=my_rmap)  # doctest: +SKIP
+    >>> my_year=2014  # doctest: +SKIP
+    >>> my_map="de21"  # doctest: +SKIP
+    >>> p=create_basic_scenario(my_year, regions=my_map)  # doctest: +SKIP
     >>> print("Xls path: {0}".format(p.xls))  # doctest: +SKIP
     >>> print("Csv path: {0}".format(p.csv))  # doctest: +SKIP
 
     """
-    configuration = json.dumps(cfg.get_dict("basic"), indent=4, sort_keys=True)
+    configuration = json.dumps(cfg.get_dict("creator"), indent=4, sort_keys=True)
     logging.info(
         "The following configuration is used to build the scenario:" " %s",
         configuration,
     )
     paths = namedtuple("paths", "xls, csv")
-    if rmap is not None:
-        cfg.tmp_set("init", "map", rmap)
-
-    regions = geometries.deflex_regions(rmap=cfg.get("init", "map"))
 
     table_collection = create_scenario(regions, year, cfg.get("init", "map"))
 
@@ -237,32 +232,19 @@ def create_basic_scenario(
         table_collection=table_collection, name=name, year=year
     )
 
-    if path is None:
-        path = os.path.join(cfg.get("paths", "scenario"), "deflex", str(year))
-
-    if only_out == "xls":
-        csv_path = None
-    elif csv_dir is None:
-        csv_path = os.path.join(path, "{0}_csv".format(name))
-    else:
-        csv_path = os.path.join(path, csv_dir)
-
-    if only_out == "csv":
-        xls_path = None
-    elif xls_name is None:
-        xls_path = os.path.join(path, name + ".xls")
-    else:
-        xls_path = os.path.join(path, xls_name)
-    fullpath = paths(xls=xls_path, csv=csv_path)
-    if not only_out == "xls":
+    if csv_path is not None:
         os.makedirs(csv_path, exist_ok=True)
-        sce.to_csv(fullpath.csv)
-    if not only_out == "csv":
-        os.makedirs(path, exist_ok=True)
-        sce.to_excel(fullpath.xls)
+        sce.to_csv(csv_path)
+    if excel_path is not None:
+        os.makedirs(os.path.dirname(excel_path), exist_ok=True)
+        sce.to_excel(excel_path)
 
-    return fullpath
+    return paths(xls=excel_path, csv=csv_path)
 
 
 if __name__ == "__main__":
-    pass
+    from deflex.geometries import deflex_regions
+    from oemof.tools import logger
+    logger.define_logging(screen_level=logging.DEBUG)
+    de02 = deflex_regions(rmap="de02", rtype="polygons")
+    create_basic_scenario(2014, de02, excel_path="/home/uwe/de02_test.xls")

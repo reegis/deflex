@@ -10,8 +10,6 @@ SPDX-FileCopyrightText: 2016-2019 Uwe Krien <krien@uni-bremen.de>
 
 SPDX-License-Identifier: MIT
 """
-__copyright__ = "Uwe Krien <krien@uni-bremen.de>"
-__license__ = "MIT"
 
 
 import math

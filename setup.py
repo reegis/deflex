@@ -94,6 +94,7 @@ setup(
             "geopandas",
         ],
         "plot": ["pygraphviz", "matplotlib"],
+        "scenario": ["scenario_builder"],
         "geo": ["pygeos", "geopandas", "descartes"],
         "example": [
             "pygeos",
