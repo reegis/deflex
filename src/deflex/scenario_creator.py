@@ -30,20 +30,23 @@ from scenario_builder import powerplants
 from scenario_builder import storages
 
 
-def scenario_decentralised_heat():
+def scenario_default_decentralised_heat():
     """
 
     Returns
     -------
 
     """
-    filename = os.path.join(
-        cfg.get("paths", "data_deflex"), cfg.get("heating", "table")
-    )
-    return pd.read_csv(filename, header=[0, 1], index_col=[0]).transpose()
+    df = pd.DataFrame(columns=pd.MultiIndex(levels=[[], []], codes=[[], []]))
+    fuels = ["hard coal", "lignite", "natural gas", "oil", "other", "re"]
+    for fuel in fuels:
+        df.loc["efficiency", ("DE_demand", fuel)] = 0.85
+        df.loc["source", ("DE_demand", fuel)] = fuel
+
+    return df
 
 
-def create_scenario(regions, year, name, weather_year=None):
+def create_scenario(regions, year, name, lines, opsd_version=None, weather_year=None):
     """
 
     Parameters
@@ -51,12 +54,17 @@ def create_scenario(regions, year, name, weather_year=None):
     regions
     year
     name
+    lines
     weather_year
 
     Returns
     -------
 
     """
+    if opsd_version is None:
+        if year < 2015:
+            opsd_version = "2019-06-05"
+
     table_collection = {}
 
     logging.info("BASIC SCENARIO - STORAGES")
@@ -70,21 +78,24 @@ def create_scenario(regions, year, name, weather_year=None):
     )
 
     logging.info("BASIC SCENARIO - TRANSMISSION")
+    print("******************", name)
     if len(regions) > 1:
         table_collection["transmission"] = transmission.scenario_transmission(
-            table_collection, regions, name
+            table_collection, regions, name, lines
         )
     else:
         logging.info("...skipped")
 
     logging.info("BASIC SCENARIO - CHP PLANTS")
-    if cfg.get("basic", "heat"):
+    if cfg.get("creator", "heat"):
         table_collection = powerplants.scenario_chp(
             table_collection, regions, year, name, weather_year=weather_year
         )
     logging.info("BASIC SCENARIO - DECENTRALISED HEAT")
-    if cfg.get("basic", "heat"):
-        table_collection["decentralised_heat"] = scenario_decentralised_heat()
+    if cfg.get("creator", "heat"):
+        table_collection[
+            "decentralised_heat"
+        ] = scenario_default_decentralised_heat()
     else:
         logging.info("...skipped")
 
@@ -98,7 +109,11 @@ def create_scenario(regions, year, name, weather_year=None):
 
     logging.info("BASIC SCENARIO - DEMAND")
     table_collection["demand_series"] = demand.scenario_demand(
-        regions, year, name, weather_year=weather_year
+        regions,
+        year,
+        name,
+        opsd_version=opsd_version,
+        weather_year=weather_year,
     )
 
     logging.info("BASIC SCENARIO - MOBILITY")
@@ -111,17 +126,17 @@ def create_scenario(regions, year, name, weather_year=None):
 
 def meta_data(year):
     meta = pd.DataFrame.from_dict(
-        cfg.get_dict("basic"), orient="index", columns=["value"]
+        cfg.get_dict("creator"), orient="index", columns=["value"]
     )
     meta.loc["year"] = year
     meta.loc["map"] = cfg.get("init", "map")
 
     # Create name
-    if cfg.get("basic", "heat"):
+    if cfg.get("creator", "heat"):
         heat = "heat"
     else:
         heat = "no-heat"
-    if cfg.get("basic", "group_transformer"):
+    if cfg.get("creator", "group_transformer"):
         merit = "no-reg-merit"
     else:
         merit = "reg-merit"
@@ -180,7 +195,9 @@ def clean_time_series(table_collection):
 
 def create_basic_scenario(
     year,
+    name,
     regions,
+    transmission=None,
     csv_path=None,
     excel_path=None,
 ):
@@ -191,8 +208,12 @@ def create_basic_scenario(
     ----------
     year : int
         Year of the scenario.
+    name : str
+        Name of the scenario
     regions : geopandas.geoDataFrame
         Set of region polygons.
+    transmission : geopandas.geoDataFrame
+        Set of transmission lines.
     csv_path : str
         A directory to store the scenario as csv collection. If None no csv
         collection will be created. Either csv_path or excel_path must not be
@@ -216,14 +237,16 @@ def create_basic_scenario(
     >>> print("Csv path: {0}".format(p.csv))  # doctest: +SKIP
 
     """
-    configuration = json.dumps(cfg.get_dict("creator"), indent=4, sort_keys=True)
+    configuration = json.dumps(
+        cfg.get_dict("creator"), indent=4, sort_keys=True
+    )
     logging.info(
         "The following configuration is used to build the scenario:" " %s",
         configuration,
     )
     paths = namedtuple("paths", "xls, csv")
 
-    table_collection = create_scenario(regions, year, cfg.get("init", "map"))
+    table_collection = create_scenario(regions, year, name, transmission)
 
     table_collection = clean_time_series(table_collection)
 
@@ -243,8 +266,12 @@ def create_basic_scenario(
 
 
 if __name__ == "__main__":
-    from deflex.geometries import deflex_regions
+    from deflex.geometries import deflex_regions, deflex_power_lines
     from oemof.tools import logger
+
     logger.define_logging(screen_level=logging.DEBUG)
     de02 = deflex_regions(rmap="de02", rtype="polygons")
-    create_basic_scenario(2014, de02, excel_path="/home/uwe/de02_test.xls")
+    de02_lines = deflex_power_lines("de02")
+    create_basic_scenario(
+        2013, "myde02", de02, de02_lines, excel_path="/home/uwe/de02_test.xls"
+    )

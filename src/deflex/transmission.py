@@ -54,9 +54,7 @@ def add_reverse_direction(df):
     return pd.DataFrame(pd.concat([values, df]))
 
 
-def get_electrical_transmission_default(
-    rmap=None, power_lines=None, both_directions=False
-):
+def get_electrical_transmission_default(power_lines, both_directions=False):
     """
     Creates a default set of transmission capacities, distance and efficiency.
     The map of the lines must exist in the geometries directory. The default
@@ -65,8 +63,6 @@ def get_electrical_transmission_default(
 
     Parameters
     ----------
-    rmap : str
-        The name of the transmission line map, that is part of deflex.
     power_lines : iterable[str]
         A list of names of transmission lines. All name must contain a dash
         between the id of the regions (FromRegion-ToRegion).
@@ -105,9 +101,6 @@ def get_electrical_transmission_default(
     inf
 
     """
-    if power_lines is None:
-        power_lines = pd.DataFrame(geometries.deflex_power_lines(rmap)).index
-
     trans = pd.DataFrame()
     for length in power_lines:
         trans.loc[length, "capacity"] = float("inf")
@@ -218,7 +211,7 @@ def get_electrical_transmission_renpass(both_directions=False):
     return df
 
 
-def scenario_transmission(table_collection, regions, name):
+def scenario_transmission(table_collection, regions, name, lines):
     """Get power plants for the scenario year
 
     Examples
@@ -268,7 +261,7 @@ def scenario_transmission(table_collection, regions, name):
             )
             raise NotImplementedError(msg)
     else:
-        elec_trans = get_electrical_transmission_default()
+        elec_trans = get_electrical_transmission_default(power_lines=lines)
 
     # Set transmission capacity of offshore power lines to installed capacity
     # Multiply the installed capacity with 1.1 to get a buffer of 10%.
