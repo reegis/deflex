@@ -56,7 +56,7 @@ def scenario_default_decentralised_heat():
 
 
 def create_scenario(
-    regions, year, name, lines, opsd_version=None, weather_year=None
+    regions, year, name, lines, opsd_version=None
 ):
     """
 
@@ -105,7 +105,7 @@ def create_scenario(
     logging.info("BASIC SCENARIO - CHP PLANTS")
     if cfg.get("creator", "heat"):
         chp = powerplants.scenario_chp(
-            table_collection, regions, year, name, weather_year=weather_year
+            table_collection, regions, year, name
         )
         table_collection["chp_hp"] = chp["chp_hp"]
         table_collection["transformer"] = chp["transformer"]
@@ -125,7 +125,7 @@ def create_scenario(
         "commodity_source"
     ] = commodity.scenario_commodity_sources(year)
     table_collection["volatile_series"] = feedin.scenario_feedin(
-        regions, year, name, weather_year=weather_year
+        regions, year, name
     )
 
     logging.info("BASIC SCENARIO - DEMAND")
@@ -134,7 +134,6 @@ def create_scenario(
         year,
         name,
         opsd_version=opsd_version,
-        weather_year=weather_year,
     )
 
     logging.info("BASIC SCENARIO - MOBILITY")
