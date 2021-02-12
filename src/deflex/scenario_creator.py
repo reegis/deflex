@@ -55,9 +55,7 @@ def scenario_default_decentralised_heat():
     return df
 
 
-def create_scenario(
-    regions, year, name, lines, opsd_version=None
-):
+def create_scenario(regions, year, name, lines, opsd_version=None):
     """
 
     Parameters
@@ -104,9 +102,7 @@ def create_scenario(
 
     logging.info("BASIC SCENARIO - CHP PLANTS")
     if cfg.get("creator", "heat"):
-        chp = powerplants.scenario_chp(
-            table_collection, regions, year, name
-        )
+        chp = powerplants.scenario_chp(table_collection, regions, year, name)
         table_collection["chp_hp"] = chp["chp_hp"]
         table_collection["transformer"] = chp["transformer"]
     else:
