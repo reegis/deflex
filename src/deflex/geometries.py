@@ -104,7 +104,7 @@ def deflex_power_lines(rmap=None, rtype="lines"):
     lines = gpd.read_file(name)
     lines.set_index("name", inplace=True)
     lines.name = rmap
-    
+
     return lines
 
 
