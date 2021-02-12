@@ -81,7 +81,7 @@ setup(
         "networkx > 2.0",
         "numpy >= 1.19.4",
         "xlrd >= 1.2.0",
-        "xlwt >= 1.3.0",
+        "openpyxl >= 1.3.0",
         "dill >= 0.3.3",
     ],
     extras_require={
@@ -92,6 +92,11 @@ setup(
             "requests",
             "pygeos",
             "geopandas",
+            (
+                "scenario_builder@https://github.com/reegis/scenario_builder"
+                "/archive/add_deflex_scenario_builder.zip"
+            ),
+            "reegis@https://github.com/reegis/reegis/archive/master.zip",
         ],
         "plot": ["pygraphviz", "matplotlib"],
         "scenario": ["scenario_builder"],
