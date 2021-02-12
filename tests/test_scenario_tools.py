@@ -82,12 +82,11 @@ def test_excel_reader():
     sc.load_excel(xls_fn)
     sc.table2es()
     csv_path = os.path.join(
-        os.path.expanduser("~"), "deflex_2014_de02_nose_test_csv"
+        os.path.expanduser("~"), "deflex_2013_de02_tmp_test_csv"
     )
     sc.to_csv(csv_path)
-    sc.to_csv(csv_path)
     xls_fn = os.path.join(
-        os.path.expanduser("~"), "deflex_2014_de02_nose_test.xls"
+        os.path.expanduser("~"), "deflex_2014_de02_tmp_test.xlsx"
     )
     sc.to_excel(xls_fn)
     shutil.rmtree(csv_path)

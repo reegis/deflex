@@ -17,17 +17,18 @@ import os
 from collections import namedtuple
 
 import pandas as pd
-
-from deflex import config as cfg
-from deflex import scenario_tools
-from deflex import transmission
-
+from reegis import config
 from scenario_builder import commodity
 from scenario_builder import demand
 from scenario_builder import feedin
 from scenario_builder import mobility
 from scenario_builder import powerplants
 from scenario_builder import storages
+
+from deflex import __file__ as dfile
+from deflex import config as cfg
+from deflex import scenario_tools
+from deflex import transmission
 
 
 def scenario_default_decentralised_heat():
@@ -37,16 +38,26 @@ def scenario_default_decentralised_heat():
     -------
 
     """
-    df = pd.DataFrame(columns=pd.MultiIndex(levels=[[], []], codes=[[], []]))
-    fuels = ["hard coal", "lignite", "natural gas", "oil", "other", "re"]
-    for fuel in fuels:
-        df.loc["efficiency", ("DE_demand", fuel)] = 0.85
-        df.loc["source", ("DE_demand", fuel)] = fuel
+    df = pd.DataFrame(index=pd.MultiIndex(levels=[[], []], codes=[[], []]))
+    fuels = [
+        ("gas", "natural gas"),
+        ("hard coal", "hard_coal"),
+        ("lignite", "lignite"),
+        ("natural gas", "natural gas"),
+        ("oil", "oil"),
+        ("other", "other"),
+        ("re", "other"),
+    ]
+    for fuel, source in fuels:
+        df.loc[("DE_demand", fuel), "efficiency"] = 0.85
+        df.loc[("DE_demand", fuel), "source"] = source
 
     return df
 
 
-def create_scenario(regions, year, name, lines, opsd_version=None, weather_year=None):
+def create_scenario(
+    regions, year, name, lines, opsd_version=None, weather_year=None
+):
     """
 
     Parameters
@@ -54,7 +65,10 @@ def create_scenario(regions, year, name, lines, opsd_version=None, weather_year=
     regions
     year
     name
-    lines
+    lines : iterable[str]
+        A list of names of transmission lines. All name must contain a dash
+        between the id of the regions (FromRegion-ToRegion).
+    opsd_version
     weather_year
 
     Returns
@@ -73,24 +87,31 @@ def create_scenario(regions, year, name, lines, opsd_version=None, weather_year=
     )
 
     logging.info("BASIC SCENARIO - POWER PLANTS")
-    table_collection = powerplants.scenario_powerplants(
+    pp = powerplants.scenario_powerplants(
         table_collection, regions, year, name
     )
+    table_collection["volatile_source"] = pp["volatile_source"]
+    table_collection["transformer"] = pp["transformer"]
 
     logging.info("BASIC SCENARIO - TRANSMISSION")
     print("******************", name)
     if len(regions) > 1:
         table_collection["transmission"] = transmission.scenario_transmission(
-            table_collection, regions, name, lines
+            regions, name, lines
         )
     else:
         logging.info("...skipped")
 
     logging.info("BASIC SCENARIO - CHP PLANTS")
     if cfg.get("creator", "heat"):
-        table_collection = powerplants.scenario_chp(
+        chp = powerplants.scenario_chp(
             table_collection, regions, year, name, weather_year=weather_year
         )
+        table_collection["chp_hp"] = chp["chp_hp"]
+        table_collection["transformer"] = chp["transformer"]
+    else:
+        logging.info("...skipped")
+
     logging.info("BASIC SCENARIO - DECENTRALISED HEAT")
     if cfg.get("creator", "heat"):
         table_collection[
@@ -129,7 +150,7 @@ def meta_data(year):
         cfg.get_dict("creator"), orient="index", columns=["value"]
     )
     meta.loc["year"] = year
-    meta.loc["map"] = cfg.get("init", "map")
+    meta.loc["map"] = cfg.get("creator", "map")
 
     # Create name
     if cfg.get("creator", "heat"):
@@ -141,7 +162,7 @@ def meta_data(year):
     else:
         merit = "reg-merit"
     meta.loc["name"] = "{0}_{1}_{2}_{3}_{4}".format(
-        "deflex", year, cfg.get("init", "map"), heat, merit
+        "deflex", year, cfg.get("creator", "map"), heat, merit
     )
     return meta
 
@@ -193,11 +214,11 @@ def clean_time_series(table_collection):
     return table_collection
 
 
-def create_basic_scenario(
-    year,
+def create_basic_reegis_scenario(
     name,
     regions,
-    transmission=None,
+    parameter,
+    lines=None,
     csv_path=None,
     excel_path=None,
 ):
@@ -206,14 +227,31 @@ def create_basic_scenario(
 
     Parameters
     ----------
-    year : int
-        Year of the scenario.
     name : str
         Name of the scenario
     regions : geopandas.geoDataFrame
         Set of region polygons.
-    transmission : geopandas.geoDataFrame
+    lines : geopandas.geoDataFrame
         Set of transmission lines.
+    parameter : dict
+        Parameter set for the creation process. Some parameters will have a
+        default value. See the list of default values:
+            * copperplate: True
+            * default_transmission_efficiency: 0.9
+            * costs_source: "ewi"
+            * downtime_bioenergy: 0.1
+            * group_transformer: False
+            * heat: False
+            * limited_transformer: "bioenergy",
+            * local_fuels: "district heating",
+            * map: "de02",
+            * mobility_other: "petrol",
+            * round: 1,
+            * separate_heat_regions: "de22",
+            * use_CO2_costs: False,
+            * use_downtime_factor: True,
+            * use_variable_costs: False,
+            * year: 2014
     csv_path : str
         A directory to store the scenario as csv collection. If None no csv
         collection will be created. Either csv_path or excel_path must not be
@@ -228,25 +266,59 @@ def create_basic_scenario(
     -------
     namedtuple : Path
 
+    Notes
+    -----
+
+    }
+
     Examples
     --------
     >>> my_year=2014  # doctest: +SKIP
     >>> my_map="de21"  # doctest: +SKIP
-    >>> p=create_basic_scenario(my_year, regions=my_map)  # doctest: +SKIP
+    >>> p=create_basic_reegis_scenario(my_year, regions=my_map
+    ...     )  # doctest: +SKIP
     >>> print("Xls path: {0}".format(p.xls))  # doctest: +SKIP
     >>> print("Csv path: {0}".format(p.csv))  # doctest: +SKIP
 
     """
+    default = {
+        "costs_source": "ewi",
+        "downtime_bioenergy": 0.1,
+        "limited_transformer": "bioenergy",
+        "local_fuels": "district heating",
+        "map": "de02",
+        "mobility_other": "petrol",
+        "round": 1,
+        "separate_heat_regions": "de22",
+        "copperplate": True,
+        "default_transmission_efficiency": 0.9,
+        "group_transformer": False,
+        "heat": False,
+        "use_CO2_costs": False,
+        "use_downtime_factor": True,
+        "use_variable_costs": False,
+        "year": 2014,
+    }
+
+    default.update(parameter)
+    config.init(paths=[os.path.dirname(dfile)])
+    for option, value in default.items():
+        cfg.tmp_set("creator", option, str(value))
+        config.tmp_set("creator", option, str(value))
+
+    year = cfg.get("creator", "year")
+
     configuration = json.dumps(
         cfg.get_dict("creator"), indent=4, sort_keys=True
     )
+
     logging.info(
         "The following configuration is used to build the scenario:" " %s",
         configuration,
     )
     paths = namedtuple("paths", "xls, csv")
 
-    table_collection = create_scenario(regions, year, name, transmission)
+    table_collection = create_scenario(regions, year, name, lines)
 
     table_collection = clean_time_series(table_collection)
 
@@ -266,12 +338,33 @@ def create_basic_scenario(
 
 
 if __name__ == "__main__":
-    from deflex.geometries import deflex_regions, deflex_power_lines
     from oemof.tools import logger
 
+    from deflex.geometries import deflex_power_lines
+    from deflex.geometries import deflex_regions
+
     logger.define_logging(screen_level=logging.DEBUG)
-    de02 = deflex_regions(rmap="de02", rtype="polygons")
-    de02_lines = deflex_power_lines("de02")
-    create_basic_scenario(
-        2013, "myde02", de02, de02_lines, excel_path="/home/uwe/de02_test.xls"
+
+    my_parameter = {
+        "year": 2014,
+        "map": "de02",
+        "copperplate": True,
+        "heat": True,
+    }
+
+    my_name = "deflex"
+    for k, v in my_parameter.items():
+        my_name += "_" + str(k) + "-" + str(v)
+
+    polygons = deflex_regions(rmap=my_parameter["map"], rtype="polygons")
+    my_lines = deflex_power_lines(my_parameter["map"]).index
+    path = "/home/uwe/deflex_examples/creator/{0}{1}".format(my_name, "{0}")
+
+    create_basic_reegis_scenario(
+        name=my_name,
+        regions=polygons,
+        lines=my_lines,
+        parameter=my_parameter,
+        excel_path=path.format(".xlsx"),
+        csv_path=path.format("_csv"),
     )
