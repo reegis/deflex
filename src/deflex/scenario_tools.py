@@ -20,6 +20,7 @@ import math
 import os
 import shutil
 import sys
+import warnings
 from collections import namedtuple
 
 import dill as pickle
@@ -149,6 +150,15 @@ class Scenario:
     def to_excel(self, filename):
         """Dump scenario into an excel-file."""
         # create path if it does not exist
+        suffix = filename.split(".")[-1]
+        if suffix == "xls":
+            filename = filename.replace(".xls", ".xlsx")
+            msg = (
+                "\nThe 'xls' format is no longer supported. An 'xlsx' file "
+                "will be written instead. \nUse an 'xlsx' file to avoid "
+                "this warning. The following file will be written:\n{0}"
+            )
+            warnings.warn(msg.format(filename), FutureWarning)
         os.makedirs(os.path.dirname(filename), exist_ok=True)
         writer = pd.ExcelWriter(filename)
         for name, df in sorted(self.table_collection.items()):
