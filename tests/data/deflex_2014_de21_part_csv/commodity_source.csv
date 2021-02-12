@@ -1,0 +1,9 @@
+,fuel,costs,emission,co2_price
+DE,nuclear,5.5,0.0,15.92
+DE,lignite,3.1,404.0,15.92
+DE,hard coal,12.53,337.0,15.92
+DE,natural gas,23.27,201.0,15.92
+DE,oil,33.22383292383289,280.0,15.92
+DE,waste,0.0,0.0,15.92
+DE,other,32.92383292383292,214.0,15.92
+DE,bioenergy,20.0,7.2,15.92

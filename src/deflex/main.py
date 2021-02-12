@@ -111,7 +111,7 @@ def fetch_scenarios_from_dir(path, csv=True, xls=False):
     ...                          os.pardir, "tests", "data")
     >>> my_csv = fetch_scenarios_from_dir(test_data)
     >>> len(my_csv)
-    2
+    3
     >>> os.path.basename(my_csv[0])
     'deflex_2014_de02_test_csv'
     >>> my_excel = fetch_scenarios_from_dir(test_data, csv=False, xls=True)
@@ -120,7 +120,7 @@ def fetch_scenarios_from_dir(path, csv=True, xls=False):
     >>> os.path.basename(my_excel[0])
     'deflex_2013_de02_test.xls'
     >>> len(fetch_scenarios_from_dir(test_data, xls=True))
-    5
+    6
 
     """
     xls_scenarios = []

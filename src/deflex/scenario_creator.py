@@ -67,7 +67,6 @@ def create_scenario(regions, year, name, lines, opsd_version=None):
         A list of names of transmission lines. All name must contain a dash
         between the id of the regions (FromRegion-ToRegion).
     opsd_version
-    weather_year
 
     Returns
     -------
@@ -268,13 +267,35 @@ def create_basic_reegis_scenario(
 
     Examples
     --------
-    >>> my_year=2014  # doctest: +SKIP
-    >>> my_map="de21"  # doctest: +SKIP
-    >>> p=create_basic_reegis_scenario(my_year, regions=my_map
-    ...     )  # doctest: +SKIP
-    >>> print("Xls path: {0}".format(p.xls))  # doctest: +SKIP
-    >>> print("Csv path: {0}".format(p.csv))  # doctest: +SKIP
-
+    >>> from oemof.tools import logger
+    >>> from deflex.geometries import deflex_power_lines
+    >>> from deflex.geometries import deflex_regions
+    >>>
+    >>> logger.define_logging(screen_level=logging.DEBUG)  # doctest: +SKIP
+    >>>
+    >>> my_parameter = {
+    ...     "year": 2014,
+    ...     "map": "de02",
+    ...     "copperplate": True,
+    ...     "heat": True,
+    ... }
+    >>>
+    >>> my_name = "deflex"
+    >>> for k, v in my_parameter.items():
+    ...     my_name += "_" + str(k) + "-" + str(v)
+    >>>
+    >>> polygons = deflex_regions(rmap=my_parameter["map"], rtype="polygons")
+    >>> my_lines = deflex_power_lines(my_parameter["map"]).index
+    >>> path = "/home/uwe/deflex_examples/creator/{0}{1}".format(my_name, "{0}")
+    >>>
+    >>> create_basic_reegis_scenario(
+    ...     name=my_name,
+    ...     regions=polygons,
+    ...     lines=my_lines,
+    ...     parameter=my_parameter,
+    ...     excel_path=path.format(".xlsx"),
+    ...     csv_path=path.format("_csv"),
+    ... )  # doctest: +SKIP
     """
     default = {
         "costs_source": "ewi",
@@ -330,36 +351,3 @@ def create_basic_reegis_scenario(
         sce.to_excel(excel_path)
 
     return paths(xls=excel_path, csv=csv_path)
-
-
-if __name__ == "__main__":
-    from oemof.tools import logger
-
-    from deflex.geometries import deflex_power_lines
-    from deflex.geometries import deflex_regions
-
-    logger.define_logging(screen_level=logging.DEBUG)
-
-    my_parameter = {
-        "year": 2014,
-        "map": "de02",
-        "copperplate": True,
-        "heat": True,
-    }
-
-    my_name = "deflex"
-    for k, v in my_parameter.items():
-        my_name += "_" + str(k) + "-" + str(v)
-
-    polygons = deflex_regions(rmap=my_parameter["map"], rtype="polygons")
-    my_lines = deflex_power_lines(my_parameter["map"]).index
-    path = "/home/uwe/deflex_examples/creator/{0}{1}".format(my_name, "{0}")
-
-    create_basic_reegis_scenario(
-        name=my_name,
-        regions=polygons,
-        lines=my_lines,
-        parameter=my_parameter,
-        excel_path=path.format(".xlsx"),
-        csv_path=path.format("_csv"),
-    )
