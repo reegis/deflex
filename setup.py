@@ -92,6 +92,7 @@ setup(
             "requests",
             "pygeos",
             "geopandas",
+            "coveralls",
             (
                 "scenario_builder@https://github.com/reegis/scenario_builder"
                 "/archive/add_deflex_scenario_builder.zip"
