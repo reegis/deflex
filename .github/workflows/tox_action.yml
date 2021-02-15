@@ -25,8 +25,3 @@ jobs:
         pip install tox tox-gh-actions
     - name: Test with tox
       run: tox
-    - name: Coveralls
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: |
-        coveralls
