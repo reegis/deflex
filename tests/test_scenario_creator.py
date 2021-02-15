@@ -135,7 +135,8 @@ class TestScenarioCreationFull:
 
     def test_transformer(self):
         pd.testing.assert_frame_equal(
-            self.tables["transformer"], self.table_collection["transformer"],
+            self.tables["transformer"],
+            self.table_collection["transformer"],
         )
 
     def test_meta(self):
@@ -161,12 +162,14 @@ class TestScenarioCreationFull:
             self.table_collection["mobility"]["efficiency"]
         )
         pd.testing.assert_frame_equal(
-            self.tables["mobility"], self.table_collection["mobility"],
+            self.tables["mobility"],
+            self.table_collection["mobility"],
         )
 
     def test_chp_hp(self):
         pd.testing.assert_frame_equal(
-            self.tables["chp_hp"], self.table_collection["chp_hp"],
+            self.tables["chp_hp"],
+            self.table_collection["chp_hp"],
         )
 
     def test_decentralised_heat(self):
@@ -293,7 +296,8 @@ class TestScenarioCreationPart:
 
     def test_transformer(self):
         pd.testing.assert_frame_equal(
-            self.tables["transformer"], self.table_collection["transformer"],
+            self.tables["transformer"],
+            self.table_collection["transformer"],
         )
 
     def test_meta(self):
@@ -319,7 +323,8 @@ class TestScenarioCreationPart:
             self.table_collection["mobility"]["efficiency"]
         )
         pd.testing.assert_frame_equal(
-            self.tables["mobility"], self.table_collection["mobility"],
+            self.tables["mobility"],
+            self.table_collection["mobility"],
         )
 
     def test_volatile_series(self):
