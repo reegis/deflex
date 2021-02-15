@@ -97,12 +97,6 @@ class TestScenarioCreationFull:
         cls.table_collection = scenario_creator.create_scenario(
             polygons, 2014, name, lines
         )
-        for key in cls.tables.keys():
-            print(key)
-            fn = "/home/uwe/{0}_{1}.csv".format(key, "{0}")
-            print(fn)
-            cls.tables[key].to_csv(fn.format("a"))
-            cls.table_collection[key].to_csv(fn.format("b"))
 
     @classmethod
     def teardown_class(cls):
