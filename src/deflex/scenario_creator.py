@@ -286,7 +286,7 @@ def create_basic_reegis_scenario(
     >>>
     >>> polygons = deflex_regions(rmap=my_parameter["map"], rtype="polygons")
     >>> my_lines = deflex_power_lines(my_parameter["map"]).index
-    >>> path = "/home/uwe/deflex_examples/creator/{0}{1}".format(my_name, "{0}")
+    >>> path = "/my/path/creator/{0}{1}".format(my_name, "{0}")
     >>>
     >>> create_basic_reegis_scenario(
     ...     name=my_name,

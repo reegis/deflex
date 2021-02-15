@@ -251,13 +251,6 @@ class TestScenarioCreationPart:
         sc_new.load_csv(path.format("_csv"))
         cls.table_collection = sc_new.table_collection
 
-        for key in cls.tables.keys():
-            print(key)
-            fn = "/home/uwe/{0}_{1}.csv".format(key, "{0}")
-            print(fn)
-            cls.tables[key].to_csv(fn.format("a"))
-            cls.table_collection[key].to_csv(fn.format("b"))
-
     @classmethod
     def teardown_class(cls):
         base = os.path.join(os.path.expanduser("~"), ".tmp_x345234dE_deflex")
