@@ -10,8 +10,6 @@ SPDX-FileCopyrightText: 2016-2019 Uwe Krien <krien@uni-bremen.de>
 
 SPDX-License-Identifier: MIT
 """
-__copyright__ = "Uwe Krien <krien@uni-bremen.de>"
-__license__ = "MIT"
 
 
 import math
@@ -56,9 +54,7 @@ def add_reverse_direction(df):
     return pd.DataFrame(pd.concat([values, df]))
 
 
-def get_electrical_transmission_default(
-    rmap=None, power_lines=None, both_directions=False
-):
+def get_electrical_transmission_default(power_lines, both_directions=False):
     """
     Creates a default set of transmission capacities, distance and efficiency.
     The map of the lines must exist in the geometries directory. The default
@@ -67,8 +63,6 @@ def get_electrical_transmission_default(
 
     Parameters
     ----------
-    rmap : str
-        The name of the transmission line map, that is part of deflex.
     power_lines : iterable[str]
         A list of names of transmission lines. All name must contain a dash
         between the id of the regions (FromRegion-ToRegion).
@@ -82,7 +76,8 @@ def get_electrical_transmission_default(
 
     Examples
     --------
-    >>> df=get_electrical_transmission_default('de21')
+    >>> de21 = geometries.deflex_power_lines("de21")
+    >>> df=get_electrical_transmission_default(de21.index)
     >>> df.loc['DE10-DE12', 'capacity']
     inf
     >>> df.loc['DE10-DE12', 'distance']
@@ -91,11 +86,14 @@ def get_electrical_transmission_default(
     1.0
     >>> len(df)
     39
-    >>> len(get_electrical_transmission_default('de22'))
+    >>> de22 = geometries.deflex_power_lines("de22")
+    >>> len(get_electrical_transmission_default(de22.index))
     40
-    >>> len(get_electrical_transmission_default('de17'))
+    >>> de17_idx = geometries.deflex_power_lines("de17").index
+    >>> len(get_electrical_transmission_default(de17_idx))
     31
-    >>> len(get_electrical_transmission_default('de02'))
+    >>> len(get_electrical_transmission_default(
+    ...     geometries.deflex_power_lines("de02").index))
     1
     >>> my_lines=['reg1-reg2', 'reg2-reg3']
     >>> df=get_electrical_transmission_default(power_lines=my_lines)
@@ -107,10 +105,8 @@ def get_electrical_transmission_default(
     inf
 
     """
-    if power_lines is None:
-        power_lines = pd.DataFrame(geometries.deflex_power_lines(rmap)).index
-
     trans = pd.DataFrame()
+
     for length in power_lines:
         trans.loc[length, "capacity"] = float("inf")
         trans.loc[length, "distance"] = float("nan")
@@ -179,8 +175,12 @@ def get_electrical_transmission_renpass(both_directions=False):
 
     grid = pd.read_csv(
         os.path.join(
-            os.path.dirname(__file__), "data", "static",
-            "renpass_transmission.csv"))
+            os.path.dirname(__file__),
+            "data",
+            "static",
+            "renpass_transmission.csv",
+        )
+    )
 
     grid["capacity_calc"] = (
         grid.circuits
@@ -220,7 +220,7 @@ def get_electrical_transmission_renpass(both_directions=False):
     return df
 
 
-def scenario_transmission(table_collection, regions, name):
+def scenario_transmission(regions, name, lines):
     """Get power plants for the scenario year
 
     Examples
@@ -238,10 +238,10 @@ def scenario_transmission(table_collection, regions, name):
     >>> float(lines.loc["DE07-DE05", ("electrical", "efficiency")]
     ...     )  # doctest: +SKIP
     0.9
-    >>> cfg.tmp_set("basic", "copperplate", "True")
+    >>> cfg.tmp_set("creator", "copperplate", "True")
     >>> lines=scenario_transmission(pp, regions, "de21"
     ...     )  # doctest: +SKIP
-    >>> cfg.tmp_set("basic", "copperplate", "False")
+    >>> cfg.tmp_set("creator", "copperplate", "False")
     >>> float(lines.loc["DE07-DE05", ("electrical", "capacity")]
     ...     )  # doctest: +SKIP
     inf
@@ -252,15 +252,16 @@ def scenario_transmission(table_collection, regions, name):
     ...     )  # doctest: +SKIP
     1.0
     """
-    vs = table_collection["volatile_source"]
 
     # This should be done automatic e.g. if representative point outside the
     # landmass polygon.
     offshore_regions = geometries.divide_off_and_onshore(regions).offshore
 
-    if name in ["de21", "de22"] and not cfg.get("basic", "copperplate"):
+    if name in ["de21", "de22"] and not cfg.get("creator", "copperplate"):
         elec_trans = get_electrical_transmission_renpass()
-        general_efficiency = cfg.get("transmission", "general_efficiency")
+        general_efficiency = cfg.get(
+            "creator", "default_transmission_efficiency"
+        )
         if general_efficiency is not None:
             elec_trans["efficiency"] = general_efficiency
         else:
@@ -270,22 +271,22 @@ def scenario_transmission(table_collection, regions, name):
             )
             raise NotImplementedError(msg)
     else:
-        elec_trans = get_electrical_transmission_default()
+        elec_trans = get_electrical_transmission_default(power_lines=lines)
 
     # Set transmission capacity of offshore power lines to installed capacity
     # Multiply the installed capacity with 1.1 to get a buffer of 10%.
     for offreg in offshore_regions:
-        elec_trans.loc[elec_trans.index.str.contains(offreg), "capacity"] = (
-            vs.loc[offreg].sum().sum() * 1.1
-        )
+        elec_trans.loc[
+            elec_trans.index.str.contains(offreg), "capacity"
+        ] = "inf"
 
     elec_trans = pd.concat(
         [elec_trans], axis=1, keys=["electrical"]
     ).sort_index(1)
-    if cfg.get("init", "map") == "de22" and not cfg.get(
-        "basic", "copperplate"
+    if cfg.get("creator", "map") == "de22" and not cfg.get(
+        "creator", "copperplate"
     ):
-        elec_trans.loc["DE22-DE01", ("electrical", "efficiency")] = 0.9999
+        elec_trans.loc["DE22-DE01", ("electrical", "efficiency")] = 0.999999
         elec_trans.loc["DE22-DE01", ("electrical", "capacity")] = 9999999
     return elec_trans
 

@@ -20,6 +20,7 @@ import math
 import os
 import shutil
 import sys
+import warnings
 from collections import namedtuple
 
 import dill as pickle
@@ -149,12 +150,21 @@ class Scenario:
     def to_excel(self, filename):
         """Dump scenario into an excel-file."""
         # create path if it does not exist
+        suffix = filename.split(".")[-1]
+        if suffix == "xls":
+            filename = filename.replace(".xls", ".xlsx")
+            msg = (
+                "\nThe 'xls' format is no longer supported. An 'xlsx' file "
+                "will be written instead. \nUse an 'xlsx' file to avoid "
+                "this warning. The following file will be written:\n{0}"
+            )
+            warnings.warn(msg.format(filename), FutureWarning)
         os.makedirs(os.path.dirname(filename), exist_ok=True)
         writer = pd.ExcelWriter(filename)
         for name, df in sorted(self.table_collection.items()):
             df.to_excel(writer, name)
         writer.save()
-        logging.info("Scenario saved as excel file to {0}".format(filename))
+        logging.info("Scenario saved as excel file to %s", filename)
 
     def to_csv(self, path):
         """Dump scenario into a csv-collection."""
@@ -166,7 +176,7 @@ class Scenario:
             name = name.replace(" ", "_") + ".csv"
             filename = os.path.join(path, name)
             df.to_csv(filename)
-        logging.info("Scenario saved as csv-collection to {0}".format(path))
+        logging.info("Scenario saved as csv-collection to %s", path)
 
     def check_table(self, table_name):
         """
@@ -196,7 +206,6 @@ class Scenario:
         dict
 
         """
-        pass
 
     def initialise_es(self, year=None):
         """
@@ -274,7 +283,7 @@ class Scenario:
         pickle.dump(self.meta, f)
         pickle.dump(self.es.__dict__, f)
         f.close()
-        logging.info("Results dumped to {0}.".format(filename))
+        logging.info("Results dumped to %s.", filename)
 
     def restore_es(self, filename=None):
         """
@@ -298,7 +307,7 @@ class Scenario:
         self.es.__dict__ = pickle.load(f)
         f.close()
         self.results = self.es.results["main"]
-        logging.info("Results restored from {0}.".format(filename))
+        logging.info("Results restored from %s.", filename)
 
     def scenario_info(self, solver_name):
         """
@@ -351,7 +360,7 @@ class Scenario:
         -------
 
         """
-        logging.info("Optimising using {0}.".format(solver))
+        logging.info("Optimising using %s.", solver)
 
         if with_duals:
             self.model.receive_duals()
@@ -360,7 +369,7 @@ class Scenario:
             filename = os.path.join(
                 solph.helpers.extend_basic_path("lp_files"), "reegis.lp"
             )
-            logging.info("Store lp-file in {0}.".format(filename))
+            logging.info("Store lp-file in %s.", filename)
             self.model.write(
                 filename, io_options={"symbolic_solver_labels": True}
             )
@@ -738,9 +747,7 @@ def add_transmission_lines_between_electricity_nodes(table_collection, nodes):
                 )
             if values.capacity != float("inf"):
                 logging.debug(
-                    "Line {0} has a capacity of {1}".format(
-                        line_label, values.capacity
-                    )
+                    "Line %s has a capacity of %s", line_label, values.capacity
                 )
                 nodes[line_label] = solph.Transformer(
                     label=line_label,
@@ -755,9 +762,7 @@ def add_transmission_lines_between_electricity_nodes(table_collection, nodes):
                     },
                 )
             else:
-                logging.debug(
-                    "Line {0} has no capacity limit".format(line_label)
-                )
+                logging.debug("Line %s has no capacity limit", line_label)
                 nodes[line_label] = solph.Transformer(
                     label=line_label,
                     inputs={nodes[bus_label_in]: solph.Flow()},

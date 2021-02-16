@@ -111,7 +111,7 @@ def fetch_scenarios_from_dir(path, csv=True, xls=False):
     ...                          os.pardir, "tests", "data")
     >>> my_csv = fetch_scenarios_from_dir(test_data)
     >>> len(my_csv)
-    2
+    3
     >>> os.path.basename(my_csv[0])
     'deflex_2014_de02_test_csv'
     >>> my_excel = fetch_scenarios_from_dir(test_data, csv=False, xls=True)
@@ -120,7 +120,7 @@ def fetch_scenarios_from_dir(path, csv=True, xls=False):
     >>> os.path.basename(my_excel[0])
     'deflex_2013_de02_test.xls'
     >>> len(fetch_scenarios_from_dir(test_data, xls=True))
-    5
+    6
 
     """
     xls_scenarios = []
@@ -383,13 +383,14 @@ def model_scenario(
     sc.dump_es(result_path)
 
     logging.info(
-        "%s - deflex scenario finished without errors: %s"
-        % (stopwatch(), sc.name)
+        "%s - deflex scenario finished without errors: %s",
+        stopwatch(),
+        sc.name,
     )
     return result_path
 
 
-def plot_scenario(path, file_type=None, image_file=None):
+def plot_scenario(path, file_type=None, graphml_file=None):
     """
     Plot the graph of an energy system. If no filename is given the plot will
     be shown on the screen but not writen to an image file
@@ -402,8 +403,8 @@ def plot_scenario(path, file_type=None, image_file=None):
         Type of the input data. Valid values are 'csv', 'excel', None. If the
         input is none the path should end on 'csv', '.xls', '.xlsx' to allow
         auto detection.
-    image_file : str
-        The image file with a valid suffix (e.g. png, pdf, svg).
+    graphml_file : str
+        The path of the graphml.
 
     Returns
     -------
@@ -424,10 +425,10 @@ def plot_scenario(path, file_type=None, image_file=None):
     sc = load_scenario(path, file_type)
     sc.table2es()
 
-    show = image_file is None
+    show = graphml_file is None
 
     sc.plot_nodes(
-        filename=image_file,
+        filename=graphml_file,
         show=show,
         remove_nodes_with_substrings=["bus_cs"],
     )

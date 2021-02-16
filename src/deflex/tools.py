@@ -10,23 +10,13 @@ SPDX-License-Identifier: MIT
 import logging
 import os
 
-try:
-    import requests
-except ModuleNotFoundError:
-    requests = None
+import requests
 
 
 def download(fn, url):
-    if requests is None:
-        raise ModuleNotFoundError(
-            "You cannot download a file without >requests< installed."
-            "Use:\n pip install requests"
-        )
     if not os.path.isfile(fn):
-        logging.info(
-            "Downloading '{0}' from {1}".format(os.path.basename(fn), url)
-        )
+        logging.info("Downloading '%s' from %s", os.path.basename(fn), url)
         req = requests.get(url)
         with open(fn, "wb") as fout:
             fout.write(req.content)
-            logging.info("{1} downloaded from {0}.".format(url, fn))
+            logging.info("%s downloaded from %s.", url, fn)

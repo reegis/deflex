@@ -1,0 +1,18 @@
+,value
+costs_source,ewi
+downtime_bioenergy,0.1
+limited_transformer,bioenergy
+local_fuels,district heating
+map,de21
+mobility_other,petrol
+round,1
+separate_heat_regions,de22
+copperplate,False
+default_transmission_efficiency,0.9
+group_transformer,True
+heat,False
+use_CO2_costs,True
+use_downtime_factor,True
+use_variable_costs,True
+year,2014
+name,deflex_2014_de21_no-heat_no-reg-merit

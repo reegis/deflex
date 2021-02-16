@@ -2,14 +2,6 @@ Reference
 =========
 
 
-deflex.demand module
-----------------------------
-
-.. automodule:: deflex.demand
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 deflex.geometries module
 ------------------------
 
