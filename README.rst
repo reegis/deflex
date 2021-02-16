@@ -13,7 +13,7 @@ something
       - **flexible multi-regional energy system model for heat, power and mobility**
 
 
-.. |logo| image:: https://github.com/reegis/deflex/blob/master/docs/images/logo_deflex_1680px.png
+.. |logo| image:: https://github.com/reegis/deflex/blob/master/docs/images/logo_deflex_small.png
     :target: https://github.com/reegis/deflex
 
 
