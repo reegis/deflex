@@ -13,7 +13,7 @@ deflex
     * - docs
       - |docs|
     * - tests
-      - | |travis|  |coveralls| |codecov|
+      - | |workflow_pytests| |workflow_checks| |coveralls| |packaging|
         | |lgt_general| |lgt_alerts| |codacy| |requires|
     * - package
       - | |version| |wheel| |supported-versions| |supported-implementations|
@@ -22,9 +22,14 @@ deflex
     :target: https://readthedocs.org/projects/deflex
     :alt: Documentation Status
 
-.. |travis| image:: https://api.travis-ci.com/reegis/deflex.svg?branch=master
-    :alt: Travis-CI Build Status
-    :target: https://travis-ci.com/reegis/deflex
+.. |workflow_pytests| image:: https://github.com/reegis/deflex/workflows/tox%20pytests/badge.svg?branch=master
+    :target: https://github.com/reegis/deflex/actions
+
+.. |workflow_checks| image:: https://github.com/reegis/deflex/workflows/tox%20checks/badge.svg?branch=master
+    :target: https://github.com/reegis/deflex/actions
+
+.. |packaging| image:: https://github.com/reegis/deflex/workflows/packaging/badge.svg?branch=master
+    :target: https://github.com/reegis/deflex/actions
 
 .. |requires| image:: https://requires.io/github/reegis/deflex/requirements.svg?branch=master
     :alt: Requirements Status
@@ -33,10 +38,6 @@ deflex
 .. |coveralls| image:: https://coveralls.io/repos/reegis/deflex/badge.svg?branch=master&service=github
     :alt: Coverage Status
     :target: https://coveralls.io/r/reegis/deflex
-
-.. |codecov| image:: https://codecov.io/gh/reegis/deflex/branch/master/graphs/badge.svg?branch=master
-    :alt: Coverage Status
-    :target: https://codecov.io/github/reegis/deflex
 
 .. |version| image:: https://img.shields.io/pypi/v/deflex.svg
     :alt: PyPI Package latest release

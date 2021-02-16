@@ -1,4 +1,4 @@
-name: Tox Pytests
+name: tox pytests
 
 on:
   push:
