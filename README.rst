@@ -35,9 +35,9 @@ deflex
     :alt: Requirements Status
     :target: https://requires.io/github/reegis/deflex/requirements/?branch=master
 
-.. |coveralls| image:: https://coveralls.io/repos/reegis/deflex/badge.svg?branch=master&service=github
+.. |coveralls| image:: https://coveralls.io/repos/github/reegis/deflex/badge.svg?branch=master
     :alt: Coverage Status
-    :target: https://coveralls.io/r/reegis/deflex
+    :target: https://coveralls.io/github/reegis/deflex?branch=master
 
 .. |version| image:: https://img.shields.io/pypi/v/deflex.svg
     :alt: PyPI Package latest release
