@@ -1,9 +1,16 @@
 | |workflow_pytests| |workflow_checks| |coveralls| |docs| |packaging|
 | |lgt_general| |lgt_alerts| |codacy| |requires|
 
+\
+
 
 | |version| |wheel| |supported-versions| |supported-implementations|
 | |commits-since| |licence| |code_Style| |zenodo|
+
+
+------------------------------------------------
+
+\
 
 .. image:: https://github.com/reegis/deflex/blob/master/docs/images/logo_deflex_rund.png
     :target: https://github.com/reegis/deflex
