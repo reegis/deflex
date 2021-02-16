@@ -1,16 +1,18 @@
-
-
-.. image:: https://github.com/reegis/deflex/blob/master/docs/images/logo_deflex_rund.png
-    :target: https://github.com/reegis/deflex
-
-**Flexible multi-regional energy system model for heat, power and mobility**
-
 | |workflow_pytests| |workflow_checks| |coveralls| |docs| |packaging|
 | |lgt_general| |lgt_alerts| |codacy| |requires|
 
 
 | |version| |wheel| |supported-versions| |supported-implementations|
 | |commits-since| |licence| |code_Style| |zenodo|
+
+.. image:: https://github.com/reegis/deflex/blob/master/docs/images/logo_deflex_rund.png
+    :target: https://github.com/reegis/deflex
+
+
+Flexible multi-regional energy system model for heat, power and mobility
+========================================================================
+
+
 
 
 .. |docs| image:: https://readthedocs.org/projects/deflex/badge/?style=flat
