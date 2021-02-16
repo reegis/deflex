@@ -2,15 +2,15 @@
 deflex
 ========
 
-something
-
 .. start-logo
 
 .. list-table::
     :stub-columns: 1
 
     * - |logo|
-      - **flexible multi-regional energy system model for heat, power and mobility**
+      -  \
+
+         **Flexible multi-regional energy system model for heat, power and mobility**
 
 
 .. |logo| image:: https://github.com/reegis/deflex/blob/master/docs/images/logo_deflex_rund.png
