@@ -87,11 +87,9 @@ jobs:
     strategy:
       matrix:
         toxenv:
-          - flake8
-          - mypy
-          - isort
-          - check-manifest
-          - check-python-versions
+          - clean
+          - check
+          - docs
 
     steps:
       - name: Git clone
