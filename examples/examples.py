@@ -820,7 +820,7 @@ def main_deflex(path, name=None):
         main.plot_scenario(
             scenario, graphml_file="{0}/mob_{1}.graphml".format(path, n)
         )
-        main.model_scenario(scenario)
+        # main.model_scenario(scenario)
 
 
 def check_modules():
@@ -844,11 +844,13 @@ def check_modules():
 if __name__ == "__main__":
     logger.define_logging()
     my_path = BASEPATH  # change the BASEPATH at the top of the file
-    download_example_scenarios(my_path)
-    # main_deflex(my_path, name="de02")
-    my_mcp = fetch_mcp(my_path)
-    show_relation(my_mcp, name="deflex_2014_de02")
-    compare_different_mcp(my_mcp)
-    compare_emission_types(my_path, name="deflex_2014_de02")
-    show_transmission(my_path, name="de21_transmission-losses")
-    check_modules()
+    # download_example_scenarios(my_path)
+
+    main_deflex(my_path)
+
+    # my_mcp = fetch_mcp(my_path)
+    # show_relation(my_mcp, name="deflex_2014_de02")
+    # compare_different_mcp(my_mcp)
+    # compare_emission_types(my_path, name="deflex_2014_de02")
+    # show_transmission(my_path, name="de21_transmission-losses")
+    # check_modules()

@@ -12,14 +12,17 @@
 
 \
 
-.. image:: https://github.com/reegis/deflex/blob/master/docs/images/logo_deflex_rund.png
+.. image:: https://raw.githubusercontent.com/reegis/deflex/master/docs/images/logo_deflex_rund.png
     :target: https://github.com/reegis/deflex
 
 
 Flexible multi-regional energy system model for heat, power and mobility
 ========================================================================
 
-
+* Multi sectoral energy system of Germany/Europe
+* Dispatch optimisation
+* Start with basic scenarios
+* Highly configurable and adaptable
 
 
 .. |docs| image:: https://readthedocs.org/projects/deflex/badge/?style=flat
