@@ -1,8 +1,15 @@
 name: Python package
 
 on:
-  - push
-  - pull_request
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+  workflow_dispatch:
+  schedule:
+    - cron: "0 5 * * 6"  # 5:00 UTC every Saturday
 
 jobs:
   build:
@@ -28,9 +35,6 @@ jobs:
 
     - name: Check test coverage
       run: coverage report -m --fail-under=${{ matrix.vcs == 'bzr' && 89 || 90 }}
-
-    - name: Run check-manifest on itself
-      run: python check_manifest.py
 
     - name: Report to coveralls
       run: coveralls
