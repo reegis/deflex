@@ -27,13 +27,13 @@ Flexible multi-regional energy system model for heat, power and mobility
     :alt: Documentation Status
 
 .. |workflow_pytests| image:: https://github.com/reegis/deflex/workflows/tox%20pytests/badge.svg?branch=master
-    :target: https://github.com/reegis/deflex/actions
+    :target: https://github.com/reegis/deflex/actions?query=workflow%3A%22tox+pytests%22
 
 .. |workflow_checks| image:: https://github.com/reegis/deflex/workflows/tox%20checks/badge.svg?branch=master
-    :target: https://github.com/reegis/deflex/actions
+    :target: https://github.com/reegis/deflex/actions?query=workflow%3A%22tox+checks%22
 
 .. |packaging| image:: https://github.com/reegis/deflex/workflows/packaging/badge.svg?branch=master
-    :target: https://github.com/reegis/deflex/actions
+    :target: https://github.com/reegis/deflex/actions?query=workflow%3Apackaging
 
 .. |requires| image:: https://requires.io/github/reegis/deflex/requirements.svg?branch=master
     :alt: Requirements Status
