@@ -22,6 +22,18 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install tox tox-gh-actions
+        pip install tox tox-gh-actions coverage coveralls
     - name: Test with tox
       run: tox
+
+    - name: Check test coverage
+      run: coverage report -m --fail-under=${{ matrix.vcs == 'bzr' && 99 || 100 }}
+
+    - name: Run check-manifest on itself
+      run: python check_manifest.py
+
+    - name: Report to coveralls
+      run: coveralls
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        COVERALLS_SERVICE_NAME: github
