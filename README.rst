@@ -2,7 +2,21 @@
 deflex
 ========
 
-**flexible multi-regional energy system model for heat, power and mobility**
+something
+
+.. start-logo
+
+.. list-table::
+    :stub-columns: 1
+
+    * - |logo|
+      - **flexible multi-regional energy system model for heat, power and mobility**
+
+
+.. |logo| image:: https://github.com/reegis/deflex/blob/master/docs/images/logo_deflex_1680px.png
+    :target: https://github.com/reegis/deflex
+
+
 
 
 .. start-badges
@@ -18,6 +32,7 @@ deflex
     * - package
       - | |version| |wheel| |supported-versions| |supported-implementations|
         | |commits-since| |licence| |code_Style| |zenodo|
+
 .. |docs| image:: https://readthedocs.org/projects/deflex/badge/?style=flat
     :target: https://readthedocs.org/projects/deflex
     :alt: Documentation Status
