@@ -12,7 +12,7 @@
 
 \
 
-.. image:: https://github.com/reegis/deflex/tree/master/docs/images/logo_deflex_big.svg
+.. image:: https://raw.githubusercontent.com/reegis/deflex/master/docs/images/logo_deflex_big.svg
     :target: https://github.com/reegis/deflex
 
 
