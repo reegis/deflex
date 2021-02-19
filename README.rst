@@ -97,8 +97,18 @@ To run older scenarios you can install the old stable phd version::
     pip install https://github.com/reegis/deflex/archive/phd.zip
 
 
-Additional requirements
------------------------
+Installation of a solver (mandatory)
+------------------------------------
+
+To solve an energy system a linear solver has to be installed. For the
+communication with the solver `Pyomo` is used. Have a look at the `Pyomo docs <https://pyomo.readthedocs.io/en/stable/solving_pyomo_models.html#supported-solvers>`_ to learn about which solvers are supported.
+
+The default solver is the CBC solver. Go to the `oemof.solph documentation <https://github.com/oemof/oemof-solph#installing-a-solver>`_
+to get help for the solver installation.
+
+
+Additional requirements (optional)
+----------------------------------
 
 The basic installation can be used to compute scenarios (csv, xls, xlsx). For
 some functions additional packages are needed.
