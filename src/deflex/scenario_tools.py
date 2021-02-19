@@ -72,7 +72,6 @@ class Scenario:
         self.results = kwargs.get("results", None)
         self.results_fn = kwargs.get("results_fn", None)
         self.debug = kwargs.get("debug", None)
-        self.location = None
         self.map = None
         self.meta = kwargs.get("meta", None)
 
@@ -117,11 +116,9 @@ class Scenario:
 
         return solph.EnergySystem(timeindex=date_time_index)
 
-    def load_excel(self, filename=None):
+    def load_excel(self, filename):
         """Load scenario from an excel-file."""
-        if filename is not None:
-            self.location = filename
-        xls = pd.ExcelFile(self.location)
+        xls = pd.ExcelFile(filename)
         for sheet in xls.sheet_names:
             table_index_header = cfg.get_list("table_index_header", sheet)
             self.table_collection[sheet] = xls.parse(
@@ -131,15 +128,13 @@ class Scenario:
             )
         return self
 
-    def load_csv(self, path=None):
+    def load_csv(self, path):
         """Load scenario from a csv-collection."""
-        if path is not None:
-            self.location = path
-        for file in os.listdir(self.location):
+        for file in os.listdir(path):
             if file[-4:] == ".csv":
                 name = file[:-4]
                 table_index_header = cfg.get_list("table_index_header", name)
-                filename = os.path.join(self.location, file)
+                filename = os.path.join(path, file)
                 self.table_collection[name] = pd.read_csv(
                     filename,
                     index_col=list(range(int(table_index_header[0]))),
@@ -381,10 +376,7 @@ class Scenario:
         self.es.results["meta"] = solph.processing.meta_results(self.model)
         self.es.results["param"] = solph.processing.parameter_as_dict(self.es)
         self.es.results["meta"]["scenario"] = self.scenario_info(solver)
-        self.es.results["meta"]["in_location"] = self.location
-        self.es.results["meta"]["file_date"] = datetime.datetime.fromtimestamp(
-            os.path.getmtime(self.location)
-        )
+
         self.es.results["meta"]["solph_version"] = solph.__version__
         self.results = self.es.results["main"]
 
