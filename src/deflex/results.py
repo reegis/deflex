@@ -16,6 +16,9 @@ import pandas as pd
 import requests
 from oemof import solph
 
+from deflex.scenario import DeflexScenario
+from deflex.scenario import restore_scenario
+
 TEST_PATH = os.path.join(os.path.expanduser("~"), ".tmp_test_32traffic_43")
 
 
@@ -34,7 +37,7 @@ def fetch_example_results(key):
         "de22_heat_reg_merit": "https://osf.io/yj4tm/download",
     }
     os.makedirs(TEST_PATH, exist_ok=True)
-    file_name = os.path.join(TEST_PATH, key + ".esys")
+    file_name = os.path.join(TEST_PATH, key + ".dflx")
     if not os.path.isfile(file_name):
         req = requests.get(urls[key])
         with open(file_name, "wb") as f_out:
@@ -137,7 +140,7 @@ def restore_results(file_names):
         file_names = list((file_names,))
     results = []
     for path in file_names:
-        results.append(restore_energy_system(path).results)
+        results.append(restore_scenario(path, DeflexScenario).results)
     if len(results) < 2:
         results = results[0]
     return results
@@ -278,70 +281,3 @@ def reshape_bus_view(results, buses, data=None, aggregate=None):
                 data[flow_label] = results["Main"][flow]["sequences"]["flow"]
 
     return data.sort_index(axis=1)
-
-
-# if __name__ == "__main__":
-#     a = download_example_results()
-#     exit(0)
-#     # from pprint import pprint
-#     from matplotlib import pyplot as plt
-#     from oemof_visio.plot import io_plot
-#
-#     my_fn = download_example_results()
-#     my_files = search_results(path=TEST_PATH)
-#
-#     print(my_files)
-#
-#     filenames = search_results(
-#         map=["de22"], heat=["1"], year=["2014"], group_transformer=["0"]
-#     )
-#     print(filenames)
-#     res = restore_energy_system(filenames[0])
-#     busses = search_nodes(res.results, solph.Bus, tag="electricity")
-#
-#     am = [
-#         ("cat", "line", "all"),
-#         ("tag", "pp", "all"),
-#         ("tag", "ee", "all"),
-#         ("tag", "chp", "all"),
-#     ]
-#
-#     df = reshape_bus_view(res.results, busses, aggregate=am)
-#     df = df.groupby(level=[1, 2, 3, 4], axis=1).sum()
-#     print(df.columns)
-#     in_order = [
-#         ("trsf", "pp", "nuclear"),
-#         ("trsf", "pp", "lignite"),
-#         ("trsf", "pp", "hard_coal"),
-#         ("trsf", "pp", "natural_gas"),
-#         ("trsf", "pp", "oil"),
-#         ("trsf", "pp", "other"),
-#         ("trsf", "pp", "waste"),
-#         ("trsf", "pp", "bioenergy"),
-#         ("trsf", "pp", "all"),
-#         ("trsf", "chp", "all"),
-#         ("storage", "electricity", "phes"),
-#         ("storage", "electricity", "all"),
-#         ("source", "ee", "geothermal"),
-#         ("source", "ee", "hydro"),
-#         ("source", "ee", "solar"),
-#         ("source", "ee", "wind"),
-#         ("source", "ee", "all"),
-#         ("line", "electricity", "all"),
-#         ("shortage", "electricity", "all"),
-#     ]
-#     out_order = [
-#         ("demand", "electricity", "all"),
-#         ("excess", "electricity", "all"),
-#         ("storage", "electricity", "phes"),
-#         ("line", "electricity", "all"),
-#     ]
-#     # exit(0)
-#     io_plot(
-#         df_in=df["in"],
-#         df_out=df["out"],
-#         inorder=in_order,
-#         outorder=out_order,
-#         smooth=True,
-#     )
-#     plt.show()

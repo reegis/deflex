@@ -15,16 +15,16 @@ import shutil
 
 import pytest
 
-from deflex import scenario_tools
+from deflex import nodes
 
 
 def test_basic_scenario_class():
-    sc = scenario_tools.Scenario()
+    sc = nodes.Scenario()
     sc.create_nodes()
 
 
 def test_scenario_building():
-    sc = scenario_tools.DeflexScenario(name="test", year=2014)
+    sc = nodes.DeflexScenario(name="test", year=2014)
     csv_path = os.path.join(
         os.path.dirname(__file__), "data", "deflex_2014_de21_test_csv"
     )
@@ -41,7 +41,7 @@ def test_scenario_building():
 
 
 def test_node_dict():
-    nc = scenario_tools.NodeDict()
+    nc = nodes.NodeDict()
     nc["g"] = 5
     nc["h"] = 6
     msg = (
@@ -53,11 +53,11 @@ def test_node_dict():
 
 
 def test_scenario_es_init():
-    sc = scenario_tools.DeflexScenario(name="test", year=2012, debug=True)
+    sc = nodes.DeflexScenario(name="test", year=2012, debug=True)
     es1 = sc.initialise_energy_system()
-    sc = scenario_tools.DeflexScenario(name="test", year=2012)
+    sc = nodes.DeflexScenario(name="test", year=2012)
     es2 = sc.initialise_energy_system()
-    sc = scenario_tools.DeflexScenario(name="test", year=2013)
+    sc = nodes.DeflexScenario(name="test", year=2013)
     es3 = sc.initialise_energy_system()
     assert len(es1.timeindex) == 3
     assert len(es2.timeindex) == 8784
@@ -65,7 +65,7 @@ def test_scenario_es_init():
 
 
 def test_scenario_es_init_error():
-    sc = scenario_tools.DeflexScenario()
+    sc = nodes.DeflexScenario()
     msg = (
         "You cannot create an EnergySystem with self.year=2012, of type"
         " <class 'str'"
@@ -75,7 +75,7 @@ def test_scenario_es_init_error():
 
 
 def test_excel_reader():
-    sc = scenario_tools.DeflexScenario(name="test", year=2014)
+    sc = nodes.DeflexScenario(name="test", year=2014)
     xls_fn = os.path.join(
         os.path.dirname(__file__), "data", "deflex_2013_de02_test.xls"
     )
@@ -94,7 +94,7 @@ def test_excel_reader():
 
 
 def test_build_model_manually():
-    sc = scenario_tools.DeflexScenario(name="my_test", year=2014, debug=True)
+    sc = nodes.DeflexScenario(name="my_test", year=2014, debug=True)
     xls_fn = os.path.join(
         os.path.dirname(__file__), "data", "deflex_2013_de02_test.xls"
     )
@@ -115,7 +115,7 @@ def test_build_model_manually():
 
 
 def test_corrupt_data():
-    sc = scenario_tools.DeflexScenario(year=2014)
+    sc = nodes.DeflexScenario(year=2014)
     csv_path = os.path.join(
         os.path.dirname(__file__), "data", "deflex_2014_de02_test_csv"
     )

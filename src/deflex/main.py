@@ -20,7 +20,7 @@ from datetime import datetime
 import pandas as pd
 
 from deflex import config as cfg
-from deflex import scenario_tools
+from deflex import nodes
 
 
 def stopwatch():
@@ -64,7 +64,7 @@ def load_scenario(path, file_type=None):
     NotADirectoryError: [Errno 20] Not a directory:
 
     """
-    sc = scenario_tools.DeflexScenario()
+    sc = nodes.DeflexScenario()
 
     if path is not None:
         if file_type is None:

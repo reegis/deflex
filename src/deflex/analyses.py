@@ -18,7 +18,7 @@ from oemof import solph
 from pandas.testing import assert_frame_equal
 
 from deflex import results
-from deflex import scenario_tools
+from deflex import scenario
 
 
 def merit_order_from_scenario(path, with_downtime=True, with_co2_price=True):
@@ -63,10 +63,10 @@ def merit_order_from_scenario(path, with_downtime=True, with_co2_price=True):
     52.87
 
     """
-    sc = scenario_tools.DeflexScenario(year=2014)
+    sc = scenario.DeflexScenario(year=2014)
     sc.load_csv(path)
-    sc.name = sc.table_collection["meta"].loc["name", "value"]
-    transf = sc.table_collection["transformer"]
+    sc.name = sc.input_data["meta"].loc["name", "value"]
+    transf = sc.input_data["transformer"]
     num_cols = ["capacity", "variable_costs", "efficiency", "count"]
     transf[num_cols] = transf[num_cols].astype(float)
     if with_downtime and "downtime_factor" in transf:
@@ -74,7 +74,7 @@ def merit_order_from_scenario(path, with_downtime=True, with_co2_price=True):
             transf["downtime_factor"].fillna(0.1)
         )
     transf = transf.loc[transf["capacity"] != 0]
-    my_data = sc.table_collection["commodity_source"].loc["DE"]
+    my_data = sc.input_data["commodity_source"].loc["DE"]
     transf = transf.merge(
         my_data, right_index=True, how="left", left_on="fuel"
     )
@@ -244,11 +244,10 @@ def check_comparision_of_merit_order(path):
     tmp_path = os.path.join(os.path.expanduser("~"), ".deflex", "tmp_dx34_f")
 
     # Fetch Results and store
-    my_results = results.restore_results(path)
-    deflex_scenario = scenario_tools.DeflexScenario(results=my_results)
-    deflex_scenario.results2scenario(tmp_path)
+    deflex_scenario = scenario.restore_scenario(path, scenario.DeflexScenario)
+    deflex_scenario.to_csv(tmp_path)
     mo_scenario = merit_order_from_scenario(tmp_path)
-    mo_results = merit_order_from_results(my_results)
+    mo_results = merit_order_from_results(deflex_scenario.results)
 
     mo_results.index = mo_scenario.index
 

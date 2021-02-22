@@ -27,7 +27,7 @@ from scenario_builder import storages
 
 from deflex import __file__ as dfile
 from deflex import config as cfg
-from deflex import scenario_tools
+from deflex import nodes
 from deflex import transmission
 
 
@@ -339,7 +339,7 @@ def create_basic_reegis_scenario(
     table_collection = clean_time_series(table_collection)
 
     name = table_collection["meta"].loc["name", "value"]
-    sce = scenario_tools.Scenario(
+    sce = nodes.Scenario(
         table_collection=table_collection, name=name, year=year
     )
 
