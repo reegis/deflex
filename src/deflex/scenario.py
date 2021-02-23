@@ -46,7 +46,7 @@ class Scenario:
     """Scenario class."""
 
     def __init__(self, **kwargs):
-        self.name = kwargs.get("name", "unnamed_scenario")
+        self.meta = kwargs.get("meta", {})
         self.input_data = kwargs.get("input_data", {})
         self.es = kwargs.get("es", None)
         self.results = kwargs.get("results", None)
@@ -94,11 +94,16 @@ class Scenario:
         xlsx = pd.ExcelFile(filename)
         for sheet in xlsx.sheet_names:
             table_index_header = cfg.get_list("table_index_header", sheet)
-            self.input_data[sheet] = xlsx.parse(
+            table = xlsx.parse(
                 sheet,
                 index_col=list(range(int(table_index_header[0]))),
                 header=list(range(int(table_index_header[1]))),
             )
+            self.input_data[sheet] = table.dropna(thresh=(len(table.columns)))
+
+        self.input_data["general"] = self.input_data["general"]["value"]
+        self.meta.update(self.input_data["general"].to_dict())
+
         return self
 
     def load_csv(self, path):
@@ -112,7 +117,9 @@ class Scenario:
                     filename,
                     index_col=list(range(int(table_index_header[0]))),
                     header=list(range(int(table_index_header[1]))),
+                    squeeze=True,
                 )
+        self.meta.update(self.input_data["general"].to_dict())
         return self
 
     def to_xlsx(self, filename):
@@ -245,43 +252,6 @@ class Scenario:
         f.close()
         logging.info("Results dumped to %s.", filename)
 
-    def scenario_info(self, solver_name):
-        """
-        Add scenario information to the results dictionary.
-
-        Parameters
-        ----------
-        solver_name
-
-        Returns
-        ------
-
-        Examples
-        --------
-        >>> dfx = DeflexScenario()
-        >>> info = dfx.scenario_info("cbc")
-        >>> info["solver"]
-        'cbc'
-        >>> type(info["datetime"].year)
-        <class 'int'>
-        >>> info["year"]
-        >>> dfx.year = 2017
-        >>> info_new = dfx.scenario_info("cbc")
-        >>> info_new["year"]
-        2017
-
-        """
-        sc_info = {
-            "name": self.name,
-            "datetime": datetime.datetime.now(),
-            "year": self.input_data["general"]["year"],
-            "solver": solver_name,
-            "scenario": self.input_data,
-            "default_values": {},
-        }
-
-        return sc_info
-
     def solve(
         self, model, with_duals=False, tee=True, logfile=None, solver=None
     ):
@@ -301,7 +271,9 @@ class Scenario:
         """
         logging.info("Optimising using %s.", solver)
 
-        solph.Model(self.es)
+        self.meta["solph_version"] = solph.__version__
+        self.meta["solver"] = solver
+        self.meta["solver_start"] = datetime.datetime.now()
 
         if with_duals:
             model.receive_duals()
@@ -317,12 +289,14 @@ class Scenario:
         model.solve(
             solver=solver, solve_kwargs={"tee": tee, "logfile": logfile}
         )
+
+        self.meta["solver_end"] = datetime.datetime.now()
+
         self.es.results["main"] = solph.processing.results(model)
         self.es.results["meta"] = solph.processing.meta_results(model)
         self.es.results["param"] = solph.processing.parameter_as_dict(self.es)
-        self.es.results["meta"]["scenario"] = self.scenario_info(solver)
+        self.es.results["meta"].update(self.meta)
 
-        self.es.results["meta"]["solph_version"] = solph.__version__
         self.results = self.es.results
 
     def plot_nodes(self, filename=None, **kwargs):

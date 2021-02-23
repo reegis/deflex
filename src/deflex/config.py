@@ -39,6 +39,7 @@ def get_ini_filenames(additional_paths=None):
     files = []
 
     paths.append(os.path.join(os.path.dirname(__file__)))
+    paths.append(os.getcwd())
     if additional_paths is not None:
         paths.extend(additional_paths)
     local_path = os.path.join(os.path.expanduser("~"), ".deflex")

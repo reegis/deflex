@@ -20,7 +20,7 @@ from datetime import datetime
 import pandas as pd
 
 from deflex import config as cfg
-from deflex import nodes
+from deflex import scenario
 
 
 def stopwatch():
@@ -54,7 +54,7 @@ def load_scenario(path, file_type=None):
     >>> s = load_scenario(fn, file_type="excel")
     >>> type(s)
     <class 'deflex.scenario_tools.DeflexScenario'>
-    >>> int(s.table_collection["volatile_source"]["capacity"]["DE02", "wind"])
+    >>> int(s.input_data["volatile_source"]["capacity"]["DE02", "wind"])
     517
     >>> type(load_scenario(fn))
     <class 'deflex.scenario_tools.DeflexScenario'>
@@ -64,11 +64,11 @@ def load_scenario(path, file_type=None):
     NotADirectoryError: [Errno 20] Not a directory:
 
     """
-    sc = nodes.DeflexScenario()
+    sc = scenario.DeflexScenario()
 
     if path is not None:
         if file_type is None:
-            if "xls" in path[-4:]:
+            if ".xlsx" in path[-5:]:
                 file_type = "excel"
             elif "csv" in path[-4:]:
                 file_type = "csv"
@@ -76,13 +76,13 @@ def load_scenario(path, file_type=None):
                 file_type = None
         logging.info("Reading file: %s", path)
         if file_type == "excel":
-            sc.load_excel(path)
+            sc.load_xlsx(path)
         elif file_type == "csv":
             sc.load_csv(path)
     return sc
 
 
-def fetch_scenarios_from_dir(path, csv=True, xls=False):
+def fetch_scenarios_from_dir(path, csv=True, xlsx=False):
     """
     Search for files with an excel extension or directories ending with '_csv'.
 
@@ -98,7 +98,7 @@ def fetch_scenarios_from_dir(path, csv=True, xls=False):
         Directory with valid deflex scenarios.
     csv : bool
         Search for csv directories.
-    xls : bool
+    xlsx : bool
         Search for xls files.
 
     Returns
@@ -123,16 +123,16 @@ def fetch_scenarios_from_dir(path, csv=True, xls=False):
     6
 
     """
-    xls_scenarios = []
+    xlsx_scenarios = []
     csv_scenarios = []
     for name in os.listdir(path):
-        if (name[-4:] == ".xls" or name[-5:] == "xlsx") and xls is True:
-            xls_scenarios.append(os.path.join(path, name))
+        if name[-4:] == "xlsx" and xlsx is True:
+            xlsx_scenarios.append(os.path.join(path, name))
         if name[-4:] == "_csv" and csv is True:
             csv_scenarios.append(os.path.join(path, name))
     csv_scenarios = sorted(csv_scenarios)
-    xls_scenarios = sorted(xls_scenarios)
-    logging.debug("Found xls(x) scenario: %s", str(xls_scenarios))
+    xls_scenarios = sorted(xlsx_scenarios)
+    logging.debug("Found xlsx scenario: %s", str(xls_scenarios))
     logging.debug("Found csv scenario: %s", str(csv_scenarios))
     return csv_scenarios + xls_scenarios
 
@@ -343,49 +343,40 @@ def model_scenario(
     logging.info("Start modelling: %s", stopwatch())
 
     sc = load_scenario(path, file_type)
-    logging.info("Add nodes to the EnergySystem: %s", stopwatch())
-    sc.table2es()
-    sc.meta = meta
 
     # If a meta table exists in the table collection update meta dict
-    if "meta" in sc.table_collection:
-        meta.update(sc.table_collection["meta"].to_dict()["value"])
+    sc.meta.update(meta)
 
     # Use name from meta or from filename
-    if "name" in meta:
-        sc.name = meta["name"]
-    else:
-        meta["name"] = (
+    sc.meta["auto_name"] = (
             os.path.basename(path)
             + "_"
             + datetime.now().strftime("%Y%d%m_%H%M%S")
-        )
-        sc.name = meta["name"]
+    )
+    if "name" not in sc.meta:
+        sc.meta["name"] = sc.meta["auto_name"]
 
     if result_path is None:
         result_path = os.path.join(
             os.path.dirname(path),
             "results_{0}".format(cfg.get("general", "solver")),
-            sc.name + ".esys",
+            os.path.basename(path).split(".")[0],
         )
 
-    logging.info("Create the concrete model: %s", stopwatch())
-    sc.create_model()
-
     logging.info("Solve the optimisation model: %s", stopwatch())
-    sc.solve(solver=cfg.get("general", "solver"))
+    sc.compute(solver=cfg.get("general", "solver"))
 
     logging.info("Solved. Dump results: %s", stopwatch())
     os.makedirs(os.path.dirname(result_path), exist_ok=True)
 
     logging.info("Dump file to %s", result_path)
     sc.meta["end_time"] = datetime.now()
-    sc.dump_es(result_path)
+    sc.dump(result_path)
 
     logging.info(
         "%s - deflex scenario finished without errors: %s",
         stopwatch(),
-        sc.name,
+        sc.meta["name"],
     )
     return result_path
 

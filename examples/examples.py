@@ -811,16 +811,16 @@ def shape_tuple_legend(reverse=False, up=1.0, **kwargs):
 
 def main_deflex(path, name=None):
     logger.define_logging()
-    scenarios = main.fetch_scenarios_from_dir(path, xls=True)
+    logging.info(str(path))
+    scenarios = main.fetch_scenarios_from_dir(path, xlsx=True)
     if name is not None:
         scenarios = [s for s in scenarios if name in s]
-    print(scenarios)
     for scenario in scenarios:
         n = "de" + str(scenario.split("_de")[-1].split(".")[0])
         main.plot_scenario(
             scenario, graphml_file="{0}/mob_{1}.graphml".format(path, n)
         )
-        # main.model_scenario(scenario)
+        main.model_scenario(scenario)
 
 
 def check_modules():

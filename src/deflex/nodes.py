@@ -105,14 +105,14 @@ def add_volatile_sources(table_collection, nodes):
 
     """
     logging.debug("Add volatile sources to nodes dictionary.")
-    vs = table_collection["volatile_source"]
+    vs = table_collection["volatile plants"]
 
     for region in vs.index.get_level_values(0).unique():
         for vs_type in vs.loc[region].index:
             vs_label = Label("source", "ee", vs_type, region)
             capacity = vs.loc[(region, vs_type), "capacity"]
             try:
-                feedin = table_collection["volatile_series"][region, vs_type]
+                feedin = table_collection["volatile series"][region, vs_type]
             except KeyError:
                 if capacity > 0:
                     msg = "Missing time series for {0} (capacity: {1}) in {2}."
@@ -220,7 +220,7 @@ def add_electricity_demand(table_collection, nodes):
 
     """
     logging.debug("Add local electricity demand to nodes dictionary.")
-    dts = table_collection["demand_series"]
+    dts = table_collection["demand series"]
     dts.columns = dts.columns.swaplevel()
     for region in dts["electrical_load"].columns:
         if dts["electrical_load"][region].sum() > 0:
@@ -252,7 +252,7 @@ def add_district_heating_systems(table_collection, nodes):
 
     """
     logging.debug("Add district heating systems to nodes dictionary.")
-    dts = table_collection["demand_series"]
+    dts = table_collection["demand series"]
     if "district heating" in dts:
         for region in dts["district heating"].columns:
             if dts["district heating"][region].sum() > 0:
@@ -284,7 +284,7 @@ def add_transmission_lines_between_electricity_nodes(table_collection, nodes):
 
     """
     logging.debug("Add transmission lines to nodes dictionary.")
-    power_lines = table_collection["transmission"]["electrical"]
+    power_lines = table_collection["power lines"]["electrical"]
     for idx, values in power_lines.iterrows():
         b1, b2 = idx.split("-")
         lines = [(b1, b2), (b2, b1)]
@@ -345,14 +345,14 @@ def add_power_and_heat_plants(table_collection, nodes, extra_regions):
     -------
 
     """
-    trsf = table_collection["transformer"]
+    trsf = table_collection["power plants"]
     if "chp_hp" in table_collection:
-        chp_hp = table_collection["chp_hp"]
+        chp_hp = table_collection["chp-heat plants"]
         chp_hp_index = chp_hp.index.get_level_values(0).unique()
     else:
         chp_hp = None
         chp_hp_index = []
-    cs = table_collection["commodity_source"].loc["DE"]
+    cs = table_collection["commodity sources"].loc["DE"]
 
     regions = set(trsf.index.get_level_values(0).unique()).union(
         set(chp_hp_index)
@@ -568,7 +568,7 @@ def add_mobility(table_collection, nodes):
     -------
 
     """
-    mseries = table_collection["mobility_series"]
+    mseries = table_collection["mobility series"]
     mtable = table_collection["mobility"]
     for region in mseries.columns.get_level_values(0).unique():
         for fuel in mseries[region].columns:
