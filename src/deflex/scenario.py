@@ -99,6 +99,17 @@ class Scenario:
                 index_col=list(range(int(table_index_header[0]))),
                 header=list(range(int(table_index_header[1]))),
             )
+            table.dropna(thresh=1)
+            if table.isnull().any().any():
+                columns = tuple(table.loc[:, table.isnull().any()].columns)
+                msg = (
+                    "NaN values found in table:'{0}', columns: {1}.\n"
+                    "Empty cells are not allowed in a scenario to avoid "
+                    "unwanted behaviour.\nRemove the whole column/row if a "
+                    "parameter is not needed. "
+                    "Consider that 0, 'inf' or 1 might be neutral values."
+                ).format(sheet, columns)
+                raise ValueError(msg)
             self.input_data[sheet] = table.dropna(thresh=(len(table.columns)))
 
         self.input_data["general"] = self.input_data["general"]["value"]
@@ -184,7 +195,9 @@ class Scenario:
 
         """
         self.table2es()
+        logging.info("Creating the linear model...")
         model = solph.Model(self.es)
+        logging.info("Done. Optimise the model.")
         self.solve(model, **kwargs)
 
     def add_nodes(self, nodes):
@@ -213,8 +226,11 @@ class Scenario:
 
         """
         if self.es is None:
+            logging.info("Initialise a solph energy system.")
             self.initialise_energy_system()
+        logging.info("Creating nodes...")
         self.es.add(*self.create_nodes().values())
+        logging.info("Done. Nodes added to the energy system.")
         return self
 
     def create_model(self):
@@ -360,8 +376,10 @@ def restore_scenario(filename, scenario_class):
     """
 
     if filename.split(".")[-1] != "dflx":
-        msg = ("The suffix of a valid deflex scenario has to be '.dflx'.\n"
-               "Cannot open {0}.".format(filename))
+        msg = (
+            "The suffix of a valid deflex scenario has to be '.dflx'.\n"
+            "Cannot open {0}.".format(filename)
+        )
         raise IOError(msg)
     f = open(filename, "rb")
     meta = pickle.load(f)
