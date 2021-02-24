@@ -45,7 +45,7 @@ def fetch_example_results(key):
     return file_name
 
 
-def search_results(path=None, extension=".esys", **parameter_filter):
+def search_results(path=None, extension=".dflx", **parameter_filter):
     """Filter results by extension and meta data.
 
     The function will search the $HOME folder recursively for files with the
