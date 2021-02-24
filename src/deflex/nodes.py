@@ -12,18 +12,16 @@ class Label(namedtuple("solph_label", ["cat", "tag", "subtag", "region"])):
 
     def __str__(self):
         return "_".join(map(str, self._asdict().values()))
-    
-    
+
+
 def create_solph_nodes_from_data(input_data, nodes, extra_regions=None):
-    
+
     # Local volatile sources
     add_volatile_sources(input_data, nodes)
 
     # Decentralised heating systems
     if "decentralised_heat" in input_data:
-        add_decentralised_heating_systems(
-            input_data, nodes, extra_regions
-        )
+        add_decentralised_heating_systems(input_data, nodes, extra_regions)
 
     # Local electricity demand
     add_electricity_demand(input_data, nodes)
@@ -32,9 +30,7 @@ def create_solph_nodes_from_data(input_data, nodes, extra_regions=None):
     add_district_heating_systems(input_data, nodes)
 
     # Local power plants as Transformer and ExtractionTurbineCHP (chp)
-    add_power_and_heat_plants(
-        input_data, nodes, extra_regions
-    )
+    add_power_and_heat_plants(input_data, nodes, extra_regions)
 
     # Storages
     if "storages" in input_data:
@@ -44,16 +40,14 @@ def create_solph_nodes_from_data(input_data, nodes, extra_regions=None):
         add_mobility(input_data, nodes)
 
     # Connect electricity buses with transmission
-    add_transmission_lines_between_electricity_nodes(
-        input_data, nodes
-    )
+    add_transmission_lines_between_electricity_nodes(input_data, nodes)
 
     # Add shortage excess to every bus
     add_shortage_excess(nodes)
     return nodes
 
 
-def create_fuel_bus_with_source(nodes, fuel, region, data):
+def create_fuel_bus_with_source(nodes, fuel, region, input_data):
     """
 
     Parameters
@@ -61,23 +55,24 @@ def create_fuel_bus_with_source(nodes, fuel, region, data):
     nodes
     fuel
     region
-    data
+    input_data
 
     Returns
     -------
 
     """
+    cs_table = input_data["commodity sources"].loc["DE"]
     bus_label = Label("bus", "commodity", fuel.replace(" ", "_"), region)
     if bus_label not in nodes:
         nodes[bus_label] = solph.Bus(label=bus_label)
 
     cs_label = Label("source", "commodity", fuel.replace(" ", "_"), region)
 
+    co2_price = input_data["general"].get("co2 price", 0)
+
     variable_costs = (
-        data.loc[fuel.replace("_", " "), "emission"]
-        / 1000
-        * data.loc[fuel.replace("_", " ")].get("co2_price", 0)
-        + data.loc[fuel.replace("_", " "), "costs"]
+        cs_table.loc[fuel.replace("_", " "), "emission"] / 1000 * co2_price
+        + cs_table.loc[fuel.replace("_", " "), "costs"]
     )
 
     if cs_label not in nodes:
@@ -86,7 +81,7 @@ def create_fuel_bus_with_source(nodes, fuel, region, data):
             outputs={
                 nodes[bus_label]: solph.Flow(
                     variable_costs=variable_costs,
-                    emission=data.loc[fuel.replace("_", " "), "emission"],
+                    emission=cs_table.loc[fuel.replace("_", " "), "emission"],
                 )
             },
         )
@@ -148,7 +143,6 @@ def add_decentralised_heating_systems(table_collection, nodes, extra_regions):
 
     """
     logging.debug("Add decentralised_heating_systems to nodes dictionary.")
-    cs = table_collection["commodity_source"].loc["DE"]
     dts = table_collection["demand_series"]
     dh = table_collection["decentralised_heat"]
     demand_regions = list({"DE_demand"}.union(set(extra_regions)))
@@ -170,7 +164,9 @@ def add_decentralised_heating_systems(table_collection, nodes, extra_regions):
 
             # Check if source bus exists
             if bus_label not in nodes:
-                create_fuel_bus_with_source(nodes, src, region_name, cs)
+                create_fuel_bus_with_source(
+                    nodes, src, region_name, table_collection
+                )
 
             # Create heating bus as Bus
             heat_bus_label = Label(
@@ -352,7 +348,6 @@ def add_power_and_heat_plants(table_collection, nodes, extra_regions):
     else:
         chp_hp = None
         chp_hp_index = []
-    cs = table_collection["commodity sources"].loc["DE"]
 
     regions = set(trsf.index.get_level_values(0).unique()).union(
         set(chp_hp_index)
@@ -389,7 +384,7 @@ def add_power_and_heat_plants(table_collection, nodes, extra_regions):
                 )
                 if bus_fuel not in nodes:
                     create_fuel_bus_with_source(
-                        nodes, fuel.replace(" ", "_"), region, cs
+                        nodes, fuel.replace(" ", "_"), region, table_collection
                     )
             else:
                 bus_fuel = Label(
@@ -397,7 +392,7 @@ def add_power_and_heat_plants(table_collection, nodes, extra_regions):
                 )
                 if bus_fuel not in nodes:
                     create_fuel_bus_with_source(
-                        nodes, fuel.replace(" ", "_"), "DE", cs
+                        nodes, fuel.replace(" ", "_"), "DE", table_collection
                     )
 
         for plant in trsf_regions:
