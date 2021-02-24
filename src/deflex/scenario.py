@@ -99,7 +99,7 @@ class Scenario:
                 index_col=list(range(int(table_index_header[0]))),
                 header=list(range(int(table_index_header[1]))),
             )
-            table.dropna(thresh=1)
+            table.dropna(thresh=1, inplace=True)
             if table.isnull().any().any():
                 columns = tuple(table.loc[:, table.isnull().any()].columns)
                 msg = (
