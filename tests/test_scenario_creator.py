@@ -71,7 +71,7 @@ class TestScenarioCreationFull:
 
         powerplants.scenario_powerplants = MagicMock(
             return_value={
-                "volatile source": cls.tables["volatile plants"],
+                "volatile plants": cls.tables["volatile plants"],
                 "power plants": cls.tables["power plants"],
             }
         )
@@ -138,9 +138,10 @@ class TestScenarioCreationFull:
         )
 
     def test_meta(self):
-        pd.testing.assert_frame_equal(
-            self.tables["general"].astype(str).sort_index(),
-            self.input_data["general"].astype(str).sort_index(),
+
+        pd.testing.assert_series_equal(
+            self.tables["general"].apply(str).sort_index(),
+            self.input_data["general"].apply(str).sort_index(),
         )
 
     def test_commodity_source(self):
@@ -210,16 +211,16 @@ class TestScenarioCreationPart:
 
         powerplants.scenario_powerplants = MagicMock(
             return_value={
-                "volatile_source": cls.tables["volatile_source"],
-                "transformer": cls.tables["transformer"],
+                "volatile plants": cls.tables["volatile plants"],
+                "power plants": cls.tables["power plants"],
             }
         )
 
         feedin.scenario_feedin = MagicMock(
-            return_value=cls.tables["volatile_series"]
+            return_value=cls.tables["volatile series"]
         )
         demand.scenario_demand = MagicMock(
-            return_value=cls.tables["demand_series"]
+            return_value=cls.tables["demand series"]
         )
 
         name = "de21"
@@ -240,7 +241,7 @@ class TestScenarioCreationPart:
         polygons = deflex_regions(rmap=my_parameter["map"], rtype="polygons")
         lines = deflex_power_lines(my_parameter["map"]).index
         base = os.path.join(os.path.expanduser("~"), ".tmp_x345234dE_deflex")
-        os.makedirs(base)
+        os.makedirs(base, exist_ok=True)
         path = os.path.join(base, "deflex_test{0}")
 
         scenario_creator.create_basic_reegis_scenario(
@@ -263,8 +264,8 @@ class TestScenarioCreationPart:
 
     def test_volatile_source(self):
         pd.testing.assert_frame_equal(
-            self.tables["volatile_source"],
-            self.input_data["volatile_source"],
+            self.tables["volatile plants"],
+            self.input_data["volatile plants"],
         )
 
     def test_storages(self):
@@ -276,38 +277,38 @@ class TestScenarioCreationPart:
 
     def test_demand_series(self):
         pd.testing.assert_frame_equal(
-            self.tables["demand_series"],
-            self.input_data["demand_series"],
+            self.tables["demand series"],
+            self.input_data["demand series"],
         )
 
     def test_transmission(self):
         pd.testing.assert_frame_equal(
-            self.tables["transmission"].apply(pd.to_numeric),
-            self.input_data["transmission"].apply(pd.to_numeric),
+            self.tables["power lines"].apply(pd.to_numeric),
+            self.input_data["power lines"].apply(pd.to_numeric),
         )
 
     def test_transformer(self):
         pd.testing.assert_frame_equal(
-            self.tables["transformer"],
-            self.input_data["transformer"],
+            self.tables["power plants"],
+            self.input_data["power plants"],
         )
 
     def test_meta(self):
         pd.testing.assert_frame_equal(
-            self.tables["meta"].astype(str).sort_index(),
-            self.input_data["meta"].astype(str).sort_index(),
+            self.tables["general"].astype(str).sort_index(),
+            self.input_data["general"].astype(str).sort_index(),
         )
 
     def test_commodity_source(self):
         pd.testing.assert_frame_equal(
-            self.tables["commodity_source"],
-            self.input_data["commodity_source"],
+            self.tables["commodity sources"],
+            self.input_data["commodity sources"],
         )
 
     def test_mobility_series(self):
         pd.testing.assert_frame_equal(
-            self.tables["mobility_series"],
-            self.input_data["mobility_series"],
+            self.tables["mobility series"],
+            self.input_data["mobility series"],
         )
 
     def test_mobility(self):
@@ -321,11 +322,12 @@ class TestScenarioCreationPart:
 
     def test_volatile_series(self):
         pd.testing.assert_frame_equal(
-            self.tables["volatile_series"],
-            self.input_data["volatile_series"],
+            self.tables["volatile series"],
+            self.input_data["volatile series"],
         )
 
     def test_length(self):
+        assert len(self.tables.keys()) == len(self.input_data.keys())
         assert sorted(list(self.tables.keys())) == sorted(
             list(self.input_data.keys())
         )

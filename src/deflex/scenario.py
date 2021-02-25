@@ -449,6 +449,3 @@ def convert_esys2dflx(path):
             sc.debug = False
             sc.input_data = sc.results["meta"]["scenario"].pop("scenario")
             sc.dump(os.path.join(os.path.dirname(filename), sc.name))
-
-
-convert_xlsx2csv("/home/uwe/popel")

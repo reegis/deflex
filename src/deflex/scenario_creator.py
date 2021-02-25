@@ -27,7 +27,7 @@ from scenario_builder import storages
 
 from deflex import __file__ as dfile
 from deflex import config as cfg
-from deflex import nodes
+from deflex import scenario
 from deflex import transmission
 
 
@@ -87,11 +87,10 @@ def create_scenario(regions, year, name, lines, opsd_version=None):
     pp = powerplants.scenario_powerplants(
         table_collection, regions, year, name
     )
-    table_collection["volatile plants"] = pp["volatile source"]
+    table_collection["volatile plants"] = pp["volatile plants"]
     table_collection["power plants"] = pp["power plants"]
 
     logging.info("BASIC SCENARIO - TRANSMISSION")
-    print("******************", name)
     if len(regions) > 1:
         table_collection["power lines"] = transmission.scenario_transmission(
             regions, name, lines
@@ -172,7 +171,7 @@ def clean_time_series(table_collection):
     -------
 
     """
-    dts = table_collection["demand_series"]
+    dts = table_collection["demand series"]
     vts = table_collection["volatile series"]
     vs = table_collection["volatile plants"]
 
@@ -338,9 +337,9 @@ def create_basic_reegis_scenario(
 
     table_collection = clean_time_series(table_collection)
 
-    name = table_collection["meta"].loc["name", "value"]
-    sce = nodes.Scenario(
-        table_collection=table_collection, name=name, year=year
+    name = table_collection["general"].get("name")
+    sce = scenario.Scenario(
+        input_data=table_collection, name=name, year=year
     )
 
     if csv_path is not None:
@@ -348,6 +347,6 @@ def create_basic_reegis_scenario(
         sce.to_csv(csv_path)
     if excel_path is not None:
         os.makedirs(os.path.dirname(excel_path), exist_ok=True)
-        sce.to_excel(excel_path)
+        sce.to_xlsx(excel_path)
 
     return paths(xls=excel_path, csv=csv_path)
