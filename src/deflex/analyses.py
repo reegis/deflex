@@ -46,27 +46,28 @@ def merit_order_from_scenario(path, with_downtime=True, with_co2_price=True):
     Examples
     --------
     >>> import os
-    >>> my_path = os.path.join(os.path.dirname(__file__), os.pardir, os.pardir,
-    ...                        "tests", "data", "deflex_2014_de02_test_csv")
+    >>> my_path = os.path.join(
+    ...     os.path.dirname(__file__), os.pardir, os.pardir, "tests", "data",
+    ...     "deflex_2014_de02_co2-price_var-costs_csv")
     >>> mo1 = merit_order_from_scenario(my_path)
     >>> round(mo1.capacity_cum.iloc[-1], 4)
-    71.9878
+    86.7028
     >>> round(mo1.capacity.sum(), 1)
-    71987.8
-    >>> round(mo1.loc[("DE01", "natural gas"), "costs_total"], 2)
-    59.93
+    86702.8
+    >>> round(mo1.loc[("DE01", "natural gas - 0.55"), "costs_total"], 2)
+    49.37
     >>> mo2 = merit_order_from_scenario(my_path, with_downtime=False)
     >>> int(round(mo2.capacity.sum(), 0))
-    84225
+    101405
     >>> mo3 = merit_order_from_scenario(my_path, with_co2_price=False)
-    >>> round(mo3.loc[("DE01", "natural gas"), "costs_total"], 2)
-    52.87
+    >>> round(mo3.loc[("DE01", "natural gas - 0.55"), "costs_total"], 2)
+    43.58
 
     """
     sc = scenario.DeflexScenario(year=2014)
-    sc.load_csv(path)
-    sc.name = sc.input_data["meta"].loc["name", "value"]
-    transf = sc.input_data["transformer"]
+    sc.read_csv(path)
+    sc.name = sc.input_data["general"].get("name")
+    transf = sc.input_data["power plants"]
     num_cols = ["capacity", "variable_costs", "efficiency", "count"]
     transf[num_cols] = transf[num_cols].astype(float)
     if with_downtime and "downtime_factor" in transf:
@@ -74,7 +75,8 @@ def merit_order_from_scenario(path, with_downtime=True, with_co2_price=True):
             transf["downtime_factor"].fillna(0.1)
         )
     transf = transf.loc[transf["capacity"] != 0]
-    my_data = sc.input_data["commodity_source"].loc["DE"]
+    my_data = sc.input_data["commodity sources"].loc["DE"]
+    my_data["co2_price"] = float(sc.input_data["general"].get("co2 price", 0))
     transf = transf.merge(
         my_data, right_index=True, how="left", left_on="fuel"
     )
@@ -119,7 +121,7 @@ def merit_order_from_results(result):
     Examples
     --------
     >>> from deflex import results
-    >>> fn = results.fetch_example_results("de02_no_heat_reg_merit")
+    >>> fn = results.fetch_example_results("de02_co2-price_var-costs.dflx")
     >>> my_results = results.restore_results(fn)
     >>> a = merit_order_from_results(my_results)
     """
@@ -235,7 +237,7 @@ def check_comparision_of_merit_order(path):
     Examples
     --------
     >>> from deflex import results
-    >>> name = "de02_no_heat_reg_merit"
+    >>> name = "de02.dflx"
     >>> my_path = results.fetch_example_results(name)
     >>> check_comparision_of_merit_order(my_path)
     Check passed! Both merit order DataFrame tables are the same.

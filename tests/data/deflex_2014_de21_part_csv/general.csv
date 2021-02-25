@@ -1,0 +1,12 @@
+key,value
+year,2014
+number of time steps,8760
+co2 price,0
+name,deflex_2014_de21_transmission-losses
+regions,21
+costs_source,EWI
+heat,false
+group_transformer,false
+copperplate,false
+use_variable_costs,false
+use_downtime_factor,true

@@ -87,13 +87,13 @@ def create_scenario(regions, year, name, lines, opsd_version=None):
     pp = powerplants.scenario_powerplants(
         table_collection, regions, year, name
     )
-    table_collection["volatile_source"] = pp["volatile_source"]
-    table_collection["transformer"] = pp["transformer"]
+    table_collection["volatile plants"] = pp["volatile source"]
+    table_collection["power plants"] = pp["power plants"]
 
     logging.info("BASIC SCENARIO - TRANSMISSION")
     print("******************", name)
     if len(regions) > 1:
-        table_collection["transmission"] = transmission.scenario_transmission(
+        table_collection["power lines"] = transmission.scenario_transmission(
             regions, name, lines
         )
     else:
@@ -102,29 +102,29 @@ def create_scenario(regions, year, name, lines, opsd_version=None):
     logging.info("BASIC SCENARIO - CHP PLANTS")
     if cfg.get("creator", "heat"):
         chp = powerplants.scenario_chp(table_collection, regions, year, name)
-        table_collection["chp_hp"] = chp["chp_hp"]
-        table_collection["transformer"] = chp["transformer"]
+        table_collection["chp-heat plants"] = chp["chp-heat plants"]
+        table_collection["power plants"] = chp["power plants"]
     else:
         logging.info("...skipped")
 
     logging.info("BASIC SCENARIO - DECENTRALISED HEAT")
     if cfg.get("creator", "heat"):
         table_collection[
-            "decentralised_heat"
+            "decentralised heat"
         ] = scenario_default_decentralised_heat()
     else:
         logging.info("...skipped")
 
     logging.info("BASIC SCENARIO - SOURCES")
     table_collection[
-        "commodity_source"
+        "commodity sources"
     ] = commodity.scenario_commodity_sources(year)
-    table_collection["volatile_series"] = feedin.scenario_feedin(
+    table_collection["volatile series"] = feedin.scenario_feedin(
         regions, year, name
     )
 
     logging.info("BASIC SCENARIO - DEMAND")
-    table_collection["demand_series"] = demand.scenario_demand(
+    table_collection["demand series"] = demand.scenario_demand(
         regions,
         year,
         name,
@@ -135,7 +135,7 @@ def create_scenario(regions, year, name, lines, opsd_version=None):
     table_collection = mobility.scenario_mobility(year, table_collection)
 
     logging.info("ADD META DATA")
-    table_collection["meta"] = meta_data(year)
+    table_collection["general"] = meta_data(year)
     return table_collection
 
 
@@ -173,8 +173,8 @@ def clean_time_series(table_collection):
 
     """
     dts = table_collection["demand_series"]
-    vts = table_collection["volatile_series"]
-    vs = table_collection["volatile_source"]
+    vts = table_collection["volatile series"]
+    vs = table_collection["volatile plants"]
 
     regions = list(dts.columns.get_level_values(0).unique())
     if "DE_demand" in regions:

@@ -50,7 +50,7 @@ class Scenario:
         self.input_data = kwargs.get("input_data", {})
         self.es = kwargs.get("es", None)
         self.results = kwargs.get("results", None)
-        self.debug = kwargs.get("debug", None)
+        self.debug = kwargs.get("debug", False)
 
     def initialise_energy_system(self):
         """
@@ -59,8 +59,19 @@ class Scenario:
         -------
 
         """
-        year = self.input_data["general"]["year"]
-        time_steps = self.input_data["general"]["number of time steps"]
+        if not self.input_data:
+            raise ValueError(
+                "There is no input data in the scenario. You cannot "
+                "initialise an energy system without a year and the number of "
+                "time steps."
+            )
+        year = int(self.input_data["general"]["year"])
+        if self.debug is False:
+            time_steps = int(
+                self.input_data["general"]["number of time steps"]
+            )
+        else:
+            time_steps = 3
         # increment = self.input_data["general"]["time increment"]
 
         # Check leap year
@@ -70,7 +81,7 @@ class Scenario:
 
         # Check series tables
         for key in [t for t in self.input_data.keys() if "series" in t]:
-            if time_steps != len(self.input_data[key]):
+            if time_steps != len(self.input_data[key]) and not self.debug:
                 msg = (
                     "Number of time steps is {0} but the length of the {1}"
                     " table is {2}."
@@ -86,7 +97,7 @@ class Scenario:
 
         return self
 
-    def load_xlsx(self, filename):
+    def read_xlsx(self, filename):
         """Load scenario from an excel-file."""
         suffix = filename.split(".")[-1]
         if not suffix == "xlsx":
@@ -94,30 +105,15 @@ class Scenario:
         xlsx = pd.ExcelFile(filename)
         for sheet in xlsx.sheet_names:
             table_index_header = cfg.get_list("table_index_header", sheet)
-            table = xlsx.parse(
+            self.input_data[sheet] = xlsx.parse(
                 sheet,
                 index_col=list(range(int(table_index_header[0]))),
                 header=list(range(int(table_index_header[1]))),
             )
-            table.dropna(thresh=1, inplace=True)
-            if table.isnull().any().any():
-                columns = tuple(table.loc[:, table.isnull().any()].columns)
-                msg = (
-                    "NaN values found in table:'{0}', columns: {1}.\n"
-                    "Empty cells are not allowed in a scenario to avoid "
-                    "unwanted behaviour.\nRemove the whole column/row if a "
-                    "parameter is not needed. "
-                    "Consider that 0, 'inf' or 1 might be neutral values."
-                ).format(sheet, columns)
-                raise ValueError(msg)
-            self.input_data[sheet] = table.dropna(thresh=(len(table.columns)))
-
-        self.input_data["general"] = self.input_data["general"]["value"]
-        self.meta.update(self.input_data["general"].to_dict())
-
+        self.check_input_data(warning=False)
         return self
 
-    def load_csv(self, path):
+    def read_csv(self, path):
         """Load scenario from a csv-collection."""
         for file in os.listdir(path):
             if file[-4:] == ".csv":
@@ -130,8 +126,43 @@ class Scenario:
                     header=list(range(int(table_index_header[1]))),
                     squeeze=True,
                 )
-        self.meta.update(self.input_data["general"].to_dict())
+        self.check_input_data(warning=False)
         return self
+
+    def check_input_data(self, warning=False):
+        for sheet, table in self.input_data.items():
+            msg = (
+                "NaN values found in table:'{0}', columns: {1}.\n"
+                "Empty cells are not allowed in a scenario to avoid "
+                "unwanted behaviour.\nRemove the whole column/row if "
+                "a parameter is not needed. Consider that 0, 'inf' or "
+                "1 might be neutral values to replace NaN values."
+            )
+            if isinstance(table, pd.DataFrame):
+                table.dropna(thresh=1, inplace=True, axis=0)
+                table.dropna(thresh=1, inplace=True, axis=1)
+                if table.isnull().any().any():
+                    columns = tuple(table.loc[:, table.isnull().any()].columns)
+                    msg = msg.format(sheet, columns)
+                    if warning is True:
+                        warnings.warn(msg, UserWarning)
+                    else:
+                        raise ValueError(msg)
+                self.input_data[sheet] = table.dropna(
+                    thresh=(len(table.columns))
+                )
+            else:
+                if table.isnull().any():
+                    msg = msg.format(sheet, "'value'")
+                    if warning is True:
+                        warnings.warn(msg, UserWarning)
+                    else:
+                        raise ValueError(msg)
+
+        if isinstance(self.input_data["general"], pd.DataFrame):
+            column = self.input_data["general"].columns[0]
+            self.input_data["general"] = self.input_data["general"][column]
+            self.meta.update(self.input_data["general"].to_dict())
 
     def to_xlsx(self, filename):
         """Dump scenario into an excel-file."""
@@ -153,30 +184,10 @@ class Scenario:
         os.makedirs(path)
 
         for name, df in self.input_data.items():
-            name = name.replace(" ", "_") + ".csv"
+            name += ".csv"
             filename = os.path.join(path, name)
             df.to_csv(filename)
         logging.info("Scenario saved as csv-collection to %s", path)
-
-    def check_table(self, table_name):
-        """
-
-        Parameters
-        ----------
-        table_name
-
-        Returns
-        -------
-
-        """
-        if self.input_data[table_name].isnull().values.any():
-            c = []
-            for column in self.input_data[table_name].columns:
-                if self.input_data[table_name][column].isnull().any():
-                    c.append(column)
-            msg = "Nan Values in the {0} table (columns: {1})."
-            raise ValueError(msg.format(table_name, c))
-        return self
 
     def create_nodes(self):
         """
@@ -260,7 +271,7 @@ class Scenario:
             filename = filename + ".dflx"
         os.makedirs(os.path.dirname(filename), exist_ok=True)
         f = open(filename, "wb")
-        if meta is None:
+        if meta is None and self.results is not None:
             if "Meta" in self.results or "meta" in self.results:
                 meta = self.results["meta"]
         pickle.dump(meta, f)
@@ -391,6 +402,23 @@ def restore_scenario(filename, scenario_class):
     return sc
 
 
+def convert_xlsx2csv(path):
+    if ".xlsx" in os.path.basename(path):
+        files = list((os.path.basename(path),))
+        path = os.path.dirname(path)
+    else:
+        files = os.listdir(path)
+    for xlsx in files:
+        if os.path.basename(xlsx).split(".")[-1] == "xlsx":
+            logging.info("Converting file: {0}".format(xlsx))
+            xlsx = os.path.join(path, xlsx)
+            directory = str(os.path.basename(xlsx).split(".")[0]) + "_csv"
+            csv = os.path.join(os.path.dirname(xlsx), directory)
+            sc = DeflexScenario()
+            sc.read_xlsx(xlsx)
+            sc.to_csv(csv)
+
+
 def convert_esys2dflx(path):
     """
     Convert .esys files with deflex results into .dflx files.
@@ -421,3 +449,6 @@ def convert_esys2dflx(path):
             sc.debug = False
             sc.input_data = sc.results["meta"]["scenario"].pop("scenario")
             sc.dump(os.path.join(os.path.dirname(filename), sc.name))
+
+
+convert_xlsx2csv("/home/uwe/popel")

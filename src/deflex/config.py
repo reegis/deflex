@@ -27,6 +27,8 @@ __all__ = [
 import configparser as cp
 import os
 
+BLACKLIST = ["tox.ini"]
+
 cfg = cp.RawConfigParser()
 cfg.optionxform = str
 _loaded = False
@@ -50,7 +52,7 @@ def get_ini_filenames(additional_paths=None):
         if p == "":  # Empty path string must be ignored
             continue
         for f in os.listdir(p):
-            if f[-4:] == ".ini":
+            if f[-4:] == ".ini" and f not in BLACKLIST:
                 files.append(os.path.join(p, f))
     return files
 

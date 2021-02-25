@@ -68,7 +68,7 @@ def create_fuel_bus_with_source(nodes, fuel, region, input_data):
 
     cs_label = Label("source", "commodity", fuel.replace(" ", "_"), region)
 
-    co2_price = input_data["general"].get("co2 price", 0)
+    co2_price = float(input_data["general"].get("co2 price", 0))
 
     variable_costs = (
         cs_table.loc[fuel.replace("_", " "), "emission"] / 1000 * co2_price

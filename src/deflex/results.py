@@ -13,39 +13,14 @@ import os
 import pickle
 
 import pandas as pd
-import requests
 from oemof import solph
 
 from deflex.scenario import DeflexScenario
 from deflex.scenario import restore_scenario
-
-TEST_PATH = os.path.join(os.path.expanduser("~"), ".tmp_test_32traffic_43")
-
-
-def fetch_example_results(key):
-    """Download example results to enable tests.
-
-    Make sure that the examples will
-    have the same structure as the actual deflex results.
-    """
-    urls = {
-        "de02_no_heat_reg_merit": "https://osf.io/9qt4a/download",
-        "de02_heat_reg_merit": "https://osf.io/69mnu/download",
-        "de22_no_heat_no_reg_merit": "https://osf.io/k4fdt/download",
-        "de22_no_heat_reg_merit": "https://osf.io/3642z/download",
-        "de22_heat_no_reg_merit": "https://osf.io/umvny/download",
-        "de22_heat_reg_merit": "https://osf.io/yj4tm/download",
-    }
-    os.makedirs(TEST_PATH, exist_ok=True)
-    file_name = os.path.join(TEST_PATH, key + ".dflx")
-    if not os.path.isfile(file_name):
-        req = requests.get(urls[key])
-        with open(file_name, "wb") as f_out:
-            f_out.write(req.content)
-    return file_name
+from deflex.tools import fetch_example_results, TEST_PATH
 
 
-def search_results(path=None, extension=".dflx", **parameter_filter):
+def search_results(path=None, extension="dflx", **parameter_filter):
     """Filter results by extension and meta data.
 
     The function will search the $HOME folder recursively for files with the
@@ -65,9 +40,9 @@ def search_results(path=None, extension=".dflx", **parameter_filter):
 
     Examples
     --------
-    >>> my_file_name = fetch_example_results("de22_no_heat_reg_merit")
-    >>> search_results(path=TEST_PATH, map=["de22"])[0].split(os.sep)[-1]
-    'de22_no_heat_reg_merit.esys'
+    >>> my_file_name = fetch_example_results("de17_heat.dflx")
+    >>> search_results(path=TEST_PATH, regions=[17])[0].split(os.sep)[-1]
+    'de17_heat.dflx'
     """
     if path is None:
         path = os.path.expanduser("~")
@@ -77,9 +52,10 @@ def search_results(path=None, extension=".dflx", **parameter_filter):
     for root, dirs, files in os.walk(path):
         files = [f for f in files if not f[0] == "."]
         dirs[:] = [d for d in dirs if not d[0] == "."]
-        if extension in str(files):
+        if "." + extension in str(files):
             for f in files:
-                result_files.append(os.path.join(root, f))
+                if f.split(".")[-1] == extension:
+                    result_files.append(os.path.join(root, f))
     files = {}
 
     # filter by meta data.
@@ -102,7 +78,7 @@ def restore_energy_system(path):
 
     Examples
     --------
-    >>> fn = fetch_example_results("de02_no_heat_reg_merit")
+    >>> fn = fetch_example_results("de02.dflx")
     >>> type(restore_energy_system(fn))
     <class 'oemof.solph.network.EnergySystem'>
     """
@@ -129,8 +105,8 @@ def restore_results(file_names):
 
     Examples
     --------
-    >>> fn1 = fetch_example_results("de22_no_heat_reg_merit")
-    >>> fn2 = fetch_example_results("de02_no_heat_reg_merit")
+    >>> fn1 = fetch_example_results("de21_transmission-losses.dflx")
+    >>> fn2 = fetch_example_results("de02.dflx")
     >>> restore_results(fn1).keys()
     ['Problem', 'Solver', 'Solution', 'Main', 'Meta', 'Param']
     >>> restore_results([fn1, fn2])[0].keys()
@@ -195,7 +171,7 @@ def reshape_bus_view(results, buses, data=None, aggregate=None):
 
     Examples
     --------
-    >>> fn = fetch_example_results("de22_no_heat_reg_merit")
+    >>> fn = fetch_example_results("de21_copperplate.dflx")
     >>> my_es = restore_energy_system(fn)
     >>> my_buses = search_nodes(
     ...     my_es.results, node_type=solph.Bus, tag="electricity")
@@ -215,9 +191,9 @@ def reshape_bus_view(results, buses, data=None, aggregate=None):
     >>> list(df2["in", "trsf", "pp"].columns[:4])
     ['bioenergy_038', 'bioenergy_042', 'bioenergy_045', 'hard_coal_023']
     >>> int(df1.sum().sum())
-    1426925322
+    1521419647
     >>> int(df2.sum().sum())
-    1426925322
+    1521419647
 
     """
     if aggregate is None:

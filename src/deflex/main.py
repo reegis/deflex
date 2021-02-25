@@ -49,15 +49,15 @@ def load_scenario(path, file_type=None):
 
     Examples
     --------
-    >>> fn = os.path.join(os.path.dirname(__file__), os.pardir, os.pardir,
-    ...                   "tests", "data", "deflex_test_scenario.xls")
-    >>> s = load_scenario(fn, file_type="excel")
+    >>> from deflex.tools import fetch_example_results, TEST_PATH
+    >>> fn = fetch_example_results("de02_short.xlsx")
+    >>> s = load_scenario(fn, file_type="xlsx")
     >>> type(s)
-    <class 'deflex.scenario_tools.DeflexScenario'>
-    >>> int(s.input_data["volatile_source"]["capacity"]["DE02", "wind"])
+    <class 'deflex.scenario.DeflexScenario'>
+    >>> int(s.input_data["volatile plants"]["capacity"]["DE02", "wind"])
     517
     >>> type(load_scenario(fn))
-    <class 'deflex.scenario_tools.DeflexScenario'>
+    <class 'deflex.scenario.DeflexScenario'>
     >>> load_scenario(fn, file_type="csv")  # doctest: +IGNORE_EXCEPTION_DETAIL
     Traceback (most recent call last):
      ...
@@ -69,16 +69,17 @@ def load_scenario(path, file_type=None):
     if path is not None:
         if file_type is None:
             if ".xlsx" in path[-5:]:
-                file_type = "excel"
+                file_type = "xlsx"
             elif "csv" in path[-4:]:
                 file_type = "csv"
             else:
                 file_type = None
         logging.info("Reading file: %s", path)
-        if file_type == "excel":
-            sc.load_xlsx(path)
+        if file_type == "xlsx":
+            sc.read_xlsx(path)
+            sc.to_xlsx(path)
         elif file_type == "csv":
-            sc.load_csv(path)
+            sc.read_csv(path)
     return sc
 
 
@@ -107,20 +108,28 @@ def fetch_scenarios_from_dir(path, csv=True, xlsx=False):
 
     Examples
     --------
+    >>> import shutil
+    >>> from deflex.tools import TEST_PATH
     >>> test_data = os.path.join(os.path.dirname(__file__), os.pardir,
     ...                          os.pardir, "tests", "data")
     >>> my_csv = fetch_scenarios_from_dir(test_data)
     >>> len(my_csv)
-    3
+    5
     >>> os.path.basename(my_csv[0])
-    'deflex_2014_de02_test_csv'
-    >>> my_excel = fetch_scenarios_from_dir(test_data, csv=False, xls=True)
+    'deflex_2014_de02_co2-price_var-costs_csv'
+    >>> my_excel = fetch_scenarios_from_dir(TEST_PATH, csv=False, xlsx=True)
     >>> len(my_excel)
-    3
-    >>> os.path.basename(my_excel[0])
-    'deflex_2013_de02_test.xls'
-    >>> len(fetch_scenarios_from_dir(test_data, xls=True))
-    6
+    9
+    >>> os.path.basename([e for e in my_excel if "short" in e][0])
+    'de02_short.xlsx'
+    >>> len(fetch_scenarios_from_dir(TEST_PATH, xlsx=True))
+    9
+    >>> s = load_scenario([e for e in my_excel if "short" in e][0])
+    >>> csv_path = os.path.join(TEST_PATH, "de02_short_csv")
+    >>> s.to_csv(csv_path)
+    >>> len(fetch_scenarios_from_dir(TEST_PATH, xlsx=True))
+    10
+    >>> shutil.rmtree(csv_path)
 
     """
     xlsx_scenarios = []
@@ -155,27 +164,26 @@ def model_multi_scenarios(scenarios, cpu_fraction=0.2, log_file=None):
 
     Examples
     --------
-    >>> fn1 = os.path.join(os.path.dirname(__file__), os.pardir, os.pardir,
-    ...                    "tests", "data", "deflex_test_scenario.xls")
-    >>> fn2 = os.path.join(os.path.dirname(__file__), os.pardir, os.pardir,
-    ...                    "tests", "data", "deflex_test_scenario_broken.xls")
+    >>> from deflex.tools import fetch_example_results, TEST_PATH
+    >>> fn1 = fetch_example_results("de02_short.xlsx")
+    >>> fn2 = fetch_example_results("de02_short_broken.xlsx")
     >>> my_log_file = os.path.join(os.path.dirname(__file__), os.pardir,
     ...                            os.pardir, "tests", "data",
     ...                            "my_log_file.csv")
     >>> my_scenarios = [fn1, fn2]
     >>> model_multi_scenarios(my_scenarios, log_file=my_log_file)
     >>> my_log = pd.read_csv(my_log_file, index_col=[0])
-    >>> good = my_log.loc["deflex_test_scenario.xls"]
+    >>> good = my_log.loc["de02_short.xlsx"]
     >>> rv = good["return_value"]
     >>> datetime.strptime(rv, "%Y-%m-%d %H:%M:%S.%f").year > 2019
     True
     >>> good["trace"]
     nan
     >>> os.path.basename(good["result_file"])
-    'deflex_test_scenario_alpha.esys'
-    >>> broken = my_log.loc["deflex_test_scenario_broken.xls"]
+    'de02_short.dflx'
+    >>> broken = my_log.loc["de02_short_broken.xlsx"]
     >>> broken["return_value"].replace("'", "")  # doctest: +ELLIPSIS
-    'ValueError(Missing time series for geothermal (capacity: 31.4) in DE01...
+    'ValueError(Missing time series for solar (capacity: 5.5) in DE02...
     >>> broken["trace"]  # doctest: +ELLIPSIS
     'Traceback (most recent call last)...
     >>> broken["result_file"]
@@ -245,22 +253,22 @@ def batch_model_scenario(path, named=True, file_type=None, ignore_errors=True):
 
     Examples
     --------
-    >>> fn = os.path.join(os.path.dirname(__file__), os.pardir, os.pardir,
-    ...                   "tests", "data", "deflex_test_scenario.xls")
+    >>> from deflex.tools import fetch_example_results
+    >>> fn = fetch_example_results("de02_short.xlsx")
     >>> r = batch_model_scenario(fn, ignore_errors=False)  # doctest: +ELLIPSIS
     Welcome to the CBC MILP ...
     >>> r.name
-    'deflex_test_scenario.xls'
+    'de02_short.xlsx'
     >>> result_file = r.result_file
     >>> os.path.basename(result_file)
-    'deflex_test_scenario_alpha.esys'
+    'de02_short.dflx'
     >>> r.trace
     >>> r.return_value.year > 2019
     True
-    >>> fn = os.path.join("wrong_file.xls")
+    >>> fn = os.path.join("wrong_file.xlsx")
     >>> r = batch_model_scenario(fn)
     >>> r.name
-    'wrong_file.xls'
+    'wrong_file.xlsx'
     >>> repr(r.return_value)
     "FileNotFoundError(2, 'No such file or directory')"
     >>> r.result_file
@@ -325,13 +333,12 @@ def model_scenario(
 
     Examples
     --------
-    >>> fn = os.path.join(os.path.dirname(__file__), os.pardir, os.pardir,
-    ...                   "tests", "data", "deflex_test_scenario.xls")
-    >>> r = model_scenario(fn, file_type="excel")  # doctest: +ELLIPSIS
+    >>> from deflex.tools import fetch_example_results, TEST_PATH
+    >>> fn = fetch_example_results("de02_short.xlsx")
+    >>> r = model_scenario(fn, file_type="xlsx")  # doctest: +ELLIPSIS
     Welcome to the CBC MILP ...
-    >>> rf = os.path.join(os.path.dirname(fn), "results_cbc",
-    ...                   "deflex_test_scenario_alpha.esys")
-    >>> os.remove(rf)
+    >>> f = os.path.join(os.path.dirname(fn), "results_cbc", "de02_short.dflx")
+    >>> os.remove(f)
     """
     stopwatch()
 
@@ -360,7 +367,7 @@ def model_scenario(
         result_path = os.path.join(
             os.path.dirname(path),
             "results_{0}".format(cfg.get("general", "solver")),
-            os.path.basename(path).split(".")[0],
+            str(os.path.basename(path).split(".")[0]) + ".dflx",
         )
 
     logging.info("Solve the optimisation model: %s", stopwatch())
@@ -402,11 +409,10 @@ def plot_scenario(path, file_type=None, graphml_file=None):
     TODO: Keep this test? It does not work without graphviz-dev and python3-dev
     Examples
     --------
-    >>> fn = os.path.join(os.path.dirname(__file__), os.pardir, os.pardir,
-    ...      "tests", "data", "deflex_test_scenario.xls")
-    >>> fn_img = os.path.join(os.path.dirname(__file__), os.pardir, os.pardir,
-    ...                       "tests", "data", "test_es.graphml")
-    >>> plot_scenario(fn, "excel", fn_img)
+    >>> from deflex.tools import fetch_example_results, TEST_PATH
+    >>> fn = fetch_example_results("de02_short.xlsx")
+    >>> fn_img = os.path.join(TEST_PATH, "test_es.graphml")
+    >>> plot_scenario(fn, "xlsx", fn_img)
     >>> os.path.isfile(fn_img)
     True
     >>> os.remove(fn_img)

@@ -1,0 +1,12 @@
+key,value
+co2 price,15
+year,2014
+number of time steps,8760
+name,deflex_2014_de21
+regions,21
+costs_source,EWI
+heat,true
+group_transformer,false
+copperplate,false
+use_variable_costs,true
+use_downtime_factor,true
