@@ -119,16 +119,16 @@ def fetch_scenarios_from_dir(path, csv=True, xlsx=False):
     'deflex_2014_de02_co2-price_var-costs_csv'
     >>> my_excel = fetch_scenarios_from_dir(TEST_PATH, csv=False, xlsx=True)
     >>> len(my_excel)
-    9
+    6
     >>> os.path.basename([e for e in my_excel if "short" in e][0])
     'de02_short.xlsx'
     >>> len(fetch_scenarios_from_dir(TEST_PATH, xlsx=True))
-    9
+    6
     >>> s = load_scenario([e for e in my_excel if "short" in e][0])
     >>> csv_path = os.path.join(TEST_PATH, "de02_short_csv")
     >>> s.to_csv(csv_path)
     >>> len(fetch_scenarios_from_dir(TEST_PATH, xlsx=True))
-    10
+    7
     >>> shutil.rmtree(csv_path)
 
     """
