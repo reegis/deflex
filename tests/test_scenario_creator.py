@@ -126,7 +126,7 @@ class TestScenarioCreationFull:
         pd.testing.assert_frame_equal(
             self.tables["power lines"].apply(pd.to_numeric).astype(float),
             self.input_data["power lines"].apply(pd.to_numeric),
-            rtol=1e-3
+            rtol=1e-3,
         )
 
     def test_transformer(self):

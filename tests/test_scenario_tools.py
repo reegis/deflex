@@ -64,7 +64,7 @@ def test_scenario_es_init():
     es2 = sc.initialise_energy_system().es
     sc = scenario.DeflexScenario(input_data=data)
     sc.input_data["general"]["year"] = 2012
-    with pytest.warns(UserWarning, match='2012 is a leap year but the'):
+    with pytest.warns(UserWarning, match="2012 is a leap year but the"):
         print(sc.initialise_energy_system().es)
     sc.input_data["general"]["number of time steps"] = 8784
     es3 = sc.initialise_energy_system().es
