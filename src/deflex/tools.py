@@ -35,8 +35,10 @@ def fetch_example_results(key):
     """
 
     zip_file = os.path.join(TEST_PATH, "deflex_examples.zip")
-    zip_url = ("https://files.de-1.osf.io/v1/resources/a5xrj/providers"
-               "/osfstorage/5fdc7e0bf0df5405452ef6f0/?zip=")
+    zip_url = (
+        "https://files.de-1.osf.io/v1/resources/a5xrj/providers"
+        "/osfstorage/5fdc7e0bf0df5405452ef6f0/?zip="
+    )
     os.makedirs(TEST_PATH, exist_ok=True)
     if ".dflx" in key:
         file_name = os.path.join(TEST_PATH, "results_cbc", key)
