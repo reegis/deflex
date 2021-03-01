@@ -16,8 +16,6 @@ import pandas as pd
 from oemof import solph
 
 from deflex.scenario import restore_scenario
-from deflex.tools import TEST_PATH
-from deflex.tools import fetch_example_results
 
 
 def search_results(path=None, extension="dflx", **parameter_filter):
@@ -40,6 +38,8 @@ def search_results(path=None, extension="dflx", **parameter_filter):
 
     Examples
     --------
+    >>> from deflex.tools import TEST_PATH
+    >>> from deflex.tools import fetch_example_results
     >>> my_file_name = fetch_example_results("de17_heat.dflx")
     >>> search_results(path=TEST_PATH, regions=[17])[0].split(os.sep)[-1]
     'de17_heat.dflx'
@@ -90,6 +90,7 @@ def restore_results(file_names, scenario_class=None):
 
     Examples
     --------
+    >>> from deflex.tools import fetch_example_results
     >>> fn1 = fetch_example_results("de21_transmission-losses.dflx")
     >>> fn2 = fetch_example_results("de02.dflx")
     >>> restore_results(fn1).keys()
@@ -159,6 +160,7 @@ def reshape_bus_view(results, buses, data=None, aggregate=None):
 
     Examples
     --------
+    >>> from deflex.tools import fetch_example_results
     >>> fn = fetch_example_results("de21_copperplate.dflx")
     >>> my_es = restore_scenario(fn).es
     >>> my_buses = search_nodes(
