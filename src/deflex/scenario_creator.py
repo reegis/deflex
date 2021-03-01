@@ -127,7 +127,10 @@ def create_scenario(regions, year, name, lines, opsd_version=None):
 
     logging.info("BASIC SCENARIO - DEMAND")
     table_collection["demand series"] = demand.scenario_demand(
-        regions, year, name, opsd_version=opsd_version,
+        regions,
+        year,
+        name,
+        opsd_version=opsd_version,
     )
 
     logging.info("BASIC SCENARIO - MOBILITY")
@@ -214,7 +217,12 @@ def clean_time_series(table_collection):
 
 
 def create_basic_reegis_scenario(
-    name, regions, parameter, lines=None, csv_path=None, excel_path=None,
+    name,
+    regions,
+    parameter,
+    lines=None,
+    csv_path=None,
+    excel_path=None,
 ):
     """
     Create a basic scenario for a given year and region-set.
