@@ -77,6 +77,7 @@ def create_scenario(regions, year, name, lines, opsd_version=None):
             opsd_version = "2019-06-05"
 
     table_collection = {}
+    table_collection["general"] = pd.DataFrame()
 
     logging.info("BASIC SCENARIO - STORAGES")
     table_collection["storages"] = storages.scenario_storages(
@@ -115,26 +116,30 @@ def create_scenario(regions, year, name, lines, opsd_version=None):
         logging.info("...skipped")
 
     logging.info("BASIC SCENARIO - SOURCES")
-    table_collection[
-        "commodity sources"
-    ] = commodity.scenario_commodity_sources(year)
+    cs = commodity.scenario_commodity_sources(year)
+    table_collection["general"].loc["co2 price", "value"] = cs.pop(
+        "co2_price"
+    ).iloc[0]
+    table_collection["commodity sources"] = cs
     table_collection["volatile series"] = feedin.scenario_feedin(
         regions, year, name
     )
 
     logging.info("BASIC SCENARIO - DEMAND")
     table_collection["demand series"] = demand.scenario_demand(
-        regions,
-        year,
-        name,
-        opsd_version=opsd_version,
+        regions, year, name, opsd_version=opsd_version,
     )
 
     logging.info("BASIC SCENARIO - MOBILITY")
     table_collection = mobility.scenario_mobility(year, table_collection)
 
     logging.info("ADD META DATA")
-    table_collection["general"] = meta_data(year)
+    table_collection["general"] = pd.concat(
+        [table_collection["general"], meta_data(year)]
+    )
+    table_collection["general"].loc["number of time steps", "value"] = len(
+        table_collection["demand series"]
+    )
     return table_collection
 
 
@@ -144,6 +149,7 @@ def meta_data(year):
     )
     meta.loc["year"] = year
     meta.loc["map"] = cfg.get("creator", "map")
+    # meta.loc[""]
 
     # Create name
     if cfg.get("creator", "heat"):
@@ -208,12 +214,7 @@ def clean_time_series(table_collection):
 
 
 def create_basic_reegis_scenario(
-    name,
-    regions,
-    parameter,
-    lines=None,
-    csv_path=None,
-    excel_path=None,
+    name, regions, parameter, lines=None, csv_path=None, excel_path=None,
 ):
     """
     Create a basic scenario for a given year and region-set.
@@ -338,9 +339,7 @@ def create_basic_reegis_scenario(
     table_collection = clean_time_series(table_collection)
 
     name = table_collection["general"].get("name")
-    sce = scenario.Scenario(
-        input_data=table_collection, name=name, year=year
-    )
+    sce = scenario.Scenario(input_data=table_collection, name=name, year=year)
 
     if csv_path is not None:
         os.makedirs(csv_path, exist_ok=True)

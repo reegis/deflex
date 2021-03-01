@@ -123,10 +123,8 @@ class TestScenarioCreationFull:
         )
 
     def test_transmission(self):
-        self.tables["power lines"].to_csv("/home/uwe/mobt.csv")
-        self.input_data["power lines"].to_csv("/home/uwe/mobi.csv")
         pd.testing.assert_frame_equal(
-            self.tables["power lines"].apply(pd.to_numeric),
+            self.tables["power lines"].apply(pd.to_numeric).astype(float),
             self.input_data["power lines"].apply(pd.to_numeric),
             rtol=1e-3
         )
@@ -137,11 +135,10 @@ class TestScenarioCreationFull:
             self.input_data["power plants"],
         )
 
-    def test_meta(self):
-
+    def test_general(self):
         pd.testing.assert_series_equal(
-            self.tables["general"].apply(str).sort_index(),
-            self.input_data["general"].apply(str).sort_index(),
+            self.tables["general"].astype(str).sort_index(),
+            self.input_data["general"]["value"].astype(str).sort_index(),
         )
 
     def test_commodity_source(self):
@@ -269,7 +266,7 @@ class TestScenarioCreationPart:
         )
 
     def test_storages(self):
-        a = self.tables["storages"].apply(pd.to_numeric)
+        a = self.tables["storages"].apply(pd.to_numeric).astype(float)
         b = self.input_data["storages"].apply(pd.to_numeric)
         for col in a.columns:
             pd.testing.assert_series_equal(a[col], b[col])
@@ -283,7 +280,7 @@ class TestScenarioCreationPart:
 
     def test_transmission(self):
         pd.testing.assert_frame_equal(
-            self.tables["power lines"].apply(pd.to_numeric),
+            self.tables["power lines"].apply(pd.to_numeric).astype(float),
             self.input_data["power lines"].apply(pd.to_numeric),
         )
 
@@ -293,8 +290,8 @@ class TestScenarioCreationPart:
             self.input_data["power plants"],
         )
 
-    def test_meta(self):
-        pd.testing.assert_frame_equal(
+    def test_general(self):
+        pd.testing.assert_series_equal(
             self.tables["general"].astype(str).sort_index(),
             self.input_data["general"].astype(str).sort_index(),
         )
