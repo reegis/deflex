@@ -373,7 +373,7 @@ class DeflexScenario(Scenario):
         )
 
 
-def restore_scenario(filename, scenario_class):
+def restore_scenario(filename, scenario_class=DeflexScenario):
     """
 
     Parameters

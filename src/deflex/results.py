@@ -15,9 +15,9 @@ import pickle
 import pandas as pd
 from oemof import solph
 
-from deflex.scenario import DeflexScenario
 from deflex.scenario import restore_scenario
-from deflex.tools import fetch_example_results, TEST_PATH
+from deflex.tools import TEST_PATH
+from deflex.tools import fetch_example_results
 
 
 def search_results(path=None, extension="dflx", **parameter_filter):
@@ -73,30 +73,15 @@ def search_results(path=None, extension="dflx", **parameter_filter):
     return list(files.keys())
 
 
-def restore_energy_system(path):
-    """Restore EnergySystem with results from file with the given path.
-
-    Examples
-    --------
-    >>> fn = fetch_example_results("de02.dflx")
-    >>> type(restore_energy_system(fn))
-    <class 'oemof.solph.network.EnergySystem'>
-    """
-    es = solph.EnergySystem()
-    f = open(path, "rb")
-    pickle.load(f)
-    es.__dict__ = pickle.load(f)
-    f.close()
-    return es
-
-
-def restore_results(file_names):
+def restore_results(file_names, scenario_class=None):
     """Load results from a file or a list of files.
 
     Parameters
     ----------
     file_names : list or string
         All file names (full path) that should be loaded.
+    scenario_class : deflex.Scenario
+        The Scenario class. ToDo How to reference the class and an object.
 
     Returns
     -------
@@ -116,7 +101,10 @@ def restore_results(file_names):
         file_names = list((file_names,))
     results = []
     for path in file_names:
-        results.append(restore_scenario(path, DeflexScenario).results)
+        if scenario_class is None:
+            results.append(restore_scenario(path).results)
+        else:
+            results.append(restore_scenario(path, scenario_class).results)
     if len(results) < 2:
         results = results[0]
     return results
@@ -172,7 +160,7 @@ def reshape_bus_view(results, buses, data=None, aggregate=None):
     Examples
     --------
     >>> fn = fetch_example_results("de21_copperplate.dflx")
-    >>> my_es = restore_energy_system(fn)
+    >>> my_es = restore_scenario(fn).es
     >>> my_buses = search_nodes(
     ...     my_es.results, node_type=solph.Bus, tag="electricity")
     >>> # aggregate lines for all regions and remove suffix of power plants
@@ -191,9 +179,9 @@ def reshape_bus_view(results, buses, data=None, aggregate=None):
     >>> list(df2["in", "trsf", "pp"].columns[:4])
     ['bioenergy_038', 'bioenergy_042', 'bioenergy_045', 'hard_coal_023']
     >>> int(df1.sum().sum())
-    1521419647
+    1521426948
     >>> int(df2.sum().sum())
-    1521419647
+    1521426948
 
     """
     if aggregate is None:

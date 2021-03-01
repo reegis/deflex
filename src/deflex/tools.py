@@ -18,8 +18,8 @@ TEST_PATH = os.path.join(
 )
 
 
-def download(fn, url):
-    if not os.path.isfile(fn):
+def download(fn, url, force=False):
+    if not os.path.isfile(fn) or force:
         logging.info("Downloading '%s' from %s", os.path.basename(fn), url)
         req = requests.get(url)
         with open(fn, "wb") as fout:
@@ -34,20 +34,21 @@ def fetch_example_results(key):
     have the same structure as the actual deflex results.
     """
 
-    urls = {
-        "de02.dflx": "https://osf.io//download",
-        "de02_co2-price_var-costs.dflx": "https://osf.io//download",
-        "de02_heat.dflx": "https://osf.io//download",
-        "de17_heat.dflx": "https://osf.io//download",
-        "de21_copperplate.dflx": "https://osf.io//download",
-        "de21_transmission-losses.dflx": "https://osf.io//download",
-        "de02_short.xlsx": "https://osf.io//download",
-        "de02_short_broken.xlsx": "https://osf.io//download",
-    }
+    zip_file = os.path.join(TEST_PATH, "deflex_examples.zip")
+    zip_url = ("https://files.de-1.osf.io/v1/resources/a5xrj/providers"
+               "/osfstorage/5fdc7e0bf0df5405452ef6f0/?zip=")
     os.makedirs(TEST_PATH, exist_ok=True)
-    file_name = os.path.join(TEST_PATH, key)
-    download(file_name, urls[key])
-    if os.path.basename(file_name).split(".")[-1] == "zip":
-        with ZipFile(file_name, "r") as zip_ref:
-            zip_ref.extractall(os.path.dirname(file_name))
+    if ".dflx" in key:
+        file_name = os.path.join(TEST_PATH, "results_cbc", key)
+    else:
+        file_name = os.path.join(TEST_PATH, key)
+    if not os.path.isfile(file_name):
+        download(zip_file, zip_url, force=True)
+        with ZipFile(zip_file, "r") as zip_ref:
+            zip_ref.extractall(os.path.dirname(zip_file))
+    if not os.path.isfile(file_name):
+        msg = "Example file '{0}' not in '{1}', downloaded from {2}".format(
+            key, zip_file, zip_url
+        )
+        raise ValueError(msg)
     return file_name
