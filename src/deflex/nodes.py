@@ -21,7 +21,7 @@ def create_solph_nodes_from_data(input_data, nodes, extra_regions=None):
     add_volatile_sources(input_data, nodes)
 
     # Decentralised heating systems
-    if "decentralised_heat" in input_data:
+    if "decentralised heat" in input_data:
         add_decentralised_heating_systems(input_data, nodes, extra_regions)
 
     # Local electricity demand
@@ -144,8 +144,8 @@ def add_decentralised_heating_systems(table_collection, nodes, extra_regions):
 
     """
     logging.debug("Add decentralised_heating_systems to nodes dictionary.")
-    dts = table_collection["demand_series"]
-    dh = table_collection["decentralised_heat"]
+    dts = table_collection["demand series"]
+    dh = table_collection["decentralised heat"]
     demand_regions = list({"DE_demand"}.union(set(extra_regions)))
 
     for d_region in demand_regions:
