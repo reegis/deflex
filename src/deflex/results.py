@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
-"""Analyses of deflex.
+"""Results handling in deflex.
 
-SPDX-FileCopyrightText: 2016-2020 Uwe Krien <krien@uni-bremen.de>
+SPDX-FileCopyrightText: 2016-2021 Uwe Krien <krien@uni-bremen.de>
 
 SPDX-License-Identifier: MIT
 """
@@ -13,36 +13,11 @@ import os
 import pickle
 
 import pandas as pd
-import requests
-from oemof import solph
 
-TEST_PATH = os.path.join(os.path.expanduser("~"), ".tmp_test_32traffic_43")
+from deflex.scenario import restore_scenario
 
 
-def fetch_example_results(key):
-    """Download example results to enable tests.
-
-    Make sure that the examples will
-    have the same structure as the actual deflex results.
-    """
-    urls = {
-        "de02_no_heat_reg_merit": "https://osf.io/9qt4a/download",
-        "de02_heat_reg_merit": "https://osf.io/69mnu/download",
-        "de22_no_heat_no_reg_merit": "https://osf.io/k4fdt/download",
-        "de22_no_heat_reg_merit": "https://osf.io/3642z/download",
-        "de22_heat_no_reg_merit": "https://osf.io/umvny/download",
-        "de22_heat_reg_merit": "https://osf.io/yj4tm/download",
-    }
-    os.makedirs(TEST_PATH, exist_ok=True)
-    file_name = os.path.join(TEST_PATH, key + ".esys")
-    if not os.path.isfile(file_name):
-        req = requests.get(urls[key])
-        with open(file_name, "wb") as f_out:
-            f_out.write(req.content)
-    return file_name
-
-
-def search_results(path=None, extension=".esys", **parameter_filter):
+def search_results(path=None, extension="dflx", **parameter_filter):
     """Filter results by extension and meta data.
 
     The function will search the $HOME folder recursively for files with the
@@ -62,9 +37,11 @@ def search_results(path=None, extension=".esys", **parameter_filter):
 
     Examples
     --------
-    >>> my_file_name = fetch_example_results("de22_no_heat_reg_merit")
-    >>> search_results(path=TEST_PATH, map=["de22"])[0].split(os.sep)[-1]
-    'de22_no_heat_reg_merit.esys'
+    >>> from deflex.tools import TEST_PATH
+    >>> from deflex.tools import fetch_example_results
+    >>> my_file_name = fetch_example_results("de17_heat.dflx")
+    >>> search_results(path=TEST_PATH, regions=[17])[0].split(os.sep)[-1]
+    'de17_heat.dflx'
     """
     if path is None:
         path = os.path.expanduser("~")
@@ -74,9 +51,10 @@ def search_results(path=None, extension=".esys", **parameter_filter):
     for root, dirs, files in os.walk(path):
         files = [f for f in files if not f[0] == "."]
         dirs[:] = [d for d in dirs if not d[0] == "."]
-        if extension in str(files):
+        if "." + extension in str(files):
             for f in files:
-                result_files.append(os.path.join(root, f))
+                if f.split(".")[-1] == extension:
+                    result_files.append(os.path.join(root, f))
     files = {}
 
     # filter by meta data.
@@ -94,30 +72,15 @@ def search_results(path=None, extension=".esys", **parameter_filter):
     return list(files.keys())
 
 
-def restore_energy_system(path):
-    """Restore EnergySystem with results from file with the given path.
-
-    Examples
-    --------
-    >>> fn = fetch_example_results("de02_no_heat_reg_merit")
-    >>> type(restore_energy_system(fn))
-    <class 'oemof.solph.network.EnergySystem'>
-    """
-    es = solph.EnergySystem()
-    f = open(path, "rb")
-    pickle.load(f)
-    es.__dict__ = pickle.load(f)
-    f.close()
-    return es
-
-
-def restore_results(file_names):
+def restore_results(file_names, scenario_class=None):
     """Load results from a file or a list of files.
 
     Parameters
     ----------
     file_names : list or string
         All file names (full path) that should be loaded.
+    scenario_class : deflex.Scenario
+        The Scenario class. ToDo How to reference the class and an object.
 
     Returns
     -------
@@ -126,8 +89,9 @@ def restore_results(file_names):
 
     Examples
     --------
-    >>> fn1 = fetch_example_results("de22_no_heat_reg_merit")
-    >>> fn2 = fetch_example_results("de02_no_heat_reg_merit")
+    >>> from deflex.tools import fetch_example_results
+    >>> fn1 = fetch_example_results("de21_transmission-losses.dflx")
+    >>> fn2 = fetch_example_results("de02.dflx")
     >>> restore_results(fn1).keys()
     ['Problem', 'Solver', 'Solution', 'Main', 'Meta', 'Param']
     >>> restore_results([fn1, fn2])[0].keys()
@@ -137,7 +101,10 @@ def restore_results(file_names):
         file_names = list((file_names,))
     results = []
     for path in file_names:
-        results.append(restore_energy_system(path).results)
+        if scenario_class is None:
+            results.append(restore_scenario(path).results)
+        else:
+            results.append(restore_scenario(path, scenario_class).results)
     if len(results) < 2:
         results = results[0]
     return results
@@ -164,7 +131,7 @@ def reshape_bus_view(results, buses, data=None, aggregate=None):
     ----------
     results: dict
         A solph results dictionary from a deflex scenario.
-    buses : solph.Bus or list
+    buses : list or solph.Bus
         A single bus node or a list of buses.
     data : pandas.DataFrame
         MultiIndex DataFrame to add the results to.
@@ -192,8 +159,10 @@ def reshape_bus_view(results, buses, data=None, aggregate=None):
 
     Examples
     --------
-    >>> fn = fetch_example_results("de22_no_heat_reg_merit")
-    >>> my_es = restore_energy_system(fn)
+    >>> from oemof import solph
+    >>> from deflex.tools import fetch_example_results
+    >>> fn = fetch_example_results("de21_copperplate.dflx")
+    >>> my_es = restore_scenario(fn).es
     >>> my_buses = search_nodes(
     ...     my_es.results, node_type=solph.Bus, tag="electricity")
     >>> # aggregate lines for all regions and remove suffix of power plants
@@ -212,9 +181,9 @@ def reshape_bus_view(results, buses, data=None, aggregate=None):
     >>> list(df2["in", "trsf", "pp"].columns[:4])
     ['bioenergy_038', 'bioenergy_042', 'bioenergy_045', 'hard_coal_023']
     >>> int(df1.sum().sum())
-    1426925322
+    1521426948
     >>> int(df2.sum().sum())
-    1426925322
+    1521426948
 
     """
     if aggregate is None:
@@ -278,70 +247,3 @@ def reshape_bus_view(results, buses, data=None, aggregate=None):
                 data[flow_label] = results["Main"][flow]["sequences"]["flow"]
 
     return data.sort_index(axis=1)
-
-
-# if __name__ == "__main__":
-#     a = download_example_results()
-#     exit(0)
-#     # from pprint import pprint
-#     from matplotlib import pyplot as plt
-#     from oemof_visio.plot import io_plot
-#
-#     my_fn = download_example_results()
-#     my_files = search_results(path=TEST_PATH)
-#
-#     print(my_files)
-#
-#     filenames = search_results(
-#         map=["de22"], heat=["1"], year=["2014"], group_transformer=["0"]
-#     )
-#     print(filenames)
-#     res = restore_energy_system(filenames[0])
-#     busses = search_nodes(res.results, solph.Bus, tag="electricity")
-#
-#     am = [
-#         ("cat", "line", "all"),
-#         ("tag", "pp", "all"),
-#         ("tag", "ee", "all"),
-#         ("tag", "chp", "all"),
-#     ]
-#
-#     df = reshape_bus_view(res.results, busses, aggregate=am)
-#     df = df.groupby(level=[1, 2, 3, 4], axis=1).sum()
-#     print(df.columns)
-#     in_order = [
-#         ("trsf", "pp", "nuclear"),
-#         ("trsf", "pp", "lignite"),
-#         ("trsf", "pp", "hard_coal"),
-#         ("trsf", "pp", "natural_gas"),
-#         ("trsf", "pp", "oil"),
-#         ("trsf", "pp", "other"),
-#         ("trsf", "pp", "waste"),
-#         ("trsf", "pp", "bioenergy"),
-#         ("trsf", "pp", "all"),
-#         ("trsf", "chp", "all"),
-#         ("storage", "electricity", "phes"),
-#         ("storage", "electricity", "all"),
-#         ("source", "ee", "geothermal"),
-#         ("source", "ee", "hydro"),
-#         ("source", "ee", "solar"),
-#         ("source", "ee", "wind"),
-#         ("source", "ee", "all"),
-#         ("line", "electricity", "all"),
-#         ("shortage", "electricity", "all"),
-#     ]
-#     out_order = [
-#         ("demand", "electricity", "all"),
-#         ("excess", "electricity", "all"),
-#         ("storage", "electricity", "phes"),
-#         ("line", "electricity", "all"),
-#     ]
-#     # exit(0)
-#     io_plot(
-#         df_in=df["in"],
-#         df_out=df["out"],
-#         inorder=in_order,
-#         outorder=out_order,
-#         smooth=True,
-#     )
-#     plt.show()

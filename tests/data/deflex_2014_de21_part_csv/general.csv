@@ -1,0 +1,20 @@
+,value
+co2 price,15.92
+copperplate,False
+costs_source,ewi
+default_transmission_efficiency,0.9
+downtime_bioenergy,0.1
+group_transformer,True
+heat,False
+limited_transformer,bioenergy
+local_fuels,district heating
+map,de21
+mobility_other,petrol
+name,deflex_2014_de21_no-heat_no-reg-merit
+number of time steps,8760
+round,1
+separate_heat_regions,de22
+use_CO2_costs,True
+use_downtime_factor,True
+use_variable_costs,True
+year,2014

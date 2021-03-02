@@ -3,7 +3,7 @@
 """
 Tests for the config module.
 
-SPDX-FileCopyrightText: 2016-2019 Uwe Krien <krien@uni-bremen.de>
+SPDX-FileCopyrightText: 2016-2021 Uwe Krien <krien@uni-bremen.de>
 
 SPDX-License-Identifier: MIT
 """

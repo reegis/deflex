@@ -3,10 +3,12 @@
 """
 Test the main module
 
-SPDX-FileCopyrightText: 2016-2019 Uwe Krien <krien@uni-bremen.de>
+SPDX-FileCopyrightText: 2016-2021 Uwe Krien <krien@uni-bremen.de>
 
 SPDX-License-Identifier: MIT
 """
+import deflex.tools
+
 __copyright__ = "Uwe Krien <krien@uni-bremen.de>"
 __license__ = "MIT"
 
@@ -17,7 +19,7 @@ from deflex import results
 
 def test_flow_results():
     """The flow results are not fetched or calculated correctly.n"""
-    my_fn = results.fetch_example_results("de02_no_heat_reg_merit")
+    my_fn = deflex.tools.fetch_example_results("de02.dflx")
     my_res = results.restore_results(my_fn)
     mo = analyses.merit_order_from_results(my_res)
     seq = analyses.get_flow_results(my_res)

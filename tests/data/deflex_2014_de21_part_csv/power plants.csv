@@ -1,0 +1,376 @@
+de21,,capacity,count,fuel,efficiency,limit_elec_pp,variable_costs,downtime_factor
+DE01,bioenergy - 0.38,252.0,8,bioenergy,0.38,1342944.41638581,0,0.1
+DE01,bioenergy - 0.42,953.7,1327,bioenergy,0.417,5082403.72641724,0,0.1
+DE01,hard coal - 0.35,124.0,1,hard coal,0.348,inf,0,0.22
+DE01,hard coal - 0.39,282.0,1,hard coal,0.392,inf,0,0.22
+DE01,hard coal - 0.4,371.0,2,hard coal,0.396,inf,0,0.22
+DE01,hard coal - 0.41,514.0,1,hard coal,0.41,inf,0,0.22
+DE01,natural gas - 0.35,446.0,12,natural gas,0.351,inf,0,0.11
+DE01,natural gas - 0.37,14.7,1,natural gas,0.37,inf,0,0.11
+DE01,natural gas - 0.38,849.6,12,natural gas,0.381,inf,0,0.11
+DE01,natural gas - 0.4,200.6,3,natural gas,0.403,inf,0,0.11
+DE01,natural gas - 0.51,160.0,1,natural gas,0.513,inf,0,0.11
+DE01,natural gas - 0.52,552.0,2,natural gas,0.522,inf,0,0.11
+DE01,natural gas - 0.53,75.0,1,natural gas,0.526,inf,0,0.11
+DE01,oil - 0.3,51.0,1,oil,0.305,inf,0,0.15
+DE01,oil - 0.35,28.0,1,oil,0.354,inf,0,0.15
+DE01,oil - 0.36,276.0,1,oil,0.36,inf,0,0.15
+DE01,oil - 0.38,246.5,3,oil,0.382,inf,0,0.15
+DE01,oil - 0.4,59.0,1,oil,0.397,inf,0,0.15
+DE01,other - 0.42,2.5,1,other,0.417,inf,0,0.15
+DE01,waste - 0.33,187.3,8,waste,0.33,inf,0,0.15
+DE02,bioenergy - 0.38,20.0,1,bioenergy,0.38,106583.35050681,0,0.1
+DE02,bioenergy - 0.42,38.7,62,bioenergy,0.417,206238.315730677,0,0.1
+DE02,hard coal - 0.41,194.0,1,hard coal,0.408,inf,0,0.22
+DE02,hard coal - 0.46,0.0,2,hard coal,0.46,inf,0,0.22
+DE02,natural gas - 0.38,22.5,1,natural gas,0.376,inf,0,0.11
+DE02,natural gas - 0.58,127.0,1,natural gas,0.58,inf,0,0.11
+DE02,oil - 0.38,38.0,1,oil,0.377,inf,0,0.15
+DE02,waste - 0.33,24.0,1,waste,0.33,inf,0,0.15
+DE03,bioenergy - 0.38,18.1,1,bioenergy,0.38,96457.9797086631,0,0.1
+DE03,bioenergy - 0.42,358.1,564,bioenergy,0.417,1908366.43832443,0,0.1
+DE03,lignite - 0.25,67.0,1,lignite,0.246,inf,0,0.13
+DE03,lignite - 0.32,0.0,1,lignite,0.32,inf,0,0.13
+DE03,lignite - 0.35,45.0,1,lignite,0.35,inf,0,0.13
+DE03,lignite - 0.38,43.6,2,lignite,0.383,inf,0,0.13
+DE03,lignite - 0.39,980.0,4,lignite,0.39,inf,0,0.13
+DE03,natural gas - 0.31,26.5,1,natural gas,0.315,inf,0,0.11
+DE03,natural gas - 0.34,35.0,1,natural gas,0.343,inf,0,0.11
+DE03,natural gas - 0.35,33.6,1,natural gas,0.346,inf,0,0.11
+DE03,natural gas - 0.36,13.2,1,natural gas,0.358,inf,0,0.11
+DE03,natural gas - 0.38,170.3,6,natural gas,0.38,inf,0,0.11
+DE03,natural gas - 0.39,206.5,2,natural gas,0.391,inf,0,0.11
+DE03,natural gas - 0.4,17.3,1,natural gas,0.399,inf,0,0.11
+DE03,natural gas - 0.51,173.0,4,natural gas,0.513,inf,0,0.11
+DE03,natural gas - 0.52,314.0,3,natural gas,0.522,inf,0,0.11
+DE03,natural gas - 0.53,39.0,1,natural gas,0.531,inf,0,0.11
+DE03,natural gas - 0.54,182.5,2,natural gas,0.54,inf,0,0.11
+DE03,natural gas - 0.6,70.3,2,natural gas,0.6,inf,0,0.11
+DE03,oil - 0.36,120.0,1,oil,0.364,inf,0,0.15
+DE03,oil - 0.38,115.8,2,oil,0.379,inf,0,0.15
+DE03,other - 0.42,70.7,4,other,0.417,inf,0,0.15
+DE03,waste - 0.33,139.0,7,waste,0.33,inf,0,0.15
+DE04,bioenergy - 0.38,52.4,3,bioenergy,0.38,279247.568327842,0,0.1
+DE04,bioenergy - 0.42,459.1,700,bioenergy,0.417,2446609.83338382,0,0.1
+DE04,lignite - 0.37,56.8,1,lignite,0.371,inf,0,0.13
+DE04,lignite - 0.38,465.0,1,lignite,0.383,inf,0,0.13
+DE04,lignite - 0.39,4050.0,9,lignite,0.39,inf,0,0.13
+DE04,lignite - 0.4,3431.0,5,lignite,0.398,inf,0,0.13
+DE04,lignite - 0.42,90.8,1,lignite,0.424,inf,0,0.13
+DE04,lignite - 0.43,640.0,1,lignite,0.429,inf,0,0.13
+DE04,natural gas - 0.37,57.2,1,natural gas,0.37,inf,0,0.11
+DE04,natural gas - 0.38,116.9,3,natural gas,0.38,inf,0,0.11
+DE04,natural gas - 0.39,13.5,1,natural gas,0.393,inf,0,0.11
+DE04,natural gas - 0.4,13.4,1,natural gas,0.399,inf,0,0.11
+DE04,natural gas - 0.51,134.8,2,natural gas,0.513,inf,0,0.11
+DE04,natural gas - 0.52,260.0,1,natural gas,0.517,inf,0,0.11
+DE04,natural gas - 0.58,167.0,2,natural gas,0.585,inf,0,0.11
+DE04,oil - 0.38,17.0,1,oil,0.38,inf,0,0.15
+DE04,other - 0.42,124.5,3,other,0.417,inf,0,0.15
+DE04,waste - 0.33,57.7,3,waste,0.33,inf,0,0.15
+DE05,bioenergy - 0.38,20.0,1,bioenergy,0.38,106583.35050681,0,0.1
+DE05,bioenergy - 0.42,264.4,703,bioenergy,0.417,1409025.78370003,0,0.1
+DE05,hard coal - 0.45,794.0,1,hard coal,0.448,inf,0,0.22
+DE05,natural gas - 0.38,84.1,2,natural gas,0.38,inf,0,0.11
+DE05,natural gas - 0.42,718.0,2,natural gas,0.421,inf,0,0.11
+DE05,natural gas - 0.58,887.0,1,natural gas,0.585,inf,0,0.11
+DE05,natural gas - 0.59,232.0,2,natural gas,0.59,inf,0,0.11
+DE05,nuclear - 0.33,1336.0,1,nuclear,0.33,inf,0,0.11
+DE05,other - 0.33,33.4,1,other,0.33,inf,0,0.15
+DE05,other - 0.42,38.0,5,other,0.417,inf,0,0.15
+DE06,bioenergy - 0.38,15.0,1,bioenergy,0.38,79937.6378801076,0,0.1
+DE06,bioenergy - 0.42,259.9,581,bioenergy,0.417,1385044.642336,0,0.1
+DE06,hard coal - 0.27,120.0,1,hard coal,0.266,inf,0,0.22
+DE06,hard coal - 0.32,90.5,3,hard coal,0.321,inf,0,0.22
+DE06,hard coal - 0.33,169.5,2,hard coal,0.331,inf,0,0.22
+DE06,hard coal - 0.34,405.4,5,hard coal,0.344,inf,0,0.22
+DE06,hard coal - 0.35,1612.5,8,hard coal,0.351,inf,0,0.22
+DE06,hard coal - 0.37,338.0,1,hard coal,0.372,inf,0,0.22
+DE06,hard coal - 0.38,695.0,1,hard coal,0.38,inf,0,0.22
+DE06,hard coal - 0.39,860.0,3,hard coal,0.388,inf,0,0.22
+DE06,hard coal - 0.4,735.0,3,hard coal,0.396,inf,0,0.22
+DE06,hard coal - 0.41,55.3,1,hard coal,0.409,inf,0,0.22
+DE06,hard coal - 0.46,1234.2,3,hard coal,0.458,inf,0,0.22
+DE06,lignite - 0.3,0.0,6,lignite,0.3,inf,0,0.13
+DE06,lignite - 0.31,27.5,6,lignite,0.309,inf,0,0.13
+DE06,lignite - 0.33,588.0,2,lignite,0.333,inf,0,0.13
+DE06,lignite - 0.34,1503.0,3,lignite,0.34,inf,0,0.13
+DE06,lignite - 0.38,562.0,2,lignite,0.376,inf,0,0.13
+DE06,lignite - 0.43,2120.0,2,lignite,0.429,inf,0,0.13
+DE06,natural gas - 0.31,131.4,2,natural gas,0.312,inf,0,0.11
+DE06,natural gas - 0.32,79.0,1,natural gas,0.315,inf,0,0.11
+DE06,natural gas - 0.33,84.0,1,natural gas,0.328,inf,0,0.11
+DE06,natural gas - 0.35,23.1,1,natural gas,0.354,inf,0,0.11
+DE06,natural gas - 0.36,330.2,3,natural gas,0.359,inf,0,0.11
+DE06,natural gas - 0.38,77.6,4,natural gas,0.379,inf,0,0.11
+DE06,natural gas - 0.39,98.8,5,natural gas,0.389,inf,0,0.11
+DE06,natural gas - 0.4,55.7,4,natural gas,0.399,inf,0,0.11
+DE06,natural gas - 0.44,14.0,1,natural gas,0.435,inf,0,0.11
+DE06,natural gas - 0.54,685.5,2,natural gas,0.54,inf,0,0.11
+DE06,natural gas - 0.55,138.7,2,natural gas,0.554,inf,0,0.11
+DE06,natural gas - 0.56,316.0,2,natural gas,0.562,inf,0,0.11
+DE06,natural gas - 0.57,417.0,1,natural gas,0.572,inf,0,0.11
+DE06,natural gas - 0.61,0.0,1,natural gas,0.61,inf,0,0.11
+DE06,oil - 0.32,86.2,1,oil,0.32,inf,0,0.15
+DE06,oil - 0.38,64.8,2,oil,0.38,inf,0,0.15
+DE06,other - 0.42,1464.7,51,other,0.417,inf,0,0.15
+DE06,waste - 0.33,310.8,14,waste,0.33,inf,0,0.15
+DE07,bioenergy - 0.38,87.8,5,bioenergy,0.38,467899.213724896,0,0.1
+DE07,bioenergy - 0.42,278.5,510,bioenergy,0.417,1484166.69330733,0,0.1
+DE07,hard coal - 0.23,19.0,1,hard coal,0.232,inf,0,0.22
+DE07,hard coal - 0.33,0.0,2,hard coal,0.33,inf,0,0.22
+DE07,hard coal - 0.35,377.0,2,hard coal,0.349,inf,0,0.22
+DE07,hard coal - 0.38,1641.0,3,hard coal,0.381,inf,0,0.22
+DE07,hard coal - 0.42,473.0,2,hard coal,0.417,inf,0,0.22
+DE07,hard coal - 0.46,1499.4,3,hard coal,0.459,inf,0,0.22
+DE07,natural gas - 0.31,110.0,2,natural gas,0.31,inf,0,0.11
+DE07,natural gas - 0.32,55.0,1,natural gas,0.315,inf,0,0.11
+DE07,natural gas - 0.34,112.0,1,natural gas,0.338,inf,0,0.11
+DE07,natural gas - 0.35,41.0,1,natural gas,0.348,inf,0,0.11
+DE07,natural gas - 0.36,388.2,3,natural gas,0.356,inf,0,0.11
+DE07,natural gas - 0.37,13.5,1,natural gas,0.37,inf,0,0.11
+DE07,natural gas - 0.38,22.0,1,natural gas,0.378,inf,0,0.11
+DE07,natural gas - 0.39,26.0,1,natural gas,0.389,inf,0,0.11
+DE07,natural gas - 0.42,820.0,4,natural gas,0.418,inf,0,0.11
+DE07,natural gas - 0.56,367.7,3,natural gas,0.56,inf,0,0.11
+DE07,natural gas - 0.58,838.0,2,natural gas,0.576,inf,0,0.11
+DE07,oil - 0.38,206.0,1,oil,0.38,inf,0,0.15
+DE07,other - 0.42,39.5,21,other,0.417,inf,0,0.15
+DE07,waste - 0.33,61.2,3,waste,0.33,inf,0,0.15
+DE08,bioenergy - 0.42,131.9,274,bioenergy,0.417,702914.399092412,0,0.1
+DE08,lignite - 0.29,0.0,1,lignite,0.29,inf,0,0.13
+DE08,lignite - 0.3,0.0,1,lignite,0.3,inf,0,0.13
+DE08,lignite - 0.31,250.0,2,lignite,0.311,inf,0,0.13
+DE08,lignite - 0.32,1234.0,4,lignite,0.319,inf,0,0.13
+DE08,lignite - 0.33,594.0,2,lignite,0.329,inf,0,0.13
+DE08,lignite - 0.34,1319.0,2,lignite,0.339,inf,0,0.13
+DE08,lignite - 0.35,19.5,1,lignite,0.347,inf,0,0.13
+DE08,lignite - 0.36,24.3,2,lignite,0.361,inf,0,0.13
+DE08,lignite - 0.37,176.0,1,lignite,0.371,inf,0,0.13
+DE08,lignite - 0.38,183.0,4,lignite,0.38,inf,0,0.13
+DE08,lignite - 0.39,20.0,2,lignite,0.388,inf,0,0.13
+DE08,lignite - 0.4,944.0,1,lignite,0.405,inf,0,0.13
+DE08,lignite - 0.41,24.6,1,lignite,0.41,inf,0,0.13
+DE08,lignite - 0.42,1351.3,3,lignite,0.421,inf,0,0.13
+DE08,lignite - 0.43,14.5,1,lignite,0.431,inf,0,0.13
+DE08,natural gas - 0.35,33.5,4,natural gas,0.347,inf,0,0.11
+DE08,natural gas - 0.38,3.0,1,natural gas,0.38,inf,0,0.11
+DE08,natural gas - 0.4,509.0,5,natural gas,0.396,inf,0,0.11
+DE08,natural gas - 0.5,42.0,1,natural gas,0.504,inf,0,0.11
+DE08,natural gas - 0.51,35.0,1,natural gas,0.513,inf,0,0.11
+DE08,natural gas - 0.52,51.9,1,natural gas,0.522,inf,0,0.11
+DE08,natural gas - 0.54,15.8,1,natural gas,0.544,inf,0,0.11
+DE08,natural gas - 0.56,108.0,1,natural gas,0.558,inf,0,0.11
+DE08,natural gas - 0.57,800.0,1,natural gas,0.567,inf,0,0.11
+DE08,natural gas - 0.58,413.0,1,natural gas,0.576,inf,0,0.11
+DE08,natural gas - 0.6,430.0,1,natural gas,0.598,inf,0,0.11
+DE08,oil - 0.38,147.1,3,oil,0.38,inf,0,0.15
+DE08,other - 0.42,94.2,6,other,0.417,inf,0,0.15
+DE08,waste - 0.33,130.0,6,waste,0.33,inf,0,0.15
+DE09,bioenergy - 0.38,19.3,2,bioenergy,0.38,102852.950739072,0,0.1
+DE09,bioenergy - 0.42,214.4,469,bioenergy,0.417,1142568.657433,0,0.1
+DE09,hard coal - 0.36,655.6,1,hard coal,0.365,inf,0,0.22
+DE09,hard coal - 0.38,905.0,2,hard coal,0.382,inf,0,0.22
+DE09,hard coal - 0.4,211.0,1,hard coal,0.398,inf,0,0.22
+DE09,hard coal - 0.42,13.4,1,hard coal,0.415,inf,0,0.22
+DE09,hard coal - 0.43,106.0,1,hard coal,0.43,inf,0,0.22
+DE09,hard coal - 0.44,50.0,1,hard coal,0.438,inf,0,0.22
+DE09,hard coal - 0.45,283.0,1,hard coal,0.452,inf,0,0.22
+DE09,natural gas - 0.36,47.0,1,natural gas,0.359,inf,0,0.11
+DE09,natural gas - 0.37,11.6,1,natural gas,0.373,inf,0,0.11
+DE09,natural gas - 0.38,62.9,4,natural gas,0.378,inf,0,0.11
+DE09,natural gas - 0.39,96.0,3,natural gas,0.393,inf,0,0.11
+DE09,natural gas - 0.4,51.6,3,natural gas,0.398,inf,0,0.11
+DE09,natural gas - 0.42,7.6,1,natural gas,0.416,inf,0,0.11
+DE09,natural gas - 0.44,335.0,1,natural gas,0.437,inf,0,0.11
+DE09,natural gas - 0.53,410.0,1,natural gas,0.526,inf,0,0.11
+DE09,natural gas - 0.54,546.3,2,natural gas,0.543,inf,0,0.11
+DE09,natural gas - 0.55,12.0,1,natural gas,0.554,inf,0,0.11
+DE09,natural gas - 0.56,497.5,1,natural gas,0.562,inf,0,0.11
+DE09,natural gas - 0.59,75.0,1,natural gas,0.594,inf,0,0.11
+DE09,natural gas - 0.6,94.6,1,natural gas,0.598,inf,0,0.11
+DE09,other - 0.42,139.8,11,other,0.417,inf,0,0.15
+DE09,other - 0.45,42.0,1,other,0.446,inf,0,0.15
+DE09,waste - 0.33,91.4,6,waste,0.33,inf,0,0.15
+DE10,bioenergy - 0.38,9.8,1,bioenergy,0.38,52226.0967483369,0,0.1
+DE10,bioenergy - 0.42,269.5,755,bioenergy,0.417,1436204.41057927,0,0.1
+DE10,natural gas - 0.35,93.0,2,natural gas,0.35,inf,0,0.11
+DE10,natural gas - 0.36,20.4,1,natural gas,0.359,inf,0,0.11
+DE10,natural gas - 0.37,10.6,2,natural gas,0.372,inf,0,0.11
+DE10,natural gas - 0.39,30.7,1,natural gas,0.39,inf,0,0.11
+DE10,natural gas - 0.4,0.0,1,natural gas,0.4,inf,0,0.11
+DE10,nuclear - 0.33,2572.0,2,nuclear,0.33,inf,0,0.11
+DE10,oil - 0.35,24.0,1,oil,0.349,inf,0,0.15
+DE10,oil - 0.36,10.5,1,oil,0.361,inf,0,0.15
+DE10,oil - 0.37,22.8,2,oil,0.369,inf,0,0.15
+DE10,other - 0.42,6.0,1,other,0.417,inf,0,0.15
+DE10,waste - 0.33,10.0,1,waste,0.33,inf,0,0.15
+DE11,bioenergy - 0.38,148.2,4,bioenergy,0.38,789779.422255463,0,0.1
+DE11,bioenergy - 0.42,185.5,301,bioenergy,0.417,988556.438450663,0,0.1
+DE11,hard coal - 0.34,202.5,1,hard coal,0.34,inf,0,0.22
+DE11,hard coal - 0.35,202.5,1,hard coal,0.35,inf,0,0.22
+DE11,hard coal - 0.38,425.0,1,hard coal,0.38,inf,0,0.22
+DE11,hard coal - 0.4,26.9,1,hard coal,0.4,inf,0,0.22
+DE11,hard coal - 0.41,435.0,1,hard coal,0.408,inf,0,0.22
+DE11,hard coal - 0.44,772.0,2,hard coal,0.438,inf,0,0.22
+DE11,hard coal - 0.45,1272.0,5,hard coal,0.449,inf,0,0.22
+DE11,hard coal - 0.46,417.0,2,hard coal,0.46,inf,0,0.22
+DE11,natural gas - 0.35,11.3,1,natural gas,0.351,inf,0,0.11
+DE11,natural gas - 0.37,37.0,2,natural gas,0.367,inf,0,0.11
+DE11,natural gas - 0.39,13.5,2,natural gas,0.387,inf,0,0.11
+DE11,natural gas - 0.45,41.2,1,natural gas,0.45,inf,0,0.11
+DE11,natural gas - 0.53,353.0,1,natural gas,0.531,inf,0,0.11
+DE11,natural gas - 0.56,17.2,1,natural gas,0.562,inf,0,0.11
+DE11,nuclear - 0.33,2712.0,2,nuclear,0.33,inf,0,0.11
+DE11,oil - 0.3,77.4,1,oil,0.305,inf,0,0.15
+DE11,oil - 0.33,136.0,1,oil,0.331,inf,0,0.15
+DE11,oil - 0.38,418.5,4,oil,0.38,inf,0,0.15
+DE11,waste - 0.33,44.7,6,waste,0.33,inf,0,0.15
+DE12,bioenergy - 0.38,48.4,5,bioenergy,0.38,257930.99822648,0,0.1
+DE12,bioenergy - 0.42,730.4,1790,bioenergy,0.417,3892406.2005087,0,0.1
+DE12,hard coal - 0.37,20.7,1,hard coal,0.37,inf,0,0.22
+DE12,hard coal - 0.38,90.0,2,hard coal,0.382,inf,0,0.22
+DE12,hard coal - 0.44,336.0,1,hard coal,0.44,inf,0,0.22
+DE12,hard coal - 0.45,22.6,2,hard coal,0.448,inf,0,0.22
+DE12,hard coal - 0.46,433.0,1,hard coal,0.455,inf,0,0.22
+DE12,natural gas - 0.3,50.0,1,natural gas,0.305,inf,0,0.11
+DE12,natural gas - 0.31,84.5,2,natural gas,0.31,inf,0,0.11
+DE12,natural gas - 0.32,81.0,1,natural gas,0.315,inf,0,0.11
+DE12,natural gas - 0.35,22.9,2,natural gas,0.35,inf,0,0.11
+DE12,natural gas - 0.36,20.0,2,natural gas,0.362,inf,0,0.11
+DE12,natural gas - 0.37,77.2,2,natural gas,0.372,inf,0,0.11
+DE12,natural gas - 0.38,13.4,1,natural gas,0.385,inf,0,0.11
+DE12,natural gas - 0.39,67.0,2,natural gas,0.388,inf,0,0.11
+DE12,natural gas - 0.4,104.4,2,natural gas,0.399,inf,0,0.11
+DE12,natural gas - 0.46,9.8,1,natural gas,0.457,inf,0,0.11
+DE12,natural gas - 0.53,60.1,1,natural gas,0.531,inf,0,0.11
+DE12,oil - 0.31,69.9,3,oil,0.312,inf,0,0.15
+DE12,other - 0.42,85.0,1,other,0.417,inf,0,0.15
+DE12,waste - 0.33,65.6,5,waste,0.33,inf,0,0.15
+DE13,bioenergy - 0.42,431.8,919,bioenergy,0.417,2301124.24244203,0,0.1
+DE13,hard coal - 0.37,23.0,1,hard coal,0.37,inf,0,0.22
+DE13,hard coal - 0.38,35.0,1,hard coal,0.38,inf,0,0.22
+DE13,hard coal - 0.4,323.0,1,hard coal,0.405,inf,0,0.22
+DE13,hard coal - 0.41,260.0,2,hard coal,0.408,inf,0,0.22
+DE13,hard coal - 0.47,33.0,1,hard coal,0.472,inf,0,0.22
+DE13,hard coal - 0.49,29.0,1,hard coal,0.486,inf,0,0.22
+DE13,hard coal - 0.5,27.0,1,hard coal,0.504,inf,0,0.22
+DE13,natural gas - 0.39,21.5,1,natural gas,0.391,inf,0,0.11
+DE13,natural gas - 0.61,0.0,1,natural gas,0.61,inf,0,0.11
+DE13,nuclear - 0.33,1410.0,1,nuclear,0.33,inf,0,0.11
+DE13,oil - 0.31,291.5,5,oil,0.309,inf,0,0.15
+DE13,oil - 0.34,44.5,1,oil,0.343,inf,0,0.15
+DE13,oil - 0.35,88.0,1,oil,0.354,inf,0,0.15
+DE13,oil - 0.36,87.0,1,oil,0.355,inf,0,0.15
+DE13,oil - 0.38,0.0,1,oil,0.38,inf,0,0.15
+DE13,other - 0.42,26.8,1,other,0.417,inf,0,0.15
+DE13,waste - 0.33,17.0,1,waste,0.33,inf,0,0.15
+DE14,bioenergy - 0.38,42.0,2,bioenergy,0.38,223824.486064301,0,0.1
+DE14,bioenergy - 0.42,632.5,1319,bioenergy,0.417,3370683.14727787,0,0.1
+DE14,bioenergy - 0.45,1.9,1,bioenergy,0.45,10125.870798147,0,0.1
+DE14,hard coal - 0.34,127.0,1,hard coal,0.345,inf,0,0.22
+DE14,hard coal - 0.36,757.0,1,hard coal,0.365,inf,0,0.22
+DE14,hard coal - 0.37,303.0,1,hard coal,0.372,inf,0,0.22
+DE14,hard coal - 0.44,350.0,1,hard coal,0.442,inf,0,0.22
+DE14,hard coal - 0.46,59.5,2,hard coal,0.46,inf,0,0.22
+DE14,natural gas - 0.31,52.0,1,natural gas,0.31,inf,0,0.11
+DE14,natural gas - 0.35,250.5,3,natural gas,0.354,inf,0,0.11
+DE14,natural gas - 0.36,433.0,1,natural gas,0.355,inf,0,0.11
+DE14,natural gas - 0.37,58.1,1,natural gas,0.373,inf,0,0.11
+DE14,natural gas - 0.4,321.0,1,natural gas,0.396,inf,0,0.11
+DE14,natural gas - 0.41,30.7,1,natural gas,0.411,inf,0,0.11
+DE14,natural gas - 0.55,14.8,1,natural gas,0.549,inf,0,0.11
+DE14,natural gas - 0.6,86.5,1,natural gas,0.603,inf,0,0.11
+DE14,natural gas - 0.61,0.0,1,natural gas,0.61,inf,0,0.11
+DE14,oil - 0.31,142.0,2,oil,0.311,inf,0,0.15
+DE14,other - 0.42,160.0,2,other,0.417,inf,0,0.15
+DE14,waste - 0.33,91.0,3,waste,0.33,inf,0,0.15
+DE15,bioenergy - 0.38,54.8,3,bioenergy,0.38,292037.51038866,0,0.1
+DE15,bioenergy - 0.42,589.7,1114,bioenergy,0.417,3142595.84719329,0,0.1
+DE15,hard coal - 0.34,0.0,1,hard coal,0.34,inf,0,0.22
+DE15,hard coal - 0.35,303.0,1,hard coal,0.35,inf,0,0.22
+DE15,hard coal - 0.39,1013.5,2,hard coal,0.392,inf,0,0.22
+DE15,hard coal - 0.4,312.0,3,hard coal,0.398,inf,0,0.22
+DE15,hard coal - 0.42,61.5,1,hard coal,0.425,inf,0,0.22
+DE15,hard coal - 0.43,690.0,1,hard coal,0.432,inf,0,0.22
+DE15,hard coal - 0.47,43.3,1,hard coal,0.468,inf,0,0.22
+DE15,lignite - 0.36,352.0,1,lignite,0.364,inf,0,0.13
+DE15,natural gas - 0.29,47.1,2,natural gas,0.289,inf,0,0.11
+DE15,natural gas - 0.31,121.0,2,natural gas,0.311,inf,0,0.11
+DE15,natural gas - 0.33,41.6,2,natural gas,0.332,inf,0,0.11
+DE15,natural gas - 0.36,898.3,5,natural gas,0.356,inf,0,0.11
+DE15,natural gas - 0.38,34.6,2,natural gas,0.384,inf,0,0.11
+DE15,natural gas - 0.39,12.8,1,natural gas,0.386,inf,0,0.11
+DE15,natural gas - 0.4,0.0,1,natural gas,0.4,inf,0,0.11
+DE15,natural gas - 0.41,20.0,1,natural gas,0.409,inf,0,0.11
+DE15,natural gas - 0.45,201.5,1,natural gas,0.45,inf,0,0.11
+DE15,natural gas - 0.54,13.0,1,natural gas,0.54,inf,0,0.11
+DE15,natural gas - 0.58,74.0,1,natural gas,0.585,inf,0,0.11
+DE15,natural gas - 0.6,230.0,1,natural gas,0.598,inf,0,0.11
+DE15,nuclear - 0.33,1360.0,1,nuclear,0.33,inf,0,0.11
+DE15,oil - 0.38,2.8,1,oil,0.378,inf,0,0.15
+DE15,other - 0.42,288.5,3,other,0.417,inf,0,0.15
+DE15,waste - 0.33,74.7,3,waste,0.33,inf,0,0.15
+DE16,bioenergy - 0.38,12.4,1,bioenergy,0.38,66081.8673142222,0,0.1
+DE16,bioenergy - 0.42,183.6,441,bioenergy,0.417,978431.067652516,0,0.1
+DE16,hard coal - 0.34,0.0,1,hard coal,0.34,inf,0,0.22
+DE16,hard coal - 0.35,0.0,1,hard coal,0.35,inf,0,0.22
+DE16,hard coal - 0.39,138.5,1,hard coal,0.387,inf,0,0.22
+DE16,hard coal - 0.4,687.0,4,hard coal,0.403,inf,0,0.22
+DE16,hard coal - 0.42,61.5,1,hard coal,0.425,inf,0,0.22
+DE16,hard coal - 0.49,66.0,1,hard coal,0.49,inf,0,0.22
+DE16,lignite - 0.37,33.5,1,lignite,0.371,inf,0,0.13
+DE16,natural gas - 0.34,0.0,1,natural gas,0.34,inf,0,0.11
+DE16,natural gas - 0.36,671.0,2,natural gas,0.36,inf,0,0.11
+DE16,natural gas - 0.37,76.2,2,natural gas,0.372,inf,0,0.11
+DE16,natural gas - 0.4,8.0,2,natural gas,0.398,inf,0,0.11
+DE16,natural gas - 0.41,96.5,1,natural gas,0.411,inf,0,0.11
+DE16,natural gas - 0.42,56.0,1,natural gas,0.418,inf,0,0.11
+DE16,natural gas - 0.55,86.0,1,natural gas,0.554,inf,0,0.11
+DE16,natural gas - 0.56,70.0,1,natural gas,0.562,inf,0,0.11
+DE16,natural gas - 0.6,78.0,1,natural gas,0.598,inf,0,0.11
+DE16,oil - 0.4,24.8,1,oil,0.397,inf,0,0.15
+DE16,other - 0.42,19.7,1,other,0.417,inf,0,0.15
+DE16,waste - 0.33,101.7,4,waste,0.33,inf,0,0.15
+DE17,bioenergy - 0.38,46.6,5,bioenergy,0.38,248338.541680867,0,0.1
+DE17,bioenergy - 0.42,550.9,1399,bioenergy,0.417,2935825.11721008,0,0.1
+DE17,hard coal - 0.35,24.8,1,hard coal,0.348,inf,0,0.22
+DE17,hard coal - 0.38,17.4,1,hard coal,0.375,inf,0,0.22
+DE17,natural gas - 0.18,36.0,1,natural gas,0.18,inf,0,0.11
+DE17,natural gas - 0.36,13.5,3,natural gas,0.363,inf,0,0.11
+DE17,natural gas - 0.37,5.1,1,natural gas,0.367,inf,0,0.11
+DE17,natural gas - 0.39,57.0,1,natural gas,0.394,inf,0,0.11
+DE17,natural gas - 0.41,23.0,1,natural gas,0.409,inf,0,0.11
+DE17,natural gas - 0.42,383.0,2,natural gas,0.418,inf,0,0.11
+DE17,natural gas - 0.43,440.0,1,natural gas,0.432,inf,0,0.11
+DE17,natural gas - 0.51,25.0,1,natural gas,0.508,inf,0,0.11
+DE17,natural gas - 0.52,64.0,1,natural gas,0.517,inf,0,0.11
+DE17,natural gas - 0.56,216.1,4,natural gas,0.562,inf,0,0.11
+DE17,natural gas - 0.58,29.5,1,natural gas,0.58,inf,0,0.11
+DE17,natural gas - 0.6,50.4,2,natural gas,0.599,inf,0,0.11
+DE17,nuclear - 0.33,1275.0,1,nuclear,0.33,inf,0,0.11
+DE17,oil - 0.36,772.0,2,oil,0.356,inf,0,0.15
+DE17,oil - 0.38,0.5,1,oil,0.375,inf,0,0.15
+DE17,waste - 0.33,117.1,5,waste,0.33,inf,0,0.15
+DE18,bioenergy - 0.38,10.0,1,bioenergy,0.38,53291.925253405,0,0.1
+DE18,bioenergy - 0.42,526.7,1504,bioenergy,0.417,2806859.86809684,0,0.1
+DE18,hard coal - 0.4,332.7,1,hard coal,0.402,inf,0,0.22
+DE18,hard coal - 0.45,472.0,1,hard coal,0.452,inf,0,0.22
+DE18,natural gas - 0.32,160.0,2,natural gas,0.315,inf,0,0.11
+DE18,natural gas - 0.36,50.0,1,natural gas,0.36,inf,0,0.11
+DE18,natural gas - 0.37,13.4,2,natural gas,0.375,inf,0,0.11
+DE18,natural gas - 0.38,52.0,3,natural gas,0.381,inf,0,0.11
+DE18,natural gas - 0.39,93.4,3,natural gas,0.387,inf,0,0.11
+DE18,natural gas - 0.4,10.5,3,natural gas,0.397,inf,0,0.11
+DE18,natural gas - 0.45,275.5,3,natural gas,0.45,inf,0,0.11
+DE18,natural gas - 0.46,23.3,3,natural gas,0.459,inf,0,0.11
+DE18,natural gas - 0.54,120.0,1,natural gas,0.544,inf,0,0.11
+DE18,natural gas - 0.56,376.4,3,natural gas,0.558,inf,0,0.11
+DE18,natural gas - 0.58,943.9,2,natural gas,0.585,inf,0,0.11
+DE18,natural gas - 0.59,561.0,1,natural gas,0.59,inf,0,0.11
+DE18,nuclear - 0.33,1410.0,1,nuclear,0.33,inf,0,0.11
+DE18,oil - 0.32,46.0,1,oil,0.318,inf,0,0.15
+DE18,oil - 0.33,92.8,4,oil,0.333,inf,0,0.15
+DE18,oil - 0.36,424.5,2,oil,0.356,inf,0,0.15
+DE18,waste - 0.33,87.0,5,waste,0.33,inf,0,0.15
+DE19,bioenergy - 0.42,4.1,6,bioenergy,0.417,21849.9843538961,0,0.1

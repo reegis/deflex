@@ -1,11 +1,8 @@
-# --> kein reegis nur scenario_builder und den als optional requirement
-
-
 # -*- coding: utf-8 -*-
 
 """Create a basic scenario from the internal data structure.
 
-SPDX-FileCopyrightText: 2016-2019 Uwe Krien <krien@uni-bremen.de>
+SPDX-FileCopyrightText: 2016-2021 Uwe Krien <krien@uni-bremen.de>
 
 SPDX-License-Identifier: MIT
 """
@@ -27,7 +24,7 @@ from scenario_builder import storages
 
 from deflex import __file__ as dfile
 from deflex import config as cfg
-from deflex import scenario_tools
+from deflex import scenario
 from deflex import transmission
 
 
@@ -77,6 +74,7 @@ def create_scenario(regions, year, name, lines, opsd_version=None):
             opsd_version = "2019-06-05"
 
     table_collection = {}
+    table_collection["general"] = pd.DataFrame()
 
     logging.info("BASIC SCENARIO - STORAGES")
     table_collection["storages"] = storages.scenario_storages(
@@ -87,13 +85,12 @@ def create_scenario(regions, year, name, lines, opsd_version=None):
     pp = powerplants.scenario_powerplants(
         table_collection, regions, year, name
     )
-    table_collection["volatile_source"] = pp["volatile_source"]
-    table_collection["transformer"] = pp["transformer"]
+    table_collection["volatile plants"] = pp["volatile plants"]
+    table_collection["power plants"] = pp["power plants"]
 
     logging.info("BASIC SCENARIO - TRANSMISSION")
-    print("******************", name)
     if len(regions) > 1:
-        table_collection["transmission"] = transmission.scenario_transmission(
+        table_collection["power lines"] = transmission.scenario_transmission(
             regions, name, lines
         )
     else:
@@ -102,29 +99,31 @@ def create_scenario(regions, year, name, lines, opsd_version=None):
     logging.info("BASIC SCENARIO - CHP PLANTS")
     if cfg.get("creator", "heat"):
         chp = powerplants.scenario_chp(table_collection, regions, year, name)
-        table_collection["chp_hp"] = chp["chp_hp"]
-        table_collection["transformer"] = chp["transformer"]
+        table_collection["chp-heat plants"] = chp["chp-heat plants"]
+        table_collection["power plants"] = chp["power plants"]
     else:
         logging.info("...skipped")
 
     logging.info("BASIC SCENARIO - DECENTRALISED HEAT")
     if cfg.get("creator", "heat"):
         table_collection[
-            "decentralised_heat"
+            "decentralised heat"
         ] = scenario_default_decentralised_heat()
     else:
         logging.info("...skipped")
 
     logging.info("BASIC SCENARIO - SOURCES")
-    table_collection[
-        "commodity_source"
-    ] = commodity.scenario_commodity_sources(year)
-    table_collection["volatile_series"] = feedin.scenario_feedin(
+    cs = commodity.scenario_commodity_sources(year)
+    table_collection["general"].loc["co2 price", "value"] = cs.pop(
+        "co2_price"
+    ).iloc[0]
+    table_collection["commodity sources"] = cs
+    table_collection["volatile series"] = feedin.scenario_feedin(
         regions, year, name
     )
 
     logging.info("BASIC SCENARIO - DEMAND")
-    table_collection["demand_series"] = demand.scenario_demand(
+    table_collection["demand series"] = demand.scenario_demand(
         regions,
         year,
         name,
@@ -135,7 +134,12 @@ def create_scenario(regions, year, name, lines, opsd_version=None):
     table_collection = mobility.scenario_mobility(year, table_collection)
 
     logging.info("ADD META DATA")
-    table_collection["meta"] = meta_data(year)
+    table_collection["general"] = pd.concat(
+        [table_collection["general"], meta_data(year)]
+    )
+    table_collection["general"].loc["number of time steps", "value"] = len(
+        table_collection["demand series"]
+    )
     return table_collection
 
 
@@ -145,6 +149,7 @@ def meta_data(year):
     )
     meta.loc["year"] = year
     meta.loc["map"] = cfg.get("creator", "map")
+    # meta.loc[""]
 
     # Create name
     if cfg.get("creator", "heat"):
@@ -172,9 +177,9 @@ def clean_time_series(table_collection):
     -------
 
     """
-    dts = table_collection["demand_series"]
-    vts = table_collection["volatile_series"]
-    vs = table_collection["volatile_source"]
+    dts = table_collection["demand series"]
+    vts = table_collection["volatile series"]
+    vs = table_collection["volatile plants"]
 
     regions = list(dts.columns.get_level_values(0).unique())
     if "DE_demand" in regions:
@@ -229,23 +234,7 @@ def create_basic_reegis_scenario(
         Set of transmission lines.
     parameter : dict
         Parameter set for the creation process. Some parameters will have a
-        default value. See the list of default values:
-            * copperplate: True
-            * default_transmission_efficiency: 0.9
-            * costs_source: "ewi"
-            * downtime_bioenergy: 0.1
-            * group_transformer: False
-            * heat: False
-            * limited_transformer: "bioenergy",
-            * local_fuels: "district heating",
-            * map: "de02",
-            * mobility_other: "petrol",
-            * round: 1,
-            * separate_heat_regions: "de22",
-            * use_CO2_costs: False,
-            * use_downtime_factor: True,
-            * use_variable_costs: False,
-            * year: 2014
+        default value. For the default values see below.
     csv_path : str
         A directory to store the scenario as csv collection. If None no csv
         collection will be created. Either csv_path or excel_path must not be
@@ -263,7 +252,24 @@ def create_basic_reegis_scenario(
     Notes
     -----
 
-    }
+    List of default values:
+
+        * copperplate: True
+        * default_transmission_efficiency: 0.9
+        * costs_source: "ewi"
+        * downtime_bioenergy: 0.1
+        * group_transformer: False
+        * heat: False
+        * limited_transformer: "bioenergy",
+        * local_fuels: "district heating",
+        * map: "de02",
+        * mobility_other: "petrol",
+        * round: 1,
+        * separate_heat_regions: "de22",
+        * use_CO2_costs: False,
+        * use_downtime_factor: True,
+        * use_variable_costs: False,
+        * year: 2014
 
     Examples
     --------
@@ -338,16 +344,14 @@ def create_basic_reegis_scenario(
 
     table_collection = clean_time_series(table_collection)
 
-    name = table_collection["meta"].loc["name", "value"]
-    sce = scenario_tools.Scenario(
-        table_collection=table_collection, name=name, year=year
-    )
+    name = table_collection["general"].get("name")
+    sce = scenario.Scenario(input_data=table_collection, name=name, year=year)
 
     if csv_path is not None:
         os.makedirs(csv_path, exist_ok=True)
         sce.to_csv(csv_path)
     if excel_path is not None:
         os.makedirs(os.path.dirname(excel_path), exist_ok=True)
-        sce.to_excel(excel_path)
+        sce.to_xlsx(excel_path)
 
     return paths(xls=excel_path, csv=csv_path)

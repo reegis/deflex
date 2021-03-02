@@ -1,6 +1,22 @@
 Reference
 =========
 
+deflex.analyses module
+----------------------
+
+.. automodule:: deflex.analyses
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+deflex.config module
+--------------------
+
+.. automodule:: deflex.config
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 
 deflex.geometries module
 ------------------------
@@ -18,10 +34,42 @@ deflex.main module
     :undoc-members:
     :show-inheritance:
 
-deflex.scenario_tools module
-----------------------------
+deflex.nodes module
+-------------------
 
-.. automodule:: deflex.scenario_tools
+.. automodule:: deflex.nodes
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+deflex.results module
+---------------------
+
+.. automodule:: deflex.results
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+deflex.scenario module
+----------------------
+
+.. automodule:: deflex.scenario
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+deflex.scenario_creator module
+------------------------------
+
+.. automodule:: deflex.scenario_creator
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+deflex.tools module
+-------------------
+
+.. automodule:: deflex.tools
     :members:
     :undoc-members:
     :show-inheritance:

@@ -5,7 +5,7 @@ Reegis config reader.
 
 Based on Steffen (https://github.com/steffenGit)
 
-SPDX-FileCopyrightText: 2016-2019 Uwe Krien <krien@uni-bremen.de>
+SPDX-FileCopyrightText: 2016-2021 Uwe Krien <krien@uni-bremen.de>
 
 SPDX-License-Identifier: MIT
 """
@@ -27,6 +27,8 @@ __all__ = [
 import configparser as cp
 import os
 
+BLACKLIST = ["tox.ini"]
+
 cfg = cp.RawConfigParser()
 cfg.optionxform = str
 _loaded = False
@@ -39,6 +41,7 @@ def get_ini_filenames(additional_paths=None):
     files = []
 
     paths.append(os.path.join(os.path.dirname(__file__)))
+    paths.append(os.getcwd())
     if additional_paths is not None:
         paths.extend(additional_paths)
     local_path = os.path.join(os.path.expanduser("~"), ".deflex")
@@ -49,7 +52,7 @@ def get_ini_filenames(additional_paths=None):
         if p == "":  # Empty path string must be ignored
             continue
         for f in os.listdir(p):
-            if f[-4:] == ".ini":
+            if f[-4:] == ".ini" and f not in BLACKLIST:
                 files.append(os.path.join(p, f))
     return files
 
