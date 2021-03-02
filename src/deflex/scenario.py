@@ -279,9 +279,7 @@ class Scenario:
         f.close()
         logging.info("Results dumped to %s.", filename)
 
-    def solve(
-        self, model, with_duals=False, solver=None, **solver_kwargs
-    ):
+    def solve(self, model, with_duals=False, solver=None, **solver_kwargs):
         """
 
         Parameters
@@ -319,9 +317,7 @@ class Scenario:
             model.write(filename, io_options={"symbolic_solver_labels": True})
             # ToDo: Try to plot a graph
 
-        model.solve(
-            solver=solver, solve_kwargs=solver_kwargs
-        )
+        model.solve(solver=solver, solve_kwargs=solver_kwargs)
 
         self.meta["solver_end"] = datetime.datetime.now()
 
