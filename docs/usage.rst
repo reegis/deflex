@@ -82,8 +82,8 @@ To restore the scenario use the ``restore_scenario`` function:
 Analyse the scenario
 ~~~~~~~~~~~~~~~~~~~~
 
-Most analyses cannot be taken if the scenario is not solved. The merit order
-can be shown based on the input data and based on the results:
+Most analyses cannot be taken if the scenario is not solved. However, the merit
+order can be shown only based on the input data:
 
 .. code-block:: python
 
@@ -92,3 +92,11 @@ can be shown based on the input data and based on the results:
     sc = scenario.DeflexScenario()
     sc.read_xlsx("path/to/xlsx/file.xlsx")
     power_plants = analyses.merit_order_from_scenario(sc)
+
+
+Results
+~~~~~~~
+
+- Link to solph results to understand the general structure
+- Typical results and analyses
+- Show some plots.
