@@ -221,7 +221,7 @@ def merit_order_from_results(result):
     return values
 
 
-def check_comparision_of_merit_order(path):
+def check_comparision_of_merit_order(scenario):
     """Comparison of two different ways to calculate the merit order.
 
     1. Calculate the merit order from scenario
@@ -243,16 +243,12 @@ def check_comparision_of_merit_order(path):
     >>> from deflex import tools
     >>> name = "de02.dflx"
     >>> my_path = tools.fetch_example_results(name)
-    >>> check_comparision_of_merit_order(my_path)
+    >>> sc = scenario.restore_scenario(my_path)
+    >>> check_comparision_of_merit_order(sc)
     Check passed! Both merit order DataFrame tables are the same.
     """
-
-    tmp_path = os.path.join(os.path.expanduser("~"), ".deflex", "tmp_dx34_f")
-
-    # Fetch Results and store
-    deflex_scenario = scenario.restore_scenario(path, scenario.DeflexScenario)
-    mo_scenario = merit_order_from_scenario(deflex_scenario)
-    mo_results = merit_order_from_results(deflex_scenario.results)
+    mo_scenario = merit_order_from_scenario(scenario)
+    mo_results = merit_order_from_results(scenario.results)
 
     mo_results.index = mo_scenario.index
 
@@ -269,8 +265,6 @@ def check_comparision_of_merit_order(path):
         mo_scenario[compare_columns], mo_results[compare_columns]
     )
     print("Check passed! Both merit order DataFrame tables are the same.")
-
-    rmtree(tmp_path)
 
 
 def get_flow_results(result):
