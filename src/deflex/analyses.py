@@ -10,8 +10,6 @@ SPDX-License-Identifier: MIT
 __copyright__ = "Uwe Krien <krien@uni-bremen.de>"
 __license__ = "MIT"
 
-import os
-
 import pandas as pd
 from oemof import solph
 from pandas.testing import assert_frame_equal
