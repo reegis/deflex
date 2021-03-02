@@ -1,11 +1,8 @@
-# --> kein reegis nur scenario_builder und den als optional requirement
-
-
 # -*- coding: utf-8 -*-
 
 """Create a basic scenario from the internal data structure.
 
-SPDX-FileCopyrightText: 2016-2019 Uwe Krien <krien@uni-bremen.de>
+SPDX-FileCopyrightText: 2016-2021 Uwe Krien <krien@uni-bremen.de>
 
 SPDX-License-Identifier: MIT
 """

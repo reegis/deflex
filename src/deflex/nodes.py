@@ -1,5 +1,14 @@
+# -*- coding: utf-8 -*-
+
+"""Creating solph nodes from input data.
+
+SPDX-FileCopyrightText: 2016-2021 Uwe Krien <krien@uni-bremen.de>
+
+SPDX-License-Identifier: MIT
+"""
+
 import logging
-import math
+
 from collections import namedtuple
 
 import pandas as pd
@@ -16,6 +25,19 @@ class Label(namedtuple("solph_label", ["cat", "tag", "subtag", "region"])):
 
 
 def create_solph_nodes_from_data(input_data, nodes, extra_regions=None):
+    """
+    Creating solph nodes from input data.
+
+    Parameters
+    ----------
+    input_data
+    nodes
+    extra_regions
+
+    Returns
+    -------
+
+    """
 
     # Local volatile sources
     add_volatile_sources(input_data, nodes)

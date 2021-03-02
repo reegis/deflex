@@ -3,7 +3,7 @@
 """
 Analyses of deflex.
 
-SPDX-FileCopyrightText: 2016-2020 Uwe Krien <krien@uni-bremen.de>
+SPDX-FileCopyrightText: 2016-2021 Uwe Krien <krien@uni-bremen.de>
 
 SPDX-License-Identifier: MIT
 """
