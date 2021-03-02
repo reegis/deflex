@@ -314,7 +314,7 @@ class Scenario:
             # ToDo: Try to plot a graph
 
         model.solve(
-            solver=solver, solve_kwargs={"tee": tee, "logfile": logfile}
+            solver=solver, solve_kwargs=solver_kwargs
         )
 
         self.meta["solver_end"] = datetime.datetime.now()
@@ -394,7 +394,7 @@ def restore_scenario(filename, scenario_class=DeflexScenario):
         raise IOError(msg)
     f = open(filename, "rb")
     meta = pickle.load(f)
-    logging.info("Meta information:\n" + pp.pformat(meta))
+    logging.info("Meta information:\n%s" % pp.pformat(meta))
     sc = scenario_class()
     sc.__dict__ = pickle.load(f)
     f.close()
@@ -410,7 +410,7 @@ def convert_xlsx2csv(path):
         files = os.listdir(path)
     for xlsx in files:
         if os.path.basename(xlsx).split(".")[-1] == "xlsx":
-            logging.info("Converting file: {0}".format(xlsx))
+            logging.info("Converting file: %s" % format(xlsx))
             xlsx = os.path.join(path, xlsx)
             directory = str(os.path.basename(xlsx).split(".")[0]) + "_csv"
             csv = os.path.join(os.path.dirname(xlsx), directory)

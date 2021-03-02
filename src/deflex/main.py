@@ -356,9 +356,7 @@ def model_scenario(
 
     # Use name from meta or from filename
     sc.meta["auto_name"] = (
-            os.path.basename(path)
-            + "_"
-            + datetime.now().strftime("%Y%d%m_%H%M%S")
+        os.path.basename(path) + "_" + datetime.now().strftime("%Y%d%m_%H%M%S")
     )
     if "name" not in sc.meta:
         sc.meta["name"] = sc.meta["auto_name"]

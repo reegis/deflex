@@ -17,7 +17,8 @@ import pandas as pd
 import pytest
 
 from deflex import scenario
-from deflex.tools import TEST_PATH, fetch_example_results
+from deflex.tools import TEST_PATH
+from deflex.tools import fetch_example_results
 
 
 def test_basic_scenario_class():
@@ -85,13 +86,9 @@ def test_excel_reader():
     xls_fn = fetch_example_results("de02_short.xlsx")
     sc.read_xlsx(xls_fn)
     sc.table2es()
-    csv_path = os.path.join(
-        TEST_PATH, "deflex_2013_de02_tmp_X45_test_csv"
-    )
+    csv_path = os.path.join(TEST_PATH, "deflex_2013_de02_tmp_X45_test_csv")
     sc.to_csv(csv_path)
-    xls_fn = os.path.join(
-        TEST_PATH, "deflex_2014_de02_tmp_X45_test.xlsx"
-    )
+    xls_fn = os.path.join(TEST_PATH, "deflex_2014_de02_tmp_X45_test.xlsx")
     sc.to_xlsx(xls_fn)
     shutil.rmtree(csv_path)
     os.remove(xls_fn)

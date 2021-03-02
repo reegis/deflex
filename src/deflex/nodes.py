@@ -1,8 +1,9 @@
-from collections import namedtuple
-from oemof import solph
 import logging
 import math
+from collections import namedtuple
+
 import pandas as pd
+from oemof import solph
 
 
 class Label(namedtuple("solph_label", ["cat", "tag", "subtag", "region"])):

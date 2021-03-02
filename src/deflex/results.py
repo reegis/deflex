@@ -13,7 +13,6 @@ import os
 import pickle
 
 import pandas as pd
-from oemof import solph
 
 from deflex.scenario import restore_scenario
 
@@ -132,7 +131,7 @@ def reshape_bus_view(results, buses, data=None, aggregate=None):
     ----------
     results: dict
         A solph results dictionary from a deflex scenario.
-    buses : solph.Bus or list
+    buses : list or solph.Bus
         A single bus node or a list of buses.
     data : pandas.DataFrame
         MultiIndex DataFrame to add the results to.
@@ -160,6 +159,7 @@ def reshape_bus_view(results, buses, data=None, aggregate=None):
 
     Examples
     --------
+    >>> from oemof import solph
     >>> from deflex.tools import fetch_example_results
     >>> fn = fetch_example_results("de21_copperplate.dflx")
     >>> my_es = restore_scenario(fn).es

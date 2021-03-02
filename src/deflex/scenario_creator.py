@@ -237,23 +237,7 @@ def create_basic_reegis_scenario(
         Set of transmission lines.
     parameter : dict
         Parameter set for the creation process. Some parameters will have a
-        default value. See the list of default values:
-            * copperplate: True
-            * default_transmission_efficiency: 0.9
-            * costs_source: "ewi"
-            * downtime_bioenergy: 0.1
-            * group_transformer: False
-            * heat: False
-            * limited_transformer: "bioenergy",
-            * local_fuels: "district heating",
-            * map: "de02",
-            * mobility_other: "petrol",
-            * round: 1,
-            * separate_heat_regions: "de22",
-            * use_CO2_costs: False,
-            * use_downtime_factor: True,
-            * use_variable_costs: False,
-            * year: 2014
+        default value. For the default values see below.
     csv_path : str
         A directory to store the scenario as csv collection. If None no csv
         collection will be created. Either csv_path or excel_path must not be
@@ -271,7 +255,24 @@ def create_basic_reegis_scenario(
     Notes
     -----
 
-    }
+    List of default values:
+
+        * copperplate: True
+        * default_transmission_efficiency: 0.9
+        * costs_source: "ewi"
+        * downtime_bioenergy: 0.1
+        * group_transformer: False
+        * heat: False
+        * limited_transformer: "bioenergy",
+        * local_fuels: "district heating",
+        * map: "de02",
+        * mobility_other: "petrol",
+        * round: 1,
+        * separate_heat_regions: "de22",
+        * use_CO2_costs: False,
+        * use_downtime_factor: True,
+        * use_variable_costs: False,
+        * year: 2014
 
     Examples
     --------

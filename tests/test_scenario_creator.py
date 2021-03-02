@@ -22,8 +22,8 @@ from scenario_builder import powerplants
 
 from deflex import __file__ as dfile
 from deflex import config as cfg
-from deflex import scenario_creator
 from deflex import scenario as st
+from deflex import scenario_creator
 from deflex.geometries import deflex_power_lines
 from deflex.geometries import deflex_regions
 

@@ -42,6 +42,8 @@ MOCK_MODULES = [
     "matplotlib",
     "oemof",
     "oemof.tools",
+    "oemof.network",
+    "pandas.testing",
 ]
 sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
 

@@ -604,7 +604,6 @@ def compare_different_mcp(mcp):
 
 
 def compare_emission_types(path, name=None, number=0):
-    print([s for s in get_scenario(path)])
     if name is not None:
         sc = [s for s in get_scenario(path).ls if name in s][0]
     else:

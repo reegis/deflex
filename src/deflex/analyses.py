@@ -17,7 +17,6 @@ import pandas as pd
 from oemof import solph
 from pandas.testing import assert_frame_equal
 
-from deflex import results
 from deflex import scenario
 
 
@@ -120,8 +119,8 @@ def merit_order_from_results(result):
 
     Examples
     --------
-    >>> from deflex import results
-    >>> fn = results.fetch_example_results("de02_co2-price_var-costs.dflx")
+    >>> from deflex import tools, results
+    >>> fn = tools.fetch_example_results("de02_co2-price_var-costs.dflx")
     >>> my_results = results.restore_results(fn)
     >>> a = merit_order_from_results(my_results)
     """
@@ -236,9 +235,9 @@ def check_comparision_of_merit_order(path):
 
     Examples
     --------
-    >>> from deflex import results
+    >>> from deflex import tools
     >>> name = "de02.dflx"
-    >>> my_path = results.fetch_example_results(name)
+    >>> my_path = tools.fetch_example_results(name)
     >>> check_comparision_of_merit_order(my_path)
     Check passed! Both merit order DataFrame tables are the same.
     """

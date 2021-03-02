@@ -103,7 +103,8 @@ Installation of a solver (mandatory)
 To solve an energy system a linear solver has to be installed. For the
 communication with the solver `Pyomo` is used. Have a look at the `Pyomo docs <https://pyomo.readthedocs.io/en/stable/solving_pyomo_models.html#supported-solvers>`_ to learn about which solvers are supported.
 
-The default solver is the CBC solver. Go to the `oemof.solph documentation <https://github.com/oemof/oemof-solph#installing-a-solver>`_
+The default solver is the CBC solver. Go to the `oemof.solph documentation
+<https://oemof-solph.readthedocs.io/en/latest/readme.html#installing-a-solver>`_
 to get help for the solver installation.
 
 
