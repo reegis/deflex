@@ -8,7 +8,6 @@ SPDX-License-Identifier: MIT
 """
 
 import logging
-
 from collections import namedtuple
 
 import pandas as pd
