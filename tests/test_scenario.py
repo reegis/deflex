@@ -85,29 +85,41 @@ def test_excel_reader():
     sc = scenario.DeflexScenario()
     xls_fn = fetch_example_results("de02_short.xlsx")
     sc.read_xlsx(xls_fn)
+    sc.initialise_energy_system()
     sc.table2es()
     csv_path = os.path.join(TEST_PATH, "deflex_2013_de02_tmp_X45_test_csv")
     sc.to_csv(csv_path)
-    xls_fn = os.path.join(TEST_PATH, "deflex_2014_de02_tmp_X45_test.xlsx")
+    xls_fn = os.path.join(TEST_PATH, "deflex_2014_de02_tmp_X45_test")
+    sc.to_xlsx(xls_fn)
+    xls_fn += ".xlsx"
     sc.to_xlsx(xls_fn)
     shutil.rmtree(csv_path)
     os.remove(xls_fn)
+
+
+def test_build_model():
+    sc = scenario.DeflexScenario(debug=True)
+    xls_fn = fetch_example_results("de02_short.xlsx")
+    sc.read_xlsx(xls_fn)
+    sc.compute()
+    assert sc.es.results["meta"]["name"] == "deflex_2014_de02"
 
 
 def test_build_model_manually():
     sc = scenario.DeflexScenario(debug=True)
     xls_fn = fetch_example_results("de02_short.xlsx")
     sc.read_xlsx(xls_fn)
+    sc.initialise_energy_system()
     test_nodes = sc.create_nodes()
-    sc.add_nodes(test_nodes)
-    dump_fn = os.path.join(TEST_PATH, "pytest_test.dflx")
+    sc.add_nodes_to_es(test_nodes)
+    dump_fn = os.path.join(TEST_PATH, "pytest_test")
     sc.dump(dump_fn)
     model = sc.create_model()
     sc.solve(model=model, solver="cbc", with_duals=True)
     assert sc.es.results["meta"]["name"] == "deflex_2014_de02"
+    dump_fn += ".dflx"
     sc.dump(dump_fn)
     sc.plot_nodes()
-    sc.results_fn = dump_fn
     scenario.restore_scenario(dump_fn, scenario.DeflexScenario)
     assert sc.meta["year"] == 2014
     os.remove(dump_fn)
@@ -125,3 +137,42 @@ def test_corrupt_data():
     msg = "Missing time series for solar"
     with pytest.raises(ValueError, match=msg):
         sc.table2es()
+
+
+def test_restore_an_invalid_scenario():
+    filename = fetch_example_results("de02.xlsx")
+    msg = "The suffix of a valid deflex scenario has to be '.dflx'."
+    with pytest.raises(IOError, match=msg):
+        scenario.restore_scenario(filename)
+
+
+class TestInputDataCheck:
+    @classmethod
+    def setup_class(cls):
+        cls.sc = scenario.DeflexScenario()
+        fn = os.path.join(TEST_PATH, "de02_short.xlsx")
+        cls.sc.read_xlsx(fn)
+        cls.sc.input_data["general"]["regions"] = float("nan")
+
+    def test_nan_value_in_general_table_series(self):
+        with pytest.raises(ValueError, match="'general'"):
+            self.sc.check_input_data()
+
+    def test_nan_values_warnings(self, recwarn):
+        self.sc.input_data["volatile series"].loc[5, ("DE01", "wind")] = float(
+            "nan"
+        )
+        self.sc.check_input_data(warning=True)
+        assert len(recwarn) == 2
+        assert "table:'general', column(s): Index(['regions']" in str(
+            recwarn[0].message
+        )
+        assert (
+            "table:'volatile series', column(s): (('DE01', 'wind'),)"
+            in str(recwarn[1].message)
+        )
+
+    def test_wrong_length(self):
+        msg = "Number of time steps is 97 but the length of the volatile serie"
+        with pytest.raises(ValueError, match=msg):
+            self.sc.initialise_energy_system()
