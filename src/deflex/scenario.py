@@ -99,9 +99,6 @@ class Scenario:
 
     def read_xlsx(self, filename):
         """Load scenario from an excel-file."""
-        suffix = filename.split(".")[-1]
-        if not suffix == "xlsx":
-            filename = filename + ".xlsx"
         xlsx = pd.ExcelFile(filename)
         for sheet in xlsx.sheet_names:
             table_index_header = cfg.get_list("table_index_header", sheet)
@@ -132,7 +129,7 @@ class Scenario:
     def check_input_data(self, warning=False):
         for sheet, table in self.input_data.items():
             msg = (
-                "NaN values found in table:'{0}', columns: {1}.\n"
+                "NaN values found in table:'{0}', column(s): {1}.\n"
                 "Empty cells are not allowed in a scenario to avoid "
                 "unwanted behaviour.\nRemove the whole column/row if "
                 "a parameter is not needed. Consider that 0, 'inf' or "
@@ -153,7 +150,8 @@ class Scenario:
                 )
             else:
                 if table.isnull().any():
-                    msg = msg.format(sheet, "'value'")
+                    value = table.loc[table.isnull()].index
+                    msg = msg.format(sheet, value)
                     if warning is True:
                         warnings.warn(msg, UserWarning)
                     else:
@@ -198,7 +196,7 @@ class Scenario:
 
         """
 
-    def compute(self, **kwargs):
+    def compute(self, solver="cbc", **kwargs):
         """
 
         Returns
@@ -209,9 +207,9 @@ class Scenario:
         logging.info("Creating the linear model...")
         model = solph.Model(self.es)
         logging.info("Done. Optimise the model.")
-        self.solve(model, **kwargs)
+        self.solve(model, solver=solver, **kwargs)
 
-    def add_nodes(self, nodes):
+    def add_nodes_to_es(self, nodes):
         """
 
         Parameters
@@ -224,8 +222,6 @@ class Scenario:
         self
 
         """
-        if self.es is None:
-            self.initialise_energy_system()
         self.es.add(*nodes.values())
         return self
 
@@ -254,13 +250,12 @@ class Scenario:
         model = solph.Model(self.es)
         return model
 
-    def dump(self, filename, meta=None):
+    def dump(self, filename):
         """
 
         Parameters
         ----------
         filename : str
-        meta : str
 
         Returns
         -------
@@ -271,17 +266,12 @@ class Scenario:
             filename = filename + ".dflx"
         os.makedirs(os.path.dirname(filename), exist_ok=True)
         f = open(filename, "wb")
-        if meta is None and self.results is not None:
-            if "Meta" in self.results or "meta" in self.results:
-                meta = self.results["meta"]
-        pickle.dump(meta, f)
+        pickle.dump(self.meta, f)
         pickle.dump(self.__dict__, f)
         f.close()
         logging.info("Results dumped to %s.", filename)
 
-    def solve(
-        self, model, with_duals=False, solver=None, **solver_kwargs
-    ):
+    def solve(self, model, solver="cbc", with_duals=False, **solver_kwargs):
         """
 
         Parameters
@@ -319,16 +309,14 @@ class Scenario:
             model.write(filename, io_options={"symbolic_solver_labels": True})
             # ToDo: Try to plot a graph
 
-        model.solve(
-            solver=solver, solve_kwargs=solver_kwargs
-        )
+        model.solve(solver=solver, solve_kwargs=solver_kwargs)
 
         self.meta["solver_end"] = datetime.datetime.now()
 
         self.es.results["main"] = solph.processing.results(model)
-        self.es.results["meta"] = solph.processing.meta_results(model)
+        self.meta.update(solph.processing.meta_results(model))
         self.es.results["param"] = solph.processing.parameter_as_dict(self.es)
-        self.es.results["meta"].update(self.meta)
+        self.es.results["meta"] = self.meta
 
         self.results = self.es.results
 
@@ -391,7 +379,6 @@ def restore_scenario(filename, scenario_class=DeflexScenario):
     -------
 
     """
-
     if filename.split(".")[-1] != "dflx":
         msg = (
             "The suffix of a valid deflex scenario has to be '.dflx'.\n"
@@ -406,52 +393,3 @@ def restore_scenario(filename, scenario_class=DeflexScenario):
     f.close()
     logging.info("Results restored from %s.", filename)
     return sc
-
-
-def convert_xlsx2csv(path):
-    if ".xlsx" in os.path.basename(path):
-        files = list((os.path.basename(path),))
-        path = os.path.dirname(path)
-    else:
-        files = os.listdir(path)
-    for xlsx in files:
-        if os.path.basename(xlsx).split(".")[-1] == "xlsx":
-            logging.info("Converting file: %s" % format(xlsx))
-            xlsx = os.path.join(path, xlsx)
-            directory = str(os.path.basename(xlsx).split(".")[0]) + "_csv"
-            csv = os.path.join(os.path.dirname(xlsx), directory)
-            sc = DeflexScenario()
-            sc.read_xlsx(xlsx)
-            sc.to_csv(csv)
-
-
-def convert_esys2dflx(path):
-    """
-    Convert .esys files with deflex results into .dflx files.
-
-    Parameters
-    ----------
-    path : str
-        Directory which contains solved and dumped deflex scenarios from
-        deflex >= 0.2.
-
-    Returns
-    -------
-
-    """
-    for fn in os.listdir(path):
-        if ".esys" in fn:
-            filename = os.path.join(path, fn)
-            sc = DeflexScenario()
-            sc.es = solph.EnergySystem()
-            f = open(filename, "rb")
-            meta = pickle.load(f)
-            logging.info("Meta information:\n" + pp.pformat(meta))
-            sc.es.__dict__ = pickle.load(f)
-            f.close()
-            sc.results = sc.es.results
-            logging.info("Results restored from %s.", filename)
-            sc.name = os.path.basename(filename).split(".")[0]
-            sc.debug = False
-            sc.input_data = sc.results["meta"]["scenario"].pop("scenario")
-            sc.dump(os.path.join(os.path.dirname(filename), sc.name))
