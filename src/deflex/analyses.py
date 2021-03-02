@@ -11,13 +11,10 @@ __copyright__ = "Uwe Krien <krien@uni-bremen.de>"
 __license__ = "MIT"
 
 import os
-from shutil import rmtree
 
 import pandas as pd
 from oemof import solph
 from pandas.testing import assert_frame_equal
-
-from deflex import scenario
 
 
 def merit_order_from_scenario(
@@ -235,12 +232,12 @@ def check_comparision_of_merit_order(scenario):
 
     Parameters
     ----------
-    path : str
+    scenario : deflex.Scenario
         Full path of results file.
 
     Examples
     --------
-    >>> from deflex import tools
+    >>> from deflex import tools, scenario
     >>> name = "de02.dflx"
     >>> my_path = tools.fetch_example_results(name)
     >>> sc = scenario.restore_scenario(my_path)
