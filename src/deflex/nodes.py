@@ -407,14 +407,7 @@ def add_power_and_heat_plants(table_collection, nodes, extra_regions):
             if params.capacity > 0:
                 # if downtime_factor is in the parameters, use it
                 if hasattr(params, "downtime_factor"):
-                    # Todo: test exception
-                    if math.isnan(params["downtime_factor"]):
-                        raise ValueError(
-                            "Downtime factor should not be Nan. Use zero but "
-                            "do not leave it empty."
-                        )
-                    else:
-                        params.capacity *= 1 - params["downtime_factor"]
+                    params.capacity *= 1 - params["downtime_factor"]
 
                 # Define output flow with or without summed_max attribute
                 if params.limit_elec_pp == float("inf"):
@@ -427,14 +420,7 @@ def add_power_and_heat_plants(table_collection, nodes, extra_regions):
 
                 # if variable costs are defined add them to the outflow
                 if hasattr(params, "variable_costs"):
-                    # Todo: test exception
-                    if math.isnan(params["variable_costs"]):
-                        raise ValueError(
-                            "Variable costs should not be Nan. Use zero but "
-                            "do not leave it empty."
-                        )
-                    else:
-                        vc = params.variable_costs
+                    vc = params.variable_costs
                     outflow.variable_costs = solph.sequence(vc)
 
                 plant_name = (
