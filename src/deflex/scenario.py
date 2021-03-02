@@ -387,7 +387,7 @@ def restore_scenario(filename, scenario_class=DeflexScenario):
         raise IOError(msg)
     f = open(filename, "rb")
     meta = pickle.load(f)
-    logging.info("Meta information:\n %s" % pp.pformat(meta))
+    logging.info("Meta information:\n %s", pp.pformat(meta))
     sc = scenario_class()
     sc.__dict__ = pickle.load(f)
     f.close()
