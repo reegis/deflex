@@ -280,23 +280,29 @@ class Scenario:
         logging.info("Results dumped to %s.", filename)
 
     def solve(
-        self, model, with_duals=False, tee=True, logfile=None, solver=None
+        self, model, with_duals=False, solver=None, **solver_kwargs
     ):
         """
 
         Parameters
         ----------
-        model
-        with_duals
-        tee
+        model : oemof.solph.Model
+        solver : str
+        with_duals : bool
+
+        Other Parameters
+        ----------------
+        tee : bool
+            Set to `False` to suppress the solver output (default: True).
         logfile
-        solver
 
         Returns
         -------
 
         """
         logging.info("Optimising using %s.", solver)
+
+        solver_kwargs["tee"] = solver_kwargs.get("tee", True)
 
         self.meta["solph_version"] = solph.__version__
         self.meta["solver"] = solver
