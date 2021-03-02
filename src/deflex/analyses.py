@@ -20,7 +20,9 @@ from pandas.testing import assert_frame_equal
 from deflex import scenario
 
 
-def merit_order_from_scenario(path, with_downtime=True, with_co2_price=True):
+def merit_order_from_scenario(
+    scenario, with_downtime=True, with_co2_price=True
+):
     """
     Create a merit order from a deflex scenario.
 
@@ -31,7 +33,7 @@ def merit_order_from_scenario(path, with_downtime=True, with_co2_price=True):
 
     Parameters
     ----------
-    path : str
+    scenario : deflex.Scenario
         Path of the directory where the csv files of the scenario are located.
     with_downtime : bool
         Use down time factor to reduce the installed capacity.
@@ -45,26 +47,29 @@ def merit_order_from_scenario(path, with_downtime=True, with_co2_price=True):
     Examples
     --------
     >>> import os
+    >>> from deflex import DeflexScenario
     >>> my_path = os.path.join(
     ...     os.path.dirname(__file__), os.pardir, os.pardir, "tests", "data",
     ...     "deflex_2014_de02_co2-price_var-costs_csv")
-    >>> mo1 = merit_order_from_scenario(my_path)
+    >>> sc = DeflexScenario()
+    >>> mo1 = merit_order_from_scenario(sc.read_csv(my_path))
     >>> round(mo1.capacity_cum.iloc[-1], 4)
     86.7028
     >>> round(mo1.capacity.sum(), 1)
     86702.8
     >>> round(mo1.loc[("DE01", "natural gas - 0.55"), "costs_total"], 2)
     49.37
-    >>> mo2 = merit_order_from_scenario(my_path, with_downtime=False)
+    >>> mo2 = merit_order_from_scenario(sc.read_csv(my_path),
+    ...                                 with_downtime=False)
     >>> int(round(mo2.capacity.sum(), 0))
     101405
-    >>> mo3 = merit_order_from_scenario(my_path, with_co2_price=False)
+    >>> mo3 = merit_order_from_scenario(sc.read_csv(my_path),
+    ...                                 with_co2_price=False)
     >>> round(mo3.loc[("DE01", "natural gas - 0.55"), "costs_total"], 2)
     43.58
 
     """
-    sc = scenario.DeflexScenario(year=2014)
-    sc.read_csv(path)
+    sc = scenario
     sc.name = sc.input_data["general"].get("name")
     transf = sc.input_data["power plants"]
     num_cols = ["capacity", "variable_costs", "efficiency", "count"]
@@ -246,8 +251,7 @@ def check_comparision_of_merit_order(path):
 
     # Fetch Results and store
     deflex_scenario = scenario.restore_scenario(path, scenario.DeflexScenario)
-    deflex_scenario.to_csv(tmp_path)
-    mo_scenario = merit_order_from_scenario(tmp_path)
+    mo_scenario = merit_order_from_scenario(deflex_scenario)
     mo_results = merit_order_from_results(deflex_scenario.results)
 
     mo_results.index = mo_scenario.index
