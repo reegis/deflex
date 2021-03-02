@@ -133,7 +133,7 @@ def get_key_values_from_results(result):
     """
     kv = pd.DataFrame(columns=pd.MultiIndex(levels=[[], []], codes=[[], []]))
     for r in result:
-        name = r["meta"]["scenario"]["name"]
+        name = r["meta"]["name"]
         flow_res = analyses.get_flow_results(r)
         if "chp" in flow_res["cost", "specific", "trsf"].columns:
             kv["mcp", name] = flow_res.drop(
@@ -625,7 +625,7 @@ def compare_emission_types(path, name=None, number=0):
 
 def emission_multiplot(res, kv):
     plt.rcParams.update({"font.size": 16})
-    name = res["meta"]["scenario"]["name"]
+    name = res["meta"]["name"]
     f, ax = plt.subplots(2, 1, sharex=True, figsize=(15, 6))
     region = "all"
     buses = results.search_nodes(res, solph.Bus, tag="electricity")
@@ -809,18 +809,26 @@ def shape_tuple_legend(reverse=False, up=1.0, **kwargs):
     return axes
 
 
-def main_deflex(path, name=None):
+def main_deflex(path, name=None, batch=False):
     logger.define_logging()
-    scenarios = main.fetch_scenarios_from_dir(path, xls=True)
+    logging.info(str(path))
+    scenarios = main.fetch_scenarios_from_dir(path, xlsx=True)
     if name is not None:
         scenarios = [s for s in scenarios if name in s]
-    print(scenarios)
-    for scenario in scenarios:
-        n = "de" + str(scenario.split("_de")[-1].split(".")[0])
-        main.plot_scenario(
-            scenario, graphml_file="{0}/mob_{1}.graphml".format(path, n)
-        )
-        # main.model_scenario(scenario)
+    if batch is True:
+        for scenario in scenarios:
+            n = "de" + str(scenario.split("_de")[-1].split(".")[0])
+            main.plot_scenario(
+                scenario, graphml_file="{0}/mob_{1}.graphml".format(path, n)
+            )
+        main.model_multi_scenarios(scenarios, cpu_fraction=0.7)
+    else:
+        for scenario in scenarios:
+            n = "de" + str(scenario.split("_de")[-1].split(".")[0])
+            main.plot_scenario(
+                scenario, graphml_file="{0}/mob_{1}.graphml".format(path, n)
+            )
+            main.model_scenario(scenario)
 
 
 def check_modules():
@@ -846,7 +854,7 @@ if __name__ == "__main__":
     my_path = BASEPATH  # change the BASEPATH at the top of the file
     # download_example_scenarios(my_path)
 
-    main_deflex(my_path)
+    main_deflex(my_path, name="de02_heat_reg")
 
     # my_mcp = fetch_mcp(my_path)
     # show_relation(my_mcp, name="deflex_2014_de02")
