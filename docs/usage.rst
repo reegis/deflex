@@ -95,7 +95,7 @@ order can be shown only based on the input data:
 
 
 Results
-~~~~~~~
++++++++
 
 - Link to solph results to understand the general structure
 - Typical results and analyses

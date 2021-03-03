@@ -8,6 +8,7 @@ Contents
    readme
    installation
    usage
+   input_data
    reference
    contributing
    authors

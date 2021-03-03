@@ -86,7 +86,7 @@ deflex - flexible multi-regional energy system model for heat, power and mobilit
 
 
 Installation
-============
+------------
 
 The following line will install the basic version. Some functions depend on further packages, see below to install additional requirements::
 
@@ -98,7 +98,7 @@ To run older scenarios you can install the old stable phd version::
 
 
 Installation of a solver (mandatory)
-------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 To solve an energy system a linear solver has to be installed. For the
 communication with the solver `Pyomo` is used. Have a look at the `Pyomo docs <https://pyomo.readthedocs.io/en/stable/solving_pyomo_models.html#supported-solvers>`_ to learn about which solvers are supported.
@@ -109,7 +109,7 @@ to get help for the solver installation.
 
 
 Additional requirements (optional)
-----------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The basic installation can be used to compute scenarios (csv, xls, xlsx). For
 some functions additional packages are needed.
@@ -142,7 +142,7 @@ some functions additional packages are needed.
 
 
 Basic usage
-===========
+-----------
 
 .. code-block:: python
 
