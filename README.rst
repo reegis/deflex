@@ -16,6 +16,7 @@
     :target: https://github.com/reegis/deflex
     :width: 600pt
 
+=================================================================================
 deflex - flexible multi-regional energy system model for heat, power and mobility
 =================================================================================
 
@@ -88,70 +89,18 @@ deflex - flexible multi-regional energy system model for heat, power and mobilit
 Installation
 ------------
 
-The following line will install the basic version. Some functions depend on further packages, see below to install additional requirements::
+Use the :ref:`installation_guide` for complete information.
 
-    pip install deflex
+ * deflex is available on `PyPi <https://pypi.org/project/deflex/>`_
+ * an LP-solver is needed such as CBC (default), GLPK, Gurobi*,
+   Cplex*
+ * for some extra functions additional packages are needed
 
-To run older scenarios you can install the old stable phd version::
-
-    pip install https://github.com/reegis/deflex/archive/phd.zip
-
-
-Installation of a solver (mandatory)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-To solve an energy system a linear solver has to be installed. For the
-communication with the solver `Pyomo` is used. Have a look at the `Pyomo docs <https://pyomo.readthedocs.io/en/stable/solving_pyomo_models.html#supported-solvers>`_ to learn about which solvers are supported.
-
-The default solver is the CBC solver. Go to the `oemof.solph documentation
-<https://oemof-solph.readthedocs.io/en/latest/readme.html#installing-a-solver>`_
-to get help for the solver installation.
-
-
-Additional requirements (optional)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-The basic installation can be used to compute scenarios (csv, xls, xlsx). For
-some functions additional packages are needed.
-
-1. To run the example with all plots you need the following packages:
-    * pygeos (spatial operations)
-    * geopandas (maps)
-    * descartes (plot maps with matplotlib)
-    * lmfit (linear fit)
-    * matplotlib (plotting)
-    * requests (download example files)
-
-    ``pip install deflex[example]``
-
-2. To use the maps of the polygons, transmission lines etc.:
-    * pygeos (spatial operations)
-    * geopandas (maps)
-
-    ``pip install deflex[map]``
-
-3. To develop deflex:
-    * pytest
-    * sphinx
-    * sphinx_rtd_theme
-    * pygeos
-    * geopandas
-    * requests
-
-    ``pip install deflex[dev]``
-
-
-Basic usage
------------
-
-.. code-block:: python
-
-    scenario = "/path/to/my/scenario.xls"
-    main.model_scenario(scenario)
+\* Proprietary solver
 
 
 Use example
-===========
+-----------
 
 1. Run ``pip install deflex[example]``
 2. Create a local directory (e.g. /home/user/deflex_examples).
@@ -169,52 +118,58 @@ Use example
     - BASEPATH = os.path.join(os.path.expanduser("~"), "deflex_examples")
     + BASEPATH = "/your/favoured/path/"
 
-Documentation
-=============
 
+Improve deflex
+--------------
 
-https://deflex.readthedocs.io/
+We are warmly welcoming all who want to contribute to the deflex library. This
+includes the following actions:
 
-The `documentation of deflex <https://deflex.readthedocs.io/en/latest/>`_ is powered by readthedocs.
+ * Write bug reports or comments
+ * Improve the documentation (including typos, grammar)
+ * Add features improve the code (open an issue first)
 
-Go to the `download page <http://readthedocs.org/projects/deflex/downloads/>`_ to download different versions and formats (pdf, html, epub) of the documentation.
-
-
-
-Contributing
-==============
-
-We are warmly welcoming all who want to contribute to the deflex library.
+See the :ref:`contributing` chapter to learn how to help.
 
 
 Citing deflex
-========================
+-------------
 
 Go to the `Zenodo page of deflex <https://doi.org/10.5281/zenodo.3572594>`_ to find the DOI of your version. To cite all deflex versions use:
 
 .. image:: https://zenodo.org/badge/DOI/10.5281/zenodo.3572594.svg
    :target: https://doi.org/10.5281/zenodo.3572594
 
-Development
-===========
 
-To run all the tests run::
+Documentation
+-------------
 
-    tox
+The `full documentation of deflex <https://deflex.readthedocs.io/en/latest/>`_
+is available on readthedocs.
 
-Note, to combine the coverage data from all the tox environments run:
+Go to the `download page <http://readthedocs.org/projects/deflex/downloads/>`_
+to download different versions and formats (pdf, html, epub) of the
+documentation.
 
-.. list-table::
-    :widths: 10 90
-    :stub-columns: 1
+License
+-------
 
-    - - Windows
-      - ::
+Copyright (c) 2019 Uwe Krien
 
-            set PYTEST_ADDOPTS=--cov-append
-            tox
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-    - - Other
-      - ::
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
 
-            PYTEST_ADDOPTS=--cov-append tox
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.

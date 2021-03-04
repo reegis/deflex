@@ -1,6 +1,6 @@
-=====
-Usage
-=====
+===========
+Usage guide
+===========
 
 THIS CHAPTER IS WORK IN PROGRESS...
 
@@ -10,7 +10,7 @@ THIS CHAPTER IS WORK IN PROGRESS...
     :backlinks: top
 
 DeflexScenario
-++++++++++++++
+--------------
 
 The scenario class :py:class:`~deflex.scenario.DeflexScenario` is a central
 element of deflex.
@@ -95,8 +95,11 @@ order can be shown only based on the input data:
 
 
 Results
-+++++++
+-------
 
 - Link to solph results to understand the general structure
 - Typical results and analyses
 - Show some plots.
+
+
+.. include:: input_data.rst

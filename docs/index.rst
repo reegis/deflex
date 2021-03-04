@@ -1,3 +1,7 @@
+.. image:: https://raw.githubusercontent.com/reegis/deflex/master/docs/images/logo_deflex_big.svg
+    :target: https://github.com/reegis/deflex
+    :width: 600pt
+
 ========
 Contents
 ========
@@ -8,7 +12,6 @@ Contents
    readme
    installation
    usage
-   input_data
    reference
    contributing
    authors

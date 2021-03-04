@@ -6,7 +6,7 @@ Contributions are welcome, and they are greatly appreciated! Every
 little bit helps, and credit will always be given.
 
 Bug reports
-===========
+-----------
 
 When `reporting a bug <https://github.com/reegis/deflex/issues>`_ please include:
 
@@ -15,14 +15,14 @@ When `reporting a bug <https://github.com/reegis/deflex/issues>`_ please include
     * Detailed steps to reproduce the bug.
 
 Documentation improvements
-==========================
+--------------------------
 
 deflex could always use more documentation, whether as part of the
 official deflex docs, in docstrings, or even on the web in blog posts,
 articles, and such.
 
 Feature requests and feedback
-=============================
+-----------------------------
 
 The best way to send feedback is to file an issue at https://github.com/reegis/deflex/issues.
 
@@ -33,7 +33,7 @@ If you are proposing a feature:
 * Remember that this is a volunteer-driven project, and that code contributions are welcome :)
 
 Development
-===========
+-----------
 
 To set up `deflex` for local development:
 
@@ -88,3 +88,28 @@ To run a subset of tests::
 To run all the test environments in *parallel*::
 
     tox -p auto
+
+Development
+-----------
+
+To run all the tests run::
+
+    tox
+
+Note, to combine the coverage data from all the tox environments run:
+
+.. list-table::
+    :widths: 10 90
+    :stub-columns: 1
+
+    - - Windows
+      - ::
+
+            set PYTEST_ADDOPTS=--cov-append
+            tox
+
+    - - Other
+      - ::
+
+            PYTEST_ADDOPTS=--cov-append tox
+
