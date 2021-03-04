@@ -31,7 +31,13 @@ if sys.getrecursionlimit() < 3000:
 
 
 class NodeDict(dict):
-    """Something."""
+    """
+    A dictionary where existing key-value-pairs cannot be overwritten.
+
+    A NodeDict can collect values with unique keys. Therefore a duplicate key
+    will raise a ``KeyError`` instead of overwriting the existing key
+    silently.
+    """
 
     def __setitem__(self, key, item):
         if super().get(key) is None:
@@ -45,20 +51,46 @@ class NodeDict(dict):
 
 
 class Scenario:
-    """Scenario class."""
+    """
+    Basic scenario class.
+
+    Attributes
+    ----------
+
+    input_data : dict
+        The input data is organised in a dictionary of pandas.DataFrame/
+        pandas.Series. The keys are the data names (string) and the values are
+        the data tables.
+    results : dict
+        The results are stored in a dictionary with tuples as keys and the
+        results as values (nested dictionary with pandas.DataFrame). The tuples
+        contain the node object in the following form:
+        (from_node, to_node) for flows and (node, None) for components. See the
+        `solph documentation
+        <https://oemof-solph.readthedocs.io/en/latest/usage.html#handling-results>`_
+         for more details.
+    meta : dict
+        Meta information that can be used to search for in stored scenarios.
+        The dictionary keys can be used like tags or categories.
+    es : oemof.solph.EnergySystem
+        This attribute will hold the oemof.solph.EnergySystem.
+
+    """
 
     def __init__(self, **kwargs):
         self.meta = kwargs.get("meta", {})
         self.input_data = kwargs.get("input_data", {})
         self.es = kwargs.get("es", None)
         self.results = kwargs.get("results", None)
-        self.debug = kwargs.get("debug", False)
 
     def initialise_energy_system(self):
         """
+        Create a solph.EnergySystem and store it in the es attribute. The
+        input_data attribute has to contain the input data to use this method.
 
         Returns
         -------
+        self
 
         """
         if not self.input_data:
@@ -68,12 +100,7 @@ class Scenario:
                 "time steps."
             )
         year = int(self.input_data["general"]["year"])
-        if self.debug is False:
-            time_steps = int(
-                self.input_data["general"]["number of time steps"]
-            )
-        else:
-            time_steps = 3
+        time_steps = int(self.input_data["general"]["number of time steps"])
         # increment = self.input_data["general"]["time increment"]
 
         # Check leap year
@@ -83,7 +110,7 @@ class Scenario:
 
         # Check series tables
         for key in [t for t in self.input_data.keys() if "series" in t]:
-            if time_steps != len(self.input_data[key]) and not self.debug:
+            if time_steps != len(self.input_data[key]):
                 msg = (
                     "Number of time steps is {0} but the length of the {1}"
                     " table is {2}."
@@ -100,7 +127,7 @@ class Scenario:
         return self
 
     def read_xlsx(self, filename):
-        """Load scenario from an excel-file."""
+        """Load scenario from an xlsx file. The full path has to be passed."""
         xlsx = pd.ExcelFile(filename)
         for sheet in xlsx.sheet_names:
             table_index_header = cfg.get_list("table_index_header", sheet)
@@ -113,7 +140,10 @@ class Scenario:
         return self
 
     def read_csv(self, path):
-        """Load scenario from a csv-collection."""
+        """
+        Load scenario from a csv-collection. The path of the directory has
+        to be passed.
+        """
         for file in os.listdir(path):
             if file[-4:] == ".csv":
                 name = file[:-4]
@@ -129,6 +159,11 @@ class Scenario:
         return self
 
     def check_input_data(self, warning=False):
+        """
+        Check the input data for NaN values. If warning is True a warning
+        for all tables is raised that contain NaN values. Otherwise an
+        exception is raised on the first occurrence of NaN values.
+        """
         for sheet, table in self.input_data.items():
             msg = (
                 "NaN values found in table:'{0}', column(s): {1}.\n"
@@ -165,7 +200,7 @@ class Scenario:
             self.meta.update(self.input_data["general"].to_dict())
 
     def to_xlsx(self, filename):
-        """Dump scenario into an excel-file."""
+        """Dump the input data as an xlsx-file."""
         # create path if it does not exist
         suffix = filename.split(".")[-1]
         if not suffix == "xlsx":
@@ -178,7 +213,7 @@ class Scenario:
         logging.info("Scenario saved as excel file to %s", filename)
 
     def to_csv(self, path):
-        """Dump scenario into a csv-collection."""
+        """Dump input data as a csv-collection."""
         if os.path.isdir(path):
             shutil.rmtree(os.path.join(path))
         os.makedirs(path)
@@ -191,6 +226,8 @@ class Scenario:
 
     def create_nodes(self):
         """
+        Creates solph components and buses from the input data and store them
+        in a dictionary with unique IDs as keys.
 
         Returns
         -------
@@ -200,9 +237,16 @@ class Scenario:
 
     def compute(self, solver="cbc", **kwargs):
         """
+        Create a solph.Model from the input data and optimise it using an
+        external solver. Afterwards the results are stored in the results
+        attribute.
 
-        Returns
-        -------
+        Parameters
+        ----------
+        solver : str
+            The name of the solver as used in the Pyomo package (cbc, glpk,
+            gurobi, cplex...).
+
 
         """
         self.table2es()
@@ -213,7 +257,11 @@ class Scenario:
 
     def add_nodes_to_es(self, nodes):
         """
-
+        Add nodes to an existing solph.EnergySystem. If the EnergySystem does
+        not exist an Error is raised. This method is included in the
+        :py:meth:~deflex.scenario.Scenario.compute() method and is only needed
+        for an advanced usage
+        
         Parameters
         ----------
         nodes : dict
@@ -251,6 +299,26 @@ class Scenario:
         """
         model = solph.Model(self.es)
         return model
+
+    def compute_debug(self):
+        """
+        The plan is to make it easy to debug an energy system.
+
+        1. Create an EnergySystem with just 5 time steps
+        2. Reduce the input data (all series) to 5 time steps
+        3. Plot the graph (try/except)
+        4. Write an LP file (try/except)
+        5. Solve and dump the results (try/except)
+
+        model = solph.Model(self.es)
+        filename = os.path.join(
+            solph.helpers.extend_basic_path("lp_files"), "reegis.lp"
+        )
+        logging.info("Store lp-file in %s.", filename)
+        model.write(filename, io_options={"symbolic_solver_labels": True})
+        # ToDo: Try to plot a graph
+        """
+        pass
 
     def dump(self, filename):
         """
@@ -302,14 +370,6 @@ class Scenario:
 
         if with_duals:
             model.receive_duals()
-
-        if self.debug:
-            filename = os.path.join(
-                solph.helpers.extend_basic_path("lp_files"), "reegis.lp"
-            )
-            logging.info("Store lp-file in %s.", filename)
-            model.write(filename, io_options={"symbolic_solver_labels": True})
-            # ToDo: Try to plot a graph
 
         model.solve(solver=solver, solve_kwargs=solver_kwargs)
 
