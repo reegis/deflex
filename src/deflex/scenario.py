@@ -56,7 +56,6 @@ class Scenario:
 
     Attributes
     ----------
-
     input_data : dict
         The input data is organised in a dictionary of pandas.DataFrame/
         pandas.Series. The keys are the data names (string) and the values are
@@ -68,7 +67,7 @@ class Scenario:
         (from_node, to_node) for flows and (node, None) for components. See the
         `solph documentation
         <https://oemof-solph.readthedocs.io/en/latest/usage.html#handling-results>`_
-         for more details.
+        for more details.
     meta : dict
         Meta information that can be used to search for in stored scenarios.
         The dictionary keys can be used like tags or categories.
@@ -225,15 +224,7 @@ class Scenario:
         logging.info("Scenario saved as csv-collection to %s", path)
 
     def create_nodes(self):
-        """
-        Creates solph components and buses from the input data and store them
-        in a dictionary with unique IDs as keys.
-
-        Returns
-        -------
-        dict
-
-        """
+        pass
 
     def compute(self, solver="cbc", **kwargs):
         """
@@ -259,9 +250,9 @@ class Scenario:
         """
         Add nodes to an existing solph.EnergySystem. If the EnergySystem does
         not exist an Error is raised. This method is included in the
-        :py:meth:~deflex.scenario.Scenario.compute() method and is only needed
-        for an advanced usage
-        
+        :py:meth:`~deflex.scenario.Scenario.compute()` method and is only
+        needed for advanced usage.
+
         Parameters
         ----------
         nodes : dict
@@ -277,9 +268,13 @@ class Scenario:
 
     def table2es(self):
         """
+        Create a populated solph.EnergySystem from the input data. This method
+        is included in the :py:meth:`~deflex.scenario.Scenario.compute()`
+        method and is only needed for advanced usage.
 
         Returns
         -------
+        self
 
         """
         if self.es is None:
@@ -292,9 +287,13 @@ class Scenario:
 
     def create_model(self):
         """
+        This method is included in the
+        :py:meth:`~deflex.scenario.Scenario.compute()` method and is only
+        needed for advanced usage.
 
         Returns
         -------
+        solph.Model
 
         """
         model = solph.Model(self.es)
@@ -311,25 +310,22 @@ class Scenario:
         5. Solve and dump the results (try/except)
 
         model = solph.Model(self.es)
-        filename = os.path.join(
-            solph.helpers.extend_basic_path("lp_files"), "reegis.lp"
-        )
+
+        filename = os.path.join(solph.helpers.extend_basic_path("lp_files"),
+        "reegis.lp")
+
         logging.info("Store lp-file in %s.", filename)
+
         model.write(filename, io_options={"symbolic_solver_labels": True})
-        # ToDo: Try to plot a graph
+
         """
         pass
 
     def dump(self, filename):
         """
-
-        Parameters
-        ----------
-        filename : str
-
-        Returns
-        -------
-
+        Store the scenario class into the binary pickle format with the suffix
+        `.dflx`. If the given filename does not contain the suffix, it will be
+        added to the filename.
         """
         suffix = filename.split(".")[-1]
         if not suffix == "dflx":
@@ -343,6 +339,9 @@ class Scenario:
 
     def solve(self, model, solver="cbc", with_duals=False, **solver_kwargs):
         """
+        Solve the solph.Model. This method is included in the
+        :py:meth:`~deflex.scenario.Scenario.compute()` method and is only
+        needed for advanced usage.
 
         Parameters
         ----------
@@ -354,10 +353,8 @@ class Scenario:
         ----------------
         tee : bool
             Set to `False` to suppress the solver output (default: True).
-        logfile
-
-        Returns
-        -------
+        logfile : str
+            Define the path where to store the log file of the solver.
 
         """
         logging.info("Optimising using %s.", solver)
@@ -382,8 +379,12 @@ class Scenario:
 
         self.results = self.es.results
 
-    def plot_nodes(self, filename=None, **kwargs):
+    def plot_nodes(self, filename, **kwargs):
         """
+        Plot a graph plot of the energy system and store it into a `.graphml`
+        file. The kwargs are passed to the oemof.network function
+        `create_nx_graph()
+        <https://github.com/oemof/oemof.network/blob/dev/src/oemof/network/graph.py#L15>`_.
 
         Parameters
         ----------
@@ -395,19 +396,25 @@ class Scenario:
 
         """
 
-        if "remove_nodes_with_substrings" in kwargs:
-            rm_nodes = kwargs.pop("remove_nodes_with_substrings")
-        else:
-            rm_nodes = None
+        g = graph.create_nx_graph(self.es, filename=filename, **kwargs)
 
-        g = graph.create_nx_graph(
-            self.es, filename=filename, remove_nodes_with_substrings=rm_nodes
-        )
         return g
 
 
 class DeflexScenario(Scenario):
-    """Something"""
+    """
+    The Deflex Scenario inherits from the Scenario class and extends the
+    Scenario class with valid nodes creation. Additionally one can define
+    an extra_regions attribute to create an extra commodity source for these
+    regions. This makes it possible to create a source balance for these
+    regions.
+
+    Attributes
+    ----------
+    extra_regions : list
+        All regions with separate commodity sources. This will blow up the
+        model a bit but makes it easier to create separate source balances.
+    """
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -415,9 +422,12 @@ class DeflexScenario(Scenario):
 
     def create_nodes(self):
         """
+        Creates solph components and buses from the input data and store them
+        in a dictionary with unique IDs as keys.
 
         Returns
         -------
+        dict
 
         """
         # Create  a special dictionary that will raise an error if a key is
@@ -431,14 +441,20 @@ class DeflexScenario(Scenario):
 
 def restore_scenario(filename, scenario_class=DeflexScenario):
     """
+    Create a Scenario from a dump file (`.dflx`). By default a DeflexScenario
+    is created but a different Scenario class can be passed. The Scenario
+    has to be equal to the dumped Scenario otherwise the restore will fail.
 
     Parameters
     ----------
-    filename
-    scenario_class
+    filename : str
+        The path to the dumped file (`.dflx`).
+    scenario_class : deflex.Scenario
+        A child of the deflex.Scenario class or the Scenario class itself.
 
     Returns
     -------
+    deflex.Scenario
 
     """
     if filename.split(".")[-1] != "dflx":
