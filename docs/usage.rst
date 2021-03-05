@@ -87,11 +87,34 @@ order can be shown only based on the input data:
 
 .. code-block:: python
 
-    from deflex import scenario
+    from deflex import DeflexScenario
     from deflex import analyses
-    sc = scenario.DeflexScenario()
+    sc = DeflexScenario()
     sc.read_xlsx("path/to/xlsx/file.xlsx")
-    power_plants = analyses.merit_order_from_scenario(sc)
+    pp = analyses.merit_order_from_scenario(sc)
+    ax = plt.figure(figsize=(15, 4)).add_subplot(1, 1, 1)
+    ax.step(pp["capacity_cum"].values, pp["costs_total"].values, where="pre")
+    ax.set_xlabel("Cumulative capacity [GW]")
+    ax.set_ylabel("Marginal costs [EUR/MWh]")
+    ax.set_ylim(0)
+    ax.set_xlim(0, pp["capacity_cum"].max())
+    plt.show()
+
+With the `de02_co2-price_var-costs.xlsx` from the examples the code above will
+produce the following plot:
+
+.. image:: https://raw.githubusercontent.com/reegis/deflex/master/docs/images/merit_order_example_plot_simple.svg
+
+Filling the area between the line and the x-axis with colors according the fuel
+of the power plant oen get the following plot:
+
+.. image:: https://raw.githubusercontent.com/reegis/deflex/master/docs/images/merit_order_example_plot_coloured.svg
+
+IMPORTANT: This is just an example and not a source for the actual merit order
+in Germany.
+
+
+/home/uwe/git-projects/reegis/deflex/docs/images/merit_order_example_plot_coloured.svg
 
 
 Results
