@@ -319,7 +319,6 @@ class Scenario:
         model.write(filename, io_options={"symbolic_solver_labels": True})
 
         """
-        pass
 
     def dump(self, filename):
         """
@@ -449,7 +448,7 @@ def restore_scenario(filename, scenario_class=DeflexScenario):
     ----------
     filename : str
         The path to the dumped file (`.dflx`).
-    scenario_class : deflex.Scenario
+    scenario_class : class
         A child of the deflex.Scenario class or the Scenario class itself.
 
     Returns
