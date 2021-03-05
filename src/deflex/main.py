@@ -386,48 +386,5 @@ def model_scenario(
     return result_path
 
 
-def plot_scenario(path, file_type=None, graphml_file=None):
-    """
-    Plot the graph of an energy system. If no filename is given the plot will
-    be shown on the screen but not writen to an image file
-
-    Parameters
-    ----------
-    path : str
-        A valid deflex scenario file.
-    file_type : str or None
-        Type of the input data. Valid values are 'csv', 'excel', None. If the
-        input is none the path should end on 'csv', '.xls', '.xlsx' to allow
-        auto detection.
-    graphml_file : str
-        The path of the graphml.
-
-    Returns
-    -------
-    TODO: Keep this test? It does not work without graphviz-dev and python3-dev
-    Examples
-    --------
-    >>> from deflex.tools import fetch_example_results, TEST_PATH
-    >>> fn = fetch_example_results("de02_short.xlsx")
-    >>> fn_img = os.path.join(TEST_PATH, "test_es.graphml")
-    >>> plot_scenario(fn, "xlsx", fn_img)
-    >>> os.path.isfile(fn_img)
-    True
-    >>> os.remove(fn_img)
-    >>> os.path.isfile(fn_img)
-    False
-    """
-    sc = load_scenario(path, file_type)
-    sc.table2es()
-
-    show = graphml_file is None
-
-    sc.plot_nodes(
-        filename=graphml_file,
-        show=show,
-        remove_nodes_with_substrings=["bus_cs"],
-    )
-
-
 if __name__ == "__main__":
     pass
