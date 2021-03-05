@@ -1,29 +1,12 @@
+.. start-badges
+
 | |workflow_pytests| |workflow_checks| |coveralls| |docs| |packaging|
 | |lgt_general| |lgt_alerts| |codacy| |requires|
 
 \
 
-
 | |version| |wheel| |supported-versions| |supported-implementations|
 | |commits-since| |licence| |code_Style| |zenodo|
-
-
-------------------------------------------------
-
-\
-
-.. image:: https://raw.githubusercontent.com/reegis/deflex/master/docs/images/logo_deflex_big.svg
-    :target: https://github.com/reegis/deflex
-    :width: 600pt
-
-=================================================================================
-deflex - flexible multi-regional energy system model for heat, power and mobility
-=================================================================================
-
-* Multi sectoral energy system of Germany/Europe
-* Dispatch optimisation
-* Start with basic scenarios
-* Highly configurable and adaptable
 
 
 .. |docs| image:: https://readthedocs.org/projects/deflex/badge/?style=flat
@@ -86,15 +69,38 @@ deflex - flexible multi-regional energy system model for heat, power and mobilit
    :target: https://doi.org/10.5281/zenodo.3572594
 
 
+------------------------------------------------
+
+.. end-badges
+
+\
+
+.. image:: https://raw.githubusercontent.com/reegis/deflex/master/docs/images/logo_deflex_big.svg
+    :target: https://github.com/reegis/deflex
+    :width: 600pt
+
+=================================================================================
+deflex - flexible multi-regional energy system model for heat, power and mobility
+=================================================================================
+
+The following README gives you a brief overview about deflex. Read the full
+`documentation <https://deflex.readthedocs.io/en/latest/>`_ for all
+information.
+
+* Multi sectoral energy system of Germany/Europe
+* Dispatch optimisation
+* Start with basic scenarios
+* Highly configurable and adaptable
+
 Installation
 ------------
 
-Use the :ref:`installation_guide` for complete information.
+To run `deflex` you have to install the Python package and a solver:
 
- * deflex is available on `PyPi <https://pypi.org/project/deflex/>`_
- * an LP-solver is needed such as CBC (default), GLPK, Gurobi*,
-   Cplex*
- * for some extra functions additional packages are needed
+* deflex is available on `PyPi <https://pypi.org/project/deflex/>`_ and can be
+  installed using ``pip install deflex``.
+* an LP-solver is needed such as CBC (default), GLPK, Gurobi*, Cplex*
+* for some extra functions additional packages and are needed
 
 \* Proprietary solver
 
@@ -125,11 +131,9 @@ Improve deflex
 We are warmly welcoming all who want to contribute to the deflex library. This
 includes the following actions:
 
- * Write bug reports or comments
- * Improve the documentation (including typos, grammar)
- * Add features improve the code (open an issue first)
-
-See the :ref:`contributing` chapter to learn how to help.
+* Write bug reports or comments
+* Improve the documentation (including typos, grammar)
+* Add features improve the code (open an issue first)
 
 
 Citing deflex

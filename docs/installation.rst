@@ -40,7 +40,9 @@ Additional requirements (optional)
 ----------------------------------
 
 The basic installation can be used to compute scenarios (csv, xls, xlsx). For
-some functions additional packages are needed.
+some functions additional packages are needed. Some of these packages may need
+OS specific packages. Please see the installation guide of each package if an
+error occur.
 
 1. To run the example with all plots you need the following packages:
     * pygeos (spatial operations)
