@@ -59,19 +59,16 @@ def test_scenario_es_init():
             {"year": 2013, "name": "test", "number of time steps": 8760}
         )
     }
-    sc = scenario.DeflexScenario(input_data=data, debug=True)
-    es1 = sc.initialise_energy_system().es
     sc = scenario.DeflexScenario(input_data=data)
-    es2 = sc.initialise_energy_system().es
+    es1 = sc.initialise_energy_system().es
     sc = scenario.DeflexScenario(input_data=data)
     sc.input_data["general"]["year"] = 2012
     with pytest.warns(UserWarning, match="2012 is a leap year but the"):
         print(sc.initialise_energy_system().es)
     sc.input_data["general"]["number of time steps"] = 8784
-    es3 = sc.initialise_energy_system().es
-    assert len(es1.timeindex) == 3
-    assert len(es2.timeindex) == 8760
-    assert len(es3.timeindex) == 8784
+    es2 = sc.initialise_energy_system().es
+    assert len(es1.timeindex) == 8760
+    assert len(es2.timeindex) == 8784
 
 
 def test_scenario_es_init_error():
@@ -119,8 +116,10 @@ def test_build_model_manually():
     assert sc.es.results["meta"]["name"] == "deflex_2014_de02"
     dump_fn += ".dflx"
     sc.dump(dump_fn)
-    sc.plot_nodes()
-    scenario.restore_scenario(dump_fn, scenario.DeflexScenario)
+    plot_fn = os.path.join(TEST_PATH, "test_plot_X343.graphml")
+    sc.plot_nodes(plot_fn)
+    assert os.path.isfile(plot_fn)
+    scenario.restore_scenario(dump_fn)
     assert sc.meta["year"] == 2014
     os.remove(dump_fn)
 
