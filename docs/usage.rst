@@ -103,12 +103,12 @@ order can be shown only based on the input data:
 With the `de02_co2-price_var-costs.xlsx` from the examples the code above will
 produce the following plot:
 
-.. image:: https://raw.githubusercontent.com/reegis/deflex/master/docs/images/merit_order_example_plot_simple.svg
+.. image:: images/merit_order_example_plot_simple.svg
 
 Filling the area between the line and the x-axis with colors according the fuel
 of the power plant oen get the following plot:
 
-.. image:: https://raw.githubusercontent.com/reegis/deflex/master/docs/images/merit_order_example_plot_coloured.svg
+.. image:: images/merit_order_example_plot_coloured.svg
 
 IMPORTANT: This is just an example and not a source for the actual merit order
 in Germany.
