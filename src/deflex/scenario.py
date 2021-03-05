@@ -224,7 +224,7 @@ class Scenario:
         logging.info("Scenario saved as csv-collection to %s", path)
 
     def create_nodes(self):
-        pass
+        """This method is a placeholder for the child classes."""
 
     def compute(self, solver="cbc", **kwargs):
         """
