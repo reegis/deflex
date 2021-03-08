@@ -14,13 +14,13 @@ __license__ = "MIT"
 
 
 from deflex import analyses
-from deflex import results
+from deflex import post_processing
 
 
 def test_flow_results():
     """The flow results are not fetched or calculated correctly.n"""
     my_fn = deflex.tools.fetch_example_results("de02.dflx")
-    my_res = results.restore_results(my_fn)
+    my_res = post_processing.restore_results(my_fn)
     mo = analyses.merit_order_from_results(my_res)
     seq = analyses.get_flow_results(my_res)
 

@@ -119,9 +119,9 @@ def merit_order_from_results(result):
 
     Examples
     --------
-    >>> from deflex import tools, results
+    >>> from deflex import tools, post_processing
     >>> fn = tools.fetch_example_results("de02_co2-price_var-costs.dflx")
-    >>> my_results = results.restore_results(fn)
+    >>> my_results = post_processing.restore_results(fn)
     >>> a = merit_order_from_results(my_results)
     """
     # TODO: If there is a transmission limit or transmission losses
@@ -275,6 +275,16 @@ def get_flow_results(result):
     -------
     pandas.DataFrame
 
+    Examples
+    --------
+    >>> from deflex.tools import TEST_PATH, fetch_example_results
+    >>> from deflex import post_processing as pp
+    >>> from deflex.analyses import get_flow_results
+    >>> fn1 = fetch_example_results("de17_heat.dflx")
+    >>> my_result = pp.restore_results(fn1)
+    >>> res = get_flow_results(my_result)
+    >>> round(res.loc[34, ("cost", "specific", "trsf")].max(), 2)
+    34.33
     """
     inflows = get_line_inflows(result)
     levels = [[], [], [], []]
@@ -307,6 +317,62 @@ def get_flow_results(result):
             seq.sort_index(1, inplace=True)
 
     return seq
+
+
+def get_key_values_from_results(results):
+    """
+    Extract key values from a list of solph results dictionaries.
+
+    emissions_average: The average emissions per time step
+    emissions_mcp: The emissions of the most expensive running power plant
+    mcp: Market Clearing Price (MCP), the costs of the most expensive running
+         power plant.
+
+    Parameters
+    ----------
+    results : list
+        A list of solph results dictionaries.
+
+    Returns
+    -------
+    pandas.DataFrame : Key values for each result dictionary.
+
+    Examples
+    --------
+    >>> from deflex.tools import TEST_PATH, fetch_example_results
+    >>> from deflex import post_processing as pp
+    >>> from deflex.analyses import get_key_values_from_results
+    >>> fn1 = fetch_example_results("de17_heat.dflx")
+    >>> fn2 = fetch_example_results("de02.dflx")
+    >>> my_results = pp.restore_results([fn1, fn2])
+    >>> kv = get_key_values_from_results(my_results)
+    >>> list(kv.columns.get_level_values(1).unique())
+    ['deflex_2014_de17_heat', 'deflex_2014_de02']
+    >>> round(kv.loc[34, ("mcp", "deflex_2014_de17_heat")], 2)
+    34.33
+
+    """
+    kv = pd.DataFrame(columns=pd.MultiIndex(levels=[[], []], codes=[[], []]))
+    for r in results:
+        name = r["meta"]["name"].split(".")[0]
+        flow_res = get_flow_results(r)
+        if "chp" in flow_res["cost", "specific", "trsf"].columns:
+            kv["mcp", name] = flow_res.drop(
+                ("cost", "specific", "trsf", "chp"), axis=1
+            )["cost", "specific"].max(axis=1)
+        else:
+            kv["mcp", name] = flow_res["cost", "specific"].max(axis=1)
+        mcp_id = flow_res["cost", "specific"].idxmax(axis=1)
+        emissions = flow_res["emission", "specific"]
+        kv["emissions_average", name] = (
+            flow_res["emission", "absolute"]
+            .sum(axis=1)
+            .div(flow_res["values", "absolute"].sum(axis=1))
+        )
+        kv["emissions_mcp", name] = pd.Series(
+            emissions.lookup(*zip(*pd.DataFrame(data=mcp_id).to_records()))
+        )
+    return kv
 
 
 if __name__ == "__main__":
