@@ -120,9 +120,76 @@ in Germany.
 Results
 -------
 
-- Link to solph results to understand the general structure
-- Typical results and analyses
-- Show some plots.
+All results are stored in ther
+:py:attr:`~deflex.scenario.Scenario.results` attribute of the
+:py:class:`~deflex.scenario.Scenario` class. It is a dictionary with the
+following keys:
+
+ * main -- Results of all variables
+ * param -- Input parameter
+ * meta -- Meta information and tags of the scenario
+ * problem -- Information about the linear problem such as `lower bound`,
+   `upper bound` etc.
+ * solver -- Solver results
+ * solution -- Information about the found solution and the objective value
+
+The ``deflex`` package provides some analyse functions as described below but
+it is also possible to write your own post processing. See the
+`results chapter of the oemof.solph documentation
+<https://oemof-solph.readthedocs.io/en/latest/usage.html#handling-results>`_
+to learn how to access the results.
+
+Fetch results
+~~~~~~~~~~~~~
+
+To find results file on your hard disc you can use the
+:py:func:`~deflex.results.search_results` function. This function provides a
+filter parameter which can be used to filter your own meta tags. The
+:py:attr:`~deflex.scenario.Scenario.meta` attribute of the
+:py:class:`~deflex.scenario.Scenario` class can store these meta tags in a
+dictionary with the tag-name as key and the value.
+
+.. code-block:: python
+
+    meta = {
+        "regions": 17,
+        "heat": True,
+        "tag": "value",
+        }
+
+The filter for these tags will look as follows. The values in the filter have
+to be strings regardless of the original type:
+
+.. code-block:: python
+
+    search_results(path=TEST_PATH, regions=["17", "21"], heat=["true"])
+
+There is always an ``AND`` connection between all filters so the filter above
+will only return results with 17 or 21 regions and with the heat-tag set to
+true. The returning list can be used as an input parameter to load the results
+and get a list of results dictionaries.
+
+.. code-block:: python
+
+    my_result_files = search_results(path=my_path)
+    my_results = restore_results(my_result_files)
+
+If a single file name is passed to the
+:py:func:`~deflex.results.restore_results` function a single result will be
+returned, otherwise a list.
+
+Get common values from results
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+1. Folgende erklären und an Example im docstring orientieren:
+    * merit_order_from_results(result)
+    * get_flow_results(result)
+    * get_key_values_from_results(results)
+
+2. Danach Ergebnisse von get_key_values plotten
+    * Show some plots.
+
+3. Dann noch reshape_bus_view + plot aus Examples
 
 
 .. include:: input_data.rst
