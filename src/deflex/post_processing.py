@@ -14,6 +14,7 @@ import pickle
 
 import pandas as pd
 
+from deflex.scenario import DeflexScenario
 from deflex.scenario import restore_scenario
 
 
@@ -31,6 +32,7 @@ def search_results(path=None, extension="dflx", **parameter_filter):
         Extension of the results files (default: ".esys")
     **parameter_filter
         Set filter always with lists e.g. map=["de21"] or map=["de21", "de22"].
+        The values in the list have to be strings.
 
     Returns
     -------
@@ -40,7 +42,19 @@ def search_results(path=None, extension="dflx", **parameter_filter):
     >>> from deflex.tools import TEST_PATH
     >>> from deflex.tools import fetch_example_results
     >>> my_file_name = fetch_example_results("de17_heat.dflx")
-    >>> search_results(path=TEST_PATH, regions=[17])[0].split(os.sep)[-1]
+    >>> res = search_results(path=TEST_PATH, regions=["17"])
+    >>> len(res)
+    1
+    >>> res[0].split(os.sep)[-1]
+    'de17_heat.dflx'
+    >>> res = search_results(path=TEST_PATH, regions=["17", "21"])
+    >>> len(res)
+    3
+    >>> res = search_results(
+    ...     path=TEST_PATH, regions=["17", "21"], heat=["true"])
+    >>> len(res)
+    1
+    >>> res[0].split(os.sep)[-1]
     'de17_heat.dflx'
     """
     if path is None:
@@ -67,13 +81,14 @@ def search_results(path=None, extension="dflx", **parameter_filter):
         iterate = list(files.keys())
         for fn in iterate:
             meta = files[fn]
-            if meta.get(filter_key) not in filter_value:
+            if str(meta.get(filter_key)) not in filter_value:
                 files.pop(fn, None)
     return list(files.keys())
 
 
-def restore_results(file_names, scenario_class=None):
-    """Load results from a file or a list of files.
+def restore_results(file_names, scenario_class=DeflexScenario):
+    """Load results from a file or a list of files. The results will be
+
 
     Parameters
     ----------
@@ -100,11 +115,12 @@ def restore_results(file_names, scenario_class=None):
     if not isinstance(file_names, list):
         file_names = list((file_names,))
     results = []
+
     for path in file_names:
-        if scenario_class is None:
-            results.append(restore_scenario(path).results)
-        else:
-            results.append(restore_scenario(path, scenario_class).results)
+        tmp_res = restore_scenario(path, scenario_class).results
+        tmp_res["meta"]["filename"] = os.path.basename(path)
+        results.append(tmp_res)
+
     if len(results) < 2:
         results = results[0]
     return results
