@@ -3,14 +3,14 @@ Input data
 
  * The input data is the data that must be provided to Deflex for it to create a scenario. This data con be provided either as csv or as an xlsx format.
  * Since the input data is quite varied, it is divided into 12 different groups, in order to have it more organized and clear. Taking the xlsx format as example, the data is divided into 12 sheets plus a last one where the data sources are indicated.
- * It is not necessary to fill in all the input data to create a scenario. Some data is necessary, others are optional with which more detailed scenarios can be created. An example of this is the heating sector, which expands the scenario covering this sector, but a scenario without it can also be created. In each group of input data it is indicated whether it is mandatory or not.
+ * It is not necessary to fill in all the input data to create a scenario. Some data is necessary, others are optional where more detailed scenarios can be created. An example of this is the heating sector, which expands the scenario covering this sector, but a scenario without it can also be created. In each group of input data it is indicated whether it is mandatory or not.
  * As a brief overview the data is divided into sources (which are subdivided into volatiles and commodities), demands (which are divided into power, heating and mobility), sotrages (electrical), and power lines.
  * The 12 different sheets are described below in the order in which the sheets are in the xlsx document.
 
 -----------------
 General
 -----------------
-*Partially mandatory*. This sheet requires general data about the scenario such as the year of the data, the time step of it, name and the number of regions in which the scenario is divided. All these three are mandatory data. There is also the possibility to set a CO2 price. Here must be indicated if the heating sector is considered or not (if so, then the heating data becomes mandatory). The cooperplate mode means that all capacities and efficiencies in the power lines are infinite and 1 respectively (again if this option is dissabled, then capacities and efficiencies must be provided in the transmission lines sheet). Variable costs and downtime factor are with respect to the power plants sheet, and data must be provided in case these are activated.
+*Partially mandatory*. This sheet requires general data about the scenario such as the year of the data, the time step of it, name and the number of regions in which the scenario is divided. The first three are mandatory data. There is also the possibility to set a CO2 price. Here must be indicated if the heating sector is considered or not (if so, then the heating data becomes mandatory). The cooperplate mode means that all capacities and efficiencies in the power lines are infinite and 1 respectively (again if this option is dissabled, then capacities and efficiencies must be provided in the transmission lines sheet). Variable costs and downtime factor are with respect to the power plants sheet, and data must be provided in case these are activated.
 
 -----------------
 Commodity sources
@@ -25,7 +25,7 @@ Demand series
 -----------------
 Mobility
 -----------------
-*Not mandatory*. Until now, the mobility sector has been treated as a global concept in Deflex and not regionalized. The reason behind this is that the eergy source of mobility is oil, which does not have transmission lines, nor does it need power plants. Thus, the demand is independent of the place in which it occurs, making it easier to deal with it on a global scale. On this sheet each energy carrier for mobility, diesel, petrol and electricity is attributed an efficiency and an energy source. 
+*Not mandatory*. Until now, the mobility sector has been treated as a global concept in Deflex and not a regionalized one. The reason behind this is that the energy source of mobility is oil, which does not have transmission lines, nor does it need power plants. Thus, the demand is independent of the place in which it occurs, making it easier to deal with it on a global scale. On this sheet each energy carrier for mobility (diesel, petrol and electricity) is attributed an efficiency and an energy source. 
 
 -----------------
 Mobility series
@@ -40,7 +40,7 @@ Decentralized heat (I thought I understood this section but now I think I don't 
 -----------------
 Chp - heat plants
 -----------------
-*Not mandatory*. This sheet requires CHP and heat plants (heat plant in the sense that they only produce heat) data divided by region and subdivided by fuel, which should be specified in the rows of the sheet. The first three columns refer to CHP data: capacity of heat and electrcitiy [MW] must be provided along with the maximal heat amount produced in the whole observation period [MWh], which is limit_heat_chp. This last parameter has the function of setting a maximum energy generation level for both the CHP and the heat plants (limit_hp) so that both types of plants work in parallel. Otherwise, it could be the case that during the entire period only one type of plant works, which in reality does not happen. The next three columns refer to heat plants (hp, do not confuse with heat pump) data: the already mentioned limit_hp, capacitiy and efficiency of them. Finally, heat and electricity efficiency of the CHP must be entered.
+*Not mandatory*. This sheet requires CHP and heat plants (heat plant in the sense that they only produce heat) data divided by region and subdivided by fuel, which should be specified in the rows of the sheet. The first three columns refer to CHP data: heat and electrcitiy capacities [MW] must be provided along with the maximal heat amount produced in the whole observation period [MWh], which is limit_heat_chp. This last parameter has the function of setting a maximum energy generation level for both the CHP and the heat plants (limit_hp) so that both types of plants work in parallel. Otherwise, it could be the case that during the entire period only one type of plant works, which in reality does not happen. The next three columns refer to heat plants (hp, do not confuse with heat pump) data: the already mentioned limit_hp, capacitiy and efficiency of them. Finally, heat and electricity efficiency of the CHP must be entered.
 
 -----------------
 Power plants
@@ -55,7 +55,7 @@ Volatiles plants
 -----------------
 Volatiles series
 -----------------
-*Mandatory*. This sheet provides the amount of energy from volatile plants that is generated in each time step. Since this sheet is a time series, it has the same frame as the demands_series sheet: information on each columns and time steps on each row. The columns are divided into each region, and then subdivided into each energy source. On each time step, the amount of energy generated with respect to the total capacitiy (volatile_plants) is indicated with a value between 0 and 1.
+*Mandatory*. This sheet provides the amount of energy from volatile plants that is generated in each time step. Since this sheet is a time series, it has the same frame as the demands_series sheet: information on each column and time steps on each row. The columns are divided into each region, and then subdivided into each energy source. On each time step, the amount of energy generated with respect to the total capacitiy (volatile_plants) is indicated with a value between 0 and 1.
 
 -----------------
 Storages
