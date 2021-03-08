@@ -17,7 +17,7 @@ from deflex import analyses
 from deflex import config as cfg
 from deflex import geometries
 from deflex import main
-from deflex import results
+from deflex import post_processing
 from deflex import tools
 
 try:
@@ -59,7 +59,8 @@ EXAMPLE_URL = (
 
 GITHUB_BASE_URL = "https://raw.githubusercontent.com/reegis/deflex/master/{0}"
 
-BASEPATH = os.path.join(os.path.expanduser("~"), "deflex_examples")
+BASEPATH = os.path.join(os.path.expanduser("~"), ".deflex",
+                        "tmp_test_32traffic_43")
 
 IMAGETYPE = "png"  # svg, pdf, png, eps
 
@@ -107,7 +108,7 @@ def get_scenario(path):
     as a list (ls) or a numbered dictionary (dc).
     """
     d = namedtuple("sc", ("ls", "dc"))
-    s = results.search_results(path)
+    s = post_processing.search_results(path)
     sc_dict = {k: v for v, k in zip(sorted(s), range(len(s)))}
     pprint(sc_dict)
     return d(ls=sorted(s), dc=sc_dict)
@@ -354,7 +355,7 @@ def show_transmission(path, name=None, number=0):
     else:
         sc = get_scenario(path).dc[number]
 
-    res = results.restore_results(sc)
+    res = post_processing.restore_results(sc)
     r = res["Main"]
     p = res["Param"]
 
@@ -508,7 +509,7 @@ def show_relation(mcp, name="deflex_2014_de02"):
 def fetch_mcp(path):
     file = os.path.join(path, "key_values.xls")
     if not os.path.isfile(file):
-        res = results.restore_results(get_scenario(path).ls)
+        res = post_processing.restore_results(get_scenario(path).ls)
         s = get_key_values_from_results(res)
         mcp = pd.DataFrame(s["mcp"])
         opsd = get_price_from_opsd(path)
@@ -609,7 +610,7 @@ def compare_emission_types(path, name=None, number=0):
     else:
         sc = get_scenario(path).dc[number]
     logging.info("Scenario to compare emissions: {}".format(sc))
-    res = results.restore_results(sc)
+    res = post_processing.restore_results(sc)
     kv = get_key_values_from_results([res])
     if plt is not None:
         emission_multiplot(res, kv)
@@ -628,7 +629,7 @@ def emission_multiplot(res, kv):
     name = res["meta"]["name"]
     f, ax = plt.subplots(2, 1, sharex=True, figsize=(15, 6))
     region = "all"
-    buses = results.search_nodes(res, solph.Bus, tag="electricity")
+    buses = post_processing.search_nodes(res, solph.Bus, tag="electricity")
     interval = ("5.8.", "26.8.")
     year = str(2014)
     start_year = datetime.datetime(2014, 1, 1)
@@ -669,7 +670,7 @@ def emission_multiplot(res, kv):
     if "no-reg-merit" not in name:
         am.append(("tag", "pp", -1))
 
-    df = results.reshape_bus_view(res, buses, aggregate=am)
+    df = post_processing.reshape_bus_view(res, buses, aggregate=am)
     idx = df.index
 
     if region == "all":
@@ -852,13 +853,21 @@ def check_modules():
 if __name__ == "__main__":
     logger.define_logging()
     my_path = BASEPATH  # change the BASEPATH at the top of the file
+    my_result_files = post_processing.search_results(path=my_path)
+    my_results = post_processing.restore_results(my_result_files)
+    print(get_key_values_from_results(my_results))
+
+
+
+
+
     # download_example_scenarios(my_path)
 
-    main_deflex(my_path, name="de02_heat_reg")
+    # main_deflex(my_path, name="de02_heat_reg")
 
-    # my_mcp = fetch_mcp(my_path)
-    # show_relation(my_mcp, name="deflex_2014_de02")
-    # compare_different_mcp(my_mcp)
-    # compare_emission_types(my_path, name="deflex_2014_de02")
-    # show_transmission(my_path, name="de21_transmission-losses")
-    # check_modules()
+    my_mcp = fetch_mcp(my_path)
+    show_relation(my_mcp, name="deflex_2014_de02")
+    compare_different_mcp(my_mcp)
+    compare_emission_types(my_path, name="deflex_2014_de02")
+    show_transmission(my_path, name="de21_transmission-losses")
+    check_modules()
