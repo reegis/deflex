@@ -141,7 +141,11 @@ def search_nodes(results, node_type, **label_filter):
 
 
 def reshape_bus_view(results, buses, data=None, aggregate=None):
-    """Create a MultiIndex DataFrame with all Flows around the Bus objects.
+    """
+    Create a MultiIndex DataFrame with all Flows around the Bus objects. The
+    first column level contains ``'in'`` or ``'out'`` for ingoing and outgoing
+    flows.
+
 
     Parameters
     ----------
@@ -153,9 +157,9 @@ def reshape_bus_view(results, buses, data=None, aggregate=None):
         MultiIndex DataFrame to add the results to.
     aggregate : list or None
         A list of tuples that will replace the subtag. The subtag normally
-        devides similar nodes. The subtag of power plant nodes for example
+        divides similar nodes. The subtag of power plant nodes for example
         contains the used fuel, By replacing the fuel with a name such as "all"
-        all powerplants will be aggregated. The tuple must have three fields:
+        all power plants will be aggregated. The tuple must have three fields:
         (field to check, value of the field, new value of subtag)
         e.g. ("tag", "pp", "all") will change all power plants:
         trsf_pp_oil_DE02 -> trsf_pp_all_DE02

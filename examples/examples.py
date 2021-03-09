@@ -17,7 +17,7 @@ from deflex import analyses
 from deflex import config as cfg
 from deflex import geometries
 from deflex import main
-from deflex import post_processing
+from deflex import postprocessing
 from deflex import tools
 
 try:
@@ -108,7 +108,7 @@ def get_scenario(path):
     as a list (ls) or a numbered dictionary (dc).
     """
     d = namedtuple("sc", ("ls", "dc"))
-    s = post_processing.search_results(path)
+    s = postprocessing.search_results(path)
     sc_dict = {k: v for v, k in zip(sorted(s), range(len(s)))}
     pprint(sc_dict)
     return d(ls=sorted(s), dc=sc_dict)
@@ -355,7 +355,7 @@ def show_transmission(path, name=None, number=0):
     else:
         sc = get_scenario(path).dc[number]
 
-    res = post_processing.restore_results(sc)
+    res = postprocessing.restore_results(sc)
     r = res["Main"]
     p = res["Param"]
 
@@ -509,7 +509,7 @@ def show_relation(mcp, name="deflex_2014_de02"):
 def fetch_mcp(path):
     file = os.path.join(path, "key_values.xls")
     if not os.path.isfile(file):
-        res = post_processing.restore_results(get_scenario(path).ls)
+        res = postprocessing.restore_results(get_scenario(path).ls)
         s = get_key_values_from_results(res)
         mcp = pd.DataFrame(s["mcp"])
         opsd = get_price_from_opsd(path)
@@ -610,7 +610,7 @@ def compare_emission_types(path, name=None, number=0):
     else:
         sc = get_scenario(path).dc[number]
     logging.info("Scenario to compare emissions: {}".format(sc))
-    res = post_processing.restore_results(sc)
+    res = postprocessing.restore_results(sc)
     kv = get_key_values_from_results([res])
     if plt is not None:
         emission_multiplot(res, kv)
@@ -629,7 +629,7 @@ def emission_multiplot(res, kv):
     name = res["meta"]["name"]
     f, ax = plt.subplots(2, 1, sharex=True, figsize=(15, 6))
     region = "all"
-    buses = post_processing.search_nodes(res, solph.Bus, tag="electricity")
+    buses = postprocessing.search_nodes(res, solph.Bus, tag="electricity")
     interval = ("5.8.", "26.8.")
     year = str(2014)
     start_year = datetime.datetime(2014, 1, 1)
@@ -644,7 +644,7 @@ def emission_multiplot(res, kv):
         ("tag", "ee", "all"),
         ("tag", "chp", "all"),
     ]
-
+    print("****", start, end)
     if "no-reg-merit" not in name:
         am.append(("tag", "pp", -1))
 
@@ -670,7 +670,8 @@ def emission_multiplot(res, kv):
     if "no-reg-merit" not in name:
         am.append(("tag", "pp", -1))
 
-    df = post_processing.reshape_bus_view(res, buses, aggregate=am)
+    df = postprocessing.reshape_bus_view(res, buses, aggregate=am)
+
     idx = df.index
 
     if region == "all":
@@ -723,22 +724,23 @@ def emission_multiplot(res, kv):
     cd.update(get_cdict_df(df["out"]))
 
     if io_plot is not None:
-        ioplot = io_plot(
+        r = ioplot = io_plot(
             df_in=df["in"].div(1000),
             df_out=df["out"].div(1000),
             inorder=in_order,
             outorder=out_order,
             smooth=True,
-            ax=ax[1],
+            # ax=ax[1],
             cdict=cd,
         )
-        ax[1].set_xlim(start, end)
-        ax[1] = set_datetime_ticks(
-            ax[1], idx, tick_distance=96, offset=12, date_format="%b-%d %H:%M"
+        ax = r["ax"]
+        ax.set_xlim(start, end)
+        ax = set_datetime_ticks(
+            ax, idx, tick_distance=96, offset=12, date_format="%b-%d %H:%M"
         )
-        ax[1].set_ylabel("Power [GW]")
+        ax.set_ylabel("Power [GW]")
         ioplot["ax"] = shape_tuple_legend(reverse=False, up=0.8, **ioplot)
-        ax[1].set_xlim(start, end)
+        ax.set_xlim(start, end)
     else:
         x = start + 100
         msg = (
@@ -853,21 +855,39 @@ def check_modules():
 if __name__ == "__main__":
     logger.define_logging()
     my_path = BASEPATH  # change the BASEPATH at the top of the file
-    my_result_files = post_processing.search_results(path=my_path)
-    my_results = post_processing.restore_results(my_result_files)
-    print(get_key_values_from_results(my_results))
+    # my_result_files = postprocessing.search_results(path=my_path)
+    # my_results = postprocessing.restore_results(my_result_files)
+    # print(get_key_values_from_results(my_results))
 
-
-
+    sc = "/home/uwe/.deflex/tmp_test_32traffic_43/results_cbc/de02.dflx"
+    res = postprocessing.restore_results(sc)
+    buses = postprocessing.search_nodes(res, solph.Bus, tag="electricity")
+    am = [
+        ("cat", "line", "all"),
+        ("tag", "ee", "all"),
+        ("tag", "chp", "all"),
+        ("tag", "pp", -1),
+    ]
+    df = postprocessing.reshape_bus_view(res, buses, aggregate=am)
+    df = df.groupby(level=[1, 2, 3, 4], axis=1).sum()
+    # interval = ("5.8.", "26.8.")
+    start = datetime.datetime(2014, 8, 4)
+    end = datetime.datetime(2014, 8, 26)
+    ioplot = io_plot(
+            df_in=df.loc[start:end, "in"].div(1000),
+            df_out=df.loc[start:end, "out"].div(1000),
+            smooth=True
+        )
+    # plt.show()
 
 
     # download_example_scenarios(my_path)
 
     # main_deflex(my_path, name="de02_heat_reg")
 
-    my_mcp = fetch_mcp(my_path)
-    show_relation(my_mcp, name="deflex_2014_de02")
-    compare_different_mcp(my_mcp)
-    compare_emission_types(my_path, name="deflex_2014_de02")
-    show_transmission(my_path, name="de21_transmission-losses")
-    check_modules()
+    # my_mcp = fetch_mcp(my_path)
+    # show_relation(my_mcp, name="deflex_2014_de02")
+    # compare_different_mcp(my_mcp)
+    compare_emission_types(my_path, name="de02.dflx")
+    # show_transmission(my_path, name="de21_transmission-losses")
+    # check_modules()
