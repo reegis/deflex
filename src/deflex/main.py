@@ -85,7 +85,7 @@ def load_scenario(path, file_type=None):
 
 def fetch_scenarios_from_dir(path, csv=True, xlsx=False):
     """
-    Search for files with an excel extension or directories ending with '_csv'.
+    Search for files with an .xlsx extension or directories ending with '_csv'.
 
     By now it is not possible to distinguish between valid deflex scenarios and
     other excel files or directories ending with 'csv'. Therefore, the given
@@ -129,7 +129,7 @@ def fetch_scenarios_from_dir(path, csv=True, xlsx=False):
     >>> s.to_csv(csv_path)
     >>> len(fetch_scenarios_from_dir(TEST_PATH, xlsx=True))
     9
-    >>> shutil.rmtree(csv_path)
+    >>> shutil.rmtree(csv_path)  # remove test results, skip this line to go on
 
     """
     xlsx_scenarios = []
@@ -148,6 +148,9 @@ def fetch_scenarios_from_dir(path, csv=True, xlsx=False):
 
 def model_multi_scenarios(scenarios, cpu_fraction=0.2, log_file=None):
     """
+    Model multi scenarios in parallel. Keep in mind that the memory usage
+    is the critical resource for large models. So start with a low
+    cpu_fraction to avoid memory errors.
 
     Parameters
     ----------
@@ -271,7 +274,7 @@ def batch_model_scenario(path, named=True, file_type=None, ignore_errors=True):
     >>> r.result_file
     >>> r.trace  # doctest: +ELLIPSIS
     'Traceback (most recent call last):...
-    >>> os.remove(result_file)
+    >>> os.remove(result_file)  # remove test results, skip this line to go on
     """
     out = namedtuple(
         "out", ["name", "return_value", "trace", "result_file", "start_time"]
@@ -311,7 +314,12 @@ def model_scenario(
     result_path=None,
 ):
     """
-    Compute a deflex scenario.
+    Compute a deflex scenario with the full work flow:
+
+        * creating a scenario
+        * loading the input data
+        * computing the scenario
+        * storing the results
 
     Parameters
     ----------
