@@ -395,9 +395,9 @@ def calculate_emissions_most_expensive_pp(result=None, flow_results=None):
         flow_results = get_flow_results(result)
 
     if "chp" in flow_results["cost", "specific", "trsf"].columns:
-        mcp_id = flow_results.drop(("cost", "specific", "trsf", "chp"), axis=1)[
-            "cost", "specific"
-        ].idxmax(axis=1)
+        mcp_id = flow_results.drop(
+            ("cost", "specific", "trsf", "chp"), axis=1
+        )["cost", "specific"].idxmax(axis=1)
     else:
         mcp_id = flow_results["cost", "specific"].idxmax(axis=1)
 
