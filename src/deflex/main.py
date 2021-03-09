@@ -39,8 +39,8 @@ def load_scenario(path, file_type=None):
     path : str
         A valid deflex scenario file.
     file_type : str or None
-        Type of the input data. Valid values are 'csv', 'excel', None. If the
-        input is non the path should end on 'csv', '.xls', '.xlsx' to allow
+        Type of the input data. Valid values are 'csv', 'xlsx', None. If the
+        input is non the path should end on 'csv', '.xlsx' to allow
         auto-detection.
 
     Returns
@@ -88,7 +88,7 @@ def fetch_scenarios_from_dir(path, csv=True, xlsx=False):
     Search for files with an .xlsx extension or directories ending with '_csv'.
 
     By now it is not possible to distinguish between valid deflex scenarios and
-    other excel files or directories ending with 'csv'. Therefore, the given
+    other xlsx-files or directories ending with '_csv'. Therefore, the given
     directory should only contain valid scenarios.
 
     The function will not search recursively.
@@ -117,14 +117,14 @@ def fetch_scenarios_from_dir(path, csv=True, xlsx=False):
     5
     >>> os.path.basename(my_csv[0])
     'deflex_2014_de02_co2-price_var-costs_csv'
-    >>> my_excel = fetch_scenarios_from_dir(TEST_PATH, csv=False, xlsx=True)
-    >>> len(my_excel)
+    >>> my_xlsx = fetch_scenarios_from_dir(TEST_PATH, csv=False, xlsx=True)
+    >>> len(my_xlsx)
     8
-    >>> os.path.basename([e for e in my_excel if "short" in e][0])
+    >>> os.path.basename([e for e in my_xlsx if "short" in e][0])
     'de02_short.xlsx'
     >>> len(fetch_scenarios_from_dir(TEST_PATH, xlsx=True))
     8
-    >>> s = load_scenario([e for e in my_excel if "short" in e][0])
+    >>> s = load_scenario([e for e in my_xlsx if "short" in e][0])
     >>> csv_path = os.path.join(TEST_PATH, "de02_short_csv")
     >>> s.to_csv(csv_path)
     >>> len(fetch_scenarios_from_dir(TEST_PATH, xlsx=True))
@@ -239,8 +239,8 @@ def batch_model_scenario(path, named=True, file_type=None, ignore_errors=True):
     path : str
         A valid deflex scenario.
     file_type : str or None
-        Type of the input data. Valid values are 'csv', 'excel', None. If the
-        input is non the path schould end on 'csv', '.xls', '.xlsx'.
+        Type of the input data. Valid values are 'csv', 'xlsx', None. If the
+        input is non the path should end on 'csv', '.xlsx'.
     named : bool
         If True a named tuple with the following fields will be returned
     ignore_errors : bool
