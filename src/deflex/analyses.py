@@ -457,7 +457,6 @@ def get_key_values_from_results(results, **switch):
     >>> kv = get_key_values_from_results(my_results, mcp=False)
     >>> list(kv.columns.get_level_values(0).unique())
     ['emissions_most_expensive_pp']
-    >>> kv.to_csv("/home/uwe/dfg.csv")
     """
     key_values = {
         "mcp": calculate_market_clearing_price,
