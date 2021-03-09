@@ -453,10 +453,10 @@ def get_key_values_from_results(results, **switch):
     >>> round(kv.loc[34, ("mcp", "deflex_2014_de17_heat")], 2)
     34.33
     >>> list(kv.columns.get_level_values(0).unique())
-    ['mcp', 'emissions_most_expensive']
+    ['mcp', 'emissions_most_expensive_pp']
     >>> kv = get_key_values_from_results(my_results, mcp=False)
     >>> list(kv.columns.get_level_values(0).unique())
-    ['emissions_most_expensive']
+    ['emissions_most_expensive_pp']
     >>> kv.to_csv("/home/uwe/dfg.csv")
     """
     key_values = {
