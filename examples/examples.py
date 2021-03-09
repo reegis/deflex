@@ -644,7 +644,7 @@ def emission_multiplot(res, kv):
         ("tag", "ee", "all"),
         ("tag", "chp", "all"),
     ]
-    print("****", start, end)
+
     if "no-reg-merit" not in name:
         am.append(("tag", "pp", -1))
 
@@ -724,23 +724,22 @@ def emission_multiplot(res, kv):
     cd.update(get_cdict_df(df["out"]))
 
     if io_plot is not None:
-        r = ioplot = io_plot(
+        ioplot = io_plot(
             df_in=df["in"].div(1000),
             df_out=df["out"].div(1000),
             inorder=in_order,
             outorder=out_order,
             smooth=True,
-            # ax=ax[1],
+            ax=ax[1],
             cdict=cd,
         )
-        ax = r["ax"]
-        ax.set_xlim(start, end)
-        ax = set_datetime_ticks(
-            ax, idx, tick_distance=96, offset=12, date_format="%b-%d %H:%M"
+        ax[1].set_xlim(start, end)
+        ax[1] = set_datetime_ticks(
+            ax[1], idx, tick_distance=96, offset=12, date_format="%b-%d %H:%M"
         )
-        ax.set_ylabel("Power [GW]")
+        ax[1].set_ylabel("Power [GW]")
         ioplot["ax"] = shape_tuple_legend(reverse=False, up=0.8, **ioplot)
-        ax.set_xlim(start, end)
+        ax[1].set_xlim(start, end)
     else:
         x = start + 100
         msg = (
@@ -855,39 +854,16 @@ def check_modules():
 if __name__ == "__main__":
     logger.define_logging()
     my_path = BASEPATH  # change the BASEPATH at the top of the file
-    # my_result_files = postprocessing.search_results(path=my_path)
-    # my_results = postprocessing.restore_results(my_result_files)
-    # print(get_key_values_from_results(my_results))
+    my_result_files = postprocessing.search_results(path=my_path)
+    my_results = postprocessing.restore_results(my_result_files)
 
-    sc = "/home/uwe/.deflex/tmp_test_32traffic_43/results_cbc/de02.dflx"
-    res = postprocessing.restore_results(sc)
-    buses = postprocessing.search_nodes(res, solph.Bus, tag="electricity")
-    am = [
-        ("cat", "line", "all"),
-        ("tag", "ee", "all"),
-        ("tag", "chp", "all"),
-        ("tag", "pp", -1),
-    ]
-    df = postprocessing.reshape_bus_view(res, buses, aggregate=am)
-    df = df.groupby(level=[1, 2, 3, 4], axis=1).sum()
-    # interval = ("5.8.", "26.8.")
-    start = datetime.datetime(2014, 8, 4)
-    end = datetime.datetime(2014, 8, 26)
-    ioplot = io_plot(
-            df_in=df.loc[start:end, "in"].div(1000),
-            df_out=df.loc[start:end, "out"].div(1000),
-            smooth=True
-        )
-    # plt.show()
-
-
-    # download_example_scenarios(my_path)
+    download_example_scenarios(my_path)
 
     # main_deflex(my_path, name="de02_heat_reg")
 
-    # my_mcp = fetch_mcp(my_path)
-    # show_relation(my_mcp, name="deflex_2014_de02")
-    # compare_different_mcp(my_mcp)
+    my_mcp = fetch_mcp(my_path)
+    show_relation(my_mcp, name="deflex_2014_de02")
+    compare_different_mcp(my_mcp)
     compare_emission_types(my_path, name="de02.dflx")
-    # show_transmission(my_path, name="de21_transmission-losses")
-    # check_modules()
+    show_transmission(my_path, name="de21_transmission-losses")
+    check_modules()
