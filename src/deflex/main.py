@@ -159,9 +159,6 @@ def model_multi_scenarios(scenarios, cpu_fraction=0.2, log_file=None):
     log_file : str
         Filename to store the log file.
 
-    Returns
-    -------
-
     Examples
     --------
     >>> from deflex.tools import fetch_example_results, TEST_PATH
@@ -322,8 +319,8 @@ def model_scenario(
         File or directory with a valid deflex scenario. If no path is given an
         energy system (es) has to be passed.
     file_type : str or None
-        Type of the input data. Valid values are 'csv', 'excel', None. If the
-        input is non the path schould end on 'csv', '.xls', '.xlsx'.
+        Type of the input data. Valid values are 'csv', 'xlsx', None. If the
+        input is non the path should end on 'csv' or '.xlsx'.
     result_path : str or None
         Path to store the output file. If None the results will be stored along
         with the scenarios.
@@ -337,8 +334,7 @@ def model_scenario(
     >>> fn = fetch_example_results("de02_short.xlsx")
     >>> r = model_scenario(fn, file_type="xlsx")  # doctest: +ELLIPSIS
     Welcome to the CBC MILP ...
-    >>> f = os.path.join(os.path.dirname(fn), "results_cbc", "de02_short.dflx")
-    >>> os.remove(f)
+    >>> os.remove(r)  # remove test results, skip this line to go on
     """
     stopwatch()
 

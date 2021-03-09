@@ -252,5 +252,33 @@ the ``mcp``.
 
     kv = get_key_values_from_results(my_results, mcp=False)
 
+Parallel computing of scenarios
+-------------------------------
+
+For the typical work flow (creating a scenario, loading the input data,
+computing the scenario and storing the results) the
+:py:func:`~deflex.main.model_scenario` function can be used.
+
+To collect all scenarios from a given directory the function
+:py:func:`~deflex.main.fetch_scenarios_from_dir` can be used. The function will
+search for ``.xlsx`` files or paths that end on ``_csv`` and cannot
+distinguish between a valid scenario and any ``.xlsx`` file or paths that
+accidentally contain ``_csv``.
+
+No matter how you collect a list of a scenario input data files the
+:py:func:`~deflex.main.batch_model_scenario` function makes it easier to run
+each scenario and get back the relevant information about the run. It is
+possible to ignore exceptions so that the script will go on with the following
+scenarios if one scenario fails.
+
+If you have enough memory and cpu capacity on your computer/server you can
+optimise your scenarios in parallel. Use the
+:py:func:`~deflex.main.model_multi_scenarios` function for this task. You can
+pass a list of scenario files to this function. A cpu fraction will limit the
+number of processes as a fraction of the maximal available number of cpu cores.
+Keep in mind that for large models the memory will be the limit not the cpu
+capacity. If a memory error occurs the script will stop immediately. It is not
+possible to catch a memory error. A log-file will log all failing and
+successful runs.
 
 .. include:: input_data.rst
