@@ -59,8 +59,9 @@ EXAMPLE_URL = (
 
 GITHUB_BASE_URL = "https://raw.githubusercontent.com/reegis/deflex/master/{0}"
 
-BASEPATH = os.path.join(os.path.expanduser("~"), ".deflex",
-                        "tmp_test_32traffic_43")
+BASEPATH = os.path.join(
+    os.path.expanduser("~"), ".deflex", "tmp_test_32traffic_43"
+)
 
 IMAGETYPE = "png"  # svg, pdf, png, eps
 
