@@ -11,7 +11,9 @@ Input data
 
 General
 ~~~~~~~
-*Mandatory*. This sheet requires basic data about the scenario in order to be able to create it: year, number of time steps, CO2 price [€/t] and name of it.
+*Mandatory*.
+
+This sheet requires basic data about the scenario in order to be able to create it: year, number of time steps, CO2 price [€/t] and name of it.
 
 Info
 ~~~~~~~
@@ -37,7 +39,10 @@ Commodity sources
 | ...  | ...       | ...           | ...              | ...                |
 +------+-----------+---------------+------------------+--------------------+
 
-*Mandatory*. As the name says, this sheet requires data from all the commodities (i.e. non volatile) the scenario uses. It is important to remark that commodities does not mean fossil fuels, althought all of them are commodities. Commodities mean the fuels with which energy generation can be controlled. For each fuel, its generation cost and emission factor must be provided.
+*Mandatory*.
+
+As the name says, this sheet requires data from all the commodities (i.e. non volatile) the scenario uses. Generation cost, emission factor and the annual maximum generation limit (if there is one, otherwise just write *inf*) must be provided. The data can be provided either global under DE, regional under DEXX or as a combination of both, where some commodities are global and some are regional. Regionalized commodities are specially useful for commodities with an annual limit, for example bioenergy. It is important to remark that commodities does not mean fossil fuels, althought all of them are commodities. Commodities mean the fuels with which energy generation can be controlled.
+
 
 Electricity demand series
 ~~~~~~~~~~~~~
@@ -47,14 +52,16 @@ Electricity demand series
 +-------------+----------+----------+-----------+----------+----------+-----+
 |             | all      | Indsutry | Buildings | Rest     | all      | ... |
 +-------------+----------+----------+-----------+----------+----------+-----+
-| Time step 1 | 01all 01 | 02ind 01 | 02bui 01  | 02res 01 | 03all 01 | ... |
+| Time step 1 |          |          |           |          |          | ... |
 +-------------+----------+----------+-----------+----------+----------+-----+
-| Time step 2 | 01all 02 | 02ind 02 | 02bui 02  | 02res 02 | 03all 02 | ... |
+| Time step 2 |          |          |           |          |          | ... |
 +-------------+----------+----------+-----------+----------+----------+-----+
 | ...         | ...      | ...      | ...       | ...      | ...      | ... |
 +-------------+----------+----------+-----------+----------+----------+-----+
 
-*Mandatory*. This sheet requires the electrical and heating demand of the scenario. The demand must be provided in a time series form with the time step specified in the general sheet for each region in [MW]. This time series must be provided as a column form, therefore there will be as many columns as there are regions on the scenario. If the heating sector is included, then two colums of data are required for each region, one for electricity and one for heating.
+*Mandatory*.
+
+This sheet requires the electricity demand of the scenario. The demand must be provided in a time series form, with the time step specified in the general sheet, for each region in [MW] as the table shows. Electrcity demand can be entered as a whole for each region as DE01 shows or it can be divided into different sectors as DE 02 shows. 
 
 Power plants
 ~~~~~~~~~~~~
@@ -75,7 +82,9 @@ Power plants
 | ...  | ...  | ...           | ...   | ...  | ...        | ...         | ...                   | ...             | ...           |
 +------+------+---------------+-------+------+------------+-------------+-----------------------+-----------------+---------------+
 
-*Mandatory*. Similarly to the CHP - heat plants sheet, here information about the power plants is required. Again, the data must be divided by region and subdivided by source. The capacity column represents the total capacitiy [MW] of all the plants operating with the same fuel in one region, while count represents the number of plants. Fuel and efficiency must be provided too. Same as with CHP - heat plants Limit_elec_pp is the maximum amount of energy that a plant can produce within the observation period. It is also possible to introduce variable costs for producing electricity (which are the costs of running the plant without fuel costs) and/or a downtime factor for each plant.
+*Mandatory*
+
+Here information about the power plants is required. The data must be divided by region and subdivided by fuel. The capacity column represents the total capacitiy of all the plants operating with the same fuel in one region, while count represents the number of plants. Fuel and efficiency must be provided too along with the maximal amount of energy produced in the whole year, which is called *limit*. This parameter has the function of setting a maximum energy generation level for each power plant so that all plants work in parallel. Otherwise, it could be the case that during the entire period only one plant works, which in reality does not happen. It is also possible to introduce variable costs for each plant and/or a downtime factor for each plant, but these last three are not mandatory. Finally source_region indicates from which region does the fuel come. In case the fuel is regionally classified in commodities, usually the source_region will be that region. In case the fuel is globally classified in commodities, then the source_region will be DE.
 
 Volatiles plants
 ~~~~~~~~~~~~~~~~
@@ -96,7 +105,9 @@ Volatiles plants
 | ...  | ...  | ...           |
 +------+------+---------------+
 
-*Mandatory*. In this context volatility means, all sources in which power production cannot be controlled. Examples are solar, wind, hydro, geothermal (geothermal power plant, not confuse it with geothermal heating or ground source heat pumps). Same as the previous sheet, here data must be provided divided by region and subdivided by energy source. Again, the total capacity of the region and the numbers of sources (count) must be entered.
+*Mandatory*.
+
+In this context volatility means, all sources in which power production cannot be controlled. Examples are solar, wind, hydro, geothermal (geothermal power plant, not confuse it with geothermal heating nor ground source heat pumps). Same as the previous sheet, here data must be provided divided by region and subdivided by energy source. Again, the capacity of the region is the sum of the capacitiy of all plants operating with the same energy source.
 
 Volatiles series
 ~~~~~~~~~~~~~~~~
@@ -112,7 +123,10 @@ Volatiles series
 +-------------+------+-----+------+------+-----+-----+
 | ...         | ...  | ... | ...  | ...  | ... | ... |
 +-------------+------+-----+------+------+-----+-----+
-*Mandatory*. This sheet provides the amount of energy from volatile plants that is generated in each time step. Since this sheet is a time series, it has the same frame as the demands_series sheet. On each time step, the amount of energy generated with respect to the total capacitiy (volatile_plants) is indicated with a value between 0 and 1. In each region there are as many columns as volatile energy sources in the previous sheet.
+
+*Mandatory*.
+
+This sheet provides the amount of energy from volatile plants that is generated in each time step. On each time step, the amount of energy generated with respect to the total capacitiy (volatile_plants) is indicated with a value between 0 and 1. In each region there are as many columns as volatile energy sources in the previous sheet.
 
 Electricity storages
 ~~~~~~~~
@@ -126,10 +140,12 @@ Electricity storages
 +------+--------------+--------------------+--------------------+----------------------+-------------------------+------------+---------------+----------------+
 | DE02 | S2           |                    |                    |                      |                         |            |               |                |
 +------+--------------+--------------------+--------------------+----------------------+-------------------------+------------+---------------+----------------+
-| ...  | ...          | ...                | ...                | ...                  | ...                     | ...        |               |                |
+| ...  | ...          | ...                | ...                | ...                  | ...                     | ...        | ...           | ...            |
 +------+--------------+--------------------+--------------------+----------------------+-------------------------+------------+---------------+----------------+
 
-*Not mandatory*. Here information about electrical storages is needed (at the moment there is only PHES but maybe it would make sense to add at least big battery storages (Huntorf 870 MWh and Jamgum 720 MWh))
+*Not mandatory*.
+
+Here information about electricity storages is needed. Since this is part of the power sector, all storages must be registered regionally. As there are different storage technologies (pumped hydro, batteries, compressed air, etc.), the information can be entered in a general way where each name corresponds to a different storage type.
 
 Power lines
 ~~~~~~~~~~~
@@ -146,72 +162,122 @@ Power lines
 | ...       | ...           | ...        |
 +-----------+---------------+------------+
 
-*Mandatory*. The last set of input data considers the transmission power lines between different regions of the scenario. Here all the connections between two regions must be entered with their respective name. Each line has a maximum transmission capacity, over which no more energy can be transmitted and an efficiency, which represent the transmission losses.
+*Mandatory*
+
+The last power input data considers the transmission power lines between different regions of the scenario. Here all the connections between two regions must be entered with their respective name which indicates the regions that are connecting. Each line has a maximum transmission capacity, over which no more energy can be transmitted and an efficiency, which represent the transmission losses.
 
 Heat demand series
 ~~~~~~~~
 
++-------------+------------------+-----+------------------+-----+-----+-----+-----+-----+-----+
+|             |       DE01             | DE02                         |     |       DE        |
++-------------+------------------+-----+------------------+-----+-----+-----+-----+-----+-----+
+|             | district heating | N1  | district heating | N1  | N2  | ... | N3  | N4  | N5  |
++-------------+------------------+-----+------------------+-----+-----+-----+-----+-----+-----+
+| Time step 1 |                  |     |                  |     |     |     |     |     |     |
++-------------+------------------+-----+------------------+-----+-----+-----+-----+-----+-----+
+| Time step 2 |                  |     |                  |     |     |     |     |     |     |
++-------------+------------------+-----+------------------+-----+-----+-----+-----+-----+-----+
+| ...         | ...              | ... | ...              | ... | ... | ... | ... | ... | ... |
++-------------+------------------+-----+------------------+-----+-----+-----+-----+-----+-----+
+
+*Optional*
+
+Continuing with the heating sector, this sheet requires the heat demand which, as mentioned at the beginning, can be entered regionally under DEXX or globally under DE. The only type of demand that must be entered regionally is the district heating. Again, as a recommendation, coal, gas, or oil demands should be treated as global since Deflex does not have infrastructure that allows a regionalization of these commodities. The demand must be entered under the same principle as the electrcitiy demand series, using the number of time steps specified in general.
+
 Decentralized heat
 ~~~~~~~~~~~~~~~~~~
-+--------+----------------+------------+--------+
-|        |      Name      | efficiency | source |
-+--------+----------------+------------+--------+
-|        | N1             | E1         | S1     |
-+        +----------------+------------+--------+
-|        | N2             | E2         | S2     |
-+ Global +----------------+------------+--------+
-|        | N3              | E3         | S3     |
-+        +----------------+------------+--------+
-|        | ...            | ...        | ...    |
-+--------+----------------+------------+--------+
++------+------+------------+--------+---------------+
+|      | Name | efficiency | source | source region |
++------+------+------------+--------+---------------+
+| DE01 | N1   |            |        | DE01          |
++------+------+------------+--------+---------------+
+| DE02 | N1   |            |        | DE02          |
+|      +------+------------+--------+---------------+
+|      | N2   |            |        | DE02          |
++------+------+------------+--------+---------------+
+|      | ...  |            |        | ...           |
++------+------+------------+--------+---------------+
+| DE   | N3   |            |        | DE            |
+|      +------+------------+--------+---------------+
+|      | N4   |            |        | DE            |
+|      +------+------------+--------+---------------+
+|      | N5   |            |        | DE            |
++------+------+------------+--------+---------------+
 
 
-*Not mandatory*. This sheet covers the part of the heating sector treated as a global. It requires all the sources with which the decentralized heat is generated along with their conversion efficiency.
+*Optional*
+
+This sheet covers all the heating technologies that are used to generate decentralized heat. It is important not to confuse decentralized sources with global / regional. A decenttralized source can be treated regional (bioenergy, heat pump) or global (natural gas, oil, coal). In other words, here must be everything that is mentioned in *heat demands* except the district heating which is covered in the next sheet.
 
 Chp - heat plants
 ~~~~~~~~~~~~~~~~~
 
-+----------+------+----------------------+------------------------+------------------------+----------------+------------------+--------+--------------+--------------+------+
-|          | Name | limit_heat_chp [MWh] | capacity_heat_chp [MW] | capacity_elec_chp [MW] | limit_hp [MWh] | capacity_hp [MW] | eff_hp | eff_heat_chp | eff_elec_chp | Fuel |
-+----------+------+----------------------+------------------------+------------------------+----------------+------------------+--------+--------------+--------------+------+
-| Region 1 | N1   |                      |                        |                        |                |                  |        |              |              |      |
-+----------+------+----------------------+------------------------+------------------------+----------------+------------------+--------+--------------+--------------+------+
-|          | N2   |                      |                        |                        |                |                  |        |              |              |      |
-+----------+------+----------------------+------------------------+------------------------+----------------+------------------+--------+--------------+--------------+------+
-|          | N3   |                      |                        |                        |                |                  |        |              |              |      |
-+----------+------+----------------------+------------------------+------------------------+----------------+------------------+--------+--------------+--------------+------+
-| Region 2 | N1   |                      |                        |                        |                |                  |        |              |              |      |
-+----------+------+----------------------+------------------------+------------------------+----------------+------------------+--------+--------------+--------------+------+
-|          | N2   |                      |                        |                        |                |                  |        |              |              |      |
-+----------+------+----------------------+------------------------+------------------------+----------------+------------------+--------+--------------+--------------+------+
-|          | N3   |                      |                        |                        |                |                  |        |              |              |      |
-+----------+------+----------------------+------------------------+------------------------+----------------+------------------+--------+--------------+--------------+------+
-| ...      | ...  | ...                  | ...                    | ...                    | ...            | ...              | ...    | ...          | ...          |      |
-+----------+------+----------------------+------------------------+------------------------+----------------+------------------+--------+--------------+--------------+------+
++------+------+----------------+-------------------+-------------------+----------+-------------+---------------+---------------------+---------------------+------+---------------+
+|      | Name | limit heat chp | capacity heat chp | capacity elec chp | limit hp | capacity hp | efficiency hp | efficiency heat chp | efficiency elec chp | fuel | source region |
++------+------+----------------+-------------------+-------------------+----------+-------------+---------------+---------------------+---------------------+------+---------------+
+| DE01 | N1   |                |                   |                   |          |             |               |                     |                     |      | DE01          |
+|      +------+----------------+-------------------+-------------------+----------+-------------+---------------+---------------------+---------------------+------+---------------+
+|      | N3   |                |                   |                   |          |             |               |                     |                     |      | DE            |
+|      +------+----------------+-------------------+-------------------+----------+-------------+---------------+---------------------+---------------------+------+---------------+
+|      | N4   |                |                   |                   |          |             |               |                     |                     |      | DE            |
++------+------+----------------+-------------------+-------------------+----------+-------------+---------------+---------------------+---------------------+------+---------------+
+| DE02 | N1   |                |                   |                   |          |             |               |                     |                     |      | DE02          |
+|      +------+----------------+-------------------+-------------------+----------+-------------+---------------+---------------------+---------------------+------+---------------+
+|      | N2   |                |                   |                   |          |             |               |                     |                     |      | DE02          |
+|      +------+----------------+-------------------+-------------------+----------+-------------+---------------+---------------------+---------------------+------+---------------+
+|      | N3   |                |                   |                   |          |             |               |                     |                     |      | DE            |
+|      +------+----------------+-------------------+-------------------+----------+-------------+---------------+---------------------+---------------------+------+---------------+
+|      | N4   |                |                   |                   |          |             |               |                     |                     |      | DE            |
+|      +------+----------------+-------------------+-------------------+----------+-------------+---------------+---------------------+---------------------+------+---------------+
+|      | N5   |                |                   |                   |          |             |               |                     |                     |      | DE            |
++------+------+----------------+-------------------+-------------------+----------+-------------+---------------+---------------------+---------------------+------+---------------+
+| ...  | ...  | ...            | ...               | ...               | ...      | ...         | ...           | ...                 | ...                 | ...  | ...           |
++------+------+----------------+-------------------+-------------------+----------+-------------+---------------+---------------------+---------------------+------+---------------+
 
-*Not mandatory*. This sheet covers the regionalized part of the heating sector. It requires CHP and heat plants (heat plant in the sense that they only produce heat) data divided by region and subdivided by fuel. The first three columns refer to CHP data: heat and electrcitiy capacities must be provided along with the maximal heat amount produced in the whole observation period, which is limit_heat_chp. This last parameter has the function of setting a maximum energy generation level for both the CHP and the heat plants (limit_hp) so that both types of plants work in parallel. Otherwise, it could be the case that during the entire period only one type of plant works, which in reality does not happen. The next three columns refer to heat plants (hp, do not confuse with heat pump) data: the already mentioned limit_hp, capacitiy and efficiency of them. Finally, heat and electricity efficiency of the CHP must be entered. It is important to emphasize that the data includes the sum of the plants in each region. This means that for example, capacity is the sum of the capacity of all plants in the region that operate with the same fuel.
+*Optional*
+
+As said before, this sheet covers the district heating part of the heating sector. Under the same principle as the power plants in the power sector, it requires CHP and heat plants (heat plant in the sense that they only produce heat) data divided by region and subdivided by fuel (Note that the fuel does not have to come explicitly from the DEXX region, it can also come from the global DE). As in the power plants sheet, there is the limit_hp (and limit_heat_chp, limit_elec_chp for CHP) value, which allows the plants to run in parallel.
+
+
 
 Mobility demand series
 ~~~~~~~~~~~~~~~
-*Not mandatory*. Similarly to demand_series, this sheet requires the mobility time series demand [MW] for each time step on the rows and for each energy carrier on the columns. Same as before, here the demand is treated on a global scale. 
+
++-------------+-------------+-------------+-----+-----+
+|             |     DE01    | DE02        | ... | DE  |
++-------------+-------------+-------------+-----+-----+
+|             | electricity | electricity |     | N1  |
++-------------+-------------+-------------+-----+-----+
+| Time step 1 |             |             |     |     |
++-------------+-------------+-------------+-----+-----+
+| Time step 2 |             |             |     |     |
++-------------+-------------+-------------+-----+-----+
+| ...         | ...         | ...         | ... | ... |
++-------------+-------------+-------------+-----+-----+
+
+*Optional*
+
+Finalizing with the mobility sector, this sheet requires the mobility time series demand [MW] for each time step. Same as the heating sector, here the demand can be entered regionally or globally. However, the reocmendation is to treat the demand globally, unless there is electricity demand (which by the way, can be removed from this sector and placed in the power sector) which must be treated regionally.
 
 Mobility
 ~~~~~~~~
 
-+----------+----------------+------------+--------+---------------+
-|          |      Name      | efficiency | source | source_region |
-+----------+----------------+------------+--------+---------------+
-|          | N1             | E1         | S1     | Global        |
-+  Global  +----------------+------------+--------+---------------+
-|          | N2             | E2         | S2     | Global        |
-+----------+----------------+------------+--------+---------------+
-| Region 1 | N1             | E1         | S1     | R1            |
-+----------+----------------+------------+--------+---------------+
-| ...      | ...            | ...        | ...    | ...           |
-+----------+----------------+------------+--------+---------------+
++------+-------------+------------+--------------------+---------------+
+|      |     name    | efficiency | source             | source region |
++------+-------------+------------+--------------------+---------------+
+| DE01 | electricity |            | electricity        | DE01          |
++------+-------------+------------+--------------------+---------------+
+| DE02 | electricity |            | electricity        | DE02          |
++------+-------------+------------+--------------------+---------------+
+| ...  |             |            |                    |               |
++------+-------------+------------+--------------------+---------------+
+| DE   | N1          |            | oil/biofuel/H2/etc | DE            |
++------+-------------+------------+--------------------+---------------+
 
-*Not mandatory*. As said before, until now, the mobility sector has been treated as a global concept in Deflex and not a regionalized one. On this sheet each energy carrier for mobility (diesel, petrol and electricity) is attributed an efficiency, an energy source and the region where this source comes from (for now the only possible region is global, but there is the possibility of regionalizing the sector). 
+*Optional*
 
+This sheet is the analog to *decentralized heat* but in the mobility sector. Since there is no analogue to heat plants in mobility, this sheet is the only one that covers the technologies of this sector. The previous means that everything that is defined in mobility demands has to be here.
 
 
 Data sources
