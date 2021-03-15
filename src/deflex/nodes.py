@@ -23,7 +23,7 @@ class Label(namedtuple("solph_label", ["cat", "tag", "subtag", "region"])):
         return "_".join(map(str, self._asdict().values()))
 
 
-def create_solph_nodes_from_data(input_data, nodes, extra_regions=None):
+def create_solph_nodes_from_data(input_data, nodes):
     """
     Creating solph nodes from input data.
 
@@ -31,38 +31,40 @@ def create_solph_nodes_from_data(input_data, nodes, extra_regions=None):
     ----------
     input_data
     nodes
-    extra_regions
 
     Returns
     -------
 
     """
 
-    # Local volatile sources
+    # Volatile sources
     add_volatile_sources(input_data, nodes)
 
     # Decentralised heating systems
     if "decentralised heat" in input_data:
-        add_decentralised_heating_systems(input_data, nodes, extra_regions)
+        add_decentralised_heating_systems(input_data, nodes)
 
-    # Local electricity demand
+    # Electricity demand
     add_electricity_demand(input_data, nodes)
 
-    # Local district heating demand
+    # District heating demand
     add_district_heating_systems(input_data, nodes)
 
-    # Local power plants as Transformer and ExtractionTurbineCHP (chp)
-    add_power_and_heat_plants(input_data, nodes, extra_regions)
+    # Power plants, heat plants and chp plants
+    add_power_plants(input_data, nodes)
+    add_heat_and_chp_plants(input_data, nodes)
 
-    # Storages
-    if "storages" in input_data:
+    # Electricity storages
+    if "electricity storages" in input_data:
         add_storages(input_data, nodes)
 
+    # Mobility
     if "mobility" in input_data:
         add_mobility(input_data, nodes)
 
     # Connect electricity buses with transmission
-    add_transmission_lines_between_electricity_nodes(input_data, nodes)
+    if "power lines" in input_data:
+        add_transmission_lines_between_electricity_nodes(input_data, nodes)
 
     # Add shortage excess to every bus
     add_shortage_excess(nodes)
@@ -83,30 +85,49 @@ def create_fuel_bus_with_source(nodes, fuel, region, input_data):
     -------
 
     """
-    cs_table = input_data["commodity sources"].loc["DE"]
-    bus_label = Label("bus", "commodity", fuel.replace(" ", "_"), region)
+    fuel = fuel.replace("_", " ")
+    cs_data = input_data["commodity sources"].loc[region, fuel]
+    bus_label = Label("bus", "commodity", fuel, region)
     if bus_label not in nodes:
         nodes[bus_label] = solph.Bus(label=bus_label)
 
-    cs_label = Label("source", "commodity", fuel.replace(" ", "_"), region)
+    cs_label = Label("source", "commodity", fuel, region)
 
-    co2_price = float(input_data["general"].get("co2 price", 0))
+    co2_price = float(input_data["general"]["co2 price"])
 
-    variable_costs = (
-        cs_table.loc[fuel.replace("_", " "), "emission"] / 1000 * co2_price
-        + cs_table.loc[fuel.replace("_", " "), "costs"]
-    )
+    variable_costs = cs_data["emission"] / 1000 * co2_price + cs_data["costs"]
 
-    if cs_label not in nodes:
-        nodes[cs_label] = solph.Source(
-            label=cs_label,
-            outputs={
-                nodes[bus_label]: solph.Flow(
-                    variable_costs=variable_costs,
-                    emission=cs_table.loc[fuel.replace("_", " "), "emission"],
-                )
-            },
-        )
+    if cs_data["annual limit"] == float("inf"):
+        if cs_label not in nodes:
+            nodes[cs_label] = solph.Source(
+                label=cs_label,
+                outputs={
+                    nodes[bus_label]: solph.Flow(
+                        variable_costs=variable_costs,
+                        emission=cs_data["emission"],
+                    )
+                },
+            )
+    else:
+        if cs_label not in nodes:
+            nodes[cs_label] = solph.Source(
+                label=cs_label,
+                outputs={
+                    nodes[bus_label]: solph.Flow(
+                        variable_costs=variable_costs,
+                        emission=cs_data["emission"],
+                        nominal_value=cs_data["annual limit"],
+                        summed_max=1,
+                    )
+                },
+            )
+
+
+def create_electricity_bus(nodes, region):
+    """Create an electricity bus for a given region."""
+    bus_label = Label("bus", "electricity", "all", region)
+    if bus_label not in nodes:
+        nodes[bus_label] = solph.Bus(label=bus_label)
 
 
 def add_volatile_sources(table_collection, nodes):
@@ -151,86 +172,76 @@ def add_volatile_sources(table_collection, nodes):
                 )
 
 
-def add_decentralised_heating_systems(table_collection, nodes, extra_regions):
+def add_decentralised_heating_systems(table_collection, nodes):
     """
 
     Parameters
     ----------
     table_collection
     nodes
-    extra_regions
 
     Returns
     -------
 
     """
     logging.debug("Add decentralised_heating_systems to nodes dictionary.")
-    dts = table_collection["demand series"]
+    dts = table_collection["heat demand series"]
     dh = table_collection["decentralised heat"]
-    demand_regions = list({"DE_demand"}.union(set(extra_regions)))
 
-    for d_region in demand_regions:
-        region_name = d_region.replace("_demand", "")
+    demand_sets = [c for c in dts.columns if "district heating" not in str(c)]
 
-        if region_name not in dh.index:
-            data_name = "DE_demand"
+    for demand_set in demand_sets:
+        region_name = demand_set[0]
+        fuel = demand_set[1].replace("_", " ")
+
+        src = dh.loc[demand_set, "source"].replace("_", " ")
+
+        if src == "electricity":
+            cs_bus_label = Label("bus", "electricity", "all", region_name)
+            if cs_bus_label not in nodes:
+                create_electricity_bus(nodes, region_name)
         else:
-            data_name = d_region
-
-        fuels = [f for f in dh.loc[data_name].index if f in dts[d_region]]
-        for fuel in fuels:
-            src = dh.loc[(data_name, fuel), "source"]
-            bus_label = Label(
-                "bus", "commodity", src.replace(" ", "_"), region_name
-            )
-
-            # Check if source bus exists
-            if bus_label not in nodes:
+            cs_bus_label = Label("bus", "commodity", src, region_name)
+            if cs_bus_label not in nodes:
                 create_fuel_bus_with_source(
                     nodes, src, region_name, table_collection
                 )
 
-            # Create heating bus as Bus
-            heat_bus_label = Label(
-                "bus", "heat", fuel.replace(" ", "_"), region_name
-            )
-            nodes[heat_bus_label] = solph.Bus(label=heat_bus_label)
+        # Create heating bus as Bus
+        heat_bus_label = Label("bus", "heat", fuel, region_name)
+        nodes[heat_bus_label] = solph.Bus(label=heat_bus_label)
 
-            # Create heating system as Transformer
-            trsf_label = Label(
-                "trsf", "heat", fuel.replace(" ", "_"), region_name
-            )
+        # Create heating system as Transformer
+        trsf_label = Label("trsf", "heat", fuel, region_name)
 
-            efficiency = float(dh.loc[(data_name, fuel), "efficiency"])
+        efficiency = float(dh.loc[demand_set, "efficiency"])
 
-            nodes[trsf_label] = solph.Transformer(
-                label=trsf_label,
-                inputs={nodes[bus_label]: solph.Flow()},
-                outputs={nodes[heat_bus_label]: solph.Flow()},
-                conversion_factors={nodes[heat_bus_label]: efficiency},
-            )
+        nodes[trsf_label] = solph.Transformer(
+            label=trsf_label,
+            inputs={nodes[cs_bus_label]: solph.Flow()},
+            outputs={nodes[heat_bus_label]: solph.Flow()},
+            conversion_factors={nodes[heat_bus_label]: efficiency},
+        )
 
-            # Create demand as Sink
-            d_heat_demand_label = Label(
-                "demand", "heat", fuel.replace(" ", "_"), region_name
-            )
-            nodes[d_heat_demand_label] = solph.Sink(
-                label=d_heat_demand_label,
-                inputs={
-                    nodes[heat_bus_label]: solph.Flow(
-                        fix=dts[d_region, fuel],
-                        nominal_value=1,
-                    )
-                },
-            )
+        # Create demand as Sink
+        d_heat_demand_label = Label("demand", "heat", fuel, region_name)
+        nodes[d_heat_demand_label] = solph.Sink(
+            label=d_heat_demand_label,
+            inputs={
+                nodes[heat_bus_label]: solph.Flow(
+                    fix=dts[demand_set],
+                    nominal_value=1,
+                )
+            },
+        )
 
 
-def add_electricity_demand(table_collection, nodes):
+def add_electricity_demand(input_data, nodes):
     """
 
     Parameters
     ----------
-    table_collection
+    input_data
     nodes
 
     Returns
@@ -238,19 +249,21 @@ def add_electricity_demand(table_collection, nodes):
 
     """
     logging.debug("Add local electricity demand to nodes dictionary.")
-    dts = table_collection["demand series"]
-    dts.columns = dts.columns.swaplevel()
-    for region in dts["electrical_load"].columns:
-        if dts["electrical_load"][region].sum() > 0:
+    for idx, series in input_data["electricity demand series"].items():
+        region = idx[0]
+        demand_name = idx[1]
+        if series.sum() > 0:
             bus_label = Label("bus", "electricity", "all", region)
             if bus_label not in nodes:
-                nodes[bus_label] = solph.Bus(label=bus_label)
-            elec_demand_label = Label("demand", "electricity", "all", region)
+                create_electricity_bus(nodes, region)
+            elec_demand_label = Label(
+                "demand", "electricity", demand_name, region
+            )
             nodes[elec_demand_label] = solph.Sink(
                 label=elec_demand_label,
                 inputs={
                     nodes[bus_label]: solph.Flow(
-                        fix=dts["electrical_load", region],
+                        fix=series,
                         nominal_value=1,
                     )
                 },
@@ -270,23 +283,26 @@ def add_district_heating_systems(table_collection, nodes):
 
     """
     logging.debug("Add district heating systems to nodes dictionary.")
-    dts = table_collection["demand series"]
-    if "district heating" in dts:
-        for region in dts["district heating"].columns:
-            if dts["district heating"][region].sum() > 0:
-                bus_label = Label("bus", "heat", "district", region)
-                if bus_label not in nodes:
-                    nodes[bus_label] = solph.Bus(label=bus_label)
-                heat_demand_label = Label("demand", "heat", "district", region)
-                nodes[heat_demand_label] = solph.Sink(
-                    label=heat_demand_label,
-                    inputs={
-                        nodes[bus_label]: solph.Flow(
-                            fix=dts["district heating", region],
-                            nominal_value=1,
-                        )
-                    },
-                )
+    dts = table_collection["heat demand series"]
+
+    demand_sets = [c for c in dts.columns if "district heating" in str(c)]
+
+    for demand_set in demand_sets:
+        region = demand_set[0]
+        if dts[demand_set].sum() > 0:
+            bus_label = Label("bus", "heat", "district", region)
+            if bus_label not in nodes:
+                nodes[bus_label] = solph.Bus(label=bus_label)
+            heat_demand_label = Label("demand", "heat", "district", region)
+            nodes[heat_demand_label] = solph.Sink(
+                label=heat_demand_label,
+                inputs={
+                    nodes[bus_label]: solph.Flow(
+                        fix=dts[demand_set],
+                        nominal_value=1,
+                    )
+                },
+            )
 
 
 def add_transmission_lines_between_electricity_nodes(table_collection, nodes):
@@ -350,181 +366,145 @@ def add_transmission_lines_between_electricity_nodes(table_collection, nodes):
                 )
 
 
-def add_power_and_heat_plants(table_collection, nodes, extra_regions):
+def check_in_out_buses(nodes, table, input_data):
+    sources = table[["fuel", "source region"]].apply(tuple, axis=1).unique()
+    for source in sources:
+        fuel = source[0]
+        region = source[1]
+        if Label("bus", "commodity", fuel, region) not in nodes:
+            create_fuel_bus_with_source(nodes, fuel, region, input_data)
+
+    for region in table.index.get_level_values(0).unique():
+        if Label("bus", "electricity", "all", region) not in nodes:
+            create_electricity_bus(nodes, region)
+
+
+def add_power_plants(table_collection, nodes):
     """
 
     Parameters
     ----------
     table_collection
     nodes
-    extra_regions
 
     Returns
     -------
 
     """
-    trsf = table_collection["power plants"]
-    if "chp_hp" in table_collection:
-        chp_hp = table_collection["chp-heat plants"]
-        chp_hp_index = chp_hp.index.get_level_values(0).unique()
-    else:
-        chp_hp = None
-        chp_hp_index = []
+    pp = table_collection["power plants"]
 
-    regions = set(trsf.index.get_level_values(0).unique()).union(
-        set(chp_hp_index)
-    )
+    check_in_out_buses(nodes, pp, table_collection)
 
-    for region in regions:
-        bus_heat = Label("bus", "heat", "district", region)
+    for idx, params in pp.iterrows():
+        region = idx[0]
+
+        # Create label for in and out bus:
+        fuel_bus = Label(
+            "bus", "commodity", params.fuel, params["source region"]
+        )
         bus_elec = Label("bus", "electricity", "all", region)
 
-        if bus_heat not in nodes:
-            nodes[bus_heat] = solph.Bus(label=bus_heat)
+        # Create power plants as 1x1 Transformer if capacity > 0
+        if params.capacity > 0:
+            # if downtime_factor is in the parameters, use it
+            if hasattr(params, "downtime_factor"):
+                params.capacity *= 1 - params["downtime_factor"]
 
-        if region in chp_hp_index:
-            chp_hp_fuels = set(chp_hp.loc[region, "fuel"].unique())
-            chp_hp_regions = chp_hp.loc[region].index
-        else:
-            chp_hp_fuels = set()
-            chp_hp_regions = []
-
-        if region in trsf.index:
-            trsf_fuels = set(trsf.loc[region, "fuel"].unique())
-            trsf_regions = trsf.loc[region].index
-        else:
-            trsf_fuels = set()
-            trsf_regions = []
-
-        fuels = trsf_fuels.union(chp_hp_fuels)
-
-        for fuel in fuels:
-            # Connect to global fuel bus if not defined as extra region
-            if region in extra_regions:
-                bus_fuel = Label(
-                    "bus", "commodity", fuel.replace(" ", "_"), region
-                )
-                if bus_fuel not in nodes:
-                    create_fuel_bus_with_source(
-                        nodes, fuel.replace(" ", "_"), region, table_collection
-                    )
-            else:
-                bus_fuel = Label(
-                    "bus", "commodity", fuel.replace(" ", "_"), "DE"
-                )
-                if bus_fuel not in nodes:
-                    create_fuel_bus_with_source(
-                        nodes, fuel.replace(" ", "_"), "DE", table_collection
-                    )
-
-        for plant in trsf_regions:
-            idx = set(trsf.loc[region, plant].index).difference(("fuel",))
-            trsf.loc[(region, plant), idx] = pd.to_numeric(
-                trsf.loc[(region, plant), idx]
-            )
-            params = trsf.loc[region, plant]
-
-            # Create power plants as 1x1 Transformer if capacity > 0
-            if params.capacity > 0:
-                # if downtime_factor is in the parameters, use it
-                if hasattr(params, "downtime_factor"):
-                    params.capacity *= 1 - params["downtime_factor"]
-
-                # Define output flow with or without summed_max attribute
-                if params.limit_elec_pp == float("inf"):
-                    outflow = solph.Flow(nominal_value=params.capacity)
-                else:
-                    smax = params.limit_elec_pp / params.capacity
-                    outflow = solph.Flow(
-                        nominal_value=params.capacity, summed_max=smax
-                    )
-
-                # if variable costs are defined add them to the outflow
-                if hasattr(params, "variable_costs"):
-                    vc = params.variable_costs
-                    outflow.variable_costs = solph.sequence(vc)
-
-                plant_name = (
-                    plant.replace(" - ", "_")
-                    .replace(" ", "_")
-                    .replace(".", "")
-                )
-
-                trsf_label = Label("trsf", "pp", plant_name, region)
-
-                fuel_bus = Label(
-                    "bus", "commodity", params.fuel.replace(" ", "_"), "DE"
-                )
-
-                nodes[trsf_label] = solph.Transformer(
-                    label=trsf_label,
-                    inputs={nodes[fuel_bus]: solph.Flow()},
-                    outputs={nodes[bus_elec]: outflow},
-                    conversion_factors={nodes[bus_elec]: params.efficiency},
-                )
-
-        for plant in chp_hp_regions:
-            idx = set(chp_hp.loc[region, plant].index).difference(("fuel",))
-            chp_hp.loc[(region, plant), idx] = pd.to_numeric(
-                chp_hp.loc[(region, plant), idx]
-            )
-            params = chp_hp.loc[region, plant]
-
-            fuel_bus = Label(
-                "bus", "commodity", params.fuel.replace(" ", "_"), "DE"
-            )
-
-            # Create chp plants as 1x2 Transformer
-            if (
-                hasattr(params, "capacity_heat_chp")
-                and params["capacity_heat_chp"] > 0
+            # Define output flow with or without summed_max attribute
+            if params.get("annual_limit_electricity", float("inf")) == float(
+                "inf"
             ):
-                trsf_label = Label(
-                    "trsf", "chp", params.fuel.replace(" ", "_"), region
+                outflow = solph.Flow(nominal_value=params.capacity)
+            else:
+                smax = params.annual_limit_electricity / params.capacity
+                outflow = solph.Flow(
+                    nominal_value=params.capacity, summed_max=smax
                 )
 
-                smax = (params.limit_heat_chp / params.efficiency_heat_chp) / (
-                    params["capacity_heat_chp"] / params.efficiency_heat_chp
-                )
+            # if variable costs are defined add them to the outflow
+            if hasattr(params, "variable_costs"):
+                vc = params.variable_costs
+                outflow.variable_costs = solph.sequence(vc)
 
-                nodes[trsf_label] = solph.Transformer(
-                    label=trsf_label,
-                    inputs={
-                        nodes[fuel_bus]: solph.Flow(
-                            nominal_value=(
-                                params["capacity_heat_chp"]
-                                / params.efficiency_heat_chp
-                            ),
-                            summed_max=smax,
-                        )
-                    },
-                    outputs={
-                        nodes[bus_elec]: solph.Flow(),
-                        nodes[bus_heat]: solph.Flow(),
-                    },
-                    conversion_factors={
-                        nodes[bus_elec]: params.efficiency_elec_chp,
-                        nodes[bus_heat]: params.efficiency_heat_chp,
-                    },
-                )
+            plant_name = "{0}_{1}".format(
+                region, idx[1].replace(" - ", "_").replace(".", "")
+            )
 
-            # Create heat plants as 1x1 Transformer
-            if hasattr(params, "capacity_hp") and params.capacity_hp > 0:
-                trsf_label = Label(
-                    "trsf", "hp", params.fuel.replace(" ", "_"), region
-                )
-                smax = params.limit_hp / params.capacity_hp
+            trsf_label = Label("trsf", "pp", plant_name, region)
 
-                nodes[trsf_label] = solph.Transformer(
-                    label=trsf_label,
-                    inputs={nodes[fuel_bus]: solph.Flow()},
-                    outputs={
-                        nodes[bus_heat]: solph.Flow(
-                            nominal_value=params.capacity_hp, summed_max=smax
-                        )
-                    },
-                    conversion_factors={nodes[bus_heat]: params.efficiency_hp},
-                )
+            nodes[trsf_label] = solph.Transformer(
+                label=trsf_label,
+                inputs={nodes[fuel_bus]: solph.Flow()},
+                outputs={nodes[bus_elec]: outflow},
+                conversion_factors={nodes[bus_elec]: params.efficiency},
+            )
+
+
+def add_heat_and_chp_plants(table_collection, nodes):
+    chp_heat_plants = table_collection["heat-chp plants"]
+
+    check_in_out_buses(nodes, chp_heat_plants, table_collection)
+
+    for idx, params in chp_heat_plants.iterrows():
+        region = idx[0]
+
+        bus_fuel = Label(
+            "bus", "commodity", params.fuel, params["source region"]
+        )
+        bus_elec = Label("bus", "electricity", "all", region)
+        bus_heat = Label("bus", "heat", "district", region)
+
+        # Create chp plants as 1x2 Transformer
+        if (
+            hasattr(params, "capacity_heat_chp")
+            and params["capacity_heat_chp"] > 0
+        ):
+            chp_label = Label(
+                "trsf", "chp", params.fuel.replace(" ", "_"), region
+            )
+
+            smax = (params.limit_heat_chp / params.efficiency_heat_chp) / (
+                params["capacity_heat_chp"] / params.efficiency_heat_chp
+            )
+
+            nodes[chp_label] = solph.Transformer(
+                label=chp_label,
+                inputs={
+                    nodes[bus_fuel]: solph.Flow(
+                        nominal_value=(
+                            params["capacity_heat_chp"]
+                            / params.efficiency_heat_chp
+                        ),
+                        summed_max=smax,
+                    )
+                },
+                outputs={
+                    nodes[bus_elec]: solph.Flow(),
+                    nodes[bus_heat]: solph.Flow(),
+                },
+                conversion_factors={
+                    nodes[bus_elec]: params.efficiency_elec_chp,
+                    nodes[bus_heat]: params.efficiency_heat_chp,
+                },
+            )
+
+        # Create heat plants as 1x1 Transformer
+        if hasattr(params, "capacity_hp") and params.capacity_hp > 0:
+            hp_label = Label(
+                "trsf", "hp", params.fuel.replace(" ", "_"), region
+            )
+            smax = params.limit_hp / params.capacity_hp
+
+            nodes[hp_label] = solph.Transformer(
+                label=hp_label,
+                inputs={nodes[bus_fuel]: solph.Flow()},
+                outputs={
+                    nodes[bus_heat]: solph.Flow(
+                        nominal_value=params.capacity_hp, summed_max=smax
+                    )
+                },
+                conversion_factors={nodes[bus_heat]: params.efficiency_hp},
+            )
 
 
 def add_storages(table_collection, nodes):
@@ -539,23 +519,28 @@ def add_storages(table_collection, nodes):
     -------
 
     """
-    storages = table_collection["storages"]
-    storages.index = storages.index.swaplevel()
-    for region in storages.loc["phes"].index:
-        storage_label = Label("storage", "electricity", "phes", region)
+    for idx, params in table_collection["electricity storages"].iterrows():
+        region = idx[0]
+        name = idx[1]
+        storage_label = Label("storage", "electricity", name, region)
         bus_label = Label("bus", "electricity", "all", region)
-        params = storages.loc["phes", region]
         nodes[storage_label] = solph.components.GenericStorage(
             label=storage_label,
-            inputs={nodes[bus_label]: solph.Flow(nominal_value=params.pump)},
-            outputs={
-                nodes[bus_label]: solph.Flow(nominal_value=params.turbine)
+            inputs={
+                nodes[bus_label]: solph.Flow(
+                    nominal_value=params["charge capacity"]
+                )
             },
-            nominal_storage_capacity=params.energy,
-            loss_rate=0,
+            outputs={
+                nodes[bus_label]: solph.Flow(
+                    nominal_value=params["discharge capacity"]
+                )
+            },
+            nominal_storage_capacity=params["energy content"],
+            loss_rate=params["loss rate"],
             initial_storage_level=None,
-            inflow_conversion_factor=params.pump_eff,
-            outflow_conversion_factor=params.turbine_eff,
+            inflow_conversion_factor=params["charge efficiency"],
+            outflow_conversion_factor=params["discharge efficiency"],
         )
 
 
@@ -571,12 +556,12 @@ def add_mobility(table_collection, nodes):
     -------
 
     """
-    mseries = table_collection["mobility series"]
+    mseries = table_collection["mobility demand series"]
     mtable = table_collection["mobility"]
     for region in mseries.columns.get_level_values(0).unique():
         for fuel in mseries[region].columns:
             source = mtable.loc[(region, fuel), "source"]
-            source_region = mtable.loc[(region, fuel), "source_region"]
+            source_region = mtable.loc[(region, fuel), "source region"]
             if mseries[region, fuel].sum() > 0:
                 fuel_transformer = Label("process", "fuel", fuel, region)
                 fuel_demand = Label("demand", "mobility", fuel, region)

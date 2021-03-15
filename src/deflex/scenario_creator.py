@@ -38,7 +38,7 @@ def scenario_default_decentralised_heat():
     df = pd.DataFrame(index=pd.MultiIndex(levels=[[], []], codes=[[], []]))
     fuels = [
         ("gas", "natural gas"),
-        ("hard coal", "hard_coal"),
+        ("hard coal", "hard coal"),
         ("lignite", "lignite"),
         ("natural gas", "natural gas"),
         ("oil", "oil"),
@@ -46,8 +46,10 @@ def scenario_default_decentralised_heat():
         ("re", "other"),
     ]
     for fuel, source in fuels:
-        df.loc[("DE_demand", fuel), "efficiency"] = 0.85
-        df.loc[("DE_demand", fuel), "source"] = source
+        df.loc[("DE", fuel), "efficiency"] = 0.85
+        df.loc[("DE", fuel), "source"] = source
+
+    df["source region"] = "DE"
 
     return df
 
@@ -73,11 +75,10 @@ def create_scenario(regions, year, name, lines, opsd_version=None):
         if year < 2015:
             opsd_version = "2019-06-05"
 
-    table_collection = {}
-    table_collection["general"] = pd.DataFrame()
+    table_collection = {"general": pd.DataFrame()}
 
     logging.info("BASIC SCENARIO - STORAGES")
-    table_collection["storages"] = storages.scenario_storages(
+    table_collection["electricity storages"] = storages.scenario_storages(
         regions, year, name
     )
 
@@ -99,7 +100,7 @@ def create_scenario(regions, year, name, lines, opsd_version=None):
     logging.info("BASIC SCENARIO - CHP PLANTS")
     if cfg.get("creator", "heat"):
         chp = powerplants.scenario_chp(table_collection, regions, year, name)
-        table_collection["chp-heat plants"] = chp["chp-heat plants"]
+        table_collection["heat-chp plants"] = chp["heat-chp plants"]
         table_collection["power plants"] = chp["power plants"]
     else:
         logging.info("...skipped")
@@ -123,33 +124,34 @@ def create_scenario(regions, year, name, lines, opsd_version=None):
     )
 
     logging.info("BASIC SCENARIO - DEMAND")
-    table_collection["demand series"] = demand.scenario_demand(
+    table_collection.update(demand.scenario_demand(
         regions,
         year,
         name,
         opsd_version=opsd_version,
-    )
+    ))
 
     logging.info("BASIC SCENARIO - MOBILITY")
-    table_collection = mobility.scenario_mobility(year, table_collection)
+    if cfg.get("creator", "mobility"):
+        table_collection = mobility.scenario_mobility(year, table_collection)
+    else:
+        logging.info("...skipped")
 
-    logging.info("ADD META DATA")
+    logging.info("ADD GENERAL DATA")
     table_collection["general"] = pd.concat(
-        [table_collection["general"], meta_data(year)]
+        [table_collection["general"], general_data(year, table_collection)]
     )
-    table_collection["general"].loc["number of time steps", "value"] = len(
-        table_collection["demand series"]
-    )
+    table_collection["info"] = meta_data()
+    logging.info("ADD META DATA")
     return table_collection
 
 
-def meta_data(year):
-    meta = pd.DataFrame.from_dict(
-        cfg.get_dict("creator"), orient="index", columns=["value"]
+def general_data(year, input_data):
+    general = pd.DataFrame(columns=["value"])
+    general.loc["year"] = year
+    general.loc["number of time steps"] = len(
+        input_data["electricity demand series"]
     )
-    meta.loc["year"] = year
-    meta.loc["map"] = cfg.get("creator", "map")
-    # meta.loc[""]
 
     # Create name
     if cfg.get("creator", "heat"):
@@ -160,9 +162,17 @@ def meta_data(year):
         merit = "no-reg-merit"
     else:
         merit = "reg-merit"
-    meta.loc["name"] = "{0}_{1}_{2}_{3}_{4}".format(
+    general.loc["name"] = "{0}_{1}_{2}_{3}_{4}".format(
         "deflex", year, cfg.get("creator", "map"), heat, merit
     )
+    return general
+
+
+def meta_data():
+    meta = pd.DataFrame.from_dict(
+        cfg.get_dict("creator"), orient="index", columns=["value"]
+    )
+    meta.loc["map"] = cfg.get("creator", "map")
     return meta
 
 
@@ -177,38 +187,45 @@ def clean_time_series(table_collection):
     -------
 
     """
-    dts = table_collection["demand series"]
+    series = [t for t in table_collection.keys() if "series" in t]
+
     vts = table_collection["volatile series"]
-    vs = table_collection["volatile plants"]
+    vp = table_collection["volatile plants"]
 
-    regions = list(dts.columns.get_level_values(0).unique())
-    if "DE_demand" in regions:
-        regions.remove("DE_demand")
-    for reg in regions:
-        for load in ["district heating", "electrical_load"]:
-            if dts[reg].get(load) is not None:
-                if dts[reg, load].sum() == 0:
-                    msg = (
-                        "Removing %s time series of region %s because"
-                        "sum of time series is %s"
-                    )
-                    logging.debug(msg, load, reg, dts[reg, load].sum())
-                    del dts[reg, load]
+    for key in series:
+        for column, data in table_collection[key].items():
+            if data.sum() == 0:
+                msg = (
+                    "Removing column %s of table %s because"
+                    "sum of column is %s"
+                )
+                logging.debug(msg, column, key, data.sum())
+                del table_collection[key][column]
 
-    regions = list(vts.columns.get_level_values(0).unique())
-    for reg in regions:
-        for t in ["hydro", "solar", "wind", "geothermal"]:
-            if (t not in vs.loc[reg].index) or (
-                vs.loc[(reg, t), "capacity"].sum() == 0
-            ):
-                if vts.get(reg) is not None:
-                    if vts[reg].get(t) is not None:
-                        msg = (
-                            "Removing %s time series of region %s "
-                            "because installed capacity is %s"
-                        )
-                        logging.debug(msg, t, reg, vs.loc[reg].get(t))
-                        vts.drop((reg, t), axis=1, inplace=True)
+    for index, data in table_collection["volatile series"].items():
+        if index in vp.index:
+            if vp.loc[index, "capacity"] == 0:
+                remove = True
+                msg = (
+                    "Removing volatile series: %s  "
+                    "because installed capacity is %s"
+                )
+                logging.debug(msg, index, vp.loc[index])
+            else:
+                remove = False
+        else:
+            remove = True
+            msg = (
+                "Removing volatile series: %s  "
+                "because installed capacity does not exist."
+            )
+            logging.debug(msg, index)
+        if remove is True:
+            vts.drop(index, axis=1, inplace=True)
+
+    for index, data in table_collection["power plants"].iterrows():
+        if data["capacity"] == 0:
+            table_collection["power plants"].drop(index, axis=0, inplace=True)
 
     return table_collection
 
@@ -303,28 +320,10 @@ def create_basic_reegis_scenario(
     ...     csv_path=path.format("_csv"),
     ... )  # doctest: +SKIP
     """
-    default = {
-        "costs_source": "ewi",
-        "downtime_bioenergy": 0.1,
-        "limited_transformer": "bioenergy",
-        "local_fuels": "district heating",
-        "map": "de02",
-        "mobility_other": "petrol",
-        "round": 1,
-        "separate_heat_regions": "de22",
-        "copperplate": True,
-        "default_transmission_efficiency": 0.9,
-        "group_transformer": False,
-        "heat": False,
-        "use_CO2_costs": False,
-        "use_downtime_factor": True,
-        "use_variable_costs": False,
-        "year": 2014,
-    }
+    # The default parameter can be found in "creator.ini".
 
-    default.update(parameter)
     config.init(paths=[os.path.dirname(dfile)])
-    for option, value in default.items():
+    for option, value in parameter.items():
         cfg.tmp_set("creator", option, str(value))
         config.tmp_set("creator", option, str(value))
 

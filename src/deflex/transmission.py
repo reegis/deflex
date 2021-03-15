@@ -103,10 +103,10 @@ def get_electrical_transmission_default(power_lines, both_directions=False):
     """
     trans = pd.DataFrame()
 
-    for length in power_lines:
-        trans.loc[length, "capacity"] = float("inf")
-        trans.loc[length, "distance"] = float("nan")
-        trans.loc[length, "efficiency"] = 1
+    for line_name in power_lines:
+        trans.loc[line_name, "capacity"] = float("inf")
+        trans.loc[line_name, "distance"] = float("nan")
+        trans.loc[line_name, "efficiency"] = 1
 
     if both_directions is True:
         trans = add_reverse_direction(trans)
@@ -267,7 +267,7 @@ def scenario_transmission(regions, name, lines):
             )
             raise NotImplementedError(msg)
     else:
-        elec_trans = get_electrical_transmission_default(power_lines=lines)
+        elec_trans = get_electrical_transmission_default(power_lines=lines.index)
 
     # Set transmission capacity of offshore power lines to installed capacity
     # Multiply the installed capacity with 1.1 to get a buffer of 10%.

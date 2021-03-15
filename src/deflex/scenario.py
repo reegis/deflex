@@ -417,7 +417,6 @@ class DeflexScenario(Scenario):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.extra_regions = kwargs.get("extra_regions", list())
 
     def create_nodes(self):
         """
@@ -433,9 +432,7 @@ class DeflexScenario(Scenario):
         # updated. This avoids the
         nodes = NodeDict()
 
-        return create_solph_nodes_from_data(
-            self.input_data, nodes, extra_regions=self.extra_regions
-        )
+        return create_solph_nodes_from_data(self.input_data, nodes)
 
 
 def restore_scenario(filename, scenario_class=DeflexScenario):
