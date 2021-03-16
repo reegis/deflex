@@ -61,7 +61,7 @@ Electricity demand series
 
 *Mandatory*.
 
-This sheet requires the electricity demand of the scenario. The demand must be provided in a time series form, with the time step specified in the general sheet, for each region in [MW] as the table shows. Electrcity demand can be entered as a whole for each region as DE01 shows or it can be divided into different sectors as DE 02 shows. 
+This sheet requires the electricity demand of the scenario. The demand must be provided in a time series form, with the time step specified *general*, for each region in [MW] as the table shows. Electrcity demand can be entered as a whole for each region as DE01 shows or it can be divided into different sectors as DE 02 shows. 
 
 Power plants
 ~~~~~~~~~~~~
@@ -84,7 +84,7 @@ Power plants
 
 *Mandatory*
 
-Here information about the power plants is required. The data must be divided by region and subdivided by fuel. The capacity column represents the total capacitiy of all the plants operating with the same fuel in one region, while count represents the number of plants. Fuel and efficiency must be provided too along with the maximal amount of energy produced in the whole year, which is called *limit*. This parameter has the function of setting a maximum energy generation level for each power plant so that all plants work in parallel. Otherwise, it could be the case that during the entire period only one plant works, which in reality does not happen. It is also possible to introduce variable costs for each plant and/or a downtime factor for each plant, but these last three are not mandatory. Finally source_region indicates from which region does the fuel come. In case the fuel is regionally classified in commodities, usually the source_region will be that region. In case the fuel is globally classified in commodities, then the source_region will be DE.
+Here information about the power plants is required. The data must be divided by region and subdivided by fuel. The capacity column represents the total capacitiy of all the plants operating with the same fuel in one region, while count represents the number of plants. Fuel and efficiency must be provided too along with the maximal amount of energy produced in the whole year, which is called *limit*. This parameter has the function of setting a maximum energy generation level for each power plant so that all plants work in parallel. Otherwise, it could be the case that during the entire period only one plant works, which in reality does not happen. It is also possible to introduce variable costs for each plant and/or a downtime factor for each plant, but these last three are not mandatory. Finally source_region indicates from which region does the fuel come. In case the fuel is regionally classified in *commodities*, usually the source_region will be that region. In case the fuel is globally classified in *commodities*, then the source_region will be DE.
 
 Volatiles plants
 ~~~~~~~~~~~~~~~~
@@ -145,7 +145,7 @@ Electricity storages
 
 *Not mandatory*.
 
-Here information about electricity storages is needed. Since this is part of the power sector, all storages must be registered regionally. As there are different storage technologies (pumped hydro, batteries, compressed air, etc.), the information can be entered in a general way where each name corresponds to a different storage type.
+Here information about electricity storages is needed. Since this is part of the power sector, all storages must be registered regionally. As there are different storage technologies (pumped hydro, batteries, compressed air, etc), the information can be entered in a general way where each name corresponds to a different storage type.
 
 Power lines
 ~~~~~~~~~~~
@@ -164,7 +164,7 @@ Power lines
 
 *Mandatory*
 
-The last power input data considers the transmission power lines between different regions of the scenario. Here all the connections between two regions must be entered with their respective name which indicates the regions that are connecting. Each line has a maximum transmission capacity, over which no more energy can be transmitted and an efficiency, which represent the transmission losses.
+The last input data regarding the power sector, considers the transmission power lines between different regions of the scenario. Here all the connections between two regions must be entered with their respective name which indicates the regions that are connecting. Each line has a maximum transmission capacity, over which no more energy can be transmitted and an efficiency, which represent the transmission losses.
 
 Heat demand series
 ~~~~~~~~
@@ -183,7 +183,7 @@ Heat demand series
 
 *Optional*
 
-Continuing with the heating sector, this sheet requires the heat demand which, as mentioned at the beginning, can be entered regionally under DEXX or globally under DE. The only type of demand that must be entered regionally is the district heating. Again, as a recommendation, coal, gas, or oil demands should be treated as global since Deflex does not have infrastructure that allows a regionalization of these commodities. The demand must be entered under the same principle as the electrcitiy demand series, using the number of time steps specified in general.
+Continuing with the heating sector, this sheet requires the heat demand which, as mentioned at the beginning, can be entered regionally under DEXX or globally under DE. The only type of demand that must be entered regionally is the district heating. Again, as a recommendation, coal, gas, or oil demands should be treated as global since Deflex does not have infrastructure that allows a regionalization of these commodities. The demand must be entered under the same principle as *electrcitiy demand series*, using the number of time steps specified in *general*.
 
 Decentralized heat
 ~~~~~~~~~~~~~~~~~~
@@ -237,7 +237,7 @@ Chp - heat plants
 
 *Optional*
 
-As said before, this sheet covers the district heating part of the heating sector. Under the same principle as the power plants in the power sector, it requires CHP and heat plants (heat plant in the sense that they only produce heat) data divided by region and subdivided by fuel (Note that the fuel does not have to come explicitly from the DEXX region, it can also come from the global DE). As in the power plants sheet, there is the limit_hp (and limit_heat_chp, limit_elec_chp for CHP) value, which allows the plants to run in parallel.
+As said before, this sheet covers the district heating part of the heating sector. Under the same principle as *power plants* in the power sector, it requires CHP and heat plants (heat plant in the sense that they only produce heat) data divided by region and subdivided by fuel (Note that the fuel does not have to come explicitly from the DEXX region, it can also come from the global DE). As in the power plants sheet, there is the *limit_hp* (and *limit_heat_chp*, *limit_elec_chp* for CHP) value, which makes the plants to run in parallel.
 
 
 

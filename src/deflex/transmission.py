@@ -267,7 +267,9 @@ def scenario_transmission(regions, name, lines):
             )
             raise NotImplementedError(msg)
     else:
-        elec_trans = get_electrical_transmission_default(power_lines=lines.index)
+        elec_trans = get_electrical_transmission_default(
+            power_lines=lines.index
+        )
 
     # Set transmission capacity of offshore power lines to installed capacity
     # Multiply the installed capacity with 1.1 to get a buffer of 10%.

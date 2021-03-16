@@ -124,12 +124,14 @@ def create_scenario(regions, year, name, lines, opsd_version=None):
     )
 
     logging.info("BASIC SCENARIO - DEMAND")
-    table_collection.update(demand.scenario_demand(
-        regions,
-        year,
-        name,
-        opsd_version=opsd_version,
-    ))
+    table_collection.update(
+        demand.scenario_demand(
+            regions,
+            year,
+            name,
+            opsd_version=opsd_version,
+        )
+    )
 
     logging.info("BASIC SCENARIO - MOBILITY")
     if cfg.get("creator", "mobility"):
