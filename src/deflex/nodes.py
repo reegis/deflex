@@ -36,30 +36,33 @@ def create_solph_nodes_from_data(input_data, nodes):
     -------
 
     """
+    # Electricity demand
+    add_electricity_demand(input_data, nodes)
 
     # Volatile sources
     add_volatile_sources(input_data, nodes)
+
+    # Power plants
+    add_power_plants(input_data, nodes)
 
     # Decentralised heating systems
     if "decentralised heat" in input_data:
         add_decentralised_heating_systems(input_data, nodes)
 
-    # Electricity demand
-    add_electricity_demand(input_data, nodes)
-
     # District heating demand
-    add_district_heating_systems(input_data, nodes)
+    if "heat demand series" in input_data:
+        add_district_heating_demand(input_data, nodes)
 
-    # Power plants, heat plants and chp plants
-    add_power_plants(input_data, nodes)
-    add_heat_and_chp_plants(input_data, nodes)
+    # Add chp plants and heat plants for gird-bound heat
+    if "heat-chp plants" in input_data:
+        add_heat_and_chp_plants(input_data, nodes)
 
     # Electricity storages
     if "electricity storages" in input_data:
-        add_storages(input_data, nodes)
+        add_electricity_storages(input_data, nodes)
 
     # Mobility
-    if "mobility" in input_data:
+    if "mobility" in input_data and "mobility demand series" in input_data:
         add_mobility(input_data, nodes)
 
     # Connect electricity buses with transmission
@@ -249,6 +252,7 @@ def add_electricity_demand(input_data, nodes):
 
     """
     logging.debug("Add local electricity demand to nodes dictionary.")
+
     for idx, series in input_data["electricity demand series"].items():
         region = idx[0]
         demand_name = idx[1]
@@ -270,7 +274,7 @@ def add_electricity_demand(input_data, nodes):
             )
 
 
-def add_district_heating_systems(table_collection, nodes):
+def add_district_heating_demand(table_collection, nodes):
     """
 
     Parameters
@@ -507,7 +511,7 @@ def add_heat_and_chp_plants(table_collection, nodes):
             )
 
 
-def add_storages(table_collection, nodes):
+def add_electricity_storages(table_collection, nodes):
     """
 
     Parameters
