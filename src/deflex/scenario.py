@@ -137,6 +137,7 @@ class Scenario:
                 squeeze=("series" not in sheet),
             )
         self.check_input_data(warning=False)
+        self.add_meta_data()
         return self
 
     def read_csv(self, path):
@@ -156,7 +157,13 @@ class Scenario:
                     squeeze=("series" not in name),
                 )
         self.check_input_data(warning=False)
+        self.add_meta_data()
         return self
+
+    def add_meta_data(self):
+        if "info" in self.input_data:
+            self.meta.update(self.input_data["info"].to_dict())
+        self.meta.update(self.input_data["general"].to_dict())
 
     def check_input_data(self, warning=False):
         """
@@ -169,8 +176,8 @@ class Scenario:
                 "NaN values found in table:'{0}', column(s): {1}.\n"
                 "Empty cells are not allowed in a scenario to avoid "
                 "unwanted behaviour.\nRemove the whole column/row if "
-                "a parameter is not needed. Consider that 0, 'inf' or "
-                "1 might be neutral values to replace NaN values."
+                "a parameter is not needed (optional). Consider that 0, 'inf' "
+                "or 1 might be neutral values to replace NaN values."
             )
             if isinstance(table, pd.DataFrame):
                 table.dropna(thresh=1, inplace=True, axis=0)
