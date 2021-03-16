@@ -134,6 +134,7 @@ class Scenario:
                 sheet,
                 index_col=list(range(int(table_index_header[0]))),
                 header=list(range(int(table_index_header[1]))),
+                squeeze=("series" not in sheet),
             )
         self.check_input_data(warning=False)
         return self
@@ -152,7 +153,7 @@ class Scenario:
                     filename,
                     index_col=list(range(int(table_index_header[0]))),
                     header=list(range(int(table_index_header[1]))),
-                    squeeze=True,
+                    squeeze=("series" not in name),
                 )
         self.check_input_data(warning=False)
         return self
@@ -192,11 +193,6 @@ class Scenario:
                         warnings.warn(msg, UserWarning)
                     else:
                         raise ValueError(msg)
-
-        if isinstance(self.input_data["general"], pd.DataFrame):
-            column = self.input_data["general"].columns[0]
-            self.input_data["general"] = self.input_data["general"][column]
-            self.meta.update(self.input_data["general"].to_dict())
 
     def to_xlsx(self, filename):
         """Dump the input data as an xlsx-file."""
