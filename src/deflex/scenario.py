@@ -201,6 +201,12 @@ class Scenario:
                     else:
                         raise ValueError(msg)
 
+        if isinstance(self.input_data["volatile plants"], pd.Series):
+            self.input_data["volatile plants"] = pd.DataFrame(
+                self.input_data["volatile plants"],
+                columns=[self.input_data["volatile plants"].name]
+            )
+
     def to_xlsx(self, filename):
         """Dump the input data as an xlsx-file."""
         # create path if it does not exist

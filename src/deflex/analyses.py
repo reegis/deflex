@@ -43,9 +43,8 @@ def merit_order_from_scenario(
     --------
     >>> import os
     >>> from deflex import DeflexScenario
-    >>> my_path = os.path.join(
-    ...     os.path.dirname(__file__), os.pardir, os.pardir, "tests", "data",
-    ...     "deflex_2014_de02_co2-price_var-costs_csv")
+    >>> from deflex.tools import TEST_PATH
+    >>> my_path = os.path.join(TEST_PATH, "de02_no-heat_csv")
     >>> sc = DeflexScenario()
     >>> mo1 = merit_order_from_scenario(sc.read_csv(my_path))
     >>> round(mo1.capacity_cum.iloc[-1], 4)
@@ -120,7 +119,7 @@ def merit_order_from_results(result):
     Examples
     --------
     >>> from deflex import tools, postprocessing
-    >>> fn = tools.fetch_example_results("de02_co2-price_var-costs.dflx")
+    >>> fn = tools.fetch_example_results("de02_no-heat.dflx")
     >>> my_results = postprocessing.restore_results(fn)
     >>> a = merit_order_from_results(my_results)
     """
@@ -236,8 +235,7 @@ def check_comparision_of_merit_order(scenario):
     Examples
     --------
     >>> from deflex import tools, scenario
-    >>> name = "de02.dflx"
-    >>> my_path = tools.fetch_example_results(name)
+    >>> my_path = tools.fetch_example_results("de02_no-heat.dflx")
     >>> sc = scenario.restore_scenario(my_path)
     >>> check_comparision_of_merit_order(sc)
     Check passed! Both merit order DataFrame tables are the same.
@@ -284,7 +282,7 @@ def get_flow_results(result):
     >>> my_result = pp.restore_results(fn1)
     >>> res = get_flow_results(my_result)
     >>> round(res.loc[34, ("cost", "specific", "trsf")].max(), 2)
-    34.33
+    209.34
     """
     inflows = get_line_inflows(result)
     levels = [[], [], [], []]
@@ -345,9 +343,9 @@ def calculate_market_clearing_price(result=None, flow_results=None):
     >>> my_result = pp.restore_results(fn1)
     >>> mcp = calculate_market_clearing_price(my_result)
     >>> round(mcp.mean(), 2)
-    37.89
+    39.78
     >>> round(mcp.max(), 2)
-    92.29
+    45.76
 
     """
     if flow_results is None:
@@ -387,7 +385,7 @@ def calculate_emissions_most_expensive_pp(result=None, flow_results=None):
     >>> my_result = pp.restore_results(fn1)
     >>> emissions_mcp = calculate_emissions_most_expensive_pp(my_result)
     >>> round(emissions_mcp.mean(), 2)
-    586.88
+    863.98
     >>> round(emissions_mcp.max(), 2)
     1642.28
     """
@@ -445,13 +443,13 @@ def get_key_values_from_results(results, **switch):
     >>> from deflex import postprocessing as pp
     >>> from deflex.analyses import get_key_values_from_results
     >>> fn1 = fetch_example_results("de17_heat.dflx")
-    >>> fn2 = fetch_example_results("de02.dflx")
+    >>> fn2 = fetch_example_results("de02_heat.dflx")
     >>> my_results = pp.restore_results([fn1, fn2])
     >>> kv = get_key_values_from_results(my_results)
     >>> list(kv.columns.get_level_values(1).unique())
-    ['deflex_2014_de17_heat', 'deflex_2014_de02']
-    >>> round(kv.loc[34, ("mcp", "deflex_2014_de17_heat")], 2)
-    34.33
+    ['deflex_2014_de17_heat_reg-merit', 'deflex_2014_de02_heat_reg-merit']
+    >>> round(kv.loc[34, ("mcp", "deflex_2014_de17_heat_reg-merit")], 2)
+    42.16
     >>> list(kv.columns.get_level_values(0).unique())
     ['mcp', 'emissions_most_expensive_pp']
     >>> kv = get_key_values_from_results(my_results, mcp=False)

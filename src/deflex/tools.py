@@ -27,7 +27,7 @@ def download(fn, url, force=False):
             logging.info("%s downloaded from %s.", url, fn)
 
 
-def fetch_example_results(key):
+def fetch_example_results(path):
     """Download example results to enable tests.
 
     Make sure that the examples will
@@ -40,17 +40,17 @@ def fetch_example_results(key):
         "/osfstorage/5fdc7e0bf0df5405452ef6f0/?zip="
     )
     os.makedirs(TEST_PATH, exist_ok=True)
-    if ".dflx" in key:
-        file_name = os.path.join(TEST_PATH, "results_cbc", key)
+    if ".dflx" in path:
+        file_name = os.path.join(TEST_PATH, "results_cbc", path)
     else:
-        file_name = os.path.join(TEST_PATH, key)
-    if not os.path.isfile(file_name):
-        download(zip_file, zip_url, force=True)
-        with ZipFile(zip_file, "r") as zip_ref:
-            zip_ref.extractall(os.path.dirname(zip_file))
-    if not os.path.isfile(file_name):
+        file_name = os.path.join(TEST_PATH, path)
+    # if not os.path.isfile(file_name):
+    #     download(zip_file, zip_url, force=True)
+    #     with ZipFile(zip_file, "r") as zip_ref:
+    #         zip_ref.extractall(os.path.dirname(zip_file))
+    if not (os.path.isfile(file_name) or os.path.isdir(file_name)):
         msg = "Example file '{0}' not in '{1}', downloaded from {2}".format(
-            key, zip_file, zip_url
+            path, zip_file, zip_url
         )
         raise ValueError(msg)
     return file_name

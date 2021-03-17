@@ -50,12 +50,12 @@ def load_scenario(path, file_type=None):
     Examples
     --------
     >>> from deflex.tools import fetch_example_results, TEST_PATH
-    >>> fn = fetch_example_results("de02_short.xlsx")
+    >>> fn = fetch_example_results("de17_heat.xlsx")
     >>> s = load_scenario(fn, file_type="xlsx")
     >>> type(s)
     <class 'deflex.scenario.DeflexScenario'>
-    >>> int(s.input_data["volatile plants"]["capacity"]["DE02", "wind"])
-    517
+    >>> int(s.input_data["volatile plants"]["capacity"]["DE01", "wind"])
+    3815
     >>> type(load_scenario(fn))
     <class 'deflex.scenario.DeflexScenario'>
     >>> load_scenario(fn, file_type="csv")  # doctest: +IGNORE_EXCEPTION_DETAIL
@@ -110,25 +110,23 @@ def fetch_scenarios_from_dir(path, csv=True, xlsx=False):
     --------
     >>> import shutil
     >>> from deflex.tools import TEST_PATH
-    >>> test_data = os.path.join(os.path.dirname(__file__), os.pardir,
-    ...                          os.pardir, "tests", "data")
-    >>> my_csv = fetch_scenarios_from_dir(test_data)
+    >>> my_csv = fetch_scenarios_from_dir(TEST_PATH)
     >>> len(my_csv)
-    5
+    10
     >>> os.path.basename(my_csv[0])
-    'deflex_2014_de02_co2-price_var-costs_csv'
+    'de02_heat_csv'
     >>> my_xlsx = fetch_scenarios_from_dir(TEST_PATH, csv=False, xlsx=True)
     >>> len(my_xlsx)
-    8
-    >>> os.path.basename([e for e in my_xlsx if "short" in e][0])
-    'de02_short.xlsx'
+    11
+    >>> os.path.basename([e for e in my_xlsx][0])
+    'de02_heat.xlsx'
     >>> len(fetch_scenarios_from_dir(TEST_PATH, xlsx=True))
-    8
-    >>> s = load_scenario([e for e in my_xlsx if "short" in e][0])
-    >>> csv_path = os.path.join(TEST_PATH, "de02_short_csv")
+    21
+    >>> s = load_scenario([e for e in my_xlsx][0])
+    >>> csv_path = os.path.join(TEST_PATH, "de02_new_csv")
     >>> s.to_csv(csv_path)
     >>> len(fetch_scenarios_from_dir(TEST_PATH, xlsx=True))
-    9
+    22
     >>> shutil.rmtree(csv_path)  # remove test results, skip this line to go on
 
     """
@@ -165,25 +163,23 @@ def model_multi_scenarios(scenarios, cpu_fraction=0.2, log_file=None):
     Examples
     --------
     >>> from deflex.tools import fetch_example_results, TEST_PATH
-    >>> fn1 = fetch_example_results("de02_short.xlsx")
-    >>> fn2 = fetch_example_results("de02_short_broken.xlsx")
-    >>> my_log_file = os.path.join(os.path.dirname(__file__), os.pardir,
-    ...                            os.pardir, "tests", "data",
-    ...                            "my_log_file.csv")
+    >>> fn1 = fetch_example_results("de03_fictive_csv")
+    >>> fn2 = fetch_example_results("de03_fictive_broken.xlsx")
+    >>> my_log_file = os.path.join(TEST_PATH, "my_log_file.csv")
     >>> my_scenarios = [fn1, fn2]
     >>> model_multi_scenarios(my_scenarios, log_file=my_log_file)
     >>> my_log = pd.read_csv(my_log_file, index_col=[0])
-    >>> good = my_log.loc["de02_short.xlsx"]
+    >>> good = my_log.loc["de03_fictive_csv"]
     >>> rv = good["return_value"]
     >>> datetime.strptime(rv, "%Y-%m-%d %H:%M:%S.%f").year > 2019
     True
     >>> good["trace"]
     nan
     >>> os.path.basename(good["result_file"])
-    'de02_short.dflx'
-    >>> broken = my_log.loc["de02_short_broken.xlsx"]
+    'de03_fictive.dflx'
+    >>> broken = my_log.loc["de03_fictive_broken.xlsx"]
     >>> broken["return_value"].replace("'", "")  # doctest: +ELLIPSIS
-    'ValueError(Missing time series for solar (capacity: 5.5) in DE02...
+    'ValueError(Missing time series for solar (capacity: 14714.6) in DE02...
     >>> broken["trace"]  # doctest: +ELLIPSIS
     'Traceback (most recent call last)...
     >>> broken["result_file"]
@@ -254,14 +250,14 @@ def batch_model_scenario(path, named=True, file_type=None, ignore_errors=True):
     Examples
     --------
     >>> from deflex.tools import fetch_example_results
-    >>> fn = fetch_example_results("de02_short.xlsx")
+    >>> fn = fetch_example_results("de02_heat_csv")
     >>> r = batch_model_scenario(fn, ignore_errors=False)  # doctest: +ELLIPSIS
     Welcome to the CBC MILP ...
     >>> r.name
-    'de02_short.xlsx'
+    'de02_heat_csv'
     >>> result_file = r.result_file
     >>> os.path.basename(result_file)
-    'de02_short.dflx'
+    'de02_heat.dflx'
     >>> r.trace
     >>> r.return_value.year > 2019
     True
@@ -339,7 +335,7 @@ def model_scenario(
     Examples
     --------
     >>> from deflex.tools import fetch_example_results, TEST_PATH
-    >>> fn = fetch_example_results("de02_short.xlsx")
+    >>> fn = fetch_example_results("de02_no-heat.xlsx")
     >>> r = model_scenario(fn, file_type="xlsx")  # doctest: +ELLIPSIS
     Welcome to the CBC MILP ...
     >>> os.remove(r)  # remove test results, skip this line to go on
@@ -369,7 +365,8 @@ def model_scenario(
         result_path = os.path.join(
             os.path.dirname(path),
             "results_{0}".format(cfg.get("general", "solver")),
-            str(os.path.basename(path).split(".")[0]) + ".dflx",
+            str(os.path.basename(path).split(".")[0]).replace("_csv", "")
+            + ".dflx",
         )
 
     logging.info("Solve the optimisation model: %s", stopwatch())

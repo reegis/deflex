@@ -430,9 +430,7 @@ def add_power_plants(table_collection, nodes):
                 vc = params.variable_costs
                 outflow.variable_costs = solph.sequence(vc)
 
-            plant_name = "{0}_{1}".format(
-                region, idx[1].replace(" - ", "_").replace(".", "")
-            )
+            plant_name = idx[1].replace(" - ", "_").replace(".", "")
 
             trsf_label = Label("trsf", "pp", plant_name, region)
 

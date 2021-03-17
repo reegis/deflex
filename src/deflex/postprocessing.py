@@ -42,16 +42,16 @@ def search_results(path=None, extension="dflx", **parameter_filter):
     >>> from deflex.tools import TEST_PATH
     >>> from deflex.tools import fetch_example_results
     >>> my_file_name = fetch_example_results("de17_heat.dflx")
-    >>> res = search_results(path=TEST_PATH, regions=["17"])
+    >>> res = search_results(path=TEST_PATH, map=["de17"])
     >>> len(res)
-    1
+    2
     >>> res[0].split(os.sep)[-1]
-    'de17_heat.dflx'
-    >>> res = search_results(path=TEST_PATH, regions=["17", "21"])
+    'de17_no-heat.dflx'
+    >>> res = search_results(path=TEST_PATH, map=["de17", "de21"])
     >>> len(res)
-    3
+    4
     >>> res = search_results(
-    ...     path=TEST_PATH, regions=["17", "21"], heat=["true"])
+    ...     path=TEST_PATH, map=["de17", "de21"], heat=["True"])
     >>> len(res)
     1
     >>> res[0].split(os.sep)[-1]
@@ -105,12 +105,12 @@ def restore_results(file_names, scenario_class=DeflexScenario):
     Examples
     --------
     >>> from deflex.tools import fetch_example_results
-    >>> fn1 = fetch_example_results("de21_transmission-losses.dflx")
-    >>> fn2 = fetch_example_results("de02.dflx")
-    >>> restore_results(fn1).keys()
-    ['Problem', 'Solver', 'Solution', 'Main', 'Meta', 'Param']
-    >>> restore_results([fn1, fn2])[0].keys()
-    ['Problem', 'Solver', 'Solution', 'Main', 'Meta', 'Param']
+    >>> fn1 = fetch_example_results("de21_no-heat_transmission.dflx")
+    >>> fn2 = fetch_example_results("de02_no-heat.dflx")
+    >>> sorted(restore_results(fn1).keys())
+    ['Main', 'Meta', 'Param', 'Problem', 'Solution', 'Solver']
+    >>> sorted(restore_results([fn1, fn2])[0].keys())
+    ['Main', 'Meta', 'Param', 'Problem', 'Solution', 'Solver']
     """
     if not isinstance(file_names, list):
         file_names = list((file_names,))
@@ -181,7 +181,7 @@ def reshape_bus_view(results, buses, data=None, aggregate=None):
     --------
     >>> from oemof import solph
     >>> from deflex.tools import fetch_example_results
-    >>> fn = fetch_example_results("de21_copperplate.dflx")
+    >>> fn = fetch_example_results("de21_no-heat.dflx")
     >>> my_es = restore_scenario(fn).es
     >>> my_buses = search_nodes(
     ...     my_es.results, node_type=solph.Bus, tag="electricity")
@@ -201,9 +201,9 @@ def reshape_bus_view(results, buses, data=None, aggregate=None):
     >>> list(df2["in", "trsf", "pp"].columns[:4])
     ['bioenergy_038', 'bioenergy_042', 'bioenergy_045', 'hard_coal_023']
     >>> int(df1.sum().sum())
-    1521426948
+    7529461
     >>> int(df2.sum().sum())
-    1521426948
+    7529461
 
     """
     if aggregate is None:
