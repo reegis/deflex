@@ -49,8 +49,8 @@ def load_scenario(path, file_type=None):
 
     Examples
     --------
-    >>> from deflex.tools import fetch_example_results, TEST_PATH
-    >>> fn = fetch_example_results("de17_heat.xlsx")
+    >>> from deflex.tools import fetch_test_files, TEST_PATH
+    >>> fn = fetch_test_files("de17_heat.xlsx")
     >>> s = load_scenario(fn, file_type="xlsx")
     >>> type(s)
     <class 'deflex.scenario.DeflexScenario'>
@@ -162,9 +162,9 @@ def model_multi_scenarios(scenarios, cpu_fraction=0.2, log_file=None):
 
     Examples
     --------
-    >>> from deflex.tools import fetch_example_results, TEST_PATH
-    >>> fn1 = fetch_example_results("de03_fictive_csv")
-    >>> fn2 = fetch_example_results("de03_fictive_broken.xlsx")
+    >>> from deflex.tools import fetch_test_files, TEST_PATH
+    >>> fn1 = fetch_test_files("de03_fictive_csv")
+    >>> fn2 = fetch_test_files("de03_fictive_broken.xlsx")
     >>> my_log_file = os.path.join(TEST_PATH, "my_log_file.csv")
     >>> my_scenarios = [fn1, fn2]
     >>> model_multi_scenarios(my_scenarios, log_file=my_log_file)
@@ -248,8 +248,8 @@ def batch_model_scenario(path, named=True, file_type=None, ignore_errors=True):
 
     Examples
     --------
-    >>> from deflex.tools import fetch_example_results
-    >>> fn = fetch_example_results("de02_heat_csv")
+    >>> from deflex.tools import fetch_test_files
+    >>> fn = fetch_test_files("de02_heat_csv")
     >>> r = batch_model_scenario(fn, ignore_errors=False)  # doctest: +ELLIPSIS
     Welcome to the CBC MILP ...
     >>> r.name
@@ -332,8 +332,8 @@ def model_scenario(
 
     Examples
     --------
-    >>> from deflex.tools import fetch_example_results, TEST_PATH
-    >>> fn = fetch_example_results("de02_no-heat.xlsx")
+    >>> from deflex.tools import fetch_test_files, TEST_PATH
+    >>> fn = fetch_test_files("de02_no-heat.xlsx")
     >>> r = model_scenario(fn, file_type="xlsx")  # doctest: +ELLIPSIS
     Welcome to the CBC MILP ...
     """

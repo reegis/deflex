@@ -18,7 +18,7 @@ import pytest
 
 from deflex import scenario
 from deflex.tools import TEST_PATH
-from deflex.tools import fetch_example_results
+from deflex.tools import fetch_test_files
 
 
 def test_basic_scenario_class():
@@ -78,7 +78,7 @@ def test_scenario_es_init_error():
 
 def test_excel_reader():
     sc = scenario.DeflexScenario()
-    xls_fn = fetch_example_results("de02_heat.xlsx")
+    xls_fn = fetch_test_files("de02_heat.xlsx")
     sc.read_xlsx(xls_fn)
     sc.initialise_energy_system()
     sc.table2es()
@@ -94,7 +94,7 @@ def test_excel_reader():
 
 def test_build_model():
     sc = scenario.DeflexScenario(debug=True)
-    xls_fn = fetch_example_results("de02_heat.xlsx")
+    xls_fn = fetch_test_files("de02_heat.xlsx")
     sc.read_xlsx(xls_fn)
     sc.compute()
     assert sc.es.results["meta"]["name"] == "deflex_2014_de02_heat_reg-merit"
@@ -102,7 +102,7 @@ def test_build_model():
 
 def test_build_model_manually():
     sc = scenario.DeflexScenario(debug=True)
-    xls_fn = fetch_example_results("de02_no-heat.xlsx")
+    xls_fn = fetch_test_files("de02_no-heat.xlsx")
     sc.read_xlsx(xls_fn)
     sc.initialise_energy_system()
     test_nodes = sc.create_nodes()
@@ -122,6 +122,7 @@ def test_build_model_manually():
     scenario.restore_scenario(dump_fn)
     assert int(sc.meta["year"]) == 2014
     os.remove(dump_fn)
+    os.remove(plot_fn)
 
 
 def test_corrupt_data():
@@ -137,7 +138,7 @@ def test_corrupt_data():
 
 
 def test_restore_an_invalid_scenario():
-    filename = fetch_example_results("de02_heat.xlsx")
+    filename = fetch_test_files("de02_heat.xlsx")
     msg = "The suffix of a valid deflex scenario has to be '.dflx'."
     with pytest.raises(IOError, match=msg):
         scenario.restore_scenario(filename)

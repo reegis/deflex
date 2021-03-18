@@ -40,8 +40,8 @@ def search_results(path=None, extension="dflx", **parameter_filter):
     Examples
     --------
     >>> from deflex.tools import TEST_PATH
-    >>> from deflex.tools import fetch_example_results
-    >>> my_file_name = fetch_example_results("de17_heat.dflx")
+    >>> from deflex.tools import fetch_test_files
+    >>> my_file_name = fetch_test_files("de17_heat.dflx")
     >>> res = search_results(path=TEST_PATH, map=["de17"])
     >>> len(res)
     2
@@ -104,9 +104,9 @@ def restore_results(file_names, scenario_class=DeflexScenario):
 
     Examples
     --------
-    >>> from deflex.tools import fetch_example_results
-    >>> fn1 = fetch_example_results("de21_no-heat_transmission.dflx")
-    >>> fn2 = fetch_example_results("de02_no-heat.dflx")
+    >>> from deflex.tools import fetch_test_files
+    >>> fn1 = fetch_test_files("de21_no-heat_transmission.dflx")
+    >>> fn2 = fetch_test_files("de02_no-heat.dflx")
     >>> sorted(restore_results(fn1).keys())
     ['Main', 'Meta', 'Param', 'Problem', 'Solution', 'Solver']
     >>> sorted(restore_results([fn1, fn2])[0].keys())
@@ -180,8 +180,8 @@ def reshape_bus_view(results, buses, data=None, aggregate=None):
     Examples
     --------
     >>> from oemof import solph
-    >>> from deflex.tools import fetch_example_results
-    >>> fn = fetch_example_results("de21_no-heat.dflx")
+    >>> from deflex.tools import fetch_test_files
+    >>> fn = fetch_test_files("de21_no-heat.dflx")
     >>> my_es = restore_scenario(fn).es
     >>> my_buses = search_nodes(
     ...     my_es.results, node_type=solph.Bus, tag="electricity")

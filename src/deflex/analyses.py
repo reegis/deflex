@@ -119,7 +119,7 @@ def merit_order_from_results(result):
     Examples
     --------
     >>> from deflex import tools, postprocessing
-    >>> fn = tools.fetch_example_results("de02_no-heat.dflx")
+    >>> fn = tools.fetch_test_files("de02_no-heat.dflx")
     >>> my_results = postprocessing.restore_results(fn)
     >>> a = merit_order_from_results(my_results)
     """
@@ -235,7 +235,7 @@ def check_comparision_of_merit_order(scenario):
     Examples
     --------
     >>> from deflex import tools, scenario
-    >>> my_path = tools.fetch_example_results("de02_no-heat.dflx")
+    >>> my_path = tools.fetch_test_files("de02_no-heat.dflx")
     >>> sc = scenario.restore_scenario(my_path)
     >>> check_comparision_of_merit_order(sc)
     Check passed! Both merit order DataFrame tables are the same.
@@ -275,10 +275,10 @@ def get_flow_results(result):
 
     Examples
     --------
-    >>> from deflex.tools import TEST_PATH, fetch_example_results
+    >>> from deflex.tools import TEST_PATH, fetch_test_files
     >>> from deflex import postprocessing as pp
     >>> from deflex.analyses import get_flow_results
-    >>> fn1 = fetch_example_results("de17_heat.dflx")
+    >>> fn1 = fetch_test_files("de17_heat.dflx")
     >>> my_result = pp.restore_results(fn1)
     >>> res = get_flow_results(my_result)
     >>> round(res.loc[34, ("cost", "specific", "trsf")].max(), 2)
@@ -336,10 +336,10 @@ def calculate_market_clearing_price(result=None, flow_results=None):
 
     Examples
     --------
-    >>> from deflex.tools import fetch_example_results
+    >>> from deflex.tools import fetch_test_files
     >>> from deflex import postprocessing as pp
     >>> from deflex.analyses import calculate_market_clearing_price
-    >>> fn1 = fetch_example_results("de17_heat.dflx")
+    >>> fn1 = fetch_test_files("de17_heat.dflx")
     >>> my_result = pp.restore_results(fn1)
     >>> mcp = calculate_market_clearing_price(my_result)
     >>> round(mcp.mean(), 2)
@@ -378,10 +378,10 @@ def calculate_emissions_most_expensive_pp(result=None, flow_results=None):
 
     Examples
     --------
-    >>> from deflex.tools import fetch_example_results
+    >>> from deflex.tools import fetch_test_files
     >>> from deflex import postprocessing as pp
     >>> from deflex.analyses import calculate_market_clearing_price
-    >>> fn1 = fetch_example_results("de17_heat.dflx")
+    >>> fn1 = fetch_test_files("de17_heat.dflx")
     >>> my_result = pp.restore_results(fn1)
     >>> emissions_mcp = calculate_emissions_most_expensive_pp(my_result)
     >>> round(emissions_mcp.mean(), 2)
@@ -439,11 +439,11 @@ def get_key_values_from_results(results, **switch):
 
     Examples
     --------
-    >>> from deflex.tools import TEST_PATH, fetch_example_results
+    >>> from deflex.tools import TEST_PATH, fetch_test_files
     >>> from deflex import postprocessing as pp
     >>> from deflex.analyses import get_key_values_from_results
-    >>> fn1 = fetch_example_results("de17_heat.dflx")
-    >>> fn2 = fetch_example_results("de02_heat.dflx")
+    >>> fn1 = fetch_test_files("de17_heat.dflx")
+    >>> fn2 = fetch_test_files("de02_heat.dflx")
     >>> my_results = pp.restore_results([fn1, fn2])
     >>> kv = get_key_values_from_results(my_results)
     >>> list(kv.columns.get_level_values(1).unique())
