@@ -20,6 +20,8 @@ from deflex import main
 from deflex import postprocessing
 from deflex import tools
 
+# from deflex import DeflexScenario
+
 try:
     from lmfit.models import LinearModel
 except ModuleNotFoundError:
@@ -854,7 +856,30 @@ def check_modules():
 
 if __name__ == "__main__":
     logger.define_logging()
-    my_path = BASEPATH  # change the BASEPATH at the top of the file
+    # my_path = BASEPATH  # change the BASEPATH at the top of the file
+    my_path = os.path.join(BASEPATH, os.pardir, "v03")
+    # sc_fns = main.fetch_scenarios_from_dir(my_path)
+    # for sc_fn in sc_fns:
+    #     sc = main.load_scenario(sc_fn)
+    #     sc.to_xlsx(sc_fn.replace("_csv", ".xlsx"))
+
+    # print(sc_fn)
+    # exit(0)
+    # my_path = "/home/uwe"
+    from deflex import DeflexScenario
+
+    # fn = os.path.join(BASEPATH, "de03_fictive.xlsx")
+    fn = os.path.join(my_path, "deflex_2014_de02_no-heat_csv")
+    sc = DeflexScenario()
+    sc.read_csv(fn)
+    # sc.to_xlsx(fn)
+    # sc.to_csv(os.path.join(BASEPATH, "de03_fictive_csv"))
+    sc.table2es()
+    # sc.plot_nodes(filename=os.path.join(BASEPATH, "de03_fictive.graphml"))
+    model = sc.create_model()
+    sc.solve(model)
+    sc.dump(os.path.join(BASEPATH, "deflex_2014_de02_no-heat.dflx"))
+    exit(0)
     my_result_files = postprocessing.search_results(path=my_path)
     my_results = postprocessing.restore_results(my_result_files)
 
