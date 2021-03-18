@@ -21,9 +21,9 @@ Overview
 ~~~~~~~~
 
 A Deflex scenario can be divided into regions. Each region must have an
-identifier number and be named after it as ``DEXX``, where ``XX`` is the number.
-For refering the Deflex scenario as a whole (i.e. the sum of all regions) use
-``DE`` only.
+identifier number and be named after it as ``DEXX``, where ``XX`` is the
+number. For refering the Deflex scenario as a whole (i.e. the sum of all
+regions) use ``DE`` only.
 
 At the current state the distribution of fossil fuels is neglected. Therefore,
 in order to keep the computing time low it is recommended to define them
@@ -35,6 +35,11 @@ and the decentralised heating sector supra-regional. It is assumed that a
 gas boiler or a filling station is always supplied with enough fuel, so that
 the only the annual values affect the model. This does not apply to electrical
 heating systems or cars.
+
+.. note::
+    NaN-values are not allowed in any table. Some columns are optional and can
+    be left out, but if a column is present there have to be values in every
+    row. Neutral values can be ``0``, ``1`` or ``inf``.
 
      * The input data is the data that must be provided to Deflex for it to create a scenario. This data con be provided either as csv or as an xlsx format.
      * Since the input data is quite varied, it is divided into 15 different groups, in order to have it more organized and clear. Taking the xlsx format as example, the data is divided into 15 sheets.
@@ -53,17 +58,39 @@ High-level-input (mandatory)
     :local:
     :backlinks: top
 
-General (mandatory)
-+++++++++++++++++++
-This sheet requires basic data about the scenario in order to be able to create it: year, number of time steps, CO2 price [€/t] and name of it.
+General
++++++++
+This sheet requires basic data about the scenario in order to be able to
+create it: year, number of time steps, CO2 price [€/t] and name of it.
 
-Info (optional?)
-++++++++++++++++
-On this sheet, additional information that characterizes the scenario can be added. The idea behind Info is that the user can filter different scenarios under different characteristics. Therefore, more keys can be written depending on the needs of each user. Examples are the number of regions, the costs source used, or if the copperplate mode is used or not (cooperplate mode means that all capacities and efficiencies in the power lines are infinite and 1 respectively)
+Info
+++++
+On this sheet, additional information that characterizes the scenario can be
+added. The idea behind Info is that the user can filter stored scenarios using
+the :py:func:`~deflex.postprocessing.search_results` function.
 
+You can create any key-value pair which is suitable for you group of scenarios.
 
-Commodity sources (mandatory)
-+++++++++++++++++++++++++++++
+e.g. key: ``scenario_type`` value: ``foo`` / ``bar`` / ``foobar``
+
+Afterwards you can search for all scenarios where the ``scenario_type`` is
+``foo`` using:
+
+.. code-block:: python
+
+    search_results(path=my_path, scenario_type=["foo"])
+
+or with other keys and multiple values:
+
+.. code-block:: python
+
+    search_results(path=my_path, scenario_type=["foo", "bar"], my_key["v1"])
+
+The second code line will return only files with (``foo`` or ``bar``) and
+``v1``.
+
+Commodity sources
++++++++++++++++++
 
 +------+-----------+---------------+------------------+--------------------+
 |      | fuel type | costs [€/MWh] | emission [t/MWh] | annual limit [MWh] |
@@ -79,11 +106,25 @@ Commodity sources (mandatory)
 | ...  | ...       | ...           | ...              | ...                |
 +------+-----------+---------------+------------------+--------------------+
 
-As the name says, this sheet requires data from all the commodities (i.e. non volatile) the scenario uses. Generation cost, emission factor and the annual maximum generation limit (if there is one, otherwise just write *inf*) must be provided. The data can be provided either global under DE, regional under DEXX or as a combination of both, where some commodities are global and some are regional. Regionalized commodities are specially useful for commodities with an annual limit, for example bioenergy. It is important to remark that commodities does not mean fossil fuels, althought all of them are commodities. Commodities mean the fuels with which energy generation can be controlled.
+As the name says, this sheet requires data from all the commodities (i.e. non
+volatile) the scenario uses. Generation cost, emission factor and the annual
+maximum generation limit (if there is one, otherwise just write *inf*) must be
+provided. If the ``annual limit`` is ``inf`` in any line the column can be left
+out.
+The data can be provided either global under DE, regional under DEXX or as a
+combination of both, where some commodities are global and some are regional.
+Regionalised commodities are specially useful for commodities with an annual
+limit, for example bioenergy. It is important to remark that commodities does
+not mean fossil fuels, although all of them are commodities.
+
+??Commodities mean the fuels with which energy generation can be controlled??
 
 Data sources (optional)
 +++++++++++++++++++++++
-*Highly recomended*. Here the type data, the source name and the url from where they were obtained can be listed.
+*Highly recomended*. Here the type data, the source name and the url from where
+they were obtained can be listed. It is a free format and additional columns
+can be added. This table helps to make your scenario as transparent as
+possible.
 
 Electricity sector (mandatory)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -93,8 +134,8 @@ Electricity sector (mandatory)
     :local:
     :backlinks: top
 
-Electricity demand series (mandatory)
-+++++++++++++++++++++++++++++++++++++
+Electricity demand series
++++++++++++++++++++++++++
 
 +-------------+----------+----------+-----------+----------+----------+-----+
 |             |   DE01   |            DE02                 | DE03     | ... |
@@ -108,10 +149,14 @@ Electricity demand series (mandatory)
 | ...         | ...      | ...      | ...       | ...      | ...      | ... |
 +-------------+----------+----------+-----------+----------+----------+-----+
 
-This sheet requires the electricity demand of the scenario. The demand must be provided in a time series form, with the time step specified *general*, for each region in [MW] as the table shows. Electrcity demand can be entered as a whole for each region as DE01 shows or it can be divided into different sectors as DE 02 shows. 
+This sheet requires the electricity demand of the scenario. The demand must
+be provided in a time series form, with the time step specified *general*,
+for each region in [MW] as the table shows. Electrcity demand can be entered
+as a whole for each region as DE01 shows or it can be divided into different
+sectors as DE02 shows.
 
-Power plants (mandatory)
-++++++++++++++++++++++++
+Power plants
+++++++++++++
 
 +------+------+---------------+-------+------+------------+-------------+-----------------------+-----------------+---------------+
 |      | Name | capacity [MW] | count | fuel | efficiency | limit [MWh] | variable_cost [€/MWh] | downtime_factor | source_region |
@@ -131,8 +176,8 @@ Power plants (mandatory)
 
 Here information about the power plants is required. The data must be divided by region and subdivided by fuel. The capacity column represents the total capacitiy of all the plants operating with the same fuel in one region, while count represents the number of plants. Fuel and efficiency must be provided too along with the maximal amount of energy produced in the whole year, which is called *limit*. This parameter has the function of setting a maximum energy generation level for each power plant so that all plants work in parallel. Otherwise, it could be the case that during the entire period only one plant works, which in reality does not happen. It is also possible to introduce variable costs for each plant and/or a downtime factor for each plant, but these last three are not mandatory. Finally source_region indicates from which region does the fuel come. In case the fuel is regionally classified in *commodities*, usually the source_region will be that region. In case the fuel is globally classified in *commodities*, then the source_region will be DE.
 
-Volatiles plants (optional?)
-++++++++++++++++++++++++++++
+Volatiles plants
+++++++++++++++++
 
 +------+------+---------------+
 |      | Name | capacity [MW] |
@@ -152,8 +197,8 @@ Volatiles plants (optional?)
 
 In this context volatility means, all sources in which power production cannot be controlled. Examples are solar, wind, hydro, geothermal (geothermal power plant, not confuse it with geothermal heating nor ground source heat pumps). Same as the previous sheet, here data must be provided divided by region and subdivided by energy source. Again, the capacity of the region is the sum of the capacitiy of all plants operating with the same energy source.
 
-Volatiles series (optional?)
-++++++++++++++++++++++++++++
+Volatiles series
+++++++++++++++++
 
 +-------------+------+-----+------+------+-----+-----+
 |             |     DE01   | DE02 |    DE03    | ... |
@@ -169,8 +214,8 @@ Volatiles series (optional?)
 
 This sheet provides the amount of energy from volatile plants that is generated in each time step. On each time step, the amount of energy generated with respect to the total capacitiy (volatile_plants) is indicated with a value between 0 and 1. In each region there are as many columns as volatile energy sources in the previous sheet.
 
-Electricity storages (optional)
-+++++++++++++++++++++++++++++++
+Electricity storages
+++++++++++++++++++++
 
 +------+--------------+--------------------+--------------------+----------------------+-------------------------+------------+---------------+----------------+
 |      | Storage type | max capacity [MWh] | Energy inflow [MW] | charge capacity [MW] | discharge capacity [MW] | charge eff | discharge eff | self-discharge |
@@ -186,8 +231,8 @@ Electricity storages (optional)
 
 Here information about electricity storages is needed. Since this is part of the power sector, all storages must be registered regionally. As there are different storage technologies (pumped hydro, batteries, compressed air, etc), the information can be entered in a general way where each name corresponds to a different storage type.
 
-Power lines (mandatory)
-+++++++++++++++++++++++
+Power lines
++++++++++++
 
 +-----------+---------------+------------+
 |           | capacity [MW] | efficiency |
