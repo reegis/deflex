@@ -45,8 +45,8 @@ def search_results(path=None, extension="dflx", **parameter_filter):
     >>> res = search_results(path=TEST_PATH, map=["de17"])
     >>> len(res)
     2
-    >>> res[0].split(os.sep)[-1]
-    'de17_no-heat.dflx'
+    >>> sorted(res)[0].split(os.sep)[-1]
+    'de17_heat.dflx'
     >>> res = search_results(path=TEST_PATH, map=["de17", "de21"])
     >>> len(res)
     4

@@ -879,7 +879,7 @@ if __name__ == "__main__":
     model = sc.create_model()
     sc.solve(model)
     sc.dump(os.path.join(BASEPATH, "deflex_2014_de02_no-heat.dflx"))
-    exit(0)
+    # exit(0)
     my_result_files = postprocessing.search_results(path=my_path)
     my_results = postprocessing.restore_results(my_result_files)
 
