@@ -99,18 +99,7 @@ def create_fuel_bus_with_source(nodes, fuel, region, input_data):
 
     variable_costs = cs_data["emission"] / 1000 * co2_price + cs_data["costs"]
 
-    if cs_data["annual limit"] == float("inf"):
-        if cs_label not in nodes:
-            nodes[cs_label] = solph.Source(
-                label=cs_label,
-                outputs={
-                    nodes[bus_label]: solph.Flow(
-                        variable_costs=variable_costs,
-                        emission=cs_data["emission"],
-                    )
-                },
-            )
-    else:
+    if cs_data.get("annual limit", float("inf")) != float("inf"):
         if cs_label not in nodes:
             nodes[cs_label] = solph.Source(
                 label=cs_label,
@@ -120,6 +109,18 @@ def create_fuel_bus_with_source(nodes, fuel, region, input_data):
                         emission=cs_data["emission"],
                         nominal_value=cs_data["annual limit"],
                         summed_max=1,
+                    )
+                },
+            )
+
+    else:
+        if cs_label not in nodes:
+            nodes[cs_label] = solph.Source(
+                label=cs_label,
+                outputs={
+                    nodes[bus_label]: solph.Flow(
+                        variable_costs=variable_costs,
+                        emission=cs_data["emission"],
                     )
                 },
             )
