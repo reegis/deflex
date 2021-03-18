@@ -9,6 +9,9 @@ THIS CHAPTER IS WORK IN PROGRESS...
     :local:
     :backlinks: top
 
+
+.. _deflex_scenario:
+
 DeflexScenario
 --------------
 
@@ -20,6 +23,7 @@ All input data is stored as a dictionary in the ``input_data`` attribute of the
 and the values are ``pandas.DataFrame`` or ``pandas.Series`` with the data.
 
 [TODO: add reference to DeflexScenario]
+
 
 Load input data
 ~~~~~~~~~~~~~~~
