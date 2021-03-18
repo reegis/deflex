@@ -19,8 +19,9 @@ The scenario class :py:class:`~deflex.scenario.DeflexScenario` is a central
 element of deflex.
 
 All input data is stored as a dictionary in the ``input_data`` attribute of the
-``DeflexScenario`` class. The keys of the ``dictionary`` are names of the data table
-and the values are ``pandas.DataFrame`` or ``pandas.Series`` with the data.
+``DeflexScenario`` class. The keys of the ``dictionary`` are names of the data
+table and the values are ``pandas.DataFrame`` or ``pandas.Series`` with the
+data.
 
 [TODO: add reference to DeflexScenario]
 
@@ -118,9 +119,6 @@ IMPORTANT: This is just an example and not a source for the actual merit order
 in Germany.
 
 
-/home/uwe/git-projects/reegis/deflex/docs/images/merit_order_example_plot_coloured.svg
-
-
 Results
 -------
 
@@ -168,10 +166,11 @@ to be strings regardless of the original type:
 
     search_results(path=TEST_PATH, regions=["17", "21"], heat=["true"])
 
-There is always an ``AND`` connection between all filters so the filter above
-will only return results with 17 or 21 regions and with the heat-tag set to
-true. The returning list can be used as an input parameter to load the results
-and get a list of results dictionaries.
+There is always an ``AND`` connection between all filters and an ``OR``
+connectionso within a list. So The filter above will only return results with
+17 ``or`` 21 regions ``and`` with the heat-tag set to true. The returning list
+can be used as an input parameter to load the results and get a list of results
+dictionaries.
 
 .. code-block:: python
 

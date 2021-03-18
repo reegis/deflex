@@ -119,8 +119,8 @@ not mean fossil fuels, although all of them are commodities.
 
 ??Commodities mean the fuels with which energy generation can be controlled??
 
-Data sources (optional)
-+++++++++++++++++++++++
+Data sources
+++++++++++++
 *Highly recomended*. Here the type data, the source name and the url from where
 they were obtained can be listed. It is a free format and additional columns
 can be added. This table helps to make your scenario as transparent as
@@ -151,7 +151,7 @@ Electricity demand series
 
 This sheet requires the electricity demand of the scenario. The demand must
 be provided in a time series form, with the time step specified *general*,
-for each region in [MW] as the table shows. Electrcity demand can be entered
+for each region in [MW] as the table shows. Electricity demand can be entered
 as a whole for each region as DE01 shows or it can be divided into different
 sectors as DE02 shows.
 
