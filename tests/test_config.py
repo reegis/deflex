@@ -24,7 +24,7 @@ def test_ini_filenames_basic():
     files = config.get_ini_filenames()
     local_path = os.path.join(os.path.expanduser("~"), ".deflex")
     fn = sorted([f.split(os.sep)[-1] for f in files if local_path not in f])
-    assert fn == ["deflex.ini"]
+    assert fn == ["creator.ini", "deflex.ini"]
 
 
 def test_ini_filenames_local_path():
@@ -48,7 +48,7 @@ def test_ini_filenames_additional_path():
     files = config.get_ini_filenames(additional_paths=additional_path)
     local_path = os.path.join(os.path.expanduser("~"), ".deflex")
     fn = sorted([f.split(os.sep)[-1] for f in files if local_path not in f])
-    assert fn == ["config_test.ini", "deflex.ini", "plot.ini"]
+    assert fn == ["config_test.ini", "creator.ini", "deflex.ini", "plot.ini"]
 
 
 def test_init_basic():
@@ -57,7 +57,7 @@ def test_init_basic():
     fn = sorted(
         [f.split(os.sep)[-1] for f in config.FILES if local_path not in f]
     )
-    assert fn == ["deflex.ini"]
+    assert fn == ["creator.ini", "deflex.ini"]
 
 
 def test_init_additional_path():
@@ -67,7 +67,7 @@ def test_init_additional_path():
     fn = sorted(
         [f.split(os.sep)[-1] for f in config.FILES if local_path not in f]
     )
-    assert fn == ["config_test.ini", "deflex.ini"]
+    assert fn == ["config_test.ini", "creator.ini", "deflex.ini"]
 
 
 def test_init_own_file_list():

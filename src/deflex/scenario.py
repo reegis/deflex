@@ -204,7 +204,7 @@ class Scenario:
         if isinstance(self.input_data["volatile plants"], pd.Series):
             self.input_data["volatile plants"] = pd.DataFrame(
                 self.input_data["volatile plants"],
-                columns=[self.input_data["volatile plants"].name]
+                columns=[self.input_data["volatile plants"].name],
             )
 
     def to_xlsx(self, filename):

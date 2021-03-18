@@ -197,13 +197,13 @@ def reshape_bus_view(results, buses, data=None, aggregate=None):
     >>> list(df2["in", "line", "electricity"].columns[:5])
     ['DE01', 'DE02', 'DE03', 'DE04', 'DE05']
     >>> list(df1["in", "trsf", "pp"].columns[:4])
-    ['bioenergy', 'hard_coal', 'lignite', 'natural_gas']
+    ['bioenergy', 'hard coal', 'lignite', 'natural gas']
     >>> list(df2["in", "trsf", "pp"].columns[:4])
-    ['bioenergy_038', 'bioenergy_042', 'bioenergy_045', 'hard_coal_023']
+    ['bioenergy_038', 'bioenergy_042', 'bioenergy_045', 'hard coal_023']
     >>> int(df1.sum().sum())
-    7529461
+    7529364
     >>> int(df2.sum().sum())
-    7529461
+    7529364
 
     """
     if aggregate is None:

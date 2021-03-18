@@ -185,7 +185,6 @@ def model_multi_scenarios(scenarios, cpu_fraction=0.2, log_file=None):
     >>> broken["result_file"]
     nan
     >>> os.remove(my_log_file)
-    >>> os.remove(good["result_file"])
     """
     start = datetime.now()
     maximal_number_of_cores = int(
@@ -270,7 +269,6 @@ def batch_model_scenario(path, named=True, file_type=None, ignore_errors=True):
     >>> r.result_file
     >>> r.trace  # doctest: +ELLIPSIS
     'Traceback (most recent call last):...
-    >>> os.remove(result_file)  # remove test results, skip this line to go on
     """
     out = namedtuple(
         "out", ["name", "return_value", "trace", "result_file", "start_time"]
@@ -338,7 +336,6 @@ def model_scenario(
     >>> fn = fetch_example_results("de02_no-heat.xlsx")
     >>> r = model_scenario(fn, file_type="xlsx")  # doctest: +ELLIPSIS
     Welcome to the CBC MILP ...
-    >>> os.remove(r)  # remove test results, skip this line to go on
     """
     stopwatch()
 

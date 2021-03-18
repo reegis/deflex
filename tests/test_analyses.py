@@ -19,7 +19,7 @@ from deflex import postprocessing
 
 def test_flow_results():
     """The flow results are not fetched or calculated correctly.n"""
-    my_fn = deflex.tools.fetch_example_results("de02.dflx")
+    my_fn = deflex.tools.fetch_example_results("de02_heat.dflx")
     my_res = postprocessing.restore_results(my_fn)
     mo = analyses.merit_order_from_results(my_res)
     seq = analyses.get_flow_results(my_res)

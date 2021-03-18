@@ -26,14 +26,13 @@ from deflex import scenario as st
 from deflex import scenario_creator
 from deflex.geometries import deflex_power_lines
 from deflex.geometries import deflex_regions
+from deflex.tools import TEST_PATH
 
 
 class TestScenarioCreationFull:
     @classmethod
     def setup_class(cls):
-        path = os.path.join(
-            os.path.dirname(__file__), "data", "deflex_2014_de21_test_csv"
-        )
+        path = os.path.join(TEST_PATH, "de22_heat_transmission_csv")
         sc = st.DeflexScenario()
         sc.read_csv(path)
         cls.tables = sc.input_data
@@ -43,7 +42,7 @@ class TestScenarioCreationFull:
             "downtime_bioenergy": 0.1,
             "limited_transformer": "bioenergy",
             "local_fuels": "district heating",
-            "map": "de21",
+            "map": "de22",
             "mobility_other": "petrol",
             "round": 1,
             "separate_heat_regions": "de22",
@@ -51,7 +50,7 @@ class TestScenarioCreationFull:
             "default_transmission_efficiency": 0.9,
             "group_transformer": False,
             "heat": True,
-            "use_CO2_costs": False,
+            "use_CO2_costs": True,
             "use_downtime_factor": True,
             "use_variable_costs": False,
             "year": 2014,
@@ -78,7 +77,7 @@ class TestScenarioCreationFull:
 
         powerplants.scenario_chp = MagicMock(
             return_value={
-                "chp-heat plants": cls.tables["chp-heat plants"],
+                "heat-chp plants": cls.tables["heat-chp plants"],
                 "power plants": cls.tables["power plants"],
             }
         )
@@ -86,11 +85,16 @@ class TestScenarioCreationFull:
         feedin.scenario_feedin = MagicMock(
             return_value=cls.tables["volatile series"]
         )
-        demand.scenario_demand = MagicMock(
-            return_value=cls.tables["demand series"]
-        )
 
-        name = "de21"
+        demand_table = {
+            "electricity demand series": cls.tables[
+                "electricity demand series"
+            ],
+            "heat demand series": cls.tables["heat demand series"],
+        }
+        demand.scenario_demand = MagicMock(return_value=demand_table)
+
+        name = "deflex_2014_de22_heat_transmission"
 
         polygons = deflex_regions(rmap=parameter["map"], rtype="polygons")
         lines = deflex_power_lines(parameter["map"]).index
@@ -109,20 +113,30 @@ class TestScenarioCreationFull:
         )
 
     def test_storages(self):
-        a = self.tables["storages"].apply(pd.to_numeric).astype(float)
-        b = self.input_data["storages"].apply(pd.to_numeric)
+        a = self.tables["electricity storages"].apply(pd.to_numeric)
+        b = self.input_data["electricity storages"].apply(pd.to_numeric)
+        b["energy inflow"] *= 48 / 8760
         for col in a.columns:
             pd.testing.assert_series_equal(a[col], b[col])
         # pd.testing.assert_frame_equal(a, b)
 
-    def test_demand_series(self):
-        print(list(self.input_data.keys()))
+    def test_electricity_demand_series(self):
         pd.testing.assert_frame_equal(
-            self.tables["demand series"],
-            self.input_data["demand series"],
+            self.tables["electricity demand series"],
+            self.input_data["electricity demand series"],
+        )
+
+    def test_heat_demand_series(self):
+        pd.testing.assert_frame_equal(
+            self.tables["heat demand series"],
+            self.input_data["heat demand series"],
         )
 
     def test_transmission(self):
+        self.input_data["power lines"].drop(
+            ("electrical", "distance"), axis=1, inplace=True
+        )
+        self.tables["power lines"].index.name = "name"
         pd.testing.assert_frame_equal(
             self.tables["power lines"].apply(pd.to_numeric).astype(float),
             self.input_data["power lines"].apply(pd.to_numeric),
@@ -144,13 +158,15 @@ class TestScenarioCreationFull:
     def test_commodity_source(self):
         pd.testing.assert_frame_equal(
             self.tables["commodity sources"],
-            self.input_data["commodity sources"],
+            self.input_data["commodity sources"]
+            .apply(pd.to_numeric)
+            .astype(float),
         )
 
     def test_mobility_series(self):
         pd.testing.assert_frame_equal(
-            self.tables["mobility series"],
-            self.input_data["mobility series"],
+            self.tables["mobility demand series"],
+            self.input_data["mobility demand series"].iloc[0:48],
         )
 
     def test_mobility(self):
@@ -164,8 +180,8 @@ class TestScenarioCreationFull:
 
     def test_chp_hp(self):
         pd.testing.assert_frame_equal(
-            self.tables["chp-heat plants"],
-            self.input_data["chp-heat plants"],
+            self.tables["heat-chp plants"],
+            self.input_data["heat-chp plants"],
         )
 
     def test_decentralised_heat(self):
@@ -190,9 +206,7 @@ class TestScenarioCreationFull:
 class TestScenarioCreationPart:
     @classmethod
     def setup_class(cls):
-        path = os.path.join(
-            os.path.dirname(__file__), "data", "deflex_2014_de21_part_csv"
-        )
+        path = os.path.join(TEST_PATH, "de21_no-heat_csv")
         sc = st.DeflexScenario()
         sc.read_csv(path)
         cls.tables = sc.input_data
@@ -216,15 +230,16 @@ class TestScenarioCreationPart:
         feedin.scenario_feedin = MagicMock(
             return_value=cls.tables["volatile series"]
         )
-        demand.scenario_demand = MagicMock(
-            return_value=cls.tables["demand series"]
-        )
-
-        name = "de21"
+        demand_table = {
+            "electricity demand series": cls.tables[
+                "electricity demand series"
+            ]
+        }
+        demand.scenario_demand = MagicMock(return_value=demand_table)
 
         my_parameter = {
-            "copperplate": False,
-            "group_transformer": True,
+            "copperplate": True,
+            "group_transformer": False,
             "heat": False,
             "use_variable_costs": True,
             "use_CO2_costs": True,
@@ -240,7 +255,7 @@ class TestScenarioCreationPart:
         base = os.path.join(os.path.expanduser("~"), ".tmp_x345234dE_deflex")
         os.makedirs(base, exist_ok=True)
         path = os.path.join(base, "deflex_test{0}")
-
+        name = "deflex_2014_de21_no-heat"
         scenario_creator.create_basic_reegis_scenario(
             name=name,
             regions=polygons,
@@ -266,16 +281,17 @@ class TestScenarioCreationPart:
         )
 
     def test_storages(self):
-        a = self.tables["storages"].apply(pd.to_numeric).astype(float)
-        b = self.input_data["storages"].apply(pd.to_numeric)
+        a = self.tables["electricity storages"].apply(pd.to_numeric)
+        b = self.input_data["electricity storages"].apply(pd.to_numeric)
+        b["energy inflow"] *= 48 / 8760
         for col in a.columns:
             pd.testing.assert_series_equal(a[col], b[col])
         # pd.testing.assert_frame_equal(a, b)
 
-    def test_demand_series(self):
+    def test_electricity_demand_series(self):
         pd.testing.assert_frame_equal(
-            self.tables["demand series"],
-            self.input_data["demand series"],
+            self.tables["electricity demand series"],
+            self.input_data["electricity demand series"],
         )
 
     def test_transmission(self):
@@ -304,8 +320,8 @@ class TestScenarioCreationPart:
 
     def test_mobility_series(self):
         pd.testing.assert_frame_equal(
-            self.tables["mobility series"],
-            self.input_data["mobility series"],
+            self.tables["mobility demand series"],
+            self.input_data["mobility demand series"].iloc[0:48],
         )
 
     def test_mobility(self):

@@ -92,7 +92,7 @@ def create_scenario(regions, year, name, lines, opsd_version=None):
     logging.info("BASIC SCENARIO - TRANSMISSION")
     if len(regions) > 1:
         table_collection["power lines"] = transmission.scenario_transmission(
-            regions, name, lines
+            regions, lines
         )
     else:
         logging.info("...skipped")
