@@ -41,15 +41,6 @@ heating systems or cars.
     be left out, but if a column is present there have to be values in every
     row. Neutral values can be ``0``, ``1`` or ``inf``.
 
-     * The input data is the data that must be provided to Deflex for it to create a scenario. This data con be provided either as csv or as an xlsx format.
-     * Since the input data is quite varied, it is divided into 15 different groups, in order to have it more organized and clear. Taking the xlsx format as example, the data is divided into 15 sheets.
-     * It is not necessary to fill in all the input data to create a scenario, there is mandatory and optional data, where more detailed scenarios can be created. For exmaple, the power sector is mandatory while heating and mobility sectors are optional. In each group of input data it is indicated whether it is mandatory or not.
-     * As a brief overview the data is divided into sources (which are subdivided into volatiles and commodities), demands (which are divided into power, heating and mobility), electrcity sotrages, and power lines.
-     * A Deflex scenario can be divided into regions. Each region must have an identifier number and be named after it as DEXX, where XX is the number. For refering the Deflex scenario as a whole (i.e. the sum of all regions) use DE only.
-     * It is important to mention how the three sectors are treated in Deflex. From one side the power sector is treated regionally, which means, each region must contain their sources (power plants and volatiles), electricity storages and electricity demands. Besides that, there must be power lines connecting different regions. Heat and mobility sectors can be treated regionally, globally or as a combination of both. Here a way to treat these two sectors is proposed, but in the end it is up to each user. It is recommended to treat the mobility sector globally, which means, that the demand of the scenario is treated as one single input under DE. The reason behind this is that the energy source of mobility is mainly oil, which does not have an infractrusture in Deflex as the power sector does (power plants, transmission lines). Thus, for Deflex the mobility demand is independent of the place in which it occurs, making it easier to deal with it on a global scale. However, for future scenarios, where electricity plays an important role in mobility, it is necessary to regionalize at least the electricity demand within mobility. For the heating sector, it is advisable to treat one part as global and the other as regional. The reason for this is due to the nature of this sector, which on the one hand has decentralized sources (gas biolers in each house for example) and on the other hand has heat plants that supply heat through district heating to multiple points. Because of that, the decentralized sources can be linked to a single global demand, as the mobilite sector is, and the heat plants can be linked to regional demands, as the power sector is. Logically to do this, separate input data must be given on how much demand is covered by heat plants/district heating and how much demand is covered with decentralized technologies.
-     * The 15 different sheets are described below in the order in which the sheets are in the xlsx document. Each of them has a table at the beginning where the framework of the sheet is indicated. After general, info and commodities, the power sector data is required, followed by the heating sector data and finally the mobility sector data.
-
-
 High-level-input (mandatory)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -91,6 +82,10 @@ The second code line will return only files with (``foo`` or ``bar``) and
 
 Commodity sources
 +++++++++++++++++
+
+In most spread sheet software it is possible to connect cells to increase
+readability. These lines are interpreted correctly. In csv files the values
+have to appear in every cell.
 
 +------+-----------+---------------+------------------+--------------------+
 |      | fuel type | costs [€/MWh] | emission [t/MWh] | annual limit [MWh] |
@@ -158,21 +153,59 @@ sectors as DE02 shows.
 Power plants
 ++++++++++++
 
-+------+------+---------------+-------+------+------------+-------------+-----------------------+-----------------+---------------+
-|      | Name | capacity [MW] | count | fuel | efficiency | limit [MWh] | variable_cost [€/MWh] | downtime_factor | source_region |
-+------+------+---------------+-------+------+------------+-------------+-----------------------+-----------------+---------------+
-| DE01 | N1   |               |       |      |            |             |                       |                 |               |
-+------+------+---------------+-------+------+------------+-------------+-----------------------+-----------------+---------------+
-|      | N2   |               |       |      |            |             |                       |                 |               |
-+------+------+---------------+-------+------+------------+-------------+-----------------------+-----------------+---------------+
-|      | N3   |               |       |      |            |             |                       |                 |               |
-+------+------+---------------+-------+------+------------+-------------+-----------------------+-----------------+---------------+
-| DE02 | N2   |               |       |      |            |             |                       |                 |               |
-+------+------+---------------+-------+------+------------+-------------+-----------------------+-----------------+---------------+
-|      | N3   |               |       |      |            |             |                       |                 |               |
-+------+------+---------------+-------+------+------------+-------------+-----------------------+-----------------+---------------+
-| ...  | ...  | ...           | ...   | ...  | ...        | ...         | ...                   | ...             | ...           |
-+------+------+---------------+-------+------+------------+-------------+-----------------------+-----------------+---------------+
+:samp:`key: "power plants", value: pandas.DataFrame()`
+
++-------+------+----------+------+------------+--------------------------+---------------+-----------------+---------------+
+| region| name | capacity | fuel | efficiency | annual electricity limit | variable_cost | downtime_factor | source_region |
++-------+------+----------+------+------------+--------------------------+---------------+-----------------+---------------+
+|       | N1   |          |      |            |                          |               |                 |               |
++       +------+----------+------+------------+--------------------------+---------------+-----------------+---------------+
+| DE01  | N2   |          |      |            |                          |               |                 |               |
++       +------+----------+------+------------+--------------------------+---------------+-----------------+---------------+
+|       | N3   |          |      |            |                          |               |                 |               |
++-------+------+----------+------+------------+--------------------------+---------------+-----------------+---------------+
+| DE02  | N2   |          |      |            |                          |               |                 |               |
++       +------+----------+------+------------+--------------------------+---------------+-----------------+---------------+
+|       | N3   |          |      |            |                          |               |                 |               |
++-------+------+----------+------+------------+--------------------------+---------------+-----------------+---------------+
+| ...   | ...  | ...      | ...  | ...        | ...                      | ...           | ...             | ...           |
++-------+------+----------+------+------------+--------------------------+---------------+-----------------+---------------+
+
+**INDEX**
+
+region: ``str``
+    DEXX (e.g. DE01, DE20)
+name: ``str``
+    arbitrary
+
+**COLUMNS**
+
+capacity: ``float``
+    The installed capacity of the power plant [MW].
+
+fuel: ``str``
+    The used fuel of the power plant. The fuel name as to be equal to the fuel
+    type of the commodity sources.
+
+efficiency: ``float``
+    The average overall efficiency of the power plant.
+
+annual limit: ``float``
+    The absolute maximum limit of produced electricity within the whole
+    modeling period [MWh].
+
+variable_costs: ``float``
+    The variable costs per produced electricity unit [€/MWh].
+
+downtime_factor: ``float``
+    The time fraction of the modeling period in which the power plant cannot
+    produce electricity. The installed capacity will be reduced by this factor.
+    ``capacity * (1 - downtime_factor)``
+
+source_region
+    The source region of the fuel source. Typically this is the region of the
+    index or ``DE`` if it is a global commodity source. The combination of fuel
+    and region must exist in the commodity sources table.
 
 Here information about the power plants is required. The data must be divided by region and subdivided by fuel. The capacity column represents the total capacitiy of all the plants operating with the same fuel in one region, while count represents the number of plants. Fuel and efficiency must be provided too along with the maximal amount of energy produced in the whole year, which is called *limit*. This parameter has the function of setting a maximum energy generation level for each power plant so that all plants work in parallel. Otherwise, it could be the case that during the entire period only one plant works, which in reality does not happen. It is also possible to introduce variable costs for each plant and/or a downtime factor for each plant, but these last three are not mandatory. Finally source_region indicates from which region does the fuel come. In case the fuel is regionally classified in *commodities*, usually the source_region will be that region. In case the fuel is globally classified in *commodities*, then the source_region will be DE.
 
