@@ -35,9 +35,9 @@ os.makedirs(path, exist_ok=True)
 fn = os.path.join(path, "deflex_scenario_examples_v03.zip")
 if not os.path.isfile(fn):
     tools.download(fn, url)
-    with ZipFile(fn, "r") as zip_ref:
-        zip_ref.extractall(path)
-    logging.info("All v0.3.x scenarios examples extracted to %s." % path)
+with ZipFile(fn, "r") as zip_ref:
+    zip_ref.extractall(path)
+logging.info("All v0.3.x scenarios examples extracted to %s.", path)
 
 # Look in your folder above. You should see some scenario files. The csv and
 # the xlsx scenarios are the same. The csv-directories cen be read faster by

@@ -73,7 +73,7 @@ if not os.path.isfile(my_fn):
     tools.download(my_fn, OSF_URL)
     with ZipFile(my_fn, "r") as zip_ref:
         zip_ref.extractall(my_path)
-    logging.info("All v0.3.x result examples extracted to %s." % my_path)
+    logging.info("All v0.3.x result examples extracted to %s.", my_path)
 
 # Search for all de02-result-files.
 result_files = pp.search_results(path=my_path, map=["de02"])
@@ -87,7 +87,7 @@ key_values = analyses.get_key_values_from_results(results)
 # Store the table with the key_values
 key_values_file = os.path.join(my_path, "key_values_v03.xlsx")
 key_values.to_excel(key_values_file)
-logging.info("Key values stored to %s." % key_values_file)
+logging.info("Key values stored to %s.", key_values_file)
 
 # Download Entsoe day ahead prices from OPSD
 opsd = get_price_from_opsd(my_path)
@@ -101,7 +101,7 @@ mcp = pd.DataFrame(key_values["mcp"])
 mcp["opsd"] = opsd.reset_index(drop=True)
 mcp.set_index(opsd.index, drop=True, inplace=True)
 mcp.tz_localize(None).to_excel(mcp_file)
-logging.info("File with mcp stored to %s." % key_values_file)
+logging.info("File with mcp stored to %s.", key_values_file)
 
 # Read and plot the table. You can set the path to the file once it is created.
 # Afterwards you will have to execute only the lines below and adapt the plot
