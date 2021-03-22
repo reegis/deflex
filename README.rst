@@ -110,19 +110,17 @@ Use example
 
 1. Run ``pip install deflex[example]``
 2. Create a local directory (e.g. /home/user/deflex_examples).
-3. Download the
-   `example <https://raw.githubusercontent.com/reegis/deflex/master/examples/examples.py>`_
-   to this new directory.
-4. Now execute the example file. The script will download some example
-   scenarios with results and show some exemplary plots.
-5. A directory "deflex_examples" will be created in you home directory. Use
-   ``print(os.path.expanduser("~"))`` to find out where your home directory is
-   located. If you want to change it replace the base path in the example:
-
-.. code-block:: diff
-
-    - BASEPATH = os.path.join(os.path.expanduser("~"), "deflex_examples")
-    + BASEPATH = "/your/favoured/path/"
+3. Download the example scripts to this directory. There are two example. The
+   `model_example.py
+   <https://raw.githubusercontent.com/reegis/deflex/master/examples/examples.py>`_
+   will explain the modelling process, the
+   `basic_analyses_example.py
+   <https://files.osf.io/v1/resources/a5xrj/providers/github/examples/examples.py?action=download&direct&version>`_
+   will show you how to analyse the results.
+4. Read the comments of each example, execute it and modify it to your needs.
+   Do not forget to set the ``my_path`` in the examples first.
+5. In parallel you should read the ``usage guid`` of the documentation to get
+   the full picture.
 
 
 Improve deflex
