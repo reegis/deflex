@@ -153,7 +153,7 @@ sectors as DE02 shows.
 Power plants
 ++++++++++++
 
-:samp:`key: "power plants", value: pandas.DataFrame()`
+``key:`` 'power plants', ``value:`` `pandas.DataFrame() <https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html>`_
 
 +-------+------+----------+------+------------+--------------------------+---------------+-----------------+---------------+
 | region| name | capacity | fuel | efficiency | annual electricity limit | variable_cost | downtime_factor | source_region |
