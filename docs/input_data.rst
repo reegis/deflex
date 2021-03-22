@@ -405,6 +405,7 @@ Heat demand series
 ``key:`` 'heat demand series', ``value:`` `pandas.DataFrame() <https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html>`_
 
 This sheet requires the heat demand which, as mentioned at the beginning, can be entered regionally under DEXX or globally under DE. The only type of demand that must be entered regionally is the district heating. As recommendation, coal, gas, or oil demands should be treated supra-regional. This sheet has the same structure as *electricity demand series*.
+
 +-------------+------------------+-----+------------------+-----+-----+-----+-----+-----+-----+
 |             |       DE01             | DE02                         |     |       DE        |
 +-------------+------------------+-----+------------------+-----+-----+-----+-----+-----+-----+
