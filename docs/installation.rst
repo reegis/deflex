@@ -44,12 +44,9 @@ some functions additional packages are needed. Some of these packages may need
 OS specific packages. Please see the installation guide of each package if an
 error occur.
 
-1. To run the example with all plots you need the following packages:
-    * pygeos (spatial operations)
-    * geopandas (maps)
-    * descartes (plot maps with matplotlib)
-    * lmfit (linear fit)
+1. To run the example with plots you need the following packages:
     * matplotlib (plotting)
+    * pytz (time zones)
     * requests (download example files)
 
     ``pip install deflex[example]``
