@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 """
-Example which compares the calculated market clearing price (mcp) of
+Example, which compares the calculated market clearing price (mcp) of
 different de02 examples with the day ahead prices of Entsoe downloaded from
 OPSD.
 
@@ -33,6 +33,12 @@ OPSD_URL = (
     "%5D=price_day_ahead&downloadCSV=Download+CSV"
 )
 
+OSF_URL = (
+    "https://files.de-1.osf.io/v1/resources/a5xrj/providers/"
+    "osfstorage/60589e10e8afef022c5efd2c?action=download&direct&version"
+    "=1"
+)
+
 
 def get_price_from_opsd(path):
     """Get day ahead prices from opsd time series."""
@@ -53,10 +59,8 @@ def get_price_from_opsd(path):
     return de_ts.loc[start_date:end_date, "DE_price_day_ahead"]
 
 
-url = ""
-
-# Set your path
-my_path = "/home/uwe/tester/results_cbc"
+# !!! ADAPT THE PATH !!!
+my_path = "/home/uwe/blubber/res"
 
 # Set logger
 logger.define_logging()
@@ -66,7 +70,7 @@ os.makedirs(my_path, exist_ok=True)
 my_fn = os.path.join(my_path, "deflex_result_examples_v03.zip")
 os.makedirs(os.path.dirname(my_fn), exist_ok=True)
 if not os.path.isfile(my_fn):
-    tools.download(my_fn, url)
+    tools.download(my_fn, OSF_URL)
     with ZipFile(my_fn, "r") as zip_ref:
         zip_ref.extractall(my_path)
     logging.info("All v0.3.x result examples extracted to {}.".format(my_path))

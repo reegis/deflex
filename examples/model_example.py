@@ -1,3 +1,14 @@
+# -*- coding: utf-8 -*-
+
+"""
+Example, which shows two different ways of solving a deflex scenario.
+
+SPDX-FileCopyrightText: 2021 Uwe Krien <krien@uni-bremen.de>
+
+SPDX-License-Identifier: MIT
+"""
+
+
 import logging
 import os
 from zipfile import ZipFile
@@ -8,10 +19,13 @@ from deflex import main
 from deflex import scenario
 from deflex import tools
 
-url = ""
+url = (
+    "https://files.de-1.osf.io/v1/resources/a5xrj/providers/osfstorage/"
+    "60589cf890bb4e01ef155df2?action=download&direct&version=1"
+)
 
-# Set your path
-path = "/home/uwe/tester"
+# !!! ADAPT THE PATH !!!
+path = "/home/uwe/blubber"
 
 # Set logger
 logger.define_logging()
