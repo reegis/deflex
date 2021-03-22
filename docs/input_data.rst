@@ -132,6 +132,14 @@ Electricity sector (mandatory)
 Electricity demand series
 +++++++++++++++++++++++++
 
+``key:`` 'electricity demand series',
+``value:`` `pandas.DataFrame() <https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html>`_
+
+This sheet requires the electricity demand of the scenario as a time series in
+``[MW]``. One summarised demand series for each region is enough, but it is
+possible to distinguish between different types. This will not have any effect
+on the model results.
+
 +-------------+----------+----------+-----------+----------+----------+-----+
 |             |   DE01   |            DE02                 | DE03     | ... |
 +-------------+----------+----------+-----------+----------+----------+-----+
@@ -144,19 +152,32 @@ Electricity demand series
 | ...         | ...      | ...      | ...       | ...      | ...      | ... |
 +-------------+----------+----------+-----------+----------+----------+-----+
 
-This sheet requires the electricity demand of the scenario. The demand must
-be provided in a time series form, with the time step specified *general*,
-for each region in [MW] as the table shows. Electricity demand can be entered
-as a whole for each region as DE01 shows or it can be divided into different
-sectors as DE02 shows.
+**INDEX**
+
+time step: ``int``
+    Number of time step. Has to be uniform in all series tables.
+
+**COLUMNS**
+
+unit: ``[MW]``
+
+level 0: ``str``
+    DEXX (e.g. DE01, DE20)
+
+level 1: ``str``
+    Specification of the series e.g. "all" for an overall series.
+
 
 Power plants
 ++++++++++++
 
 ``key:`` 'power plants', ``value:`` `pandas.DataFrame() <https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html>`_
 
+The power plants will feed in the electricity bus of the region the are
+located.
+
 +-------+------+----------+------+------------+--------------------------+---------------+-----------------+---------------+
-| region| name | capacity | fuel | efficiency | annual electricity limit | variable_cost | downtime_factor | source_region |
+|       |      | capacity | fuel | efficiency | annual electricity limit | variable_cost | downtime_factor | source_region |
 +-------+------+----------+------+------------+--------------------------+---------------+-----------------+---------------+
 |       | N1   |          |      |            |                          |               |                 |               |
 +       +------+----------+------+------------+--------------------------+---------------+-----------------+---------------+
@@ -173,9 +194,9 @@ Power plants
 
 **INDEX**
 
-region: ``str``
+level 0: ``str``
     DEXX (e.g. DE01, DE20)
-name: ``str``
+level 1: ``str``
     arbitrary
 
 **COLUMNS**
