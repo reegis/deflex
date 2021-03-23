@@ -163,13 +163,13 @@ limit, for example bioenergy.
 +------+-----------+---------------+------------------+--------------------+
 |      |           | costs         | emission         | annual limit       |
 +------+-----------+---------------+------------------+--------------------+
-|      | F1        | C1            | E1               | AL1                |
+|      | F1        |               |                  |                    |
 +  DE  +-----------+---------------+------------------+--------------------+
-|      | F2        | C2            | E2               | AL2                |
+|      | F2        |               |                  |                    |
 +------+-----------+---------------+------------------+--------------------+
-| DE01 | F1        | C1            | E1               | AL3                |
+| DE01 | F1        |               |                  |                    |
 +------+-----------+---------------+------------------+--------------------+
-| DE02 | F2        | C2            | E2               | AL4                |
+| DE02 | F2        |               |                  |                    |
 +------+-----------+---------------+------------------+--------------------+
 | ...  | ...       | ...           | ...              | ...                |
 +------+-----------+---------------+------------------+--------------------+
@@ -231,7 +231,7 @@ Electricity demand series
 ``value:`` `pandas.DataFrame() <https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html>`_
 
 This sheet requires the electricity demand of the scenario as a time series
-in ``[MW]``. One summarised demand series for each region is enough, but it
+in ``MW``. One summarised demand series for each region is enough, but it
 is possible to distinguish between different types. This will not have any
 effect on the model results but may help to distinguish the different flows in
 the results.
