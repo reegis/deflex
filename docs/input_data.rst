@@ -38,18 +38,19 @@ heating systems or cars.
 
 In most spread sheet software it is possible to connect cells to increase
 readability. These lines are interpreted correctly. In csv files the values
-have to appear in every cell. So the following tables will be read equally.
+have to appear in every cell. So the following two tables will be interpreted
+equally!
 
 **Connected cells**
 
 +------+-----------+---------------+
 |      |           | value         |
 +------+-----------+---------------+
-|      | F1        | C1            |
+|      | F1        |               |
 + DE01 +-----------+---------------+
-|      | F2        | C2            |
+|      | F2        |               |
 +------+-----------+---------------+
-| DE02 | F1        | C1            |
+| DE02 | F1        |               |
 +------+-----------+---------------+
 
 **Unconnected cells**
@@ -57,11 +58,11 @@ have to appear in every cell. So the following tables will be read equally.
 +------+-----------+---------------+
 |      |           | value         |
 +------+-----------+---------------+
-| DE01 | F1        | C1            |
+| DE01 | F1        |               |
 +------+-----------+---------------+
-| DE01 | F2        | C2            |
+| DE01 | F2        |               |
 +------+-----------+---------------+
-| DE02 | F1        | C1            |
+| DE02 | F1        |               |
 +------+-----------+---------------+
 
 .. note::
@@ -85,25 +86,25 @@ General
 This table contains basic data about the scenario.
 
 +----------------------+------+
-| year                 | V1   |
+| year                 |      |
 +----------------------+------+
-| number of time steps | V2   |
+| number of time steps |      |
 +----------------------+------+
-| co2 price            | V3   |
+| co2 price            |      |
 +----------------------+------+
-| name                 | V4   |
+| name                 |      |
 +----------------------+------+
 
 **INDEX**
 
-year: ``int``
+year: ``int``, [-]
     A time index will be created started with January 1, at 00:00 with the
     number of hours given in `number of time steps`.
-number of time steps: ``int``
+number of time steps: ``int``, [-]
     The number of hourly time steps.
-co2 price: ``float``
-    The average price for CO\ :sub:`2`  over the whole time period [€/t].
-name: ``str``
+co2 price: ``float``, [€/t]
+    The average price for CO\ :sub:`2`  over the whole time period.
+name: ``str``, [-]
     A name for the scenario. This name will be used to compare key values
     between different scenarios. Therefore, it should be unique within a group
     of scenarios. It does not have to be intuitive. Use the `info` table for
@@ -139,11 +140,11 @@ The second code line will return only files with (``foo`` or ``bar``) and
 ``v1``.
 
 +------+--------+
-| key1 | value1 |
+| key1 |        |
 +------+--------+
-| key2 | value2 |
+| key2 |        |
 +------+--------+
-| key3 | value3 |
+| key3 |        |
 +------+--------+
 | ...  | ...    |
 +------+--------+
@@ -183,16 +184,16 @@ level 1: ``str``
 
 **COLUMNS**
 
-costs: ``float``
+costs: ``float``, [€/MWh]
     The fuel production cost in €/MWh.
 
-emission: ``float``
+emission: ``float``, [t/MWh]
     The fuel emission factor in t/MWh.
     
-annual limit: ``float``
-    The annual maximum energy generation in MWh (if there is one, otherwise
-    just write *inf*). If the ``annual limit`` is ``inf`` in every line the
-    column can be left out.
+annual limit: ``float``, [MWh]
+    The annual maximum energy generation (if there is one, otherwise just use
+    *inf*). If the ``annual limit`` is ``inf`` in every line the column can be
+    left out.
 
 
 Data sources
@@ -300,31 +301,31 @@ level 1: ``str``
 
 **COLUMNS**
 
-capacity: ``float``
+capacity: ``float``, [MW]
     The installed capacity of the power plant or the group of power plants in
     MW.
 
-fuel: ``str``
+fuel: ``str``, [-]
     The used fuel of the power plant or group of power plants. The combination
     of `source_region` and `fuel` must exist in the commodity sources table.
 
-efficiency: ``float``
+efficiency: ``float``, [-]
     The average overall efficiency of the power plant or the group of power
     plants.
 
-annual limit: ``float``
+annual limit: ``float``, [MWh]
     The absolute maximum limit of produced electricity within the whole
-    modeling period [MWh].
+    modeling period.
 
-variable_costs: ``float``
+variable_costs: ``float``, [€/MWh]
     The variable costs per produced electricity unit in €/MWh.
 
-downtime_factor: ``float``
+downtime_factor: ``float``, [-]
     The time fraction of the modeling period in which the power plant or the
     group of power plants cannot produce electricity. The installed capacity
     will be reduced by this factor ``capacity * (1 - downtime_factor)``.
 
-source_region
+source_region, [-]
     The source region of the fuel source. Typically this is the region of the
     index or ``DE`` if it is a global commodity source. The combination of
     `source_region` and `fuel` must exist in the commodity sources table.
@@ -362,12 +363,13 @@ columns for information purposes.
 level 0: ``str``
     Region (e.g. DE01, DE02).
 level 1: ``str``
-    Name, arbitrary.
+    Name, arbitrary. The combination of the region and the name has to exist as
+    a time series in the `volatile series` table.
     
 **COLUMNS**
 
-capacity: ``float``
-    The installed capacity of all power plants operating in the region, in MW.
+capacity: ``float``, [MW]
+    The installed capacity of the plant.
 
 
 Volatile series
@@ -439,26 +441,26 @@ level 1: ``str``
     
 **COLUMNS**
 
-energy content: ``float``
+energy content: ``float``, [MWh]
     The maximum energy content of a storage or a group storages in MWh.
 
-energy inflow: ``float``
+energy inflow: ``float``, [MWh]
     The amount of energy that will feed into the storage of the model period in
     MWh. For example a river into a pumped hydroelectric energy storage.
     
-charge capacity: ``float``
+charge capacity: ``float``, [MW]
     Maximum capacity to charge the storage or the group of storages in MW.
     
-discharge capacity: ``float``
+discharge capacity: ``float``, [MW]
     Maximum capacity to discharge the storage or the group of storages in MW.
 
-charge efficiency: ``float``
+charge efficiency: ``float``, [-]
     Charging efficiency of the storage or the group of storages.
     
-discharge efficiency: ``float``
+discharge efficiency: ``float``, [-]
     Discharging efficiency of the storage or the group of storages.
     
-loss rate: ``float``
+loss rate: ``float``, [-]
     The relative loss of the energy content of the storage. For example a loss
     rate or `0.01` means that the energy content of the storage will be
     reduced by `1%` in each time step.
@@ -497,10 +499,10 @@ Name: ``str``
 
 **COLUMNS**
 
-capacity: ``float``
+capacity: ``float``, [MW]
     The maximum transmission capacity in MW.
     
-efficiency:``float``
+efficiency:``float``, [-]
     The transmission efficiency of the power lines.
 
 Heating sector (optional)
@@ -589,10 +591,10 @@ level 1: ``str``
 
 **COLUMNS**
 
-efficiency: ``float``
+efficiency: ``float``, [-]
     The efficiency of the heating technology.
     
-source: ``str``
+source: ``str``, [-]
     The source that the heating technology uses. Examples are coal, oil for
     commodities, but it could also be electricity in case of a heat pump.
     Except for `electricity` the combination of `source` and `source region`
@@ -647,41 +649,41 @@ level 1: ``str``
 
 **COLUMNS**
 
-limit heat chp: ``float``
+limit heat chp: ``float``, [MWh]
     The absolute maximum limit of heat produced by chp within the whole
     modeling period, in MWh.
     
-capacity heat chp: ``float``
+capacity heat chp: ``float``, [MW]
     The installed heat capacity of all chp plants of the same group in the
     region, in MW.
     
-capacity elect chp: ``float``
+capacity elect chp: ``float``, [MW]
     The installed electricity capacity of all chp plants of the same group in
     the region, in MW.
 
-limit hp: ``float``
+limit hp: ``float``, [MWh]
     The absolute maximum limit of heat produced by the heat plant within the
     whole modeling period, in MWh.
     
-capacity hp: ``float``
+capacity hp: ``float``, [MW]
     The installed heat capacity of all heat of the same group in the region in
     MW.
     
-efficiency hp: ``float``
+efficiency hp: ``float``, [-]
     The average overall efficiency of the heat plant.
     
-efficiency heat chp: ``float``
+efficiency heat chp: ``float``, [-]
     The average overall heat efficiency of the chp.
     
-efficiency elect chp: ``float``
+efficiency elect chp: ``float``, [-]
     The average overall electricity efficiency of the chp.
 
-fuel: ``str``
+fuel: ``str``, [-]
     The used fuel of the plants. The fuel name must be equal to the fuel
     type of the commodity sources. The combination of `fuel` and
     `source region` has to exist in the `commodity sources` table.
 
-source_region
+source_region, [-]
     The source region of the fuel source. Typically this is the region of the
     index or ``DE`` if it is a global commodity source.
 
@@ -761,19 +763,19 @@ level 1: ``str``
 
 **COLUMNS**
 
-efficiency: ``float``
+efficiency: ``float``, [-]
     The efficiency of the fuel production. If a `diesel` demand is defined in
     the `mobility demand series` table the `efficiency` represents the
     efficiency of `diesel` production from the commodity source e.g. oil. For
     a `biofuel` demand the efficiency of the production of `biofuel` from
     `biomass` has to be defined.
     
-source: ``str``
+source: ``str``, [-]
     The source that the technology uses. Except for `electricity` the
     combination of `source` and `source region` has to exist in the
     `commodity sources` table. The `electricity` source will be connected to
     the electricity bus of the region defined in `source region`.
 
-source region: ``str``
+source region: ``str``, [-]
     The region where the source comes from.
 
