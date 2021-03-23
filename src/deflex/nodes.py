@@ -322,7 +322,7 @@ def add_transmission_lines_between_electricity_nodes(table_collection, nodes):
 
     """
     logging.debug("Add transmission lines to nodes dictionary.")
-    power_lines = table_collection["power lines"]["electrical"]
+    power_lines = table_collection["power lines"]
     for idx, values in power_lines.iterrows():
         b1, b2 = idx.split("-")
         lines = [(b1, b2), (b2, b1)]

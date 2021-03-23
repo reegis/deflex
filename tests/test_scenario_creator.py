@@ -133,9 +133,7 @@ class TestScenarioCreationFull:
         )
 
     def test_transmission(self):
-        self.input_data["power lines"].drop(
-            ("electrical", "distance"), axis=1, inplace=True
-        )
+        self.input_data["power lines"].drop("distance", axis=1, inplace=True)
         self.tables["power lines"].index.name = "name"
         pd.testing.assert_frame_equal(
             self.tables["power lines"].apply(pd.to_numeric).astype(float),

@@ -224,18 +224,18 @@ def scenario_transmission(regions, lines, rmap=None, copperplate=None):
     >>> my_regions=geometries.deflex_regions(rmap="de21")
     >>> my_lines = geometries.deflex_power_lines(rmap="de21").index
     >>> lines=scenario_transmission(my_regions, my_lines, "de21", False)
-    >>> int(lines.loc["DE07-DE05", ("electrical", "capacity")])
+    >>> int(lines.loc["DE07-DE05", "capacity"])
     1978
-    >>> int(lines.loc["DE07-DE05", ("electrical", "distance")])
+    >>> int(lines.loc["DE07-DE05", "distance"])
     199
-    >>> float(lines.loc["DE07-DE05", ("electrical", "efficiency")])
+    >>> float(lines.loc["DE07-DE05", "efficiency"])
     0.9
     >>> lines=scenario_transmission(my_regions, my_lines, copperplate=True)
-    >>> float(lines.loc["DE07-DE05", ("electrical", "capacity")])
+    >>> float(lines.loc["DE07-DE05", "capacity"])
     inf
-    >>> float(lines.loc["DE07-DE05", ("electrical", "distance")])
+    >>> float(lines.loc["DE07-DE05", "distance"])
     nan
-    >>> float(lines.loc["DE07-DE05", ("electrical", "efficiency")])
+    >>> float(lines.loc["DE07-DE05", "efficiency"])
     1.0
     """
 
@@ -272,15 +272,12 @@ def scenario_transmission(regions, lines, rmap=None, copperplate=None):
             elec_trans.index.str.contains(offreg), "capacity"
         ] = "inf"
 
-    elec_trans = pd.concat(
-        [elec_trans], axis=1, keys=["electrical"]
-    ).sort_index(1)
     if cfg.get("creator", "map") == "de22" and not cfg.get(
         "creator", "copperplate"
     ):
-        elec_trans.loc["DE22-DE01", ("electrical", "efficiency")] = 0.999999
-        elec_trans.loc["DE22-DE01", ("electrical", "capacity")] = 9999999
-        elec_trans.loc["DE22-DE01", ("electrical", "distance")] = 0
+        elec_trans.loc["DE22-DE01", "efficiency"] = 0.999999
+        elec_trans.loc["DE22-DE01", "capacity"] = 9999999
+        elec_trans.loc["DE22-DE01", "distance"] = 0
     return elec_trans
 
 
