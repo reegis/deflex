@@ -37,7 +37,7 @@ def fetch_test_files(path):
     zip_file = os.path.join(TEST_PATH, "deflex_test_files.zip")
     zip_url = (
         "https://files.de-1.osf.io/v1/resources/a5xrj/providers/osfstorage"
-        "/605331aa90bb4e00771516a6?action=download&direct&version=1"
+        "/6059eecc818bde00713a7b29?action=download&direct&version=1"
     )
 
     os.makedirs(TEST_PATH, exist_ok=True)
