@@ -388,7 +388,7 @@ Name: ``str``
 capacity [MW]: ``float``
     The maximum transmission capacity.
     
-efficiency:b``float``
+efficiency: ``float``
     The transmission efficiency of the power line.
 
 Heating sector (optional)
