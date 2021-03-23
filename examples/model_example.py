@@ -25,7 +25,7 @@ url = (
 )
 
 # !!! ADAPT THE PATH !!!
-path = "/home/uwe/blubber"
+path = "your/path"
 
 # Set logger
 logger.define_logging()

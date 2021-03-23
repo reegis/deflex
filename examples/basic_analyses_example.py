@@ -60,7 +60,7 @@ def get_price_from_opsd(path):
 
 
 # !!! ADAPT THE PATH !!!
-my_path = "/home/uwe/blubber/res"
+my_path = "your/path"
 
 # Set logger
 logger.define_logging()
