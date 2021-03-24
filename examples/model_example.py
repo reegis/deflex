@@ -20,8 +20,8 @@ from deflex import scenario
 from deflex import tools
 
 url = (
-    "https://files.de-1.osf.io/v1/resources/a5xrj/providers/osfstorage/"
-    "60589cf890bb4e01ef155df2?action=download&direct&version=1"
+    "https://files.de-1.osf.io/v1/resources/a5xrj/providers/osfstorage"
+    "/605a5d5c818bde00903a8f78?action=download&direct&version=1"
 )
 
 # !!! ADAPT THE PATH !!!
