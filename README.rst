@@ -117,17 +117,17 @@ Use example
 2. Create a local directory (e.g. /home/user/deflex_examples).
 3. Download the example scripts to this directory. There are two example. The
    `model_example.py
-   <https://raw.githubusercontent.com/reegis/deflex/master/examples/examples.py>`_
+   <https://files.osf.io/v1/resources/a5xrj/providers/github/examples/model_example.py?action=download&direct&version>`_
    will explain the modelling process, the
    `basic_analyses_example.py
-   <https://files.osf.io/v1/resources/a5xrj/providers/github/examples/examples.py?action=download&direct&version>`_
+   <https://files.osf.io/v1/resources/a5xrj/providers/github/examples/basic_analyses_example.py?action=download&direct&version>`_
    will show you how to analyse the results.
 4. Read the comments of each example, execute it and modify it to your needs.
    Do not forget to set the ``my_path`` in the examples first.
 5. In parallel you should read the ``usage guide`` of the documentation to get
    the full picture.
 
-
+basic_analyses_example.py
 Improve deflex
 --------------
 
