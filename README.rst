@@ -83,29 +83,19 @@
 deflex - flexible multi-regional energy system model for heat, power and mobility
 =================================================================================
 
-The following README gives you a brief overview about deflex. Read the full
-`documentation <https://deflex.readthedocs.io/en/latest/>`_ for all
-information.
-
 * Multi sectoral energy system of Germany/Europe
 * Dispatch optimisation
 * Start with basic scenarios
 * Highly configurable and adaptable
 
+The following README gives you a brief overview about deflex. Read the full
+`documentation <https://deflex.readthedocs.io/en/latest/>`_ for all
+information.
+
 .. contents::
     :depth: 1
     :local:
     :backlinks: top
-
-Documentation
--------------
-
-The `full documentation of deflex <https://deflex.readthedocs.io/en/latest/>`_
-is available on readthedocs.
-
-Go to the `download page <http://readthedocs.org/projects/deflex/downloads/>`_
-to download different versions and formats (pdf, html, epub) of the
-documentation.
 
 Installation
 ------------
@@ -160,10 +150,38 @@ Go to the `Zenodo page of deflex <https://doi.org/10.5281/zenodo.3572594>`_ to f
 Gallery
 -------
 
+Use one of the include regions sets or create your own one. You can also
+include other European countries.
+
 .. image:: https://raw.githubusercontent.com/reegis/deflex/master/docs/images/model_regions.svg
+
+The resulting system costs of deflex have been compared with the day-ahead
+prices from the Entso-e downloaded from `Open Power System Data
+<https://open-power-system-data.org/>`_. The plot shows three different periods
+of the year.
+
 .. image:: https://raw.githubusercontent.com/reegis/deflex/master/docs/images/mcp.svg
+
+It is also possible to get a time series of the average emissions. Furthermore,
+it shows the emissions of the most expensive power plant which would be
+replaced by an additional feed-in.
+
 .. image:: https://raw.githubusercontent.com/reegis/deflex/master/docs/images/emissions.svg
+
+The following plot shows fraction of the time on which the utilisation of the
+power lines between the regions is more than 90% of its maximum capacity:
+
 .. image:: https://raw.githubusercontent.com/reegis/deflex/master/docs/images/transmission.svg
+
+Documentation
+-------------
+
+The `full documentation of deflex <https://deflex.readthedocs.io/en/latest/>`_
+is available on readthedocs.
+
+Go to the `download page <http://readthedocs.org/projects/deflex/downloads/>`_
+to download different versions and formats (pdf, html, epub) of the
+documentation.
 
 License
 -------
