@@ -2,4 +2,4 @@
 Authors
 =======
 
-* Uwe Krien - https://www.uni-bremen.de/en/res/team/dipl-ing-uwe-krien
+* Uwe Krien - `University of Bremen <https://www.uni-bremen.de/en/res/team/dr-ing-uwe-krien>`_

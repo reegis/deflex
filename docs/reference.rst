@@ -42,10 +42,10 @@ deflex.nodes module
     :undoc-members:
     :show-inheritance:
 
-deflex.results module
----------------------
+deflex.postprocessing module
+----------------------------
 
-.. automodule:: deflex.results
+.. automodule:: deflex.postprocessing
     :members:
     :undoc-members:
     :show-inheritance:

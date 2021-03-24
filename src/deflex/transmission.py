@@ -103,10 +103,10 @@ def get_electrical_transmission_default(power_lines, both_directions=False):
     """
     trans = pd.DataFrame()
 
-    for length in power_lines:
-        trans.loc[length, "capacity"] = float("inf")
-        trans.loc[length, "distance"] = float("nan")
-        trans.loc[length, "efficiency"] = 1
+    for line_name in power_lines:
+        trans.loc[line_name, "capacity"] = float("inf")
+        trans.loc[line_name, "distance"] = float("nan")
+        trans.loc[line_name, "efficiency"] = 1
 
     if both_directions is True:
         trans = add_reverse_direction(trans)
@@ -216,36 +216,26 @@ def get_electrical_transmission_renpass(both_directions=False):
     return df
 
 
-def scenario_transmission(regions, name, lines):
+def scenario_transmission(regions, lines, rmap=None, copperplate=None):
     """Get power plants for the scenario year
 
     Examples
     --------
-    >>> my_regions=geometries.deflex_regions(rmap="de21")  # doctest: +SKIP
-    >>> pp=scenario_powerplants(dict(), my_regions, 2014, "de21"
-    ...     )  # doctest: +SKIP
-    >>> lines=scenario_transmission(pp, my_regions, "de21")  # doctest: +SKIP
-    >>> int(lines.loc["DE07-DE05", ("electrical", "capacity")]
-    ...     )  # doctest: +SKIP
+    >>> my_regions=geometries.deflex_regions(rmap="de21")
+    >>> my_lines = geometries.deflex_power_lines(rmap="de21").index
+    >>> lines=scenario_transmission(my_regions, my_lines, "de21", False)
+    >>> int(lines.loc["DE07-DE05", "capacity"])
     1978
-    >>> int(lines.loc["DE07-DE05", ("electrical", "distance")]
-    ...     )  # doctest: +SKIP
+    >>> int(lines.loc["DE07-DE05", "distance"])
     199
-    >>> float(lines.loc["DE07-DE05", ("electrical", "efficiency")]
-    ...     )  # doctest: +SKIP
+    >>> float(lines.loc["DE07-DE05", "efficiency"])
     0.9
-    >>> cfg.tmp_set("creator", "copperplate", "True")
-    >>> lines=scenario_transmission(pp, regions, "de21"
-    ...     )  # doctest: +SKIP
-    >>> cfg.tmp_set("creator", "copperplate", "False")
-    >>> float(lines.loc["DE07-DE05", ("electrical", "capacity")]
-    ...     )  # doctest: +SKIP
+    >>> lines=scenario_transmission(my_regions, my_lines, copperplate=True)
+    >>> float(lines.loc["DE07-DE05", "capacity"])
     inf
-    >>> float(lines.loc["DE07-DE05", ("electrical", "distance")]
-    ...     )  # doctest: +SKIP
+    >>> float(lines.loc["DE07-DE05", "distance"])
     nan
-    >>> float(lines.loc["DE07-DE05", ("electrical", "efficiency")]
-    ...     )  # doctest: +SKIP
+    >>> float(lines.loc["DE07-DE05", "efficiency"])
     1.0
     """
 
@@ -253,7 +243,13 @@ def scenario_transmission(regions, name, lines):
     # landmass polygon.
     offshore_regions = geometries.divide_off_and_onshore(regions).offshore
 
-    if name in ["de21", "de22"] and not cfg.get("creator", "copperplate"):
+    if rmap is None:
+        rmap = cfg.get("creator", "map")
+
+    if copperplate is None:
+        copperplate = cfg.get("creator", "copperplate")
+
+    if rmap in ["de21", "de22"] and not copperplate:
         elec_trans = get_electrical_transmission_renpass()
         general_efficiency = cfg.get(
             "creator", "default_transmission_efficiency"
@@ -276,14 +272,12 @@ def scenario_transmission(regions, name, lines):
             elec_trans.index.str.contains(offreg), "capacity"
         ] = "inf"
 
-    elec_trans = pd.concat(
-        [elec_trans], axis=1, keys=["electrical"]
-    ).sort_index(1)
     if cfg.get("creator", "map") == "de22" and not cfg.get(
         "creator", "copperplate"
     ):
-        elec_trans.loc["DE22-DE01", ("electrical", "efficiency")] = 0.999999
-        elec_trans.loc["DE22-DE01", ("electrical", "capacity")] = 9999999
+        elec_trans.loc["DE22-DE01", "efficiency"] = 0.999999
+        elec_trans.loc["DE22-DE01", "capacity"] = 9999999
+        elec_trans.loc["DE22-DE01", "distance"] = 0
     return elec_trans
 
 

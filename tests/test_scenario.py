@@ -18,7 +18,7 @@ import pytest
 
 from deflex import scenario
 from deflex.tools import TEST_PATH
-from deflex.tools import fetch_example_results
+from deflex.tools import fetch_test_files
 
 
 def test_basic_scenario_class():
@@ -28,9 +28,7 @@ def test_basic_scenario_class():
 
 def test_scenario_building():
     sc = scenario.DeflexScenario(name="test", year=2014)
-    csv_path = os.path.join(
-        os.path.dirname(__file__), "data", "deflex_2014_de21_test_csv"
-    )
+    csv_path = os.path.join(TEST_PATH, "de22_heat_transmission_csv")
     sc.read_csv(csv_path)
     sc.table2es()
     sc.check_input_data()
@@ -59,19 +57,16 @@ def test_scenario_es_init():
             {"year": 2013, "name": "test", "number of time steps": 8760}
         )
     }
-    sc = scenario.DeflexScenario(input_data=data, debug=True)
-    es1 = sc.initialise_energy_system().es
     sc = scenario.DeflexScenario(input_data=data)
-    es2 = sc.initialise_energy_system().es
+    es1 = sc.initialise_energy_system().es
     sc = scenario.DeflexScenario(input_data=data)
     sc.input_data["general"]["year"] = 2012
     with pytest.warns(UserWarning, match="2012 is a leap year but the"):
         print(sc.initialise_energy_system().es)
     sc.input_data["general"]["number of time steps"] = 8784
-    es3 = sc.initialise_energy_system().es
-    assert len(es1.timeindex) == 3
-    assert len(es2.timeindex) == 8760
-    assert len(es3.timeindex) == 8784
+    es2 = sc.initialise_energy_system().es
+    assert len(es1.timeindex) == 8760
+    assert len(es2.timeindex) == 8784
 
 
 def test_scenario_es_init_error():
@@ -83,7 +78,7 @@ def test_scenario_es_init_error():
 
 def test_excel_reader():
     sc = scenario.DeflexScenario()
-    xls_fn = fetch_example_results("de02_short.xlsx")
+    xls_fn = fetch_test_files("de02_heat.xlsx")
     sc.read_xlsx(xls_fn)
     sc.initialise_energy_system()
     sc.table2es()
@@ -99,15 +94,15 @@ def test_excel_reader():
 
 def test_build_model():
     sc = scenario.DeflexScenario(debug=True)
-    xls_fn = fetch_example_results("de02_short.xlsx")
+    xls_fn = fetch_test_files("de02_heat.xlsx")
     sc.read_xlsx(xls_fn)
     sc.compute()
-    assert sc.es.results["meta"]["name"] == "deflex_2014_de02"
+    assert sc.es.results["meta"]["name"] == "deflex_2014_de02_heat_reg-merit"
 
 
 def test_build_model_manually():
     sc = scenario.DeflexScenario(debug=True)
-    xls_fn = fetch_example_results("de02_short.xlsx")
+    xls_fn = fetch_test_files("de02_no-heat.xlsx")
     sc.read_xlsx(xls_fn)
     sc.initialise_energy_system()
     test_nodes = sc.create_nodes()
@@ -116,20 +111,23 @@ def test_build_model_manually():
     sc.dump(dump_fn)
     model = sc.create_model()
     sc.solve(model=model, solver="cbc", with_duals=True)
-    assert sc.es.results["meta"]["name"] == "deflex_2014_de02"
+    assert (
+        sc.es.results["meta"]["name"] == "deflex_2014_de02_no-heat_reg-merit"
+    )
     dump_fn += ".dflx"
     sc.dump(dump_fn)
-    sc.plot_nodes()
-    scenario.restore_scenario(dump_fn, scenario.DeflexScenario)
-    assert sc.meta["year"] == 2014
+    plot_fn = os.path.join(TEST_PATH, "test_plot_X343.graphml")
+    sc.plot_nodes(plot_fn)
+    assert os.path.isfile(plot_fn)
+    scenario.restore_scenario(dump_fn)
+    assert int(sc.meta["year"]) == 2014
     os.remove(dump_fn)
+    os.remove(plot_fn)
 
 
 def test_corrupt_data():
     sc = scenario.DeflexScenario(year=2014)
-    csv_path = os.path.join(
-        os.path.dirname(__file__), "data", "deflex_2014_de02_test_csv"
-    )
+    csv_path = os.path.join(TEST_PATH, "de03_fictive_csv")
     sc.read_csv(csv_path)
     sc.input_data["volatile series"].drop(
         ("DE02", "solar"), inplace=True, axis=1
@@ -140,7 +138,7 @@ def test_corrupt_data():
 
 
 def test_restore_an_invalid_scenario():
-    filename = fetch_example_results("de02.xlsx")
+    filename = fetch_test_files("de02_heat.xlsx")
     msg = "The suffix of a valid deflex scenario has to be '.dflx'."
     with pytest.raises(IOError, match=msg):
         scenario.restore_scenario(filename)
@@ -150,7 +148,7 @@ class TestInputDataCheck:
     @classmethod
     def setup_class(cls):
         cls.sc = scenario.DeflexScenario()
-        fn = os.path.join(TEST_PATH, "de02_short.xlsx")
+        fn = os.path.join(TEST_PATH, "de02_no-heat.xlsx")
         cls.sc.read_xlsx(fn)
         cls.sc.input_data["general"]["regions"] = float("nan")
 
@@ -173,6 +171,9 @@ class TestInputDataCheck:
         )
 
     def test_wrong_length(self):
-        msg = "Number of time steps is 97 but the length of the volatile serie"
+        self.sc.input_data["volatile series"] = self.sc.input_data[
+            "volatile series"
+        ].iloc[0:40]
+        msg = "Number of time steps is 48 but the length of the volatile serie"
         with pytest.raises(ValueError, match=msg):
             self.sc.initialise_energy_system()

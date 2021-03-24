@@ -39,8 +39,8 @@ def load_scenario(path, file_type=None):
     path : str
         A valid deflex scenario file.
     file_type : str or None
-        Type of the input data. Valid values are 'csv', 'excel', None. If the
-        input is non the path should end on 'csv', '.xls', '.xlsx' to allow
+        Type of the input data. Valid values are 'csv', 'xlsx', None. If the
+        input is non the path should end on 'csv', '.xlsx' to allow
         auto-detection.
 
     Returns
@@ -49,13 +49,13 @@ def load_scenario(path, file_type=None):
 
     Examples
     --------
-    >>> from deflex.tools import fetch_example_results, TEST_PATH
-    >>> fn = fetch_example_results("de02_short.xlsx")
+    >>> from deflex.tools import fetch_test_files, TEST_PATH
+    >>> fn = fetch_test_files("de17_heat.xlsx")
     >>> s = load_scenario(fn, file_type="xlsx")
     >>> type(s)
     <class 'deflex.scenario.DeflexScenario'>
-    >>> int(s.input_data["volatile plants"]["capacity"]["DE02", "wind"])
-    517
+    >>> int(s.input_data["volatile plants"]["capacity"]["DE01", "wind"])
+    3815
     >>> type(load_scenario(fn))
     <class 'deflex.scenario.DeflexScenario'>
     >>> load_scenario(fn, file_type="csv")  # doctest: +IGNORE_EXCEPTION_DETAIL
@@ -85,10 +85,10 @@ def load_scenario(path, file_type=None):
 
 def fetch_scenarios_from_dir(path, csv=True, xlsx=False):
     """
-    Search for files with an excel extension or directories ending with '_csv'.
+    Search for files with an .xlsx extension or directories ending with '_csv'.
 
     By now it is not possible to distinguish between valid deflex scenarios and
-    other excel files or directories ending with 'csv'. Therefore, the given
+    other xlsx-files or directories ending with '_csv'. Therefore, the given
     directory should only contain valid scenarios.
 
     The function will not search recursively.
@@ -110,26 +110,24 @@ def fetch_scenarios_from_dir(path, csv=True, xlsx=False):
     --------
     >>> import shutil
     >>> from deflex.tools import TEST_PATH
-    >>> test_data = os.path.join(os.path.dirname(__file__), os.pardir,
-    ...                          os.pardir, "tests", "data")
-    >>> my_csv = fetch_scenarios_from_dir(test_data)
+    >>> my_csv = fetch_scenarios_from_dir(TEST_PATH)
     >>> len(my_csv)
-    5
+    10
     >>> os.path.basename(my_csv[0])
-    'deflex_2014_de02_co2-price_var-costs_csv'
-    >>> my_excel = fetch_scenarios_from_dir(TEST_PATH, csv=False, xlsx=True)
-    >>> len(my_excel)
-    8
-    >>> os.path.basename([e for e in my_excel if "short" in e][0])
-    'de02_short.xlsx'
+    'de02_heat_csv'
+    >>> my_xlsx = fetch_scenarios_from_dir(TEST_PATH, csv=False, xlsx=True)
+    >>> len(my_xlsx)
+    11
+    >>> os.path.basename([e for e in my_xlsx][0])
+    'de02_heat.xlsx'
     >>> len(fetch_scenarios_from_dir(TEST_PATH, xlsx=True))
-    8
-    >>> s = load_scenario([e for e in my_excel if "short" in e][0])
-    >>> csv_path = os.path.join(TEST_PATH, "de02_short_csv")
+    21
+    >>> s = load_scenario([e for e in my_xlsx][0])
+    >>> csv_path = os.path.join(TEST_PATH, "de02_new_csv")
     >>> s.to_csv(csv_path)
     >>> len(fetch_scenarios_from_dir(TEST_PATH, xlsx=True))
-    9
-    >>> shutil.rmtree(csv_path)
+    22
+    >>> shutil.rmtree(csv_path)  # remove test results, skip this line to go on
 
     """
     xlsx_scenarios = []
@@ -148,6 +146,9 @@ def fetch_scenarios_from_dir(path, csv=True, xlsx=False):
 
 def model_multi_scenarios(scenarios, cpu_fraction=0.2, log_file=None):
     """
+    Model multi scenarios in parallel. Keep in mind that the memory usage
+    is the critical resource for large models. So start with a low
+    cpu_fraction to avoid memory errors.
 
     Parameters
     ----------
@@ -159,37 +160,31 @@ def model_multi_scenarios(scenarios, cpu_fraction=0.2, log_file=None):
     log_file : str
         Filename to store the log file.
 
-    Returns
-    -------
-
     Examples
     --------
-    >>> from deflex.tools import fetch_example_results, TEST_PATH
-    >>> fn1 = fetch_example_results("de02_short.xlsx")
-    >>> fn2 = fetch_example_results("de02_short_broken.xlsx")
-    >>> my_log_file = os.path.join(os.path.dirname(__file__), os.pardir,
-    ...                            os.pardir, "tests", "data",
-    ...                            "my_log_file.csv")
+    >>> from deflex.tools import fetch_test_files, TEST_PATH
+    >>> fn1 = fetch_test_files("de03_fictive_csv")
+    >>> fn2 = fetch_test_files("de03_fictive_broken.xlsx")
+    >>> my_log_file = os.path.join(TEST_PATH, "my_log_file.csv")
     >>> my_scenarios = [fn1, fn2]
     >>> model_multi_scenarios(my_scenarios, log_file=my_log_file)
     >>> my_log = pd.read_csv(my_log_file, index_col=[0])
-    >>> good = my_log.loc["de02_short.xlsx"]
+    >>> good = my_log.loc["de03_fictive_csv"]
     >>> rv = good["return_value"]
     >>> datetime.strptime(rv, "%Y-%m-%d %H:%M:%S.%f").year > 2019
     True
     >>> good["trace"]
     nan
     >>> os.path.basename(good["result_file"])
-    'de02_short.dflx'
-    >>> broken = my_log.loc["de02_short_broken.xlsx"]
+    'de03_fictive.dflx'
+    >>> broken = my_log.loc["de03_fictive_broken.xlsx"]
     >>> broken["return_value"].replace("'", "")  # doctest: +ELLIPSIS
-    'ValueError(Missing time series for solar (capacity: 5.5) in DE02...
+    'ValueError(Missing time series for geothermal (capacity: 12.56) in DE02...
     >>> broken["trace"]  # doctest: +ELLIPSIS
     'Traceback (most recent call last)...
     >>> broken["result_file"]
     nan
     >>> os.remove(my_log_file)
-    >>> os.remove(good["result_file"])
     """
     start = datetime.now()
     maximal_number_of_cores = int(
@@ -239,8 +234,8 @@ def batch_model_scenario(path, named=True, file_type=None, ignore_errors=True):
     path : str
         A valid deflex scenario.
     file_type : str or None
-        Type of the input data. Valid values are 'csv', 'excel', None. If the
-        input is non the path schould end on 'csv', '.xls', '.xlsx'.
+        Type of the input data. Valid values are 'csv', 'xlsx', None. If the
+        input is non the path should end on 'csv', '.xlsx'.
     named : bool
         If True a named tuple with the following fields will be returned
     ignore_errors : bool
@@ -253,15 +248,15 @@ def batch_model_scenario(path, named=True, file_type=None, ignore_errors=True):
 
     Examples
     --------
-    >>> from deflex.tools import fetch_example_results
-    >>> fn = fetch_example_results("de02_short.xlsx")
+    >>> from deflex.tools import fetch_test_files
+    >>> fn = fetch_test_files("de02_heat_csv")
     >>> r = batch_model_scenario(fn, ignore_errors=False)  # doctest: +ELLIPSIS
     Welcome to the CBC MILP ...
     >>> r.name
-    'de02_short.xlsx'
+    'de02_heat_csv'
     >>> result_file = r.result_file
     >>> os.path.basename(result_file)
-    'de02_short.dflx'
+    'de02_heat.dflx'
     >>> r.trace
     >>> r.return_value.year > 2019
     True
@@ -274,7 +269,6 @@ def batch_model_scenario(path, named=True, file_type=None, ignore_errors=True):
     >>> r.result_file
     >>> r.trace  # doctest: +ELLIPSIS
     'Traceback (most recent call last):...
-    >>> os.remove(result_file)
     """
     out = namedtuple(
         "out", ["name", "return_value", "trace", "result_file", "start_time"]
@@ -314,7 +308,12 @@ def model_scenario(
     result_path=None,
 ):
     """
-    Compute a deflex scenario.
+    Compute a deflex scenario with the full work flow:
+
+        * creating a scenario
+        * loading the input data
+        * computing the scenario
+        * storing the results
 
     Parameters
     ----------
@@ -322,8 +321,8 @@ def model_scenario(
         File or directory with a valid deflex scenario. If no path is given an
         energy system (es) has to be passed.
     file_type : str or None
-        Type of the input data. Valid values are 'csv', 'excel', None. If the
-        input is non the path schould end on 'csv', '.xls', '.xlsx'.
+        Type of the input data. Valid values are 'csv', 'xlsx', None. If the
+        input is non the path should end on 'csv' or '.xlsx'.
     result_path : str or None
         Path to store the output file. If None the results will be stored along
         with the scenarios.
@@ -333,12 +332,10 @@ def model_scenario(
 
     Examples
     --------
-    >>> from deflex.tools import fetch_example_results, TEST_PATH
-    >>> fn = fetch_example_results("de02_short.xlsx")
+    >>> from deflex.tools import fetch_test_files, TEST_PATH
+    >>> fn = fetch_test_files("de02_no-heat.xlsx")
     >>> r = model_scenario(fn, file_type="xlsx")  # doctest: +ELLIPSIS
     Welcome to the CBC MILP ...
-    >>> f = os.path.join(os.path.dirname(fn), "results_cbc", "de02_short.dflx")
-    >>> os.remove(f)
     """
     stopwatch()
 
@@ -365,7 +362,8 @@ def model_scenario(
         result_path = os.path.join(
             os.path.dirname(path),
             "results_{0}".format(cfg.get("general", "solver")),
-            str(os.path.basename(path).split(".")[0]) + ".dflx",
+            str(os.path.basename(path).split(".")[0]).replace("_csv", "")
+            + ".dflx",
         )
 
     logging.info("Solve the optimisation model: %s", stopwatch())
@@ -384,49 +382,6 @@ def model_scenario(
         sc.meta["name"],
     )
     return result_path
-
-
-def plot_scenario(path, file_type=None, graphml_file=None):
-    """
-    Plot the graph of an energy system. If no filename is given the plot will
-    be shown on the screen but not writen to an image file
-
-    Parameters
-    ----------
-    path : str
-        A valid deflex scenario file.
-    file_type : str or None
-        Type of the input data. Valid values are 'csv', 'excel', None. If the
-        input is none the path should end on 'csv', '.xls', '.xlsx' to allow
-        auto detection.
-    graphml_file : str
-        The path of the graphml.
-
-    Returns
-    -------
-    TODO: Keep this test? It does not work without graphviz-dev and python3-dev
-    Examples
-    --------
-    >>> from deflex.tools import fetch_example_results, TEST_PATH
-    >>> fn = fetch_example_results("de02_short.xlsx")
-    >>> fn_img = os.path.join(TEST_PATH, "test_es.graphml")
-    >>> plot_scenario(fn, "xlsx", fn_img)
-    >>> os.path.isfile(fn_img)
-    True
-    >>> os.remove(fn_img)
-    >>> os.path.isfile(fn_img)
-    False
-    """
-    sc = load_scenario(path, file_type)
-    sc.table2es()
-
-    show = graphml_file is None
-
-    sc.plot_nodes(
-        filename=graphml_file,
-        show=show,
-        remove_nodes_with_substrings=["bus_cs"],
-    )
 
 
 if __name__ == "__main__":
