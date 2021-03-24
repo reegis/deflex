@@ -161,7 +161,7 @@ Commodity sources
 ``key:`` 'commodity sources', ``value:`` `pandas.DataFrame() <https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html>`_
 
 This sheet requires data fromm all the commodities used in the scenario. The
-data can be provided either global under DE, regional under DEXX or as a
+data can be provided either supra-regional under DE, regional under DEXX or as a
 combination of both, where some commodities are global and some are regional.
 Regionalised commodities are specially useful for commodities with an annual
 limit, for example bioenergy.
@@ -190,10 +190,10 @@ level 1: ``str``
 **COLUMNS**
 
 costs: ``float``, [€/MWh]
-    The fuel production cost in €/MWh.
+    The fuel production cost.
 
 emission: ``float``, [t/MWh]
-    The fuel emission factor in t/MWh.
+    The fuel emission factor.
     
 annual limit: ``float``, [MWh]
     The annual maximum energy generation (if there is one, otherwise just use
@@ -236,8 +236,7 @@ Electricity demand series
 ``key:`` 'electricity demand series',
 ``value:`` `pandas.DataFrame() <https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html>`_
 
-This sheet requires the electricity demand of the scenario as a time series
-in ``MW``. One summarised demand series for each region is enough, but it
+This sheet requires the electricity demand of the scenario as a time series. One summarised demand series for each region is enough, but it
 is possible to distinguish between different types. This will not have any
 effect on the model results but may help to distinguish the different flows in
 the results.
@@ -307,8 +306,7 @@ level 1: ``str``
 **COLUMNS**
 
 capacity: ``float``, [MW]
-    The installed capacity of the power plant or the group of power plants in
-    MW.
+    The installed capacity of the power plant or the group of power plants.
 
 fuel: ``str``, [-]
     The used fuel of the power plant or group of power plants. The combination
@@ -323,7 +321,7 @@ annual limit: ``float``, [MWh]
     modeling period.
 
 variable_costs: ``float``, [€/MWh]
-    The variable costs per produced electricity unit in €/MWh.
+    The variable costs per produced electricity unit.
 
 downtime_factor: ``float``, [-]
     The time fraction of the modeling period in which the power plant or the
@@ -341,8 +339,7 @@ Volatiles plants
 
 ``key:`` 'volatile plants', ``value:`` `pandas.DataFrame() <https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html>`_
 
-In this context volatility means, all sources in which power production cannot
-be controlled. Examples are solar, wind, hydro, geothermal power plant. Data
+Examples of volatile power plants are solar, wind, hydro, geothermal. Data
 must be provided divided by region and subdivided by energy source. Each row
 can indicate one plant or a group of plants. It is possible to add additional
 columns for information purposes.
@@ -447,17 +444,17 @@ level 1: ``str``
 **COLUMNS**
 
 energy content: ``float``, [MWh]
-    The maximum energy content of a storage or a group storages in MWh.
+    The maximum energy content of a storage or a group storages.
 
 energy inflow: ``float``, [MWh]
     The amount of energy that will feed into the storage of the model period in
     MWh. For example a river into a pumped hydroelectric energy storage.
     
 charge capacity: ``float``, [MW]
-    Maximum capacity to charge the storage or the group of storages in MW.
+    Maximum capacity to charge the storage or the group of storages.
     
 discharge capacity: ``float``, [MW]
-    Maximum capacity to discharge the storage or the group of storages in MW.
+    Maximum capacity to discharge the storage or the group of storages.
 
 charge efficiency: ``float``, [-]
     Charging efficiency of the storage or the group of storages.
@@ -505,10 +502,10 @@ Name: ``str``
 **COLUMNS**
 
 capacity: ``float``, [MW]
-    The maximum transmission capacity in MW.
+    The maximum transmission capacity of the power lines.
     
 efficiency:``float``, [-]
-    The transmission efficiency of the power lines.
+    The transmission efficiency of the power line.
 
 Heating sector (optional)
 ~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -523,7 +520,7 @@ Heat demand series
 
 ``key:`` 'heat demand series', ``value:`` `pandas.DataFrame() <https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html>`_
 
-The heat demand can be entered regionally under DEXX or globally under DE.
+The heat demand can be entered regionally under DEXX or supra-regional under DE.
 The only type of demand that must be entered regionally is district heating.
 As recommendation, coal, gas, or oil demands should be treated supra-regional.
 
@@ -566,8 +563,7 @@ Decentralised heat
 This sheet covers all heating technologies that are used to generate
 decentralized heat. In this context decentralised does not mean regional it
 represents the large group of independent heating systems. If there is no
-specific reason to define a heating system regional they should be defined
-globally.
+specific reason to define a heating system regional they should be defined supra-regional.
 
 +------+------+------------+--------+---------------+
 |      |      | efficiency | source | source region |
@@ -656,23 +652,22 @@ level 1: ``str``
 
 limit heat chp: ``float``, [MWh]
     The absolute maximum limit of heat produced by chp within the whole
-    modeling period, in MWh.
+    modeling period.
     
 capacity heat chp: ``float``, [MW]
     The installed heat capacity of all chp plants of the same group in the
-    region, in MW.
+    region.
     
 capacity elect chp: ``float``, [MW]
     The installed electricity capacity of all chp plants of the same group in
-    the region, in MW.
+    the region.
 
 limit hp: ``float``, [MWh]
     The absolute maximum limit of heat produced by the heat plant within the
-    whole modeling period, in MWh.
+    whole modeling period.
     
 capacity hp: ``float``, [MW]
-    The installed heat capacity of all heat of the same group in the region in
-    MW.
+    The installed heat capacity of all heat of the same group in the region.
     
 efficiency hp: ``float``, [-]
     The average overall efficiency of the heat plant.
