@@ -92,6 +92,21 @@ information.
 * Start with basic scenarios
 * Highly configurable and adaptable
 
+.. contents::
+    :depth: 1
+    :local:
+    :backlinks: top
+
+Documentation
+-------------
+
+The `full documentation of deflex <https://deflex.readthedocs.io/en/latest/>`_
+is available on readthedocs.
+
+Go to the `download page <http://readthedocs.org/projects/deflex/downloads/>`_
+to download different versions and formats (pdf, html, epub) of the
+documentation.
+
 Installation
 ------------
 
@@ -119,7 +134,7 @@ Use example
    will show you how to analyse the results.
 4. Read the comments of each example, execute it and modify it to your needs.
    Do not forget to set the ``my_path`` in the examples first.
-5. In parallel you should read the ``usage guid`` of the documentation to get
+5. In parallel you should read the ``usage guide`` of the documentation to get
    the full picture.
 
 
@@ -142,21 +157,18 @@ Go to the `Zenodo page of deflex <https://doi.org/10.5281/zenodo.3572594>`_ to f
 .. image:: https://zenodo.org/badge/DOI/10.5281/zenodo.3572594.svg
    :target: https://doi.org/10.5281/zenodo.3572594
 
+Gallery
+-------
 
-Documentation
--------------
-
-The `full documentation of deflex <https://deflex.readthedocs.io/en/latest/>`_
-is available on readthedocs.
-
-Go to the `download page <http://readthedocs.org/projects/deflex/downloads/>`_
-to download different versions and formats (pdf, html, epub) of the
-documentation.
+.. image:: https://raw.githubusercontent.com/reegis/deflex/master/docs/images/model_regions.svg
+.. image:: https://raw.githubusercontent.com/reegis/deflex/master/docs/images/mcp.svg
+.. image:: https://raw.githubusercontent.com/reegis/deflex/master/docs/images/emissions.svg
+.. image:: https://raw.githubusercontent.com/reegis/deflex/master/docs/images/transmission.svg
 
 License
 -------
 
-Copyright (c) 2019 Uwe Krien
+Copyright (c) 2016-2021 Uwe Krien
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

@@ -23,7 +23,7 @@ All input data is stored as a dictionary in the ``input_data`` attribute of the
 table and the values are ``pandas.DataFrame`` or ``pandas.Series`` with the
 data.
 
-[TODO: add reference to DeflexScenario]
+.. image:: https://raw.githubusercontent.com/reegis/deflex/master/docs/images/deflex_scenario_class.svg
 
 
 Load input data
