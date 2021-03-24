@@ -127,7 +127,6 @@ Use example
 5. In parallel you should read the ``usage guide`` of the documentation to get
    the full picture.
 
-basic_analyses_example.py
 Improve deflex
 --------------
 
