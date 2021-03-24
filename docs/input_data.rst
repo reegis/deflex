@@ -11,6 +11,11 @@ pandas.Series).
 The input data is divided into four main topics: High-level-inputs, electricity
 sector, heating sector (optional) and mobility sector (optional).
 
+Download a fictive `input data example
+<https://files.de-1.osf.io/v1/resources/a5xrj/providers/osfstorage/605b1ed7818bde00cd3a6063?action=download&direct&version=1>`_
+to get an idea of the structure. Then go on with the following chapter to learn
+everything about how to define the data for a deflex model.
+
 .. contents::
     :depth: 1
     :local:
