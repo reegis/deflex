@@ -21,7 +21,7 @@ from deflex import tools
 
 url = (
     "https://files.de-1.osf.io/v1/resources/a5xrj/providers/osfstorage"
-    "/605a5d5c818bde00903a8f78?action=download&direct&version=1"
+    "/605c566be12b600065aa635f?action=download&direct&version=1"
 )
 
 # !!! ADAPT THE PATH !!!

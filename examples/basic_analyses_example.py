@@ -35,7 +35,7 @@ OPSD_URL = (
 
 OSF_URL = (
     "https://files.de-1.osf.io/v1/resources/a5xrj/providers/osfstorage"
-    "/605a5e017d552b00911b0b75?action=download&direct&version=1"
+    "/605c564de12b600065aa6315?action=download&direct&version=1"
 )
 
 
