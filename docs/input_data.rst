@@ -25,6 +25,8 @@ everything about how to define the data for a deflex model.
 Overview
 ~~~~~~~~
 
+.. image:: https://raw.githubusercontent.com/reegis/deflex/master/docs/images/spreadsheet_examples.png
+
 A Deflex scenario can be divided into regions. Each region must have an
 identifier number and be named after it as ``DEXX``, where ``XX`` is the
 number. For refering the Deflex scenario as a whole (i.e. the sum of all

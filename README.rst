@@ -153,6 +153,11 @@ include other European countries.
 
 .. image:: https://raw.githubusercontent.com/reegis/deflex/master/docs/images/model_regions.svg
 
+The input data can be organised in spreadsheets or csv files.
+
+.. image:: https://raw.githubusercontent.com/reegis/deflex/master/docs/images/spreadsheet_examples.png
+  :width: 950pt
+
 The resulting system costs of deflex have been compared with the day-ahead
 prices from the Entso-e downloaded from `Open Power System Data
 <https://open-power-system-data.org/>`_. The plot shows three different periods
