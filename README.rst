@@ -46,9 +46,9 @@
     :alt: Supported implementations
     :target: https://pypi.org/project/deflex
 
-.. |commits-since| image:: https://img.shields.io/github/commits-since/reegis/deflex/v0.2.0.svg
+.. |commits-since| image:: https://img.shields.io/github/commits-since/reegis/deflex/v0.3.0.svg
     :alt: Commits since latest release
-    :target: https://github.com/reegis/deflex/compare/v0.2.0...master
+    :target: https://github.com/reegis/deflex/compare/v0.3.0...master
 
 .. |lgt_general| image:: https://img.shields.io/lgtm/grade/python/g/reegis/deflex.svg?logo=lgtm&logoWidth=18
     :target: https://lgtm.com/projects/g/reegis/deflex/context:python

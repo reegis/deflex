@@ -23,7 +23,7 @@ def read(*names, **kwargs):
 
 setup(
     name="deflex",
-    version="0.2.1dev",
+    version="0.3.0",
     license="MIT",
     description=(
         "deflex - flexible multi-regional energy system model for "
@@ -46,8 +46,6 @@ setup(
     include_package_data=True,
     zip_safe=False,
     classifiers=[
-        # complete classifier list:
-        # http://pypi.python.org/pypi?%3Aaction=list_classifiers
         "Development Status :: 5 - Production/Stable",
         "Intended Audience :: Developers",
         "License :: OSI Approved :: MIT License",
@@ -58,10 +56,6 @@ setup(
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
-        # uncomment if you test on these interpreters:
-        # 'Programming Language :: Python :: Implementation :: IronPython',
-        # 'Programming Language :: Python :: Implementation :: Jython',
-        # 'Programming Language :: Python :: Implementation :: Stackless',
         "Topic :: Utilities",
     ],
     project_urls={
@@ -80,7 +74,6 @@ setup(
         "requests",
         "networkx > 2.0",
         "numpy >= 1.19.4",
-        "xlrd >= 1.2.0",
         "openpyxl >= 1.3.0",
         "dill >= 0.3.3",
     ],
