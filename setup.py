@@ -86,11 +86,8 @@ setup(
             "pygeos",
             "geopandas",
             "coveralls",
-            (
-                "scenario_builder@https://github.com/reegis/scenario_builder"
-                "/archive/add_deflex_scenario_builder.zip"
-            ),
-            "reegis@https://github.com/reegis/reegis/archive/master.zip",
+            "scenario_builder",
+            "reegis",
         ],
         "plot": ["pygraphviz", "matplotlib"],
         "scenario": ["scenario_builder", "reegis"],
