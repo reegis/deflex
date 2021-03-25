@@ -16,8 +16,7 @@ API more stable from now on.
 * Tests are more stable, test coverage increased slightly
 * Example data (v03) can be downloaded from the `deflex OSF page <https://osf.io/a5xrj/files/>`_.
 
-Authors
-+++++++
+**Authors**
 
 * Uwe Krien
 * Pedro Duran
@@ -28,3 +27,7 @@ Authors
 * Move basic scenario with reegis dependency to new package
 * Revise structure
 * Add tox tests: pyflake, docs, coverage, tests, link-test, manifest, isort
+
+**Authors**
+
+* Uwe Krien
