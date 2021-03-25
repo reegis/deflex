@@ -83,10 +83,9 @@
 deflex - flexible multi-regional energy system model for heat, power and mobility
 =================================================================================
 
-* Multi sectoral energy system of Germany/Europe
-* Dispatch optimisation
-* Start with basic scenarios
-* Highly configurable and adaptable
+++++++ multi sectoral energy system of Germany/Europe ++++++ dispatch
+optimisation ++++++ highly configurable and adaptable ++++++ multiple analyses
+functions +++++
 
 The following README gives you a brief overview about deflex. Read the full
 `documentation <https://deflex.readthedocs.io/en/latest/>`_ for all
