@@ -148,33 +148,43 @@ Go to the `Zenodo page of deflex <https://doi.org/10.5281/zenodo.3572594>`_ to f
 Gallery
 -------
 
-Use one of the include regions sets or create your own one. You can also
-include other European countries.
+The following figures will give you a brief impression about deflex.
 
 .. image:: https://raw.githubusercontent.com/reegis/deflex/master/docs/images/model_regions.svg
 
-The input data can be organised in spreadsheets or csv files.
+**Figure 1:** Use one of the include regions sets or create your own one. You
+can also include other European countries.
+
+-------------------------------------------------------------------------------
 
 .. image:: https://raw.githubusercontent.com/reegis/deflex/master/docs/images/spreadsheet_examples.png
   :width: 950pt
 
-The resulting system costs of deflex have been compared with the day-ahead
-prices from the Entso-e downloaded from `Open Power System Data
-<https://open-power-system-data.org/>`_. The plot shows three different periods
-of the year.
+**Figure 2:** The input data can be organised in spreadsheets or csv files.
+
+-------------------------------------------------------------------------------
 
 .. image:: https://raw.githubusercontent.com/reegis/deflex/master/docs/images/mcp.svg
 
-It is also possible to get a time series of the average emissions. Furthermore,
-it shows the emissions of the most expensive power plant which would be
-replaced by an additional feed-in.
+**Figure 3:** The resulting system costs of deflex have been compared with the
+day-ahead prices from the Entso-e downloaded from `Open Power System Data
+<https://open-power-system-data.org/>`_. The plot shows three different periods
+of the year.
+
+-------------------------------------------------------------------------------
 
 .. image:: https://raw.githubusercontent.com/reegis/deflex/master/docs/images/emissions.svg
 
-The following plot shows fraction of the time on which the utilisation of the
-power lines between the regions is more than 90% of its maximum capacity:
+**Figure 4:** It is also possible to get a time series of the average emissions. Furthermore,
+it shows the emissions of the most expensive power plant which would be
+replaced by an additional feed-in.
+
+-------------------------------------------------------------------------------
 
 .. image:: https://raw.githubusercontent.com/reegis/deflex/master/docs/images/transmission.svg
+
+**Figure 5:** The following plot shows fraction of the time on which the utilisation of the
+power lines between the regions is more than 90% of its maximum capacity:
 
 Documentation
 -------------
