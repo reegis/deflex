@@ -194,7 +194,7 @@ level 1: ``str``
 costs: ``float``, [€/MWh]
     The fuel production cost.
 
-emission: ``float``, [t/MWh]
+emission: ``float``, [kg/MWh]
     The fuel emission factor.
     
 annual limit: ``float``, [MWh]
