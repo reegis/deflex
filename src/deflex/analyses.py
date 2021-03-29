@@ -384,10 +384,10 @@ def calculate_emissions_most_expensive_pp(result=None, flow_results=None):
     >>> fn1 = fetch_test_files("de17_heat.dflx")
     >>> my_result = pp.restore_results(fn1)
     >>> emissions_mcp = calculate_emissions_most_expensive_pp(my_result)
-    >>> round(emissions_mcp.mean(), 2)
-    863.98
-    >>> round(emissions_mcp.max(), 2)
-    1642.28
+    >>> round(emissions_mcp.mean(), 4)
+    0.864
+    >>> round(emissions_mcp.max(), 4)
+    1.6423
     """
     if flow_results is None:
         flow_results = get_flow_results(result)
