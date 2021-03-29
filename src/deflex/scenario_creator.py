@@ -118,6 +118,7 @@ def create_scenario(regions, year, name, lines, opsd_version=None):
     table_collection["general"].loc["co2 price", "value"] = cs.pop(
         "co2_price"
     ).iloc[0]
+    cs["emission"] /= 1000
     table_collection["commodity sources"] = cs
     table_collection["volatile series"] = feedin.scenario_feedin(
         regions, year, name

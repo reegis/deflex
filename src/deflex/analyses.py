@@ -86,7 +86,7 @@ def merit_order_from_scenario(
     if with_co2_price and "co2_price" in transf:
         transf["costs_total"] += transf["co2_price"] * transf[
             "fuel_emission"
-        ].div(1000).div(transf["efficiency"])
+        ].div(transf["efficiency"])
 
     transf.sort_values(["costs_total", "capacity"], inplace=True)
     transf["capacity_cum"] = transf.capacity.cumsum().div(1000)
