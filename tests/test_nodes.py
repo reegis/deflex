@@ -10,8 +10,8 @@ SPDX-License-Identifier: MIT
 
 
 from deflex import main
-from deflex import scenario
 from deflex import nodes as nd
+from deflex import scenario
 from deflex.tools import fetch_test_files
 
 
