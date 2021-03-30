@@ -86,8 +86,17 @@ def search_results(path, extension="dflx", **parameter_filter):
 
 
 def restore_results(file_names, scenario_class=DeflexScenario):
-    """Load results from a file or a list of files. The results will be
+    """
+    Load results from a file or a list of files. The results will be a deflex
+    result dictionary with the following keys:
 
+     * main – Results of all variables
+     * param – Input parameter
+     * meta – Meta information and tags of the scenario
+     * problem – Information about the linear problem such as lower bound,
+       upper bound etc.
+     * solver – Solver results
+     * solution – Information about the found solution and the objective value
 
     Parameters
     ----------
@@ -180,7 +189,7 @@ def reshape_bus_view(results, buses, data=None, aggregate=None):
     ----------
     results: dict
         A solph results dictionary from a deflex scenario.
-    buses : list or solph.Bus
+    buses : list[solph.Bus] or solph.Bus
         A single bus node or a list of buses.
     data : pandas.DataFrame
         MultiIndex DataFrame to add the results to.
@@ -253,7 +262,7 @@ def reshape_bus_view(results, buses, data=None, aggregate=None):
                 if isinstance(agg[2], int):
                     if agg[2] < 0:
                         val = "_".join(node.label.subtag.split("_")[: agg[2]])
-                    elif agg[2] > 0:
+                    else:
                         val = "_".join(node.label.subtag.split("_")[agg[2] :])
                 else:
                     val = agg[2]
@@ -278,7 +287,7 @@ def reshape_bus_view(results, buses, data=None, aggregate=None):
                     flow[1].label.tag,
                     subtag,
                 )
-            elif flow[1] == bus:
+            else:
                 subtag = change_subtag(flow[0], aggregate)
                 flow_label = (
                     bus.label,
@@ -287,8 +296,6 @@ def reshape_bus_view(results, buses, data=None, aggregate=None):
                     flow[0].label.tag,
                     subtag,
                 )
-            else:
-                flow_label = None
 
             if flow_label in data:
                 data[flow_label] += results["Main"][flow]["sequences"]["flow"]
