@@ -13,6 +13,8 @@ from zipfile import ZipFile
 
 import requests
 
+from deflex import config as cfg
+
 TEST_PATH = os.path.join(
     os.path.expanduser("~"), ".deflex", "tmp_test_32traffic_43"
 )
@@ -35,10 +37,7 @@ def fetch_test_files(path):
     """
 
     zip_file = os.path.join(TEST_PATH, "deflex_test_files.zip")
-    zip_url = (
-        "https://files.de-1.osf.io/v1/resources/9krgp/providers/osfstorage"
-        "/60622a3e7ae1960226accc72?action=download&direct&version=1"
-    )
+    zip_url = cfg.get("url", "osfbase") + cfg.get("url", "tests")
 
     os.makedirs(TEST_PATH, exist_ok=True)
     if ".dflx" in path:
