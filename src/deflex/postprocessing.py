@@ -57,8 +57,6 @@ def search_results(path=None, extension="dflx", **parameter_filter):
     >>> res[0].split(os.sep)[-1]
     'de17_heat.dflx'
     """
-    if path is None:
-        path = os.path.expanduser("~")
 
     # Search for files with ".esys" extension.
     result_files = []
