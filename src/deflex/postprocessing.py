@@ -18,7 +18,7 @@ from deflex.scenario import DeflexScenario
 from deflex.scenario import restore_scenario
 
 
-def search_results(path=None, extension="dflx", **parameter_filter):
+def search_results(path, extension="dflx", **parameter_filter):
     """Filter results by extension and meta data.
 
     The function will search the $HOME folder recursively for files with the
@@ -29,10 +29,13 @@ def search_results(path=None, extension="dflx", **parameter_filter):
     path : str
         Start folder from where to search recursively.
     extension : str
-        Extension of the results files (default: ".esys")
+        Extension of the results files (default: ".dflx")
     **parameter_filter
         Set filter always with lists e.g. map=["de21"] or map=["de21", "de22"].
-        The values in the list have to be strings.
+        The values in the list have to be strings. Two filters will be
+        connected with 'AND', the values within one filter with `OR`.
+        The filters year=["2014"], map=["de21", "de22"] will find all scenarios
+        with: year==2014 and (map=="de21" or map=="de22")
 
     Returns
     -------
@@ -57,8 +60,6 @@ def search_results(path=None, extension="dflx", **parameter_filter):
     >>> res[0].split(os.sep)[-1]
     'de17_heat.dflx'
     """
-
-    # Search for files with ".esys" extension.
     result_files = []
     for root, dirs, files in os.walk(path):
         files = [f for f in files if not f[0] == "."]
@@ -125,6 +126,36 @@ def restore_results(file_names, scenario_class=DeflexScenario):
 
 
 def search_nodes(results, node_type, **label_filter):
+    """
+    Filter nodes of a specific type. Additionally it is possible to filter by
+    specific label tags.
+
+    Parameters
+    ----------
+    results: dict
+        A solph results dictionary from a deflex scenario.
+    node_type : solph.Node
+        The type of the instance.
+
+    Returns
+    -------
+    list : A list of nodes of the given node_type.
+
+    Examples
+    --------
+    >>> from oemof import solph
+    >>> from deflex.tools import fetch_test_files
+    >>> fn = fetch_test_files("de02_heat.dflx")
+    >>> my_es = restore_scenario(fn).es
+    >>> my_buses = search_nodes(
+    ...     my_es.results, node_type=solph.Bus, tag=["commodity", "heat"])
+    >>> len(my_buses)
+    15
+    >>> my_buses = search_nodes(
+    ...     my_es.results, node_type=solph.Bus, tag=["commodity"])
+    >>> len(my_buses)
+    8
+    """
     nodes = {
         x[0] for x in results["Main"].keys() if isinstance(x[0], node_type)
     }
