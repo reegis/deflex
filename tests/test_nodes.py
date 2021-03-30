@@ -27,6 +27,11 @@ class TestNodes:
         nodes = nd.create_fuel_bus_with_source(
             nodes, "lignite", "DE", self.sc.input_data
         )
+        nodes_copy = nodes.copy()
+        nodes = nd.create_fuel_bus_with_source(
+            nodes, "lignite", "DE", self.sc.input_data
+        )
+        assert nodes == nodes_copy
         self.sc.add_nodes_to_es(nodes)
         src = [v for k, v in nodes.items() if k.cat == "source"][0]
         trg = [v for k, v in nodes.items() if k.cat == "bus"][0]
