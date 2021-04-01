@@ -170,7 +170,7 @@ def add_volatile_sources(table_collection, nodes):
                         nodes[bus_label]: solph.Flow(
                             fix=feedin,
                             nominal_value=capacity,
-                            emission=0,
+                            emission=solph.sequence(0),
                         )
                     },
                 )
@@ -376,8 +376,9 @@ def check_in_out_buses(nodes, table, input_data):
     for source in sources:
         fuel = source[0]
         region = source[1]
-        if Label("bus", "commodity", fuel, region) not in nodes:
-            create_fuel_bus_with_source(nodes, fuel, region, input_data)
+        if fuel != "electricity":
+            if Label("bus", "commodity", fuel, region) not in nodes:
+                create_fuel_bus_with_source(nodes, fuel, region, input_data)
 
     for region in table.index.get_level_values(0).unique():
         if Label("bus", "electricity", "all", region) not in nodes:
@@ -451,11 +452,19 @@ def add_heat_and_chp_plants(table_collection, nodes):
     for idx, params in chp_heat_plants.iterrows():
         region = idx[0]
 
-        bus_fuel = Label(
-            "bus", "commodity", params.fuel, params["source region"]
-        )
+        # Check and create buses
         bus_elec = Label("bus", "electricity", "all", region)
+        if params.fuel != "electricity":
+            bus_fuel = Label(
+                "bus", "commodity", params.fuel, params["source region"]
+            )
+        else:
+            bus_fuel = bus_elec
+
         bus_heat = Label("bus", "heat", "district", region)
+
+        if bus_heat not in nodes:
+            nodes[bus_heat] = solph.Bus(label=bus_heat)
 
         # Create chp plants as 1x2 Transformer
         if (
@@ -463,7 +472,7 @@ def add_heat_and_chp_plants(table_collection, nodes):
             and params["capacity_heat_chp"] > 0
         ):
             chp_label = Label(
-                "trsf", "chp", params.fuel.replace(" ", "_"), region
+                "trsf", "chp", params.fuel.replace("_", " "), region
             )
 
             smax = (params.limit_heat_chp / params.efficiency_heat_chp) / (
@@ -494,7 +503,7 @@ def add_heat_and_chp_plants(table_collection, nodes):
         # Create heat plants as 1x1 Transformer
         if hasattr(params, "capacity_hp") and params.capacity_hp > 0:
             hp_label = Label(
-                "trsf", "hp", params.fuel.replace(" ", "_"), region
+                "trsf", "hp", params.fuel.replace("_", " "), region
             )
             smax = params.limit_hp / params.capacity_hp
 
