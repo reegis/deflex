@@ -417,12 +417,12 @@ def add_power_plants(table_collection, nodes):
                 params.capacity *= 1 - params["downtime_factor"]
 
             # Define output flow with or without summed_max attribute
-            if params.get("annual_limit_electricity", float("inf")) == float(
+            if params.get("annual electricity limit", float("inf")) == float(
                 "inf"
             ):
                 outflow = solph.Flow(nominal_value=params.capacity)
             else:
-                smax = params.annual_limit_electricity / params.capacity
+                smax = params["annual electricity limit"] / params.capacity
                 outflow = solph.Flow(
                     nominal_value=params.capacity, summed_max=smax
                 )
