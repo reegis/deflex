@@ -574,38 +574,38 @@ def add_mobility(table_collection, nodes):
         for fuel in mseries[region].columns:
             source = mtable.loc[(region, fuel), "source"]
             source_region = mtable.loc[(region, fuel), "source region"]
-            if mseries[region, fuel].sum() > 0:
-                fuel_transformer = Label("process", "fuel", fuel, region)
-                fuel_demand = Label("demand", "mobility", fuel, region)
-                bus_label = Label("bus", "mobility", fuel, region)
-                if fuel != "electricity":
-                    com_bus_label = Label(
-                        "bus", "commodity", source, source_region
-                    )
-                else:
-                    com_bus_label = Label(
-                        "bus", "electricity", "all", source_region
-                    )
-                if bus_label not in nodes:
-                    nodes[bus_label] = solph.Bus(label=bus_label)
-                if com_bus_label not in nodes:
-                    nodes[com_bus_label] = solph.Bus(label=com_bus_label)
-                cf = mtable.loc[(region, fuel), "efficiency"]
-                nodes[fuel_transformer] = solph.Transformer(
-                    label=fuel_transformer,
-                    inputs={nodes[com_bus_label]: solph.Flow()},
-                    outputs={nodes[bus_label]: solph.Flow()},
-                    conversion_factors={nodes[bus_label]: cf},
+
+            fuel_transformer = Label("process", "fuel", fuel, region)
+            fuel_demand = Label("demand", "mobility", fuel, region)
+            bus_label = Label("bus", "mobility", fuel, region)
+            if fuel != "electricity":
+                com_bus_label = Label(
+                    "bus", "commodity", source, source_region
                 )
-                fix_value = mseries[region, fuel]
-                nodes[fuel_demand] = solph.Sink(
-                    label=fuel_demand,
-                    inputs={
-                        nodes[bus_label]: solph.Flow(
-                            nominal_value=1, fix=fix_value
-                        )
-                    },
+            else:
+                com_bus_label = Label(
+                    "bus", "electricity", "all", source_region
                 )
+            nodes[bus_label] = solph.Bus(label=bus_label)
+
+            if com_bus_label not in nodes:
+                nodes[com_bus_label] = solph.Bus(label=com_bus_label)
+            cf = mtable.loc[(region, fuel), "efficiency"]
+            nodes[fuel_transformer] = solph.Transformer(
+                label=fuel_transformer,
+                inputs={nodes[com_bus_label]: solph.Flow()},
+                outputs={nodes[bus_label]: solph.Flow()},
+                conversion_factors={nodes[bus_label]: cf},
+            )
+            fix_value = mseries[region, fuel]
+            nodes[fuel_demand] = solph.Sink(
+                label=fuel_demand,
+                inputs={
+                    nodes[bus_label]: solph.Flow(
+                        nominal_value=1, fix=fix_value
+                    )
+                },
+            )
     return nodes
 
 
@@ -631,7 +631,3 @@ def add_shortage_excess(nodes):
             label=shortage_label,
             outputs={nodes[key]: solph.Flow(variable_costs=900)},
         )
-
-
-if __name__ == "__main__":
-    pass
