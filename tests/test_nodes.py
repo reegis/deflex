@@ -256,7 +256,16 @@ class TestNodes:
         pass
 
     def test_power_plants(self):
-        pass
+        self.sc.initialise_energy_system()
+        nodes = scenario.NodeDict()
+        nd.add_power_plants(self.sc.input_data, nodes)
+        self.sc.input_data["power plants"].drop(
+            ["annual electricity limit", "downtime_factor", "variable_costs"],
+            axis=1,
+            inplace=True,
+        )
+        nodes = {k: v for k, v in nodes.items() if k.cat != "trsf"}
+        nd.add_power_plants(self.sc.input_data, nodes)
 
     def test_heat_and_chp_plants(self):
         self.sc.initialise_energy_system()
@@ -303,10 +312,17 @@ class TestNodes:
         assert round(hflow2.summed_max, 1) == 17.7
 
     def test_electricity_storages(self):
-        pass
+        self.sc.initialise_energy_system()
+        nodes = scenario.NodeDict()
+        nd.create_electricity_bus(nodes, "DE01")
+        nd.add_electricity_storages(self.sc.input_data, nodes)
 
     def test_mobility(self):
-        pass
+        self.sc.initialise_energy_system()
+        nodes = scenario.NodeDict()
+        nd.add_mobility(self.sc.input_data, nodes)
 
     def test_shortage_excess(self):
-        pass
+        self.sc.initialise_energy_system()
+        nodes = scenario.NodeDict()
+        nd.add_shortage_excess(nodes)
