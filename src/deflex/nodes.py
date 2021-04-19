@@ -19,7 +19,7 @@ class Label(namedtuple("solph_label", ["cat", "tag", "subtag", "region"])):
     __slots__ = ()
 
     def __str__(self):
-        return "_".join(map(str, self._asdict().values()))
+        return "_".join(map(str, self._asdict().values())).replace(" ", "-")
 
 
 def create_solph_nodes_from_data(input_data, nodes):
