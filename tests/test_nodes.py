@@ -35,7 +35,7 @@ class TestNodes:
         assert nodes == nodes_copy
         self.sc.add_nodes_to_es(nodes)
         src = [v for k, v in nodes.items() if k.cat == "source"][0]
-        trg = [v for k, v in nodes.items() if k.cat == "bus"][0]
+        trg = [v for k, v in nodes.items() if isinstance(v, solph.Bus)][0]
         flow = self.sc.es.flows()[(src, trg)]
         assert flow.variable_costs[0] == 11.988
         assert flow.nominal_value is None
@@ -50,7 +50,7 @@ class TestNodes:
         assert nodes == nodes_copy
         assert len(nodes.keys()) == 1
         assert list(nodes.keys())[0] == nd.Label(
-            "bus", "electricity", "all", "DE01"
+            "electricity", "all", "all", "DE01"
         )
 
     def test_volatile_sources(self):
@@ -64,7 +64,7 @@ class TestNodes:
             trg = [
                 v
                 for k, v in nodes.items()
-                if k.cat == "bus" and k.region == region
+                if isinstance(v, solph.Bus) and k.region == region
             ][0]
             flow = self.sc.es.flows()[(s, trg)]
             idx = (region, s.label.subtag)
@@ -78,12 +78,12 @@ class TestNodes:
             )
             flow.nominal_value = 12.29
             assert flow.emission[0] == 0
-            assert trg.label == nd.Label("bus", "electricity", "all", region)
+            assert trg.label == nd.Label("electricity", "all", "all", region)
         s0 = sorted(src)[0]
         t0 = [
             v
             for k, v in nodes.items()
-            if k.cat == "bus" and k.region == s0.label.region
+            if isinstance(v, solph.Bus) and k.region == s0.label.region
         ][0]
         flow = self.sc.es.flows()[(s0, t0)]
         assert flow.fix.sum() == 24.0
@@ -98,17 +98,24 @@ class TestNodes:
         oil_heat_bus = [
             v
             for k, v in nodes.items()
-            if k.cat == "bus" and k.tag == "heat" and k.subtag == "oil"
+            if isinstance(v, solph.Bus)
+            and k.cat == "heat"
+            and k.tag == "decentralised"
+            and k.subtag == "oil"
         ][0]
         oil_heat_demand = [
             v
             for k, v in nodes.items()
-            if k.cat == "demand" and k.tag == "heat" and k.subtag == "oil"
+            if k.cat == "heat demand"
+            and k.tag == "decentralised"
+            and k.subtag == "oil"
         ][0]
         oil_heat_transformer = [
             v
             for k, v in nodes.items()
-            if k.cat == "trsf" and k.tag == "heat" and k.subtag == "oil"
+            if k.cat == "decentralised heat"
+            and k.tag == "oil"
+            and k.subtag == "oil"
         ][0]
         flow = self.sc.es.flows()[(oil_heat_bus, oil_heat_demand)]
         idx = ("DE", "oil")
@@ -182,7 +189,7 @@ class TestNodes:
     def test_transmission_lines_between_electricity_nodes_errors(self):
         self.sc.initialise_energy_system()
         nodes = scenario.NodeDict()
-        msg = "Bus bus_electricity_all_{0} missing for power line from bus_"
+        msg = "Bus electricity_all_all_{0} missing for power line from "
         with pytest.raises(ValueError, match=msg.format("DE01")):
             nd.add_transmission_lines_between_electricity_nodes(
                 self.sc.input_data, nodes
@@ -279,19 +286,19 @@ class TestNodes:
         self.sc.add_nodes_to_es(nodes)
 
         src = self.sc.es.groups[
-            str(nd.Label("bus", "commodity", "natural gas", "DE"))
+            str(nd.Label("commodity", "all", "natural gas", "DE"))
         ]
         chp1 = self.sc.es.groups[
-            str(nd.Label("trsf", "chp", "natural gas", "DE01"))
+            str(nd.Label("chp plant", "natural gas", "natural gas", "DE01"))
         ]
         hp2 = self.sc.es.groups[
-            str(nd.Label("trsf", "hp", "natural gas", "DE01"))
+            str(nd.Label("heat plant", "natural gas", "natural gas", "DE01"))
         ]
         heat = self.sc.es.groups[
-            str(nd.Label("bus", "heat", "district", "DE01"))
+            str(nd.Label("heat", "district", "all", "DE01"))
         ]
         elec = self.sc.es.groups[
-            str(nd.Label("bus", "electricity", "all", "DE01"))
+            str(nd.Label("electricity", "all", "all", "DE01"))
         ]
         print(self.sc.es.groups[str(chp1)])
         fflow1 = self.sc.es.flows()[(src, chp1)]

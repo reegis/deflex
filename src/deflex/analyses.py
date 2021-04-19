@@ -98,7 +98,7 @@ def get_line_inflows(result):
         x
         for x in result["Main"].keys()
         if isinstance(x[1], solph.Bus)
-        and x[1].label.tag == "electricity"
+        and x[1].label.cat == "electricity"
         and not x[0].label.cat == "line"
     ]
 
@@ -208,7 +208,6 @@ def merit_order_from_results(result):
             )
             / values.loc[label, "efficiency"]
         )
-
     values = values.loc[values["fuel"] != "no fuel"]
     values.sort_values(["costs_total", "capacity"], inplace=True)
     values["capacity_cum"] = values.capacity.cumsum().div(1000)

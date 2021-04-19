@@ -157,11 +157,11 @@ def search_nodes(results, node_type, **label_filter):
     >>> fn = fetch_test_files("de02_heat.dflx")
     >>> my_es = restore_scenario(fn).es
     >>> my_buses = search_nodes(
-    ...     my_es.results, node_type=solph.Bus, tag=["commodity", "heat"])
+    ...     my_es.results, node_type=solph.Bus, cat=["commodity", "heat"])
     >>> len(my_buses)
     15
     >>> my_buses = search_nodes(
-    ...     my_es.results, node_type=solph.Bus, tag=["commodity"])
+    ...     my_es.results, node_type=solph.Bus, cat=["commodity"])
     >>> len(my_buses)
     8
     """

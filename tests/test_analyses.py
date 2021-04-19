@@ -24,7 +24,10 @@ def test_flow_results():
     mo = analyses.merit_order_from_results(my_res)
     seq = analyses.get_flow_results(my_res)
 
-    for trsf in seq["cost", "specific", "trsf"].columns:
+    print(seq)
+
+    for trsf in seq["cost", "specific"].columns:
+        print(trsf)
         for w in [("cost", "costs_total"), ("emission", "spec_emission")]:
             base = ("trsf",) + tuple(trsf)
             weight_spec = (w[0], "specific") + base
