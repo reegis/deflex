@@ -10,6 +10,9 @@ SPDX-License-Identifier: MIT
 __copyright__ = "Uwe Krien <krien@uni-bremen.de>"
 __license__ = "MIT"
 
+import logging
+from collections import namedtuple
+
 import pandas as pd
 from oemof import solph
 from pandas.testing import assert_frame_equal
@@ -260,6 +263,336 @@ def check_comparision_of_merit_order(scenario):
     print("Check passed! Both merit order DataFrame tables are the same.")
 
 
+def meta_results2series(results):
+    meta = results["Meta"]
+    meta.pop("solver")
+    meta.pop("problem")
+    return pd.Series(meta)
+
+
+def pyomo_results2series(results):
+    pyomo = pd.Series(
+        index=pd.MultiIndex(levels=[[], []], codes=[[], []]), dtype="object"
+    )
+    for k, v in dict(results["Solver"][0]).items():
+        try:
+            pyomo["Solver", k] = v.value
+        except AttributeError:
+            for k2, v2 in dict(results["Solver"][0][k]).items():
+                for k3, v3 in dict(results["Solver"][0][k][k2]).items():
+                    pyomo["Solver " + k2, k3] = v3.value
+    for k, v in dict(results["Problem"][0]).items():
+        pyomo["Problem", k] = v.value
+
+    for k, v in results["Solution"].items():
+        pyomo["Solution", k] = v.value
+    return pyomo.sort_index()
+
+
+def storage_results2table(results):
+    storages = set(
+        [
+            k[0]
+            for k in results["main"].keys()
+            if isinstance(k[0], solph.GenericStorage)
+        ]
+    )
+
+    levels = [[], [], [], [], []]
+    store = pd.DataFrame(columns=pd.MultiIndex(levels=levels, codes=levels))
+    for storage in storages:
+        for col in results["main"][storage, None]["sequences"].columns:
+            store[
+                storage.label.cat,
+                storage.label.tag,
+                storage.label.subtag,
+                storage.label.region,
+                col,
+            ] = results["main"][storage, None]["sequences"][col]
+    return store
+
+
+def bus_flows2tables(results, bus_tags):
+    levels = [[], [], [], [], [], [], [], []]
+    tables = {}
+    for tag in bus_tags:
+        seq = pd.DataFrame(columns=pd.MultiIndex(levels=levels, codes=levels))
+        buses = set(
+            [
+                k[0]
+                for k in results["main"].keys()
+                if isinstance(k[0], solph.Bus) and k[0].label.tag == tag
+            ]
+        )
+        for c in buses:
+            flows = [k for k in results["main"].keys() if k[1] == c]
+            flows.extend([k for k in results["main"].keys() if k[0] == c])
+            for f in flows:
+                seq[
+                    f[0].label.cat,
+                    f[0].label.tag,
+                    f[0].label.subtag,
+                    f[0].label.region,
+                    f[1].label.cat,
+                    f[1].label.tag,
+                    f[1].label.subtag,
+                    f[1].label.region,
+                ] = results["main"][f]["sequences"]["flow"]
+        tables[tag] = seq.sort_index(axis=1)
+
+    return tables
+
+
+def get_all_results(results):
+    """
+    SOMETHING
+
+    Parameters
+    ----------
+    results
+
+    Returns
+    -------
+
+    """
+    bus_tags = set(
+        [
+            k[0].label.tag
+            for k in results["main"].keys()
+            if isinstance(k[0], solph.Bus)
+        ]
+    )
+
+    names = list(bus_tags)
+    names.extend(["storages", "pyomo", "meta"])
+
+    collection = namedtuple("deflex_results", names)
+
+    tables = bus_flows2tables(results, bus_tags)
+
+    return collection(
+        storages=storage_results2table(results),
+        pyomo=pyomo_results2series(results),
+        meta=meta_results2series(results),
+        **tables,
+    )
+
+
+def calculate_chp_fuel_factor(efficiency, method="carnot"):
+    print(efficiency)
+    if method == "carnot":
+        return 0.5
+
+
+def calculate_emissions(results):
+    # TODO: Bei Auswertungen immer(!) vorher testen, ob excess/shortage == 0
+    # sind, denn sonst stimmen die Auswertungen nicht.
+
+    res = {}
+
+    keys = sorted(list(results["main"].keys()))
+    df = pd.DataFrame()
+    n = 0
+    for label in keys:
+        n += 1
+        if isinstance(label[1], solph.Sink):
+            df.loc[n, "cat"] = label[1].label.cat
+            df.loc[n, "tag"] = label[1].label.tag
+            df.loc[n, "subtag"] = label[1].label.subtag
+            df.loc[n, "region"] = label[1].label.region
+    df.loc["z", "cat"] = df["cat"].unique()
+    df.loc["z", "tag"] = df["tag"].unique()
+    df.loc["z", "subtag"] = df["subtag"].unique()
+    df.loc["z", "region"] = df["region"].unique()
+    df.to_excel("/home/uwe/labels2.xlsx")
+    exit(0)
+
+    sinks = set(
+        [k[1] for k in results["main"].keys() if isinstance(k[1], solph.Sink)]
+    )
+
+    com_source_flows = set(
+        [
+            k
+            for k in results["main"].keys()
+            if isinstance(k[0], solph.Source) and k[0].label.tag == "commodity"
+        ]
+    )
+
+    esinks = set([k for k in sinks if k.label.tag == "electricity"])
+    msinks = set([k for k in sinks if k.label.tag == "mobility"])
+    csinks = set([k for k in sinks if k.label.tag == "commodity"])
+
+    heat_sink_flows = set(
+        [
+            k
+            for k in results["main"].keys()
+            if isinstance(k[1], solph.Sink) and k[1].label.tag == "heat"
+        ]
+    )
+    heat_buses = set(
+        [
+            k[0]
+            for k in results["main"].keys()
+            if isinstance(k[1], solph.Sink) and k[1].label.tag == "heat"
+        ]
+    )
+
+    heat_buses_inflows = set(
+        [k for k in results["main"].keys() if k[1] in heat_buses]
+    )
+
+    # heat_transformer = set(
+    #     [
+    #         k[0]
+    #         for k in heat_buses_inflows
+    #         if isinstance(k[0], solph.Transformer)
+    #     ]
+    # )
+    # cs = set([k[0] for k in results["main"].keys() if k[1] is None])
+    #
+    # # for c in cs:
+    # #     print(c)
+    # # exit(0)
+    #
+    # for i in heat_buses_inflows:
+    #     if results["main"][i]["sequences"]["flow"].sum() > 0:
+    #         print(i[0])
+
+    heat_transformer = set(
+        [
+            k[0]
+            for k in results["main"].keys()
+            if isinstance(k[0], solph.Transformer) and k[1].label.tag == "heat"
+            # and k[0].label.tag != "chp"
+        ]
+    )
+
+    chp_transformer = set(
+        [
+            k[0]
+            for k in results["main"].keys()
+            if isinstance(k[0], solph.Transformer) and k[0].label.tag == "chp"
+        ]
+    )
+
+    electricity_transformer = set(
+        [
+            k[0]
+            for k in results["main"].keys()
+            if isinstance(k[0], solph.Transformer)
+            and k[1].label.tag == "electricity"
+            and k[1].label.cat != "line"
+        ]
+    )
+    print("#####")
+    for e in electricity_transformer:
+        print(e)
+    print("****")
+    for h in heat_transformer:
+        print(h)
+    print("%%%%%")
+    # heat_transformer.add(chp_transformer)
+    for h in chp_transformer:
+        print(h)
+    exit(0)
+    for t in heat_transformer:
+        inflow = [f for f in results["main"].keys() if f[1] == t][0]
+        inflow_energy = results["main"][inflow]["sequences"]["flow"]
+        outflow_heat = [
+            f
+            for f in results["main"].keys()
+            if f[0] == t
+            if f[1].label.tag == "heat"
+        ][0]
+        print(outflow_heat)
+        efficiency = {
+            k.label.tag: v[0]
+            for k, v in t.conversion_factors.items()
+            if k != inflow[0]
+        }
+        if len(efficiency) == 1:
+            fuel_factor_heat = 1
+        else:
+            fuel_factor_heat = calculate_chp_fuel_factor(efficiency, "carnot")
+
+        heat_related_inflow = inflow_energy * fuel_factor_heat
+        heat_energy_outflow = results["main"][outflow_heat]["sequences"][
+            "flow"
+        ]
+        print(
+            fuel_factor_heat,
+            t,
+            # int(heat_related_inflow.sum()),
+            # int(heat_energy_outflow.sum()),
+            int(heat_energy_outflow.sum()) / int(heat_related_inflow.sum()),
+        )
+    exit(0)
+
+    print("****************+")
+    print("number of sinks", len(sinks))
+    # print("number of heat sinks", len(hsinks))
+    print("number of electricity sinks", len(esinks))
+    print("number of mobility sinks", len(msinks))
+    print("number of commodity sinks", len(csinks))
+    for s in sorted(sinks):
+        print(s)
+
+    print("****************+")
+    level = [[], [], [], [], []]
+    fuel = pd.DataFrame(columns=pd.MultiIndex(levels=level, codes=level))
+    for s in sorted(com_source_flows):
+        if results["main"][s]["sequences"]["flow"].sum() > 0:
+            fuel[
+                "energy",
+                s[0].label.cat,
+                s[0].label.tag,
+                s[0].label.subtag,
+                s[0].label.region,
+            ] = results["main"][s]["sequences"]["flow"]
+            try:
+                emission = results["param"][s]["scalars"]["emission"]
+            except KeyError as e:
+                if s[0].label.cat == "shortag":
+                    value_sum = results["main"][s]["sequences"]["flow"].sum()
+                    msg = (
+                        "The results cannot be used, because the "
+                        "optimisation is not feasible without a shortage "
+                        "source.\nThe sum of {0} is {1}".format(
+                            s[0].label, value_sum
+                        )
+                    )
+                    raise ValueError(msg)
+                else:
+                    logging.error(s)
+                    raise e
+            fuel[
+                "emission",
+                s[0].label.cat,
+                s[0].label.tag,
+                s[0].label.subtag,
+                s[0].label.region,
+            ] = (
+                results["main"][s]["sequences"]["flow"] * emission
+            )
+    heat_demand = pd.DataFrame(
+        columns=pd.MultiIndex(levels=level, codes=level)
+    )
+    for h in heat_sink_flows:
+        if results["main"][h]["sequences"]["flow"].sum() > 0:
+            print(results["main"][h]["sequences"]["flow"].sum())
+            heat_demand[
+                "energy",
+                h[1].label.cat,
+                h[1].label.tag,
+                h[1].label.subtag,
+                h[1].label.region,
+            ] = results["main"][h]["sequences"]["flow"]
+    print(fuel.sort_index(axis=1))
+    print(heat_demand.sort_index(axis=1))
+    heat_demand.sort_index(axis=1).to_excel("/home/uwe/000AA.xlsx")
+
+
 def get_flow_results(result):
     """
     Extract values from the flows and calculate key values.
@@ -472,4 +805,26 @@ def get_key_values_from_results(results, **switch):
 
 
 if __name__ == "__main__":
-    pass
+    from deflex import postprocessing as pp
+    import os
+
+    # fn = "/home/uwe/.deflex/pedro/2030-DE02-Agora2.dflx"
+    fn = os.path.join(
+        os.path.expanduser("~"),
+        ".deflex",
+        "tmp_test_32traffic_43",
+        "de03_fictive.dflx",
+    )
+
+    my_results = pp.restore_results(fn)
+
+    # filename = "/home/uwe/.deflex/pedro/2030-DE02-Agora2_results.xlsx"
+    # all_results = get_all_results(my_results)
+    # writer = pd.ExcelWriter(filename)
+    # for table in all_results._fields:
+    #     getattr(all_results, table).to_excel(writer, table)
+    # writer.save()
+    calculate_emissions(my_results)
+    # for table in all_results._fields:
+    #     print("\n\n***************** " + table + " ****************\n")
+    #     print(getattr(all_results, table))
