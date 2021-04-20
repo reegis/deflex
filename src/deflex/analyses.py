@@ -314,13 +314,20 @@ def storage_results2table(results):
 def bus_flows2tables(results, bus_tags):
     levels = [[], [], [], [], [], [], [], []]
     tables = {}
-    for tag in bus_tags:
+    for bus_tag in bus_tags:
         seq = pd.DataFrame(columns=pd.MultiIndex(levels=levels, codes=levels))
+        if "heat" in bus_tag:
+            cat, tag = bus_tag.split("_")
+        else:
+            cat = bus_tag
+            tag = "all"
         buses = set(
             [
                 k[0]
                 for k in results["main"].keys()
-                if isinstance(k[0], solph.Bus) and k[0].label.tag == tag
+                if isinstance(k[0], solph.Bus)
+                and k[0].label.cat == cat
+                and k[0].label.tag == tag
             ]
         )
         for c in buses:
@@ -337,7 +344,7 @@ def bus_flows2tables(results, bus_tags):
                     f[1].label.subtag,
                     f[1].label.region,
                 ] = results["main"][f]["sequences"]["flow"]
-        tables[tag] = seq.sort_index(axis=1)
+        tables[bus_tag] = seq.sort_index(axis=1)
 
     return tables
 
@@ -356,11 +363,12 @@ def get_all_results(results):
     """
     bus_tags = set(
         [
-            k[0].label.tag
+            "_".join([k[0].label.cat, k[0].label.tag]).replace("_all", "")
             for k in results["main"].keys()
             if isinstance(k[0], solph.Bus)
         ]
     )
+    print(bus_tags)
 
     names = list(bus_tags)
     names.extend(["storages", "pyomo", "meta"])
@@ -383,28 +391,61 @@ def calculate_chp_fuel_factor(efficiency, method="carnot"):
         return 0.5
 
 
+def get_all_nodes_from_results(results):
+    keys = sorted(list(results["main"].keys()))
+    unique_nodes = []
+    for nodes in keys:
+        unique_nodes.append(nodes[0])
+        if nodes[1] is not None:
+            unique_nodes.append(nodes[1])
+    return set(unique_nodes)
+
+
+def nodes2table(results):
+    """
+    Get a table with all nodes (class, category, tag, subtag, region) from a
+    results dictionary.
+
+    Parameters
+    ----------
+    results : dict
+
+    Returns
+    -------
+    Table with all nodes : pandas.DataFrame
+
+    Examples
+    --------
+    >>> from deflex import tools
+    >>> from deflex import postprocessing
+    >>> fn = tools.fetch_test_files("de03_fictive.dflx")
+    >>> my_results = postprocessing.restore_results(fn)
+    >>> all_nodes = nodes2table(my_results)
+    >>> len(all_nodes)
+    220
+    >>> all_nodes.to_csv("your/path/file.csv")  # doctest: +SKIP
+
+
+    """
+    unique_nodes = get_all_nodes_from_results(results)
+    df = pd.DataFrame()
+    n = 0
+    for node in unique_nodes:
+        solph_class = type(node)
+        label = node.label
+        n += 1
+        df.loc[n, "class"] = str(solph_class).split(".")[-1].replace("'>", "")
+        df.loc[n, "cat"] = label.cat
+        df.loc[n, "tag"] = label.tag
+        df.loc[n, "subtag"] = label.subtag
+        df.loc[n, "region"] = label.region
+    df.sort_values(by=list(df.columns), inplace=True)
+    return df.reset_index(drop=True)
+
+
 def calculate_emissions(results):
     # TODO: Bei Auswertungen immer(!) vorher testen, ob excess/shortage == 0
     # sind, denn sonst stimmen die Auswertungen nicht.
-
-    res = {}
-
-    keys = sorted(list(results["main"].keys()))
-    df = pd.DataFrame()
-    n = 0
-    for label in keys:
-        n += 1
-        if isinstance(label[1], solph.Sink):
-            df.loc[n, "cat"] = label[1].label.cat
-            df.loc[n, "tag"] = label[1].label.tag
-            df.loc[n, "subtag"] = label[1].label.subtag
-            df.loc[n, "region"] = label[1].label.region
-    df.loc["z", "cat"] = df["cat"].unique()
-    df.loc["z", "tag"] = df["tag"].unique()
-    df.loc["z", "subtag"] = df["subtag"].unique()
-    df.loc["z", "region"] = df["region"].unique()
-    df.to_excel("/home/uwe/labels2.xlsx")
-    exit(0)
 
     sinks = set(
         [k[1] for k in results["main"].keys() if isinstance(k[1], solph.Sink)]
@@ -457,43 +498,49 @@ def calculate_emissions(results):
     # for i in heat_buses_inflows:
     #     if results["main"][i]["sequences"]["flow"].sum() > 0:
     #         print(i[0])
-
-    heat_transformer = set(
+    buses = set(
         [
             k[0]
             for k in results["main"].keys()
-            if isinstance(k[0], solph.Transformer) and k[1].label.tag == "heat"
-            # and k[0].label.tag != "chp"
+            if isinstance(k[0], solph.Bus)
         ]
     )
 
-    chp_transformer = set(
-        [
-            k[0]
-            for k in results["main"].keys()
-            if isinstance(k[0], solph.Transformer) and k[0].label.tag == "chp"
-        ]
-    )
-
-    electricity_transformer = set(
+    transformer_objects = set(
         [
             k[0]
             for k in results["main"].keys()
             if isinstance(k[0], solph.Transformer)
-            and k[1].label.tag == "electricity"
-            and k[1].label.cat != "line"
         ]
     )
-    print("#####")
-    for e in electricity_transformer:
-        print(e)
-    print("****")
-    for h in heat_transformer:
-        print(h)
-    print("%%%%%")
-    # heat_transformer.add(chp_transformer)
-    for h in chp_transformer:
-        print(h)
+
+    transformer = {}
+    for t in transformer_objects:
+        temp = set(
+            [
+                k
+                for k in results["main"].keys()
+                if k[0] == t
+            ]
+        )
+        tr
+        print(t, temp)
+
+    b_groups = {}
+    for b in transformer:
+        b_groups[b.label.cat] = []
+
+    t_groups = {}
+    for t in transformer:
+        t_groups[t.label.cat] = []
+    for t in transformer:
+        t_groups[t.label.cat].append(t)
+
+    for k, v in t_groups.items():
+        print("******", k, "*******")
+        for t in v:
+            print(str(t))
+
     exit(0)
     for t in heat_transformer:
         inflow = [f for f in results["main"].keys() if f[1] == t][0]
@@ -807,17 +854,18 @@ if __name__ == "__main__":
     from deflex import postprocessing as pp
     import os
 
-    # fn = "/home/uwe/.deflex/pedro/2030-DE02-Agora2.dflx"
-    fn = os.path.join(
-        os.path.expanduser("~"),
-        ".deflex",
-        "tmp_test_32traffic_43",
-        "de03_fictive.dflx",
-    )
+    fn = "/home/uwe/.deflex/pedro/2030-DE02-Agora3.dflx"
+    # fn = os.path.join(
+    #     os.path.expanduser("~"),
+    #     ".deflex",
+    #     "tmp_test_32traffic_43",
+    #     "results_cbc",
+    #     "de03_fictive.dflx",
+    # )
 
     my_results = pp.restore_results(fn)
 
-    # filename = "/home/uwe/.deflex/pedro/2030-DE02-Agora2_results.xlsx"
+    filename = fn.replace(".dflx", "_results.xlsx")
     # all_results = get_all_results(my_results)
     # writer = pd.ExcelWriter(filename)
     # for table in all_results._fields:
