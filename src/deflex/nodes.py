@@ -135,7 +135,7 @@ def create_fuel_bus_with_source(nodes, fuel, region, input_data):
     return nodes
 
 
-def create_electricity_bus(nodes, region):
+def add_electricity_bus(nodes, region):
     """Create an electricity bus for a given region."""
     bus_label = electricity_bus_label(region)
     if bus_label not in nodes:
@@ -212,7 +212,7 @@ def add_decentralised_heating_systems(table_collection, nodes):
         if src == "electricity":
             cs_bus_label = electricity_bus_label(region_name)
             if cs_bus_label not in nodes:
-                create_electricity_bus(nodes, region_name)
+                add_electricity_bus(nodes, region_name)
         else:
             cs_bus_label = commodity_bus_label(src, region_name)
             if cs_bus_label not in nodes:
@@ -273,7 +273,7 @@ def add_electricity_demand(input_data, nodes):
         if series.sum() > 0:
             bus_label = electricity_bus_label(region)
             if bus_label not in nodes:
-                create_electricity_bus(nodes, region)
+                add_electricity_bus(nodes, region)
             elec_demand_label = Label(
                 "electricity demand", "electricity", demand_name, region
             )
@@ -395,7 +395,7 @@ def check_in_out_buses(nodes, table, input_data):
 
     for region in table.index.get_level_values(0).unique():
         if electricity_bus_label(region) not in nodes:
-            create_electricity_bus(nodes, region)
+            add_electricity_bus(nodes, region)
 
 
 def add_power_plants(table_collection, nodes):
