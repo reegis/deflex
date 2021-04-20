@@ -583,38 +583,44 @@ def add_mobility(table_collection, nodes):
     """
     mseries = table_collection["mobility demand series"]
     mtable = table_collection["mobility"]
-    for region in mseries.columns.get_level_values(0).unique():
-        for name in mseries[region].columns:
-            source = mtable.loc[(region, name), "source"]
-            source_region = mtable.loc[(region, name), "source region"]
 
-            fuel_transformer = Label("fuel converter", name, source, region)
-            fuel_demand = Label("mobility demand", "mobility", name, region)
-            bus_label = Label("mobility", "all", name, region)
-            if source != "electricity":
-                com_bus_label = commodity_bus_label(source, source_region)
-            else:
-                com_bus_label = electricity_bus_label(source_region)
-            nodes[bus_label] = solph.Bus(label=bus_label)
+    for mset in mseries.columns:
+        source = mtable.loc[mset, "source"]
+        source_region = mtable.loc[mset, "source region"]
+        region = mset[0]
+        name = mset[1]
+        efficiency = mtable.loc[mset, "efficiency"]
+        
+        # Define labels
+        converter_label = Label("fuel converter", name, source, region)
+        demand_label = Label("mobility demand", "mobility", name, region)
+        bus_label = Label("mobility", "all", name, region)
+        if source != "electricity":
+            fuel_bus_label = commodity_bus_label(source, source_region)
+        else:
+            fuel_bus_label = electricity_bus_label(source_region)
 
-            if com_bus_label not in nodes:
-                nodes[com_bus_label] = solph.Bus(label=com_bus_label)
-            cf = mtable.loc[(region, name), "efficiency"]
-            nodes[fuel_transformer] = solph.Transformer(
-                label=fuel_transformer,
-                inputs={nodes[com_bus_label]: solph.Flow()},
-                outputs={nodes[bus_label]: solph.Flow()},
-                conversion_factors={nodes[bus_label]: cf},
-            )
-            fix_value = mseries[region, name]
-            nodes[fuel_demand] = solph.Sink(
-                label=fuel_demand,
-                inputs={
-                    nodes[bus_label]: solph.Flow(
-                        nominal_value=1, fix=fix_value
-                    )
-                },
-            )
+        # Create mobility Bus
+        nodes[bus_label] = solph.Bus(label=bus_label)
+
+        # Create fuel converter (Transformer)
+        nodes[converter_label] = solph.Transformer(
+            label=converter_label,
+            inputs={nodes[fuel_bus_label]: solph.Flow()},
+            outputs={nodes[bus_label]: solph.Flow()},
+            conversion_factors={nodes[bus_label]: efficiency},
+        )
+
+        # Create mobility demand Sink
+        fix_value = mseries[region, name]
+        nodes[demand_label] = solph.Sink(
+            label=demand_label,
+            inputs={
+                nodes[bus_label]: solph.Flow(
+                    nominal_value=1, fix=fix_value
+                )
+            },
+        )
     return nodes
 
 
