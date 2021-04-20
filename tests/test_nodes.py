@@ -44,9 +44,9 @@ class TestNodes:
     def test_electricity_bus(self):
         self.sc.initialise_energy_system()
         nodes = scenario.NodeDict()
-        nd.create_electricity_bus(nodes, "DE01")
+        nd.add_electricity_bus(nodes, "DE01")
         nodes_copy = nodes.copy()
-        nd.create_electricity_bus(nodes, "DE01")
+        nd.add_electricity_bus(nodes, "DE01")
         assert nodes == nodes_copy
         assert len(nodes.keys()) == 1
         assert list(nodes.keys())[0] == nd.Label(
@@ -133,7 +133,7 @@ class TestNodes:
     def test_add_electricity_demand(self):
         self.sc.initialise_energy_system()
         nodes = scenario.NodeDict()
-        nd.create_electricity_bus(nodes, "DE01")
+        nd.add_electricity_bus(nodes, "DE01")
         self.sc.input_data["electricity demand series"][("DE01", "new")] = 0
         nd.add_electricity_demand(self.sc.input_data, nodes)
         self.sc.add_nodes_to_es(nodes)
@@ -194,7 +194,7 @@ class TestNodes:
             nd.add_transmission_lines_between_electricity_nodes(
                 self.sc.input_data, nodes
             )
-        nd.create_electricity_bus(nodes, "DE01")
+        nd.add_electricity_bus(nodes, "DE01")
         with pytest.raises(ValueError, match=msg.format("DE02")):
             nd.add_transmission_lines_between_electricity_nodes(
                 self.sc.input_data, nodes
@@ -203,9 +203,9 @@ class TestNodes:
     def test_transmission_lines_between_electricity_nodes(self):
         self.sc.initialise_energy_system()
         nodes = scenario.NodeDict()
-        nd.create_electricity_bus(nodes, "DE01")
-        nd.create_electricity_bus(nodes, "DE02")
-        nd.create_electricity_bus(nodes, "DE03")
+        nd.add_electricity_bus(nodes, "DE01")
+        nd.add_electricity_bus(nodes, "DE02")
+        nd.add_electricity_bus(nodes, "DE03")
         nd.add_transmission_lines_between_electricity_nodes(
             self.sc.input_data, nodes
         )
@@ -321,12 +321,21 @@ class TestNodes:
     def test_electricity_storages(self):
         self.sc.initialise_energy_system()
         nodes = scenario.NodeDict()
-        nd.create_electricity_bus(nodes, "DE01")
+        nd.add_electricity_bus(nodes, "DE01")
         nd.add_electricity_storages(self.sc.input_data, nodes)
 
     def test_mobility(self):
         self.sc.initialise_energy_system()
         nodes = scenario.NodeDict()
+        mobility_table = self.sc.input_data["mobility"]
+        # There should be 3 different regions in the test table
+        assert len(set(mobility_table["source region"].values)) == 3
+        # Add the 3 different buses
+        nd.add_electricity_bus(nodes, "DE01")
+        nd.add_electricity_bus(nodes, "DE02")
+        c_label = nd.commodity_bus_label("oil", "DE")
+        nodes[c_label] = solph.Bus(label=c_label)
+        # Test the creation of the mobility nodes
         nd.add_mobility(self.sc.input_data, nodes)
 
     def test_shortage_excess(self):
