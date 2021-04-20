@@ -590,7 +590,7 @@ def add_mobility(table_collection, nodes):
         region = mset[0]
         name = mset[1]
         efficiency = mtable.loc[mset, "efficiency"]
-        
+
         # Define labels
         converter_label = Label("fuel converter", name, source, region)
         demand_label = Label("mobility demand", "mobility", name, region)
@@ -616,9 +616,7 @@ def add_mobility(table_collection, nodes):
         nodes[demand_label] = solph.Sink(
             label=demand_label,
             inputs={
-                nodes[bus_label]: solph.Flow(
-                    nominal_value=1, fix=fix_value
-                )
+                nodes[bus_label]: solph.Flow(nominal_value=1, fix=fix_value)
             },
         )
     return nodes
