@@ -8,8 +8,10 @@ SPDX-License-Identifier: MIT
 """
 
 import logging
+import warnings
 from collections import namedtuple
 
+import pandas as pd
 from oemof import solph
 
 
@@ -35,6 +37,9 @@ def create_solph_nodes_from_data(input_data, nodes):
     -------
 
     """
+    # Commodity sources
+    add_commodity_sources(input_data, nodes)
+
     # Electricity demand
     add_electricity_demand(input_data, nodes)
 
@@ -58,11 +63,15 @@ def create_solph_nodes_from_data(input_data, nodes):
 
     # Electricity storages
     if "electricity storages" in input_data:
-        add_electricity_storages(input_data, nodes)
+        add_storages(input_data, nodes)
 
     # Mobility
     if "mobility" in input_data and "mobility demand series" in input_data:
         add_mobility(input_data, nodes)
+
+    # Other commodities
+    if "other demand" in input_data:
+        add_other_demand(input_data, nodes)
 
     # Connect electricity buses with transmission
     if "power lines" in input_data:
@@ -81,54 +90,54 @@ def commodity_bus_label(fuel, region):
     return Label("commodity", "all", fuel, region)
 
 
-def create_fuel_bus_with_source(nodes, fuel, region, input_data):
+def add_commodity_sources(input_data, nodes):
     """
 
     Parameters
     ----------
     nodes
-    fuel
-    region
     input_data
 
     Returns
     -------
 
     """
-    fuel = fuel.replace("_", " ")
-    cs_data = input_data["commodity sources"].loc[region, fuel]
-    bus_label = commodity_bus_label(fuel, region)
-    if bus_label not in nodes:
-        nodes[bus_label] = solph.Bus(label=bus_label)
+    for idx, params in input_data["commodity sources"].iterrows():
+        name = idx[1].replace("_", " ")
+        region = idx[0]
 
-    cs_label = Label("source", "commodity", fuel, region)
+        # Create commodity Bus
+        bus_label = commodity_bus_label(name, region)
+        nodes[commodity_bus_label(name, region)] = solph.Bus(label=bus_label)
 
-    co2_price = float(input_data["general"]["co2 price"])
+        cs_label = Label("source", "commodity", name, region)
 
-    variable_costs = cs_data["emission"] * co2_price + cs_data["costs"]
+        co2_price = float(input_data["general"]["co2 price"])
 
-    if cs_data.get("annual limit", float("inf")) != float("inf"):
-        if cs_label not in nodes:
+        variable_costs = params["emission"] * co2_price + params["costs"]
+
+        annual_limit = params.get("annual limit", float("inf"))
+        if annual_limit <= 0:
+            pass
+        elif annual_limit == float("inf"):
             nodes[cs_label] = solph.Source(
                 label=cs_label,
                 outputs={
                     nodes[bus_label]: solph.Flow(
                         variable_costs=variable_costs,
-                        emission=solph.sequence(cs_data["emission"]),
-                        nominal_value=cs_data["annual limit"],
-                        summed_max=1,
+                        emission=solph.sequence(params["emission"]),
                     )
                 },
             )
-
-    else:
-        if cs_label not in nodes:
+        else:
             nodes[cs_label] = solph.Source(
                 label=cs_label,
                 outputs={
                     nodes[bus_label]: solph.Flow(
                         variable_costs=variable_costs,
-                        emission=solph.sequence(cs_data["emission"]),
+                        emission=solph.sequence(params["emission"]),
+                        nominal_value=params["annual limit"],
+                        summed_max=1,
                     )
                 },
             )
@@ -215,10 +224,6 @@ def add_decentralised_heating_systems(table_collection, nodes):
                 add_electricity_bus(nodes, region_name)
         else:
             cs_bus_label = commodity_bus_label(src, region_name)
-            if cs_bus_label not in nodes:
-                create_fuel_bus_with_source(
-                    nodes, src, region_name, table_collection
-                )
 
         # Create heating bus as Bus
         heat_bus_label = Label("heat", "decentralised", fuel, region_name)
@@ -384,15 +389,7 @@ def add_transmission_lines_between_electricity_nodes(table_collection, nodes):
                 )
 
 
-def check_in_out_buses(nodes, table, input_data):
-    sources = table[["fuel", "source region"]].apply(tuple, axis=1).unique()
-    for source in sources:
-        fuel = source[0]
-        region = source[1]
-        if fuel != "electricity":
-            if commodity_bus_label(fuel, region) not in nodes:
-                create_fuel_bus_with_source(nodes, fuel, region, input_data)
-
+def check_electricity_buses(nodes, table):
     for region in table.index.get_level_values(0).unique():
         if electricity_bus_label(region) not in nodes:
             add_electricity_bus(nodes, region)
@@ -412,7 +409,7 @@ def add_power_plants(table_collection, nodes):
     """
     pp = table_collection["power plants"]
 
-    check_in_out_buses(nodes, pp, table_collection)
+    check_electricity_buses(nodes, pp)
 
     for idx, params in pp.iterrows():
         region = idx[0]
@@ -458,7 +455,7 @@ def add_power_plants(table_collection, nodes):
 def add_heat_and_chp_plants(table_collection, nodes):
     chp_heat_plants = table_collection["heat-chp plants"]
 
-    check_in_out_buses(nodes, chp_heat_plants, table_collection)
+    check_electricity_buses(nodes, chp_heat_plants)
 
     for idx, params in chp_heat_plants.iterrows():
         region = idx[0]
@@ -531,7 +528,7 @@ def add_heat_and_chp_plants(table_collection, nodes):
             )
 
 
-def add_electricity_storages(table_collection, nodes):
+def add_storages(table_collection, nodes):
     """
 
     Parameters
@@ -543,12 +540,45 @@ def add_electricity_storages(table_collection, nodes):
     -------
 
     """
-    for idx, params in table_collection["electricity storages"].iterrows():
+    # Begin ##### Remove the following lines in deflex >= 0.5
+    if (
+        "electricity storages" in table_collection
+        and "storages" in table_collection
+    ):
+        msg = (
+            "'electricity storages' tables are deprecated and cannot be "
+            "used together with 'storages'.\nUse 'storages' for all kind "
+            "of storages. Define 'storage medium' as 'electricity' for "
+            "electricity storages."
+        )
+        raise ValueError(msg)
+
+    if "electricity storages" in table_collection:
+        storage_table = table_collection["electricity storages"]
+        storage_table["storage medium"] = "electricity"
+        msg = (
+            "The 'electricity storages' table is deprecated.\nUse "
+            "'storages' for all kind of storages.\nDefine 'storage medium' "
+            "as 'electricity' for electricity storages.\nIn the future "
+            "such a table will cause an error (deflex >=0.5)."
+        )
+        warnings.warn(msg, FutureWarning)
+    elif "storages" in table_collection:
+        storage_table = table_collection["storages"]
+    else:
+        storage_table = pd.DataFrame()
+    # End ##### Remove the following lines in deflex >= 0.5
+
+    for idx, params in storage_table.iterrows():
         region = idx[0]
         name = idx[1]
-        medium = "electricity"
-        storage_label = Label("storage", medium, name, region)
-        bus_label = electricity_bus_label(region)
+        storage_label = Label(
+            "storage", params["storage medium"], name, region
+        )
+        if params["storage medium"] == "electricity":
+            bus_label = electricity_bus_label(region)
+        else:
+            bus_label = commodity_bus_label(params["storage medium"], region)
         nodes[storage_label] = solph.components.GenericStorage(
             label=storage_label,
             inputs={
@@ -567,6 +597,76 @@ def add_electricity_storages(table_collection, nodes):
             inflow_conversion_factor=params["charge efficiency"],
             outflow_conversion_factor=params["discharge efficiency"],
         )
+
+
+def add_other_demand(input_data, nodes):
+    logging.debug("Add other demand to nodes dictionary.")
+
+    for idx, series in input_data["other demand series"].items():
+        region = idx[0]
+        medium = idx[1]
+        demand_name = idx[2]
+        if series.sum() > 0:
+            bus_label = commodity_bus_label(medium, region)
+            demand_label = Label("other demand", medium, demand_name, region)
+            nodes[demand_label] = solph.Sink(
+                label=demand_label,
+                inputs={
+                    nodes[bus_label]: solph.Flow(
+                        fix=series,
+                        nominal_value=1,
+                    )
+                },
+            )
+
+
+def add_other_converters(input_data, nodes):
+    pp = input_data["other converters"]
+
+    for idx, params in pp.iterrows():
+        region = idx[0]
+
+        bus = {}
+        for f in ["source", "target"]:
+            if params[f] == "electricity":
+                bus[f] = electricity_bus_label(params["{} region".format(f)])
+            else:
+                bus[f] = commodity_bus_label(
+                    params[f], params["{} region".format(f)]
+                )
+
+        # Create converter as 1x1 Transformer if capacity > 0
+        if params.capacity > 0:
+            # if downtime_factor is in the parameters, use it
+            if hasattr(params, "downtime_factor"):
+                params.capacity *= 1 - params["downtime_factor"]
+
+            # Define output flow with or without summed_max attribute
+            if params.get("annual limit", float("inf")) == float("inf"):
+                outflow = solph.Flow(nominal_value=params.capacity)
+            else:
+                smax = params["annual limit"] / params.capacity
+                outflow = solph.Flow(
+                    nominal_value=params.capacity, summed_max=smax
+                )
+
+            # if variable costs are defined add them to the outflow
+            if hasattr(params, "variable_costs"):
+                vc = params.variable_costs
+                outflow.variable_costs = solph.sequence(vc)
+
+            plant_name = idx[1].replace(" - ", "_").replace(".", "")
+
+            trsf_label = Label(
+                "other converter", plant_name, params.source, region
+            )
+
+            nodes[trsf_label] = solph.Transformer(
+                label=trsf_label,
+                inputs={nodes[bus["source"]]: solph.Flow()},
+                outputs={nodes[bus["target"]]: outflow},
+                conversion_factors={nodes[bus["target"]]: params.efficiency},
+            )
 
 
 def add_mobility(table_collection, nodes):

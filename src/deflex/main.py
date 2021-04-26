@@ -77,7 +77,6 @@ def load_scenario(path, file_type=None):
         logging.info("Reading file: %s", path)
         if file_type == "xlsx":
             sc.read_xlsx(path)
-            sc.to_xlsx(path)
         elif file_type == "csv":
             sc.read_csv(path)
     return sc
