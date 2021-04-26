@@ -7,6 +7,7 @@ SPDX-FileCopyrightText: 2016-2021 Uwe Krien <krien@uni-bremen.de>
 
 SPDX-License-Identifier: MIT
 """
+import pandas as pd
 import pytest
 from oemof import solph
 
@@ -265,6 +266,20 @@ class TestNodes:
     def test_power_plants(self):
         self.sc.initialise_energy_system()
         nodes = scenario.NodeDict()
+        sources = [
+            ("bioenergy", "DE01"),
+            ("bioenergy", "DE02"),
+            ("natural gas", "DE"),
+            ("hard coal", "DE"),
+            ("lignite", "DE"),
+            ("nuclear", "DE"),
+            ("oil", "DE"),
+            ("other", "DE"),
+            ("waste", "DE"),
+        ]
+        for c in sources:
+            label = nd.commodity_bus_label(c[0], c[1])
+            nodes[label] = solph.Bus(label=label)
         nd.add_power_plants(self.sc.input_data, nodes)
         self.sc.input_data["power plants"].drop(
             ["annual electricity limit", "downtime_factor", "variable_costs"],
@@ -277,6 +292,17 @@ class TestNodes:
     def test_heat_and_chp_plants(self):
         self.sc.initialise_energy_system()
         nodes = scenario.NodeDict()
+        sources = [
+            ("bioenergy", "DE01"),
+            ("natural gas", "DE"),
+            ("hard coal", "DE"),
+            ("lignite", "DE"),
+            ("oil", "DE"),
+            ("other", "DE"),
+        ]
+        for c in sources:
+            label = nd.commodity_bus_label(c[0], c[1])
+            nodes[label] = solph.Bus(label=label)
         nd.add_heat_and_chp_plants(self.sc.input_data, nodes)
         nodes_copy = nodes.copy()
         nodes = {k: v for k, v in nodes.items() if k.cat != "trsf"}
@@ -318,11 +344,30 @@ class TestNodes:
         assert int(hflow2.nominal_value) == 6775
         assert round(hflow2.summed_max, 1) == 17.7
 
-    def test_electricity_storages(self):
+    def test_deprecated_electricity_storages(self):
+        self.sc.initialise_energy_system()
+        fn = fetch_test_files("electricity storages.csv")
+        self.sc.input_data["electricity storages"] = pd.read_csv(
+            fn, index_col=[0, 1]
+        )
+        nodes = scenario.NodeDict()
+        nd.add_electricity_bus(nodes, "DE01")
+        error_msg = "'electricity storages' tables are deprecated and cannot"
+        with pytest.raises(ValueError, match=error_msg):
+            nd.add_storages(self.sc.input_data, nodes)
+        self.sc.input_data.pop("storages")
+        warn_msg = "The 'electricity storages' table is deprecated."
+        with pytest.warns(FutureWarning, match=warn_msg):
+            nd.add_storages(self.sc.input_data, nodes)
+
+    def test_storages(self):
         self.sc.initialise_energy_system()
         nodes = scenario.NodeDict()
         nd.add_electricity_bus(nodes, "DE01")
-        nd.add_electricity_storages(self.sc.input_data, nodes)
+        nodes[nd.commodity_bus_label("H2", "DE")] = solph.Bus(
+            label=nd.commodity_bus_label("H2", "DE")
+        )
+        nd.add_storages(self.sc.input_data, nodes)
 
     def test_mobility(self):
         self.sc.initialise_energy_system()
@@ -333,10 +378,29 @@ class TestNodes:
         # Add the 3 different buses
         nd.add_electricity_bus(nodes, "DE01")
         nd.add_electricity_bus(nodes, "DE02")
-        c_label = nd.commodity_bus_label("oil", "DE")
-        nodes[c_label] = solph.Bus(label=c_label)
+        for c in ["oil", "syn_fuel"]:
+            label = nd.commodity_bus_label(c, "DE")
+            nodes[label] = solph.Bus(label=label)
         # Test the creation of the mobility nodes
         nd.add_mobility(self.sc.input_data, nodes)
+
+    def test_other_demand(self):
+        self.sc.initialise_energy_system()
+        nodes = scenario.NodeDict()
+        for medium in ["H2", "syn_fuel"]:
+            bus_label_h2 = nd.commodity_bus_label(medium, "DE")
+            nodes[bus_label_h2] = solph.Bus(label=bus_label_h2)
+        nd.add_other_demand(self.sc.input_data, nodes)
+
+    def test_other_converter(self):
+        self.sc.initialise_energy_system()
+        nodes = scenario.NodeDict()
+        nd.add_electricity_bus(nodes, "DE01")
+        for medium in ["H2", "syn_fuel"]:
+            bus_label = nd.commodity_bus_label(medium, "DE")
+            nodes[bus_label] = solph.Bus(label=bus_label)
+        print(nodes)
+        nd.add_other_converters(self.sc.input_data, nodes)
 
     def test_shortage_excess(self):
         self.sc.initialise_energy_system()
