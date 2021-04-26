@@ -26,17 +26,15 @@ class TestNodes:
     def test_fuel_bus_with_source(self):
         self.sc.initialise_energy_system()
         nodes = scenario.NodeDict()
-        nodes = nd.create_fuel_bus_with_source(
-            nodes, "lignite", "DE", self.sc.input_data
-        )
+        nodes = nd.add_commodity_sources(self.sc.input_data, nodes)
         nodes_copy = nodes.copy()
-        nodes = nd.create_fuel_bus_with_source(
-            nodes, "lignite", "DE", self.sc.input_data
-        )
+        # nodes = nd.create_fuel_bus_with_source(
+        #     nodes, "lignite", "DE", self.sc.input_data
+        # )
         assert nodes == nodes_copy
         self.sc.add_nodes_to_es(nodes)
-        src = [v for k, v in nodes.items() if k.cat == "source"][0]
-        trg = [v for k, v in nodes.items() if isinstance(v, solph.Bus)][0]
+        src = [v for k, v in nodes.items() if k.cat == "source"][1]
+        trg = [v for k, v in nodes.items() if isinstance(v, solph.Bus)][1]
         flow = self.sc.es.flows()[(src, trg)]
         assert flow.variable_costs[0] == 11.988
         assert flow.nominal_value is None
@@ -93,8 +91,9 @@ class TestNodes:
     def test_decentralised_heating_systems(self):
         self.sc.initialise_energy_system()
         nodes = scenario.NodeDict()
+        nd.add_commodity_sources(self.sc.input_data, nodes)
         nd.add_decentralised_heating_systems(self.sc.input_data, nodes)
-        assert len(nodes) == 34
+        assert len(nodes) == 44
         self.sc.add_nodes_to_es(nodes)
         oil_heat_bus = [
             v
@@ -378,7 +377,7 @@ class TestNodes:
         # Add the 3 different buses
         nd.add_electricity_bus(nodes, "DE01")
         nd.add_electricity_bus(nodes, "DE02")
-        for c in ["oil", "syn_fuel"]:
+        for c in ["oil", "syn fuel"]:
             label = nd.commodity_bus_label(c, "DE")
             nodes[label] = solph.Bus(label=label)
         # Test the creation of the mobility nodes
@@ -387,7 +386,7 @@ class TestNodes:
     def test_other_demand(self):
         self.sc.initialise_energy_system()
         nodes = scenario.NodeDict()
-        for medium in ["H2", "syn_fuel"]:
+        for medium in ["H2", "syn fuel"]:
             bus_label_h2 = nd.commodity_bus_label(medium, "DE")
             nodes[bus_label_h2] = solph.Bus(label=bus_label_h2)
         nd.add_other_demand(self.sc.input_data, nodes)
@@ -396,7 +395,7 @@ class TestNodes:
         self.sc.initialise_energy_system()
         nodes = scenario.NodeDict()
         nd.add_electricity_bus(nodes, "DE01")
-        for medium in ["H2", "syn_fuel"]:
+        for medium in ["H2", "syn fuel"]:
             bus_label = nd.commodity_bus_label(medium, "DE")
             nodes[bus_label] = solph.Bus(label=bus_label)
         print(nodes)

@@ -37,6 +37,9 @@ def create_solph_nodes_from_data(input_data, nodes):
     -------
 
     """
+    # Commodity sources
+    add_commodity_sources(input_data, nodes)
+
     # Electricity demand
     add_electricity_demand(input_data, nodes)
 
@@ -87,54 +90,54 @@ def commodity_bus_label(fuel, region):
     return Label("commodity", "all", fuel, region)
 
 
-def create_fuel_bus_with_source(nodes, fuel, region, input_data):
+def add_commodity_sources(input_data, nodes):
     """
 
     Parameters
     ----------
     nodes
-    fuel
-    region
     input_data
 
     Returns
     -------
 
     """
-    fuel = fuel.replace("_", " ")
-    cs_data = input_data["commodity sources"].loc[region, fuel]
-    bus_label = commodity_bus_label(fuel, region)
-    if bus_label not in nodes:
-        nodes[bus_label] = solph.Bus(label=bus_label)
+    for idx, params in input_data["commodity sources"].iterrows():
+        name = idx[1].replace("_", " ")
+        region = idx[0]
 
-    cs_label = Label("source", "commodity", fuel, region)
+        # Create commodity Bus
+        bus_label = commodity_bus_label(name, region)
+        nodes[commodity_bus_label(name, region)] = solph.Bus(label=bus_label)
 
-    co2_price = float(input_data["general"]["co2 price"])
+        cs_label = Label("source", "commodity", name, region)
 
-    variable_costs = cs_data["emission"] * co2_price + cs_data["costs"]
+        co2_price = float(input_data["general"]["co2 price"])
 
-    if cs_data.get("annual limit", float("inf")) != float("inf"):
-        if cs_label not in nodes:
+        variable_costs = params["emission"] * co2_price + params["costs"]
+
+        annual_limit = params.get("annual limit", float("inf"))
+        if annual_limit <= 0:
+            pass
+        elif annual_limit == float("inf"):
             nodes[cs_label] = solph.Source(
                 label=cs_label,
                 outputs={
                     nodes[bus_label]: solph.Flow(
                         variable_costs=variable_costs,
-                        emission=solph.sequence(cs_data["emission"]),
-                        nominal_value=cs_data["annual limit"],
-                        summed_max=1,
+                        emission=solph.sequence(params["emission"]),
                     )
                 },
             )
-
-    else:
-        if cs_label not in nodes:
+        else:
             nodes[cs_label] = solph.Source(
                 label=cs_label,
                 outputs={
                     nodes[bus_label]: solph.Flow(
                         variable_costs=variable_costs,
-                        emission=solph.sequence(cs_data["emission"]),
+                        emission=solph.sequence(params["emission"]),
+                        nominal_value=params["annual limit"],
+                        summed_max=1,
                     )
                 },
             )
@@ -221,10 +224,6 @@ def add_decentralised_heating_systems(table_collection, nodes):
                 add_electricity_bus(nodes, region_name)
         else:
             cs_bus_label = commodity_bus_label(src, region_name)
-            if cs_bus_label not in nodes:
-                create_fuel_bus_with_source(
-                    nodes, src, region_name, table_collection
-                )
 
         # Create heating bus as Bus
         heat_bus_label = Label("heat", "decentralised", fuel, region_name)
