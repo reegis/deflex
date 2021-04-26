@@ -368,27 +368,226 @@ def get_all_results(results):
             if isinstance(k[0], solph.Bus)
         ]
     )
-    print(bus_tags)
-
-    names = list(bus_tags)
-    names.extend(["storages", "pyomo", "meta"])
-
-    collection = namedtuple("deflex_results", names)
 
     tables = bus_flows2tables(results, bus_tags)
-
-    return collection(
-        storages=storage_results2table(results),
-        pyomo=pyomo_results2series(results),
-        meta=meta_results2series(results),
-        **tables,
-    )
+    tables["storages"] = storage_results2table(results)
+    tables["pyomo"] = pyomo_results2series(results)
+    tables["meta"] = meta_results2series(results)
+    return tables
 
 
-def calculate_chp_fuel_factor(efficiency, method="carnot"):
-    print(efficiency)
-    if method == "carnot":
-        return 0.5
+def allocate_fuel(method, **kwargs):
+    """
+    Allocate the fuel input of chp plants to the two output flows: heat and
+    electricity.
+
+    The following methods are available:
+
+    * Alternative Generation or Finnish Method -> :py:func:`finnish_method`
+    * Exergy Method or Carnot Method -> :py:func:`exergy_method`
+
+    Parameters
+    ----------
+    method : str
+        The method to allocate the output flows of chp plants:
+        alternative_generation, exergy, iea, efficiency, electricity, heat
+
+    Other Parameters
+    ----------------
+    eta_e : numeric
+        The efficiency of the electricity production in the chp plant.
+        Mandatory in the following functions: alternative_generation,
+        exergy, iea, efficiency
+
+    eta_th : numeric
+        The efficiency of the heat output in the chp plant. Mandatory in
+        the following functions: alternative_generation, exergy, iea,
+        efficiency
+
+    eta_c : numeric
+        The Carnot factor of the heating system. Mandatory in
+        the following functions: exergy
+
+    eta_e_ref : numeric
+        The efficiency of the best power plant available on the market and
+        economically viable in the year of construction of the CHP plant.
+        Mandatory in the following functions: alternative_generation
+
+    eta_th_ref : numeric
+        The efficiency of the best heat plant available on the market and
+        economically viable in the year of construction of the CHP plant.
+        Mandatory in the following functions: alternative_generation
+
+
+    Returns
+    -------
+
+    """
+    fuel_factors = namedtuple("fuel_factors", ["heat", "electricity"])
+    name = "{0} (method: {1})".format(allocate_fuel.__name__, method)
+
+    if method == "alternative_generation" or method == "finnish":
+        mandatory = ["eta_e", "eta_th", "eta_e_ref", "eta_th_ref"]
+        check_input(name, *mandatory, **kwargs)
+        f_elec = finnish_method(**kwargs)
+    elif method == "efficiency":
+        mandatory = ["eta_e", "eta_th", "eta_c"]
+        check_input(name, *mandatory, **kwargs)
+        f_elec = efficiency_method(**kwargs)
+    elif method == "exergy" or method == "carnot":
+        mandatory = ["eta_e", "eta_th", "eta_c"]
+        check_input(name, *mandatory, **kwargs)
+        f_elec = exergy_method(**kwargs)
+    elif method == "iea":
+        mandatory = ["eta_e", "eta_th", "eta_c"]
+        check_input(name, *mandatory, **kwargs)
+        f_elec = iea_method(**kwargs)
+    elif method == "electricity":
+        f_elec = 1
+    elif method == "heat":
+        f_elec = 0
+    else:
+        msg = (
+            "Method '{0}' is not implemented to calculate the allocation "
+            "factor of chp product flows."
+        ).format(method)
+        raise NotImplementedError(msg)
+
+    return fuel_factors(heat=(1 - f_elec), electricity=f_elec)
+
+
+def check_input(name, *mandatory_parameters, **kwargs):
+    missing = []
+    for arg in mandatory_parameters:
+        if arg not in kwargs:
+            missing.append(arg)
+    if len(missing) > 0:
+        msg = "The following parameters are missing for {0}: {1}".format(
+            name, ", ".join(missing)
+        )
+        raise ValueError(msg)
+
+
+def iea_method(eta_e, eta_th):
+    return eta_e * 1 / (eta_e + eta_th)
+
+
+def efficiency_method(eta_e, eta_th):
+    """
+    Efficiency Method - a method to allocate the fuel
+    input of chp plants to the two output flows: heat and electricity
+
+    Parameters
+    ----------
+    eta_e : numeric
+        The efficiency of the electricity production in the chp plant.
+        Mandatory in the following functions: alternative_generation,
+        exergy, iea, efficiency
+
+    eta_th : numeric
+        The efficiency of the heat output in the chp plant. Mandatory in
+        the following functions: alternative_generation, exergy, iea,
+        efficiency
+
+    Returns
+    -------
+    Allocation factor for the electricity flow : numeric
+
+    """
+    return eta_th * 1 / (eta_e + eta_th)
+
+
+def finnish_method(eta_e, eta_th, eta_e_ref, eta_th_ref):
+    r"""
+    Alternative Generation or Finnish Method - a method to allocate the fuel
+    input of chp plants to the two output flows: heat and electricity
+
+    The allocation factor :math:`\alpha_{el}` of the electricity output is
+    calculated as follows:
+      .. math::
+        \alpha_{el} = \frac{\eta_{el,ref}}{\eta_{el}} \cdot \left(
+        \frac{\eta_{el}}{\eta_{el,ref}}+ \frac{\eta_{th}}{ \eta_{th,ref}}
+        \right)
+
+    :math:`\alpha_{el}` : Allocation factor of the electricity flow
+
+    :math:`\eta_{el}` : Efficiency of the electricity output in the chp plant
+
+    :math:`\eta_{th}` : Efficiency of the thermal output in the chp plant
+
+    :math:`\eta_{el,ref}` : Efficiency of the reference power plant
+
+    :math:`\eta_{th,ref}` : Efficiency of the reference heat plant
+
+
+    Parameters
+    ----------
+    eta_e : numeric
+        The efficiency of the electricity production in the chp plant.
+        Mandatory in the following functions: alternative_generation,
+        exergy, iea, efficiency
+
+    eta_th : numeric
+        The efficiency of the heat output in the chp plant. Mandatory in
+        the following functions: alternative_generation, exergy, iea,
+        efficiency
+
+    eta_e_ref : numeric
+        The efficiency of the best power plant available on the market and
+        economically viable in the year of construction of the CHP plant.
+        Mandatory in the following functions: alternative_generation
+
+    eta_th_ref : numeric
+        The efficiency of the best heat plant available on the market and
+        economically viable in the year of construction of the CHP plant.
+        Mandatory in the following functions: alternative_generation
+
+    Returns
+    -------
+    Allocation factor for the electricity flow : numeric
+
+    Examples
+    --------
+    >>> round(finnish_method(0.3, 0.5, 0.5, 0.9), 3)
+    0.519
+
+    """
+    return (eta_e / eta_e_ref) / (eta_e / eta_e_ref + eta_th / eta_th_ref)
+
+
+def exergy_method(eta_e, eta_th, eta_c):
+    """
+    Exergy Method or Carnot Method- a method to allocate the fuel
+    input of chp plants to the two output flows: heat and electricity
+
+
+
+    Parameters
+    ----------
+    eta_e : numeric
+        The efficiency of the electricity production in the chp plant.
+        Mandatory in the following functions: alternative_generation,
+        exergy, iea, efficiency
+
+    eta_th : numeric
+        The efficiency of the heat output in the chp plant. Mandatory in
+        the following functions: alternative_generation, exergy, iea,
+        efficiency
+
+    eta_c : numeric
+        The Carnot factor of the heating system. Mandatory in
+        the following functions: exergy
+
+    Returns
+    -------
+    Allocation factor for the electricity flow : numeric
+
+    """
+    return eta_e / (eta_e + eta_c * eta_th)
+
+
+def power_bonus(eta):
+    return eta
 
 
 def get_all_nodes_from_results(results):
@@ -443,200 +642,195 @@ def nodes2table(results):
     return df.reset_index(drop=True)
 
 
-def calculate_emissions(results):
-    # TODO: Bei Auswertungen immer(!) vorher testen, ob excess/shortage == 0
-    # sind, denn sonst stimmen die Auswertungen nicht.
-
-    sinks = set(
-        [k[1] for k in results["main"].keys() if isinstance(k[1], solph.Sink)]
-    )
-
-    com_source_flows = set(
-        [
-            k
-            for k in results["main"].keys()
-            if isinstance(k[0], solph.Source) and k[0].label.tag == "commodity"
-        ]
-    )
-
-    esinks = set([k for k in sinks if k.label.tag == "electricity"])
-    msinks = set([k for k in sinks if k.label.tag == "mobility"])
-    csinks = set([k for k in sinks if k.label.tag == "commodity"])
-
-    heat_sink_flows = set(
-        [
-            k
-            for k in results["main"].keys()
-            if isinstance(k[1], solph.Sink) and k[1].label.tag == "heat"
-        ]
-    )
-    heat_buses = set(
-        [
-            k[0]
-            for k in results["main"].keys()
-            if isinstance(k[1], solph.Sink) and k[1].label.tag == "heat"
-        ]
-    )
-
-    heat_buses_inflows = set(
-        [k for k in results["main"].keys() if k[1] in heat_buses]
-    )
-
-    # heat_transformer = set(
-    #     [
-    #         k[0]
-    #         for k in heat_buses_inflows
-    #         if isinstance(k[0], solph.Transformer)
-    #     ]
-    # )
-    # cs = set([k[0] for k in results["main"].keys() if k[1] is None])
-    #
-    # # for c in cs:
-    # #     print(c)
-    # # exit(0)
-    #
-    # for i in heat_buses_inflows:
-    #     if results["main"][i]["sequences"]["flow"].sum() > 0:
-    #         print(i[0])
-    buses = set(
-        [
-            k[0]
-            for k in results["main"].keys()
-            if isinstance(k[0], solph.Bus)
-        ]
-    )
-
+def fetch_converter_with_in_out_flows(results):
+    # Select all converters (class Transformer excluding lines)
     transformer_objects = set(
         [
             k[0]
             for k in results["main"].keys()
-            if isinstance(k[0], solph.Transformer)
+            if isinstance(k[0], solph.Transformer) and k[0].label.cat != "line"
         ]
     )
 
-    transformer = {}
+    # Create dictionary with all converters and their in- and outflows.
+    converter = {}
     for t in transformer_objects:
-        temp = set(
-            [
-                k
-                for k in results["main"].keys()
-                if k[0] == t
-            ]
-        )
-        tr
-        print(t, temp)
+        converter[t] = {}
+        converter[t]["in"] = {}
+        converter[t]["out"] = {}
 
-    b_groups = {}
-    for b in transformer:
-        b_groups[b.label.cat] = []
-
-    t_groups = {}
-    for t in transformer:
-        t_groups[t.label.cat] = []
-    for t in transformer:
-        t_groups[t.label.cat].append(t)
-
-    for k, v in t_groups.items():
-        print("******", k, "*******")
-        for t in v:
-            print(str(t))
-
-    exit(0)
-    for t in heat_transformer:
-        inflow = [f for f in results["main"].keys() if f[1] == t][0]
-        inflow_energy = results["main"][inflow]["sequences"]["flow"]
-        outflow_heat = [
-            f
-            for f in results["main"].keys()
-            if f[0] == t
-            if f[1].label.tag == "heat"
-        ][0]
-        print(outflow_heat)
-        efficiency = {
-            k.label.tag: v[0]
-            for k, v in t.conversion_factors.items()
-            if k != inflow[0]
-        }
-        if len(efficiency) == 1:
-            fuel_factor_heat = 1
+        inflow = [k for k in results["main"].keys() if k[1] == t][0]
+        sector = inflow[0].label.subtag
+        if sector == "all":
+            key = (inflow[0].label.cat, inflow[0].label.region)
         else:
-            fuel_factor_heat = calculate_chp_fuel_factor(efficiency, "carnot")
+            key = (sector, inflow[0].label.region)
+        converter[t]["in"][key] = inflow
 
-        heat_related_inflow = inflow_energy * fuel_factor_heat
-        heat_energy_outflow = results["main"][outflow_heat]["sequences"][
-            "flow"
-        ]
-        print(
-            fuel_factor_heat,
-            t,
-            # int(heat_related_inflow.sum()),
-            # int(heat_energy_outflow.sum()),
-            int(heat_energy_outflow.sum()) / int(heat_related_inflow.sum()),
-        )
-    exit(0)
+        outflows = [k for k in results["main"].keys() if k[0] == t]
+        for outflow in outflows:
+            converter[t]["out"][
+                (outflow[1].label.cat, outflow[1].label.region)
+            ] = outflow
 
-    print("****************+")
-    print("number of sinks", len(sinks))
-    # print("number of heat sinks", len(hsinks))
-    print("number of electricity sinks", len(esinks))
-    print("number of mobility sinks", len(msinks))
-    print("number of commodity sinks", len(csinks))
-    for s in sorted(sinks):
-        print(s)
+    return converter
 
-    print("****************+")
-    level = [[], [], [], [], []]
-    fuel = pd.DataFrame(columns=pd.MultiIndex(levels=level, codes=level))
-    for s in sorted(com_source_flows):
-        if results["main"][s]["sequences"]["flow"].sum() > 0:
-            fuel[
-                "energy",
-                s[0].label.cat,
-                s[0].label.tag,
-                s[0].label.subtag,
-                s[0].label.region,
-            ] = results["main"][s]["sequences"]["flow"]
-            try:
-                emission = results["param"][s]["scalars"]["emission"]
-            except KeyError as e:
-                if s[0].label.cat == "shortag":
-                    value_sum = results["main"][s]["sequences"]["flow"].sum()
-                    msg = (
-                        "The results cannot be used, because the "
-                        "optimisation is not feasible without a shortage "
-                        "source.\nThe sum of {0} is {1}".format(
-                            s[0].label, value_sum
-                        )
-                    )
-                    raise ValueError(msg)
-                else:
-                    logging.error(s)
-                    raise e
-            fuel[
-                "emission",
-                s[0].label.cat,
-                s[0].label.tag,
-                s[0].label.subtag,
-                s[0].label.region,
-            ] = (
-                results["main"][s]["sequences"]["flow"] * emission
-            )
-    heat_demand = pd.DataFrame(
-        columns=pd.MultiIndex(levels=level, codes=level)
+
+def get_time_index(results):
+    key = list(results["main"].keys())[0]
+    return results["main"][key]["sequences"].index
+
+
+def fetch_parameter_of_commodity_sources(results):
+    commodity_sources = [
+        k
+        for k in results["main"].keys()
+        if isinstance(k[0], solph.Source)
+        and k[0].label.tag == "commodity"
+        and k[0].label.cat != "shortage"
+    ]
+
+    parameter = pd.DataFrame(
+        index=pd.MultiIndex(levels=[[], []], codes=[[], []])
     )
-    for h in heat_sink_flows:
-        if results["main"][h]["sequences"]["flow"].sum() > 0:
-            print(results["main"][h]["sequences"]["flow"].sum())
-            heat_demand[
-                "energy",
-                h[1].label.cat,
-                h[1].label.tag,
-                h[1].label.subtag,
-                h[1].label.region,
-            ] = results["main"][h]["sequences"]["flow"]
-    print(fuel.sort_index(axis=1))
-    print(heat_demand.sort_index(axis=1))
-    heat_demand.sort_index(axis=1).to_excel("/home/uwe/000AA.xlsx")
+    for c in commodity_sources:
+        for k, v in results["param"][c]["scalars"].items():
+            if k != "label":
+                parameter.loc[(c[0].label.subtag, c[0].label.region), k] = v
+    return parameter
+
+
+def fetch_volatile_electricity_sources(results):
+    """
+
+    Parameters
+    ----------
+    results
+
+    Returns
+    -------
+    pandas.DataFrame
+
+    """
+    volatile_sources = [
+        k
+        for k in results["main"].keys()
+        if isinstance(k[0], solph.Source) and k[0].label.tag == "volatile"
+    ]
+    sources = pd.DataFrame(
+        columns=pd.MultiIndex(levels=[[], []], codes=[[], []])
+    )
+
+    for src in volatile_sources:
+        sources[src[0].label.subtag, src[0].label.region] = results["main"][
+            src
+        ]["sequences"]["flow"]
+    return sources
+
+
+def _calculate_emissions_from_energy_table(table, emissions):
+    emission_table = table["in"].mul(emissions)
+    emission_table = pd.concat([emission_table], axis=1, keys=["in"])
+    emission_table["out", "electricity"] = emission_table["in"].sum(axis=1)
+    # exit(0)
+    table = pd.concat(
+        [table, emission_table],
+        axis=1,
+        keys=["energy", "emission"],
+    )
+    return table.sort_index(axis=1)
+
+
+def calculate_product_fuel_balance(results, chp_method, **kwargs):
+    transformer = fetch_converter_with_in_out_flows(results)
+
+    # Create a dictionary of empty tables (pandas.DataFrame) for all sectors
+    tables = {}
+    mcol = pd.MultiIndex(levels=[[], []], codes=[[], []])
+    time_index = get_time_index(results)
+    for t, f in transformer.items():
+        for k1 in f["out"].keys():
+            tables.setdefault(
+                k1[0], pd.DataFrame(columns=mcol, index=time_index)
+            )
+            tables[k1[0]]["out", k1] = 0
+            for k2 in f["in"].keys():
+                tables[k1[0]]["in", k2] = 0
+
+    # Assign inflows to cumulated product flows (fill empty tables from above)
+    for t, f in transformer.items():
+        # fuel_factor = {}
+        if len(f["out"]) == 1:
+            fuel_factors = allocate_fuel(list(f["out"].keys())[0][0])
+        else:
+            fuel_factors = allocate_fuel(method=chp_method, **kwargs)
+            # fuel_factor["heat"] = fuel_factors.heat
+            # fuel_factor["electricity"] = 1 - fuel_factors.electricity
+        for sector, outflow in f["out"].items():
+            tables[sector[0]]["out", sector] += results["main"][outflow][
+                "sequences"
+            ]["flow"]
+            for fuel, inflow in f["in"].items():
+                tables[sector[0]]["in", fuel] += results["main"][inflow][
+                    "sequences"
+                ]["flow"] * getattr(fuel_factors, sector[0])
+
+    # Add volatile source to electricity table
+    volatile_output_by_region = (
+        fetch_volatile_electricity_sources(results)
+        .groupby(level=1, axis=1)
+        .sum()
+    )
+
+    for region in volatile_output_by_region.columns:
+        if ("out", ("electricity", region)) in tables["electricity"]:
+            tables["electricity"][
+                "out", ("electricity", region)
+            ] += volatile_output_by_region[region]
+        else:
+            tables["electricity"][
+                "out", ("electricity", region)
+            ] = volatile_output_by_region[region]
+
+    emissions = fetch_parameter_of_commodity_sources(results)["emission"]
+    emissions.index = emissions.index.to_flat_index()
+    emission_series = (
+        pd.DataFrame(index=time_index, columns=emissions.index)
+        .fillna(1)
+        .mul(emissions)
+    )
+
+    tables["electricity"] = _calculate_emissions_from_energy_table(
+        tables["electricity"], emission_series
+    )
+
+    last_key = None
+    for column in tables["electricity"]["energy", "out"].columns:
+        emission_series[("electricity", column[1])] = tables["electricity"][
+            "emission", "out", "electricity"
+        ] / tables["electricity"]["energy", "out"].sum(axis=1)
+        last_key = column[1]
+
+    avg_elec_emissions = (
+        tables["electricity"]["emission", "out", "electricity"].sum()
+        / tables["electricity"]["energy", "out"].sum().sum()
+    )
+    emissions = emissions.append(
+        pd.Series({("electricity", "all"): avg_elec_emissions})
+    )
+    print(avg_elec_emissions)
+    sectors = [k for k in tables.keys() if k != "electricity"]
+
+    for sector in sectors:
+        tables[sector] = _calculate_emissions_from_energy_table(
+            tables[sector], emissions
+        )
+
+    tables["emissions"] = emissions.reindex(emissions.index)
+    tables["electricity emission series"] = emission_series[
+        ("electricity", last_key)
+    ]
+    return tables
 
 
 def get_flow_results(result):
@@ -850,11 +1044,49 @@ def get_key_values_from_results(results, **switch):
     return kv
 
 
+def remove_empty_columns(table):
+    return
+
+
+def dict2file(tables, path, filetype=None, drop_empty_columns=False):
+
+    if filetype is None:
+        filetype = path.split(".")[-1]
+
+    if filetype == "xlsx":
+        dict2spreadsheet(tables, path, drop_empty_columns)
+    elif filetype == "csv":
+        dict2csv(tables, path, drop_empty_columns)
+    else:
+        msg = "No function implemented for filetype: '{}'".format(filetype)
+        raise NotImplementedError(msg)
+
+
+def dict2spreadsheet(tables, path, drop_empty_columns=False):
+    writer = pd.ExcelWriter(path)
+    for name, table in tables.items():
+        if isinstance(table, pd.DataFrame):
+            table.sort_index(axis=1, inplace=True)
+            if drop_empty_columns:
+                table = table.loc[:, (table.sum(axis=0) != 0)]
+        table.to_excel(writer, name)
+    writer.save()
+
+
+def dict2csv(tables, path, drop_empty_columns=False):
+    for name, table in tables.items():
+        fn = os.path.join(path, name + ".csv")
+        table.to_csv(fn)
+
+
 if __name__ == "__main__":
     from deflex import postprocessing as pp
     import os
 
-    fn = "/home/uwe/.deflex/pedro/2030-DE02-Agora3.dflx"
+    allocate_fuel("finnish", eta_e=0.3, eta_th=0.5)
+    # print(finnish_method(0.3, 0.5, 0.5, 0.9))
+    exit(0)
+    my_fn = "/home/uwe/.deflex/pedro/2030-DE02-Agora4.dflx"
     # fn = os.path.join(
     #     os.path.expanduser("~"),
     #     ".deflex",
@@ -863,15 +1095,15 @@ if __name__ == "__main__":
     #     "de03_fictive.dflx",
     # )
 
-    my_results = pp.restore_results(fn)
+    my_results = pp.restore_results(my_fn)
 
-    filename = fn.replace(".dflx", "_results.xlsx")
+    # filename1 = fn.replace(".dflx", "_results.xlsx")
     # all_results = get_all_results(my_results)
-    # writer = pd.ExcelWriter(filename)
-    # for table in all_results._fields:
-    #     getattr(all_results, table).to_excel(writer, table)
-    # writer.save()
-    calculate_emissions(my_results)
+    # dict2file(all_results, filename1)
+
+    filename2 = my_fn.replace(".dflx", "_results_emission.xlsx")
+    my_tables = calculate_product_fuel_balance(my_results)
+    dict2file(my_tables, filename2, drop_empty_columns=True)
     # for table in all_results._fields:
     #     print("\n\n***************** " + table + " ****************\n")
     #     print(getattr(all_results, table))
