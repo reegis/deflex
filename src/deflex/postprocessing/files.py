@@ -135,7 +135,6 @@ def restore_results(file_names, scenario_class=DeflexScenario):
 
 
 def dict2file(tables, path, filetype=None, drop_empty_columns=False):
-    os.makedirs(path, exist_ok=True)
 
     if filetype is None:
         filetype = path.split(".")[-1]
@@ -161,6 +160,7 @@ def dict2spreadsheet(tables, path, drop_empty_columns=False):
 
 
 def dict2csv(tables, path, drop_empty_columns=False):
+    os.makedirs(path, exist_ok=True)
     for name, table in tables.items():
         fn = os.path.join(path, name + ".csv")
         table.to_csv(fn)

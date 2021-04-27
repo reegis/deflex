@@ -55,31 +55,36 @@ def reshape_bus_view(results, buses, data=None, aggregate=None):
     --------
     >>> from oemof import solph
     >>> from deflex.tools import fetch_test_files
-    >>> from deflex.postprocessing import restore_scenario
+    >>> from deflex.postprocessing import restore_results
     >>> fn = fetch_test_files("de21_no-heat.dflx")
-    >>> my_es = restore_scenario(fn).es
-    >>> my_buses = [bus for flow in my_es.results if
-    ...             isinstance(flow[0], solph.Bus) and
-    ...             flow[0].label.tag == "electricity"]
+    >>> my_results = restore_results(fn)
+    >>> my_buses = set([flow[0] for flow in my_results["main"].keys() if
+    ...                 isinstance(flow[0], solph.Bus) and
+    ...                 flow[0].label.cat == "electricity"])
+    >>> len(my_buses)
+    21
     >>> # aggregate lines for all regions and remove suffix of power plants
-    >>> agg = [("cat", "line", "all"),
-    ...        ("tag", "pp", -1)]
-    >>> df1 = reshape_bus_view(my_es.results, my_buses, aggregate=agg)
-    >>> df2 = reshape_bus_view(my_es.results, my_buses)
-    >>> df1 = df1.groupby(level=[1, 2, 3, 4], axis=1).sum()
-    >>> df2 = df2.groupby(level=[1, 2, 3, 4], axis=1).sum()
-    >>> list(df1["in", "line", "electricity"].columns[:5])
+    >>> agg = [("cat", "line", "subtag", "all"),
+    ...        ("cat", "power plant", "tag", -1),
+    ...        ("cat", "power plant", "subtag", "all")]
+    >>> df1 = reshape_bus_view(my_results, my_buses, aggregate=agg)
+    >>> df2 = reshape_bus_view(my_results, list(my_buses))
+    >>> df1g1 = df1.groupby(level=[1, 2, 3, 4], axis=1).sum()
+    >>> df2g1 = df2.groupby(level=[1, 2, 3, 4], axis=1).sum()
+    >>> list(df1g1["in", "line", "electricity"].columns[:5])
     ['all']
-    >>> list(df2["in", "line", "electricity"].columns[:5])
+    >>> list(df2g1["in", "line", "electricity"].columns[:5])
     ['DE01', 'DE02', 'DE03', 'DE04', 'DE05']
-    >>> list(df1["in", "trsf", "pp"].columns[:4])
+    >>> df1g2 = df1.groupby(level=[1, 2, 3], axis=1).sum()
+    >>> df2g2 = df2.groupby(level=[1, 2, 3], axis=1).sum()
+    >>> list(df1g2["in", "power plant"].columns[:4])
     ['bioenergy', 'hard coal', 'lignite', 'natural gas']
-    >>> list(df2["in", "trsf", "pp"].columns[:4])
+    >>> list(df2g2["in", "power plant"].columns[:4])
     ['bioenergy_038', 'bioenergy_042', 'bioenergy_045', 'hard coal_023']
     >>> int(df1.sum().sum())
-    7529364
+    7529461
     >>> int(df2.sum().sum())
-    7529364
+    7529461
 
     """
     if aggregate is None:
@@ -91,19 +96,24 @@ def reshape_bus_view(results, buses, data=None, aggregate=None):
         data = pd.DataFrame(columns=m_cols)
 
     if not isinstance(buses, list):
-        buses = [buses]
+        buses = list(buses)
 
-    def change_subtag(node, changes):
-        val = node.label.subtag
+    def change_field(node, changes):
+        val = {"subtag": node.label.subtag, "tag": node.label.tag}
         for agg in changes:
+            field = agg[2]
             if getattr(node.label, agg[0]) == agg[1]:
-                if isinstance(agg[2], int):
-                    if agg[2] < 0:
-                        val = "_".join(node.label.subtag.split("_")[: agg[2]])
+                if isinstance(agg[3], int):
+                    if agg[3] < 0:
+                        val[field] = "_".join(
+                            getattr(node.label, field).split("_")[: agg[3]]
+                        )
                     else:
-                        val = "_".join(node.label.subtag.split("_")[agg[2] :])
+                        val[field] = "_".join(
+                            getattr(node.label, field).split("_")[agg[3] :]
+                        )
                 else:
-                    val = agg[2]
+                    val[field] = agg[3]
         return val
 
     for bus in buses:
@@ -117,22 +127,23 @@ def reshape_bus_view(results, buses, data=None, aggregate=None):
         # Add all flow time series to a MultiIndex DataFrame using in/out
         for flow in node_flows:
             if flow[0] == bus:
-                subtag = change_subtag(flow[1], aggregate)
+                fields = change_field(flow[1], aggregate)
                 flow_label = (
                     bus.label,
                     "out",
                     flow[1].label.cat,
-                    flow[1].label.tag,
-                    subtag,
+                    fields["tag"],
+                    fields["subtag"],
                 )
+
             else:
-                subtag = change_subtag(flow[0], aggregate)
+                fields = change_field(flow[0], aggregate)
                 flow_label = (
                     bus.label,
                     "in",
                     flow[0].label.cat,
-                    flow[0].label.tag,
-                    subtag,
+                    fields["tag"],
+                    fields["subtag"],
                 )
 
             if flow_label in data:
