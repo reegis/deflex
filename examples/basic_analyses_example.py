@@ -20,8 +20,7 @@ import pytz
 from matplotlib import pyplot as plt
 from oemof.tools import logger
 
-from deflex import analyses
-from deflex import postprocessing as pp
+from deflex.postprocessing import files as pp, analyses
 from deflex import tools
 
 OPSD_URL = (
