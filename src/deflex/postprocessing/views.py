@@ -58,10 +58,10 @@ def reshape_bus_view(results, buses, data=None, aggregate=None):
     >>> from deflex.postprocessing import restore_results
     >>> fn = fetch_test_files("de21_no-heat.dflx")
     >>> my_results = restore_results(fn)
-    >>> my_buses = set([flow[0] for flow in my_results["main"].keys() if
-    ...                 isinstance(flow[0], solph.Bus) and
-    ...                 flow[0].label.cat == "electricity"])
-    >>> len(my_buses)
+    >>> my_buses = [flow[0] for flow in my_results["main"].keys() if
+    ...             isinstance(flow[0], solph.Bus) and
+    ...             flow[0].label.cat == "electricity"]
+    >>> len(set(my_buses))
     21
     >>> # aggregate lines for all regions and remove suffix of power plants
     >>> agg = [("cat", "line", "subtag", "all"),
@@ -96,7 +96,9 @@ def reshape_bus_view(results, buses, data=None, aggregate=None):
         data = pd.DataFrame(columns=m_cols)
 
     if not isinstance(buses, list):
-        buses = list(buses)
+        buses = [buses]
+    else:
+        buses = list(set(buses))
 
     def change_field(node, changes):
         val = {"subtag": node.label.subtag, "tag": node.label.tag}
