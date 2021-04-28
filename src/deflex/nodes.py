@@ -62,7 +62,7 @@ def create_solph_nodes_from_data(input_data, nodes):
         add_heat_and_chp_plants(input_data, nodes)
 
     # Electricity storages
-    if "electricity storages" in input_data:
+    if "electricity storages" in input_data or "storages" in input_data:
         add_storages(input_data, nodes)
 
     # Mobility
