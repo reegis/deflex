@@ -61,28 +61,15 @@ def storage_results2table(results):
     return store
 
 
-def bus_flows2tables(results, bus_tags):
+def bus_flows2tables(results, bus_groups):
     levels = [[], [], [], [], [], [], [], []]
     tables = {}
-    for bus_tag in bus_tags:
+    for key, buses in bus_groups.items():
         seq = pd.DataFrame(columns=pd.MultiIndex(levels=levels, codes=levels))
-        if "heat" in bus_tag:
-            cat, tag = bus_tag.split("_")
-        else:
-            cat = bus_tag
-            tag = "all"
-        buses = set(
-            [
-                k[0]
-                for k in results["main"].keys()
-                if isinstance(k[0], solph.Bus)
-                and k[0].label.cat == cat
-                and k[0].label.tag == tag
-            ]
-        )
-        for c in buses:
-            flows = [k for k in results["main"].keys() if k[1] == c]
-            flows.extend([k for k in results["main"].keys() if k[0] == c])
+        name = "_".join(key).replace("_all", "")
+        for bus in buses:
+            flows = [k for k in results["main"].keys() if k[1] == bus]
+            flows.extend([k for k in results["main"].keys() if k[0] == bus])
             for f in flows:
                 seq[
                     f[0].label.cat,
@@ -94,9 +81,22 @@ def bus_flows2tables(results, bus_tags):
                     f[1].label.subtag,
                     f[1].label.region,
                 ] = results["main"][f]["sequences"]["flow"]
-        tables[bus_tag] = seq.sort_index(axis=1)
+        tables[name] = seq.sort_index(axis=1)
 
     return tables
+
+
+def group_buses(buses, fields):
+    groups = {}
+    for b in buses:
+        temp = []
+        for field in fields:
+            temp.append(getattr(b.label, field))
+        if tuple(temp) in groups.keys():
+            groups[tuple(temp)].append(b)
+        else:
+            groups[tuple(temp)] = [b]
+    return groups
 
 
 def get_all_results(results):
@@ -131,15 +131,17 @@ def get_all_results(results):
     >>> my_bool
     [True, True, True, True, True, True, True, True]
     """
-    bus_tags = set(
+    buses = set(
         [
-            "_".join([k[0].label.cat, k[0].label.tag]).replace("_all", "")
+            k[0]
             for k in results["main"].keys()
             if isinstance(k[0], solph.Bus)
         ]
     )
 
-    tables = bus_flows2tables(results, bus_tags)
+    bus_groups = group_buses(buses, ["cat", "tag"])
+    print(bus_groups)
+    tables = bus_flows2tables(results, bus_groups)
     tables["storages"] = storage_results2table(results)
     tables["pyomo"] = pyomo_results2series(results)
     tables["meta"] = meta_results2series(results)
