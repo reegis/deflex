@@ -73,6 +73,9 @@ def create_solph_nodes_from_data(input_data, nodes):
     if "other demand" in input_data:
         add_other_demand(input_data, nodes)
 
+    if "other converters" in input_data:
+        add_other_converters(input_data, nodes)
+
     # Connect electricity buses with transmission
     if "power lines" in input_data:
         add_transmission_lines_between_electricity_nodes(input_data, nodes)
