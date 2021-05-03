@@ -70,7 +70,7 @@ def create_solph_nodes_from_data(input_data, nodes):
         add_mobility(input_data, nodes)
 
     # Other commodities
-    if "other demand" in input_data:
+    if "other demand series" in input_data:
         add_other_demand(input_data, nodes)
 
     if "other converters" in input_data:
