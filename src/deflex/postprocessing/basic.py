@@ -6,10 +6,14 @@ SPDX-FileCopyrightText: 2016-2021 Uwe Krien <krien@uni-bremen.de>
 
 SPDX-License-Identifier: MIT
 """
-
-
+import matplotlib.patches as patches
+import networkx as nx
 import pandas as pd
+from matplotlib import pyplot as plt
 from oemof import solph
+
+from deflex import DeflexScenario
+from deflex import scenario
 
 
 def meta_results2series(results):
@@ -132,17 +136,194 @@ def get_all_results(results):
     [True, True, True, True, True, True, True, True]
     """
     buses = set(
-        [
-            k[0]
-            for k in results["main"].keys()
-            if isinstance(k[0], solph.Bus)
-        ]
+        [k[0] for k in results["main"].keys() if isinstance(k[0], solph.Bus)]
     )
 
     bus_groups = group_buses(buses, ["cat", "tag"])
-    print(bus_groups)
     tables = bus_flows2tables(results, bus_groups)
     tables["storages"] = storage_results2table(results)
     tables["pyomo"] = pyomo_results2series(results)
     tables["meta"] = meta_results2series(results)
     return tables
+
+
+def nx_graph_from_results(results, filename):
+    """
+    Create a `networkx.DiGraph` for the passed energy system and plot it.
+    See http://networkx.readthedocs.io/en/latest/ for more information.
+
+    Parameters
+    ----------
+    energy_system : `oemof.solph.network.EnergySystem`
+
+    filename : str
+        Absolute filename (with path) to write your graph in the graphml
+        format. If no filename is given no file will be written.
+
+    remove_nodes: list of strings
+        Nodes to be removed e.g. ['node1', node2')]
+
+    remove_nodes_with_substrings: list of strings
+        Nodes that contain substrings to be removed e.g. ['elec', 'heat')]
+
+    remove_edges: list of string tuples
+        Edges to be removed e.g. [('resource_gas', 'gas_balance')]
+
+    Examples
+    --------
+    >>> import os
+    >>> import pandas as pd
+    >>> from oemof.solph import (Bus, Sink, Transformer, Flow, EnergySystem)
+    >>> import oemof.graph as grph
+    >>> datetimeindex = pd.date_range('1/1/2017', periods=3, freq='H')
+    >>> es = EnergySystem(timeindex=datetimeindex)
+    >>> b_gas = Bus(label='b_gas', balanced=False)
+    >>> bel1 = Bus(label='bel1')
+    >>> bel2 = Bus(label='bel2')
+    >>> demand_el = Sink(label='demand_el',
+    ...                  inputs = {bel1: Flow(nominal_value=85,
+    ...                            actual_value=[0.5, 0.25, 0.75],
+    ...                            fixed=True)})
+    >>> pp_gas = Transformer(label=('pp', 'gas'),
+    ...                            inputs={b_gas: Flow()},
+    ...                            outputs={bel1: Flow(nominal_value=41,
+    ...                                                variable_costs=40)},
+    ...                            conversion_factors={bel1: 0.5})
+    >>> line_to2 = Transformer(label='line_to2',
+    ...                        inputs={bel1: Flow()}, outputs={bel2: Flow()})
+    >>> line_from2 = Transformer(label='line_from2',
+    ...                          inputs={bel2: Flow()}, outputs={bel1: Flow()})
+    >>> es.add(b_gas, bel1, demand_el, pp_gas, bel2, line_to2, line_from2)
+    >>> my_graph = grph.create_nx_graph(es)
+    >>> # export graph as .graphml for programs like Yed where it can be
+    >>> # sorted and customized. this is especially helpful for large graphs
+    >>> # grph.create_nx_graph(es, filename="my_graph.graphml")
+    >>> [my_graph.has_node(n)
+    ...  for n in ['b_gas', 'bel1', "('pp', 'gas')", 'demand_el', 'tester']]
+    [True, True, True, True, False]
+    >>> list(nx.attracting_components(my_graph))
+    [{'demand_el'}]
+    >>> sorted(list(nx.strongly_connected_components(my_graph))[1])
+    ['bel1', 'bel2', 'line_from2', 'line_to2']
+    >>> new_graph = grph.create_nx_graph(energy_system=es,
+    ...                                  remove_nodes_with_substrings=['b_'],
+    ...                                  remove_nodes=["('pp', 'gas')"],
+    ...                                  remove_edges=[('bel2', 'line_from2')],
+    ...                                  filename='test_graph')
+    >>> [new_graph.has_node(n)
+    ...  for n in ['b_gas', 'bel1', "('pp', 'gas')", 'demand_el', 'tester']]
+    [False, True, False, True, False]
+    >>> my_graph.has_edge("('pp', 'gas')", 'bel1')
+    True
+    >>> new_graph.has_edge('bel2', 'line_from2')
+    False
+    >>> os.remove('test_graph.graphml')
+
+    Notes
+    -----
+    Needs graphviz and networkx (>= v.1.11) to work properly.
+    Tested on Ubuntu 16.04 x64 and solydxk (debian 9).
+    """
+    # construct graph from nodes and flows
+    grph = nx.DiGraph()
+
+    # get all nodes
+    nodes = [n[0] for n in results["main"].keys()]
+    nodes.extend([n[1] for n in results["main"].keys() if n[1] is not None])
+    nodes = set(nodes)
+
+    colors = {
+        "commodity_all_H2": {"bg": "#00ff11", "fg": "#000000"},
+        "electricity": {"bg": "#efb507", "fg": "#000000"},
+        "heat": {"bg": "#94221d", "fg": "#000000"},
+        "commodity_all_other heat": {"bg": "#996967", "fg": "#000000"},
+        "commodity_all_syn-fuel": {"bg": "#9969c3", "fg": "#000000"},
+        "commodity_all_bioenergy": {"bg": "#063313", "fg": "#ffffff"},
+        "commodity_all_other-elect": {"bg": "#c07b56", "fg": "#000000"},
+        "commodity_all_oil": {"bg": "#1d101b", "fg": "#ffffff"},
+        "mobility": {"bg": "#31306e", "fg": "#ffffff"},
+        "default": {"bg": "#6a6a72", "fg": "#000000"},
+    }
+
+    # add nodes
+    for n in nodes:
+        if isinstance(n, solph.Bus):
+            for k, c in colors.items():
+                if k in str(n.label):
+                    color = c
+
+        else:
+            color = colors["default"]
+        grph.add_node(
+            str(n.label),
+            label=str(n.label),
+            bg_color=color["bg"],
+            fg_color=color["fg"],
+        )
+
+    # add labeled flows on directed edge if an optimization_model has been
+    # passed or undirected edge otherwise
+    for n in nodes:
+        for i in [f[0] for f in results["main"].keys() if f[1] == n]:
+            weight = (
+                results["main"][(i, n)]["sequences"]["flow"].sum() / 10 ** 6
+            )
+            grph.add_edge(str(i.label), str(n.label))
+            # if weight is None:
+            #     grph.add_edge(str(i.label), str(n.label))
+            # else:
+            grph.add_edge(
+                str(i.label), str(n.label), weigth=format(weight, ".1f")
+            )
+    print("**********************")
+    for g in grph.edges:
+        print(g)
+
+    if filename is not None:
+        if filename[-8:] != ".graphml":
+            filename = filename + ".graphml"
+        nx.write_graphml(grph, filename)
+
+    print(colors)
+
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+
+    w = 0.5
+    h = 1 / 15
+    x = 0
+    y = 0
+    for k, c in colors.items():
+        pos1 = (x, y)
+        pos2 = (x + w / 2, y + h / 2)
+        ax.add_patch(patches.Rectangle(pos1, w, h, color=c["bg"]))
+        ax.annotate(k, xy=pos2, color=c["fg"], ha="center", va="center")
+        y += h
+    plt.show()
+
+    return grph
+
+
+def get_results_graph(path, scenario_class=DeflexScenario):
+    sc = scenario.restore_scenario(path, scenario_class=scenario_class)
+    print(sc.es)
+    graph = sc.plot_nodes()
+    for g in graph:
+        print(g)
+
+
+if __name__ == "__main__":
+    from deflex.postprocessing import dict2file
+    from deflex.postprocessing import get_all_results
+    from deflex.postprocessing import restore_results
+
+    # fn = "/home/uwe/.deflex/tmp_test_32traffic_43/de03_fictive.dflx"
+    fn = "/home/uwe/.deflex/pedro_new/2050-DE02-Agora2.dflx"
+    # get_results_graph(fn)
+    # exit(0)
+    my_results = restore_results(fn)
+    nx_graph_from_results(my_results, fn.replace(".dflx", ".graphml"))
+    exit(0)
+    all_results = get_all_results(my_results)
+    fn_out = fn.replace(".dflx", "_all_results.csv")
+    dict2file(all_results, fn_out, "csv", drop_empty_columns=True)

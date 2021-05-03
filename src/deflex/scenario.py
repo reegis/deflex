@@ -387,7 +387,7 @@ class Scenario:
 
         self.results = self.es.results
 
-    def plot_nodes(self, filename, **kwargs):
+    def plot_nodes(self, filename=None, **kwargs):
         """
         Plot a graph plot of the energy system and store it into a `.graphml`
         file. The kwargs are passed to the oemof.network function
