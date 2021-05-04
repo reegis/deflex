@@ -6,14 +6,12 @@ SPDX-FileCopyrightText: 2016-2021 Uwe Krien <krien@uni-bremen.de>
 
 SPDX-License-Identifier: MIT
 """
-import matplotlib.patches as patches
 import networkx as nx
 import pandas as pd
-from matplotlib import pyplot as plt
+from matplotlib.cm import get_cmap
+from matplotlib.colors import Normalize
+from matplotlib.colors import rgb2hex
 from oemof import solph
-
-from deflex import DeflexScenario
-from deflex import scenario
 
 
 def meta_results2series(results):
@@ -149,7 +147,7 @@ def get_all_results(results):
 
 class Edge:
     def __init__(self, **kwargs):
-        self.nodes = kwargs.get("key", None)
+        self.nodes = kwargs.get("nodes", None)
         self.sequence = kwargs.get("sequence", None)
         self.weight = kwargs.get("weight", None)
         self.color = kwargs.get("color", None)
@@ -157,27 +155,117 @@ class Edge:
 
 class DeflexGraph:
     def __init__(self, results, **kwargs):
+        """
+
+        Parameters
+        ----------
+        results : dict
+            Deflex results dictionary.
+
+        Other Parameters
+        ----------------
+        default_node_color : str
+            The default color as a dictionary with the keys "fg" for the
+            foreground color (font color) and "bg" for the background color
+            (fill color). The color has to be a hexadecimal string. The default
+            color is used if no other color is set.
+            (default: {"bg": "#6a6a72", "fg": "#000000"}")
+        default_edge_color : str
+            The default edge color as a hexadecimal string. The default color
+            is used if no other color is set.
+            (default: "#000000"")
+
+        Examples
+        --------
+        >>> import os
+        >>> from deflex.tools import fetch_test_files
+        >>> from deflex.postprocessing import restore_results
+        >>> from deflex.postprocessing import DeflexGraph
+        >>> fn = fetch_test_files("de03_fictive.dflx")
+        >>> my_results = restore_results(fn)
+        >>> dflx_graph = DeflexGraph(my_results)
+        >>> sorted(k.__name__ for k in dflx_graph.group_nodes_by_type())
+        ['Bus', 'GenericStorage', 'Sink', 'Source', 'Transformer']
+
+        >>> nx_graph = dflx_graph.get()
+        >>> nx.number_of_nodes(nx_graph)
+        236
+        >>> nx.number_weakly_connected_components(nx_graph)
+        1
+        >>> fn_out = fn.replace(".dflx", "_graph.graphml")
+        >>> dflx_graph.write(fn_out)
+        >>> os.path.isfile(fn_out)
+        True
+        >>> os.remove(fn_out)
+        """
         self.results = results
         self.default_node_color = kwargs.get(
             "default_node_color", {"bg": "#6a6a72", "fg": "#000000"}
         )
         self.default_edge_color = kwargs.get("default_edge_color", "#000000")
-        self.nodes = self.fetch_nodes()
-        self.edges = self.fetch_edges()
+        self.nodes = self._fetch_nodes()
+        self.edges = self._fetch_edges()
         self.graph = None
 
-    def fetch_nodes(self):
+    def _fetch_edges(self):
+        """
+        Fetch all edges from the results dictionary and create Edge objects.
+        """
+        edges = []
+        for n in self.results["main"]:
+            if n[1] is not None:
+                seq = self.results["main"][n]["sequences"]["flow"]
+                edges.append(
+                    Edge(
+                        nodes=n,
+                        weight=seq.sum(),
+                        color=self.default_edge_color,
+                        sequence=seq,
+                    )
+                )
+        return edges
+
+    def _fetch_nodes(self):
+        """Fetch all nodes from the results dictionary."""
         nodes = [n[0] for n in self.results["main"].keys()]
         nodes.extend(
             [n[1] for n in self.results["main"].keys() if n[1] is not None]
         )
         return list(set(nodes))
 
-    def group_nodes_by_type(self, use_str=False):
+    def group_nodes_by_type(self, use_name=False):
+        """
+        Group all nodes by types returning a dictionary with the types or the
+        name of the types as keys and the list of nodes as value.
+
+        Parameters
+        ----------
+        use_name : bool
+            Use the name of the class instead of the class as key.
+
+        Returns
+        -------
+        All nodes sorted by their type. The keys of the dictionary are the
+        classes (or name of the classes) the values are lists with nodes of
+        the corresponding class.
+
+        Examples
+        --------
+        >>> from deflex.tools import fetch_test_files
+        >>> from deflex.postprocessing import restore_results
+        >>> from deflex.postprocessing import DeflexGraph
+        >>> fn = fetch_test_files("de03_fictive.dflx")
+        >>> my_results = restore_results(fn)
+        >>> dflx_graph = DeflexGraph(my_results)
+        >>> sorted(dflx_graph.group_nodes_by_type(use_name=True))
+        ['Bus', 'GenericStorage', 'Sink', 'Source', 'Transformer']
+        >>> list(dflx_graph.group_nodes_by_type(use_name=False))[0].__mro__[-2]
+        <class 'oemof.network.network.Node'>
+        """
         node_groups = {}
-        node_types = set([type(n) for n in self.nodes])
+        node_types = set([type(n) for n in sorted(self.nodes)])
         for node_type in node_types:
-            if use_str is True:
+            if use_name is True:
                 name = node_type.__name__
             else:
                 name = node_type
@@ -186,8 +274,67 @@ class DeflexGraph:
             ]
         return node_groups
 
-    def color_nodes_by_type(self, colors, use_str=True):
-        groups = self.group_nodes_by_type(use_str)
+    def color_nodes_by_type(self, colors, use_name=True):
+        """
+        Color all nodes in a specific color according to the class. Use the
+        :py:meth:`group_nodes_by_type` method to get all existing types. Now
+        a color can be assigned to every type using a color dictionary. If no
+        color is defined for an existing class the default color is used. By
+        default the name of each class is used.
+
+        Parameters
+        ----------
+          colors : dict
+            The dictionary needs to have the class (name of class) as keys and
+            a color dictionary as value. The color dictionary has two keys,
+            "fg" for the foreground color (font color) and "bg" for the
+            background color (fill color) and the color as value. The color has
+            to be in the hexadecimal style.
+        use_name : bool
+            Use the name of the class instead of the class as key. If the class
+            is used, the classes also have to be used for the colors as key.
+
+        Examples
+        --------
+        >>> from deflex.tools import fetch_test_files
+        >>> from deflex.postprocessing import restore_results
+        >>> from deflex.postprocessing import DeflexGraph
+        >>> from oemof import solph
+        >>> fn = fetch_test_files("de03_fictive.dflx")
+        >>> my_results = restore_results(fn)
+        >>> dflx_graph = DeflexGraph(my_results)
+        >>> my_colors = {
+        ...     "Bus": {"bg": "#00ff11", "fg": "#000000"},
+        ...     "GenericStorage": {"bg": "#efb507", "fg": "#000000"},
+        ...     "Transformer": {"bg": "#94221d", "fg": "#000000"},
+        ...     "Source": {"bg": "#996967", "fg": "#000000"},
+        ...     "Sink": {"bg": "#31306e", "fg": "#ffffff"},
+        ... }
+        >>> dflx_graph.color_nodes_by_type(my_colors)
+        >>> bus = [n for n in dflx_graph.nodes if isinstance(n, solph.Bus)][0]
+        >>> getattr(bus, "bgcolor")
+        '#00ff11'
+        >>> sorted(set([n.bgcolor for n in dflx_graph.nodes]))
+        ['#00ff11', '#31306e', '#94221d', '#996967', '#efb507']
+        >>> sorted(set([n.fgcolor for n in dflx_graph.nodes]))
+        ['#000000', '#ffffff']
+        >>> my_colors = {
+        ...     solph.Bus: {"bg": "#00ff11", "fg": "#000000"},
+        ...     "GenericStorage": {"bg": "#efb507", "fg": "#000000"},
+        ...     "Transformer": {"bg": "#94221d", "fg": "#000000"},
+        ...     solph.Source: {"bg": "#996967", "fg": "#000000"},
+        ...     solph.Sink: {"bg": "#31306e", "fg": "#ffffff"},
+        ... }
+        >>> dflx_graph.color_nodes_by_type(my_colors, use_name=False)
+        >>> bus = [n for n in dflx_graph.nodes if isinstance(n, solph.Bus)][0]
+        >>> getattr(bus, "bgcolor")
+        '#00ff11'
+        >>> sorted(set([n.bgcolor for n in dflx_graph.nodes]))
+        ['#00ff11', '#31306e', '#6a6a72', '#996967']
+        >>> sorted(set([n.fgcolor for n in dflx_graph.nodes]))
+        ['#000000', '#ffffff']
+        """
+        groups = self.group_nodes_by_type(use_name)
         for ntype, nodes in groups.items():
             type_color = colors.get(ntype, self.default_node_color)
             for n in nodes:
@@ -195,23 +342,95 @@ class DeflexGraph:
                 n.fgcolor = type_color["fg"]
         self.graph = None
 
-    def fetch_edges(self):
-        edges = []
-        for n in self.results["main"]:
-            if n[1] is not None:
-                seq = self.results["main"][n]["sequences"]["flow"]
-                edges.append(
-                    Edge(
-                        key=n, weight=seq.sum(), color=self.default_edge_color,
-                        sequence=seq
-                    )
-                )
-        return edges
+    def color_nodes_by_substring(self, colors):
+        """
+        Color all nodes in a specific color according to a given substring. A
+        color can be assigned to every substring using a dictionary with the
+        substrings as key an the color dictionary as value. The color
+        dictionary needs to have the keys "fg" for the foreground color (font
+        color) and "bg" for the background color (fill color). The color has to
+        be in the hexadecimal style. Each substring key will be compared with
+        the label of the node as string. If no substring match
+        the default node color is used. If more than one substring is within
+        a label the last match will overwrite the previous matches.
 
-    # def color_nodes(self, color_function, **kwargs):
-    #     self.nodes = map(color_function, **kwargs)
+        Parameters
+        ----------
+        colors : dict
+            The dictionary needs to have the substring as keys and a color
+            dictionary as value. The color dictionary has two keys, "fg" for
+            the foreground color (font color) and "bg" for the background color
+            (fill color) and the color as value. The color has to be in the
+            hexadecimal style.
+
+        Examples
+        --------
+        >>> from deflex.tools import fetch_test_files
+        >>> from deflex.postprocessing import restore_results
+        >>> from deflex.postprocessing import DeflexGraph
+        >>> fn = fetch_test_files("de03_fictive.dflx")
+        >>> my_results = restore_results(fn)
+        >>> dflx_graph = DeflexGraph(my_results)
+        >>> my_colors = {
+        ...     "H2": {"bg": "#00ff11", "fg": "#000000"},
+        ...     "electricity": {"bg": "#efb507", "fg": "#000000"},
+        ...     "bioenergy": {"bg": "#063313", "fg": "#ffffff"},
+        ... }
+        >>> dflx_graph.color_nodes_by_substring(my_colors)
+        >>> node = [n for n in dflx_graph.nodes if "bioenergy" in n.label][0]
+        >>> getattr(node, "bgcolor")
+        '#063313'
+        >>> sorted(set([n.bgcolor for n in dflx_graph.nodes]))
+        ['#00ff11', '#063313', '#6a6a72', '#efb507']
+        >>> sorted(set([n.fgcolor for n in dflx_graph.nodes]))
+        ['#000000', '#ffffff']
+        """
+        for node in self.nodes:
+            node.bgcolor = self.default_node_color["bg"]
+            node.fgcolor = self.default_node_color["fg"]
+        for substring, color in colors.items():
+            nodes = [n for n in self.nodes if substring in str(n.label)]
+            for node in nodes:
+                node.bgcolor = color["bg"]
+                node.fgcolor = color["fg"]
 
     def color_edges_by_weight(self, cmap="cool", max_weight=None):
+        """
+        Color all edges by their weight using a matplotlib color map (cmap). If
+        no maximum weight is give the highest weight is used.
+
+        Parameters
+        ----------
+        cmap : str
+            Name of the matplotlib color map.
+        max_weight : numeric
+            The maximum for the normalisation of the weights. All number above
+            the max_weight will get the color of the maximum. If no value is
+            given the maximum weight of all edges will used.
+
+        Examples
+        --------
+        >>> from deflex.tools import fetch_test_files
+        >>> from deflex.postprocessing import restore_results
+        >>> from deflex.postprocessing import DeflexGraph
+        >>> from matplotlib.cm import get_cmap
+        >>>
+        >>> fn = fetch_test_files("de03_fictive.dflx")
+        >>> my_results = restore_results(fn)
+        >>> dflx_graph = DeflexGraph(my_results)
+        >>> round(dflx_graph.max_edge_weight()/10**6, 2)
+        8.68
+        >>> dflx_graph.color_edges_by_weight(cmap="rainbow", max_weight=80)
+        >>> edges = dflx_graph.edges
+        >>> bus = [e for e in edges if "shortage" in e.nodes[0].label][0]
+        >>> getattr(bus, "color")
+        '#8000ff'
+        >>> w = bus.weight
+        >>> rgb2hex(get_cmap("rainbow")(w))
+        '#8000ff'
+        >>> w
+        0.0
+        """
         cmap = get_cmap(cmap)
         if max_weight is None:
             max_weight = self.max_edge_weight()
@@ -231,6 +450,7 @@ class DeflexGraph:
                 label=str(n.label),
                 bg_color=getattr(n, "bgcolor", self.default_node_color["bg"]),
                 fg_color=getattr(n, "fgcolor", self.default_node_color["fg"]),
+                type=n.__class__.__name__,
             )
 
         for e in self.edges:
@@ -238,8 +458,8 @@ class DeflexGraph:
                 str(e.nodes[0].label),
                 str(e.nodes[1].label),
                 weigth=format(e.weight * 10 ** weight_exponent, ".1f"),
-                color=e.color,
-                sequence=str(e.sequence.values)
+                color=getattr(e, "color", self.default_edge_color),
+                sequence=str(e.sequence.values),
             )
         return self
 
@@ -252,118 +472,3 @@ class DeflexGraph:
                 weight_exponent=kwargs.get("weight_exponent", 0)
             )
         return self.graph
-
-
-def nx_graph_from_results(results, filename=None):
-    """
-    Create a `networkx.DiGraph` for the passed results.
-
-    If a filename is given it is possible to write the file as an `.graphml`
-    file. See http://networkx.readthedocs.io/en/latest/ for more information.
-
-    Parameters
-    ----------
-    results : dict
-        A deflex result dictionary.
-
-    filename : str
-        Absolute filename (with path) to write your graph in the graphml
-        format. If no filename is given no file will be written.
-
-    Examples
-    --------
-    >>> import os
-    >>> from deflex.postprocessing import restore_results
-    >>> from deflex.postprocessing import dict2file
-    >>> from deflex.postprocessing import nx_graph_from_results
-    >>> from deflex.tools import fetch_test_files
-    >>> fn = fetch_test_files("de03_fictive.dflx")
-    >>> my_results = restore_results(fn)
-    >>> my_graph = nx_graph_from_results(my_results)
-    >>> nx.number_of_nodes(my_graph)
-    231
-    >>> nx.number_weakly_connected_components(my_graph)
-    3
-    >>> fn_out = fn.replace(".dflx", "_graph.graphml")
-    >>> my_graph = nx_graph_from_results(my_results, fn_out)
-    >>> os.path.isfile(fn_out)
-    True
-    >>> os.remove(fn_out)
-
-    Notes
-    -----
-    Needs the networkx (>= v.1.11) package to work .
-    """
-    # construct graph from nodes and flows
-    grph = nx.DiGraph()
-
-    # get all nodes
-    nodes = [n[0] for n in results["main"].keys()]
-    nodes.extend([n[1] for n in results["main"].keys() if n[1] is not None])
-    nodes = set(nodes)
-
-    if filename is not None:
-        if filename[-8:] != ".graphml":
-            filename = filename + ".graphml"
-        nx.write_graphml(grph, filename)
-    return grph
-
-
-def get_results_graph(path, scenario_class=DeflexScenario):
-    sc = scenario.restore_scenario(path, scenario_class=scenario_class)
-    print(sc.es)
-    graph = sc.plot_nodes()
-    for g in graph:
-        print(g)
-
-
-if __name__ == "__main__":
-    from deflex.postprocessing import dict2file
-    from deflex.postprocessing import get_all_results
-    from deflex.postprocessing import restore_results
-    # import pprint as pp
-    from matplotlib.cm import get_cmap
-    from matplotlib.colors import rgb2hex, Normalize
-
-    # my_cmap = get_cmap("cool")
-    # print(rgb2hex(my_cmap(0.2)))
-    # print(my_cmap(0.2, bytes=True))
-    # exit(0)
-    # fn = "/home/uwe/.deflex/tmp_test_32traffic_43/de03_fictive.dflx"
-    fn = "/home/uwe/.deflex/pedro/2030-DE02-Agora4.dflx"
-    # get_results_graph(fn)
-    # exit(0)
-    my_results = restore_results(fn)
-    dg = DeflexGraph(my_results)
-    # my_colors = {
-    #     "commodity_all_H2": {"bg": "#00ff11", "fg": "#000000"},
-    #     "electricity": {"bg": "#efb507", "fg": "#000000"},
-    #     "heat": {"bg": "#94221d", "fg": "#000000"},
-    #     "commodity_all_other heat": {"bg": "#996967", "fg": "#000000"},
-    #     "commodity_all_syn-fuel": {"bg": "#9969c3", "fg": "#000000"},
-    #     "commodity_all_bioenergy": {"bg": "#063313", "fg": "#ffffff"},
-    #     "commodity_all_other-elect": {"bg": "#c07b56", "fg": "#000000"},
-    #     "commodity_all_oil": {"bg": "#1d101b", "fg": "#ffffff"},
-    #     "mobility": {"bg": "#31306e", "fg": "#ffffff"},
-    #     "default": {"bg": "#6a6a72", "fg": "#000000"},
-    # }
-
-    my_colors = {
-        "Bus": {"bg": "#00ff11", "fg": "#000000"},
-        "GenericStorage": {"bg": "#efb507", "fg": "#000000"},
-        "Transformer": {"bg": "#94221d", "fg": "#000000"},
-        "Source": {"bg": "#996967", "fg": "#000000"},
-        "Sink": {"bg": "#31306e", "fg": "#ffffff"},
-        "default": {"bg": "#6a6a72", "fg": "#000000"},
-    }
-
-    dg.color_nodes_by_type(my_colors)
-    dg.color_edges_by_weight()
-    dg.write(fn.replace(".dflx", "_graph.graphml"), weight_exponent=-6)
-
-    # pp.pprint(ng)
-    # nx_graph_from_results(my_results, fn.replace(".dflx", ".graphml"))
-    exit(0)
-    all_results = get_all_results(my_results)
-    fn_out = fn.replace(".dflx", "_all_results.csv")
-    dict2file(all_results, fn_out, "csv", drop_empty_columns=True)
