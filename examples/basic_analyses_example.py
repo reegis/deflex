@@ -20,9 +20,9 @@ import pytz
 from matplotlib import pyplot as plt
 from oemof.tools import logger
 
-from deflex import analyses
-from deflex import postprocessing as pp
 from deflex import tools
+from deflex.postprocessing import analyses
+from deflex.postprocessing import files as pp
 
 OPSD_URL = (
     "https://data.open-power-system-data.org/index.php?package="

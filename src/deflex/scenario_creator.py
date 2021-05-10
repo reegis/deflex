@@ -15,17 +15,18 @@ from collections import namedtuple
 
 import pandas as pd
 from reegis import config
-from scenario_builder import commodity
-from scenario_builder import demand
-from scenario_builder import feedin
-from scenario_builder import mobility
-from scenario_builder import powerplants
-from scenario_builder import storages
+from scenario_builder import (
+    commodity,
+    demand,
+    feedin,
+    mobility,
+    powerplants,
+    storages,
+)
 
 from deflex import __file__ as dfile
 from deflex import config as cfg
-from deflex import scenario
-from deflex import transmission
+from deflex import scenario, transmission
 
 
 def scenario_default_decentralised_heat():
