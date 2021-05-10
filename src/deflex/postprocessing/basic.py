@@ -6,12 +6,22 @@ SPDX-FileCopyrightText: 2016-2021 Uwe Krien <krien@uni-bremen.de>
 
 SPDX-License-Identifier: MIT
 """
+
+__all__ = [
+    "get_all_results",
+    "DeflexGraph",
+]
+
 import networkx as nx
 import pandas as pd
 from matplotlib.cm import get_cmap
-from matplotlib.colors import Normalize
-from matplotlib.colors import rgb2hex
+from matplotlib.colors import Normalize, rgb2hex
 from oemof import solph
+
+
+def get_time_index(results):
+    key = list(results["main"].keys())[0]
+    return results["main"][key]["sequences"].index
 
 
 def meta_results2series(results):

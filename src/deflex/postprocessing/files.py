@@ -14,8 +14,7 @@ import pickle
 
 import pandas as pd
 
-from deflex.scenario import DeflexScenario
-from deflex.scenario import restore_scenario
+from deflex.scenario import DeflexScenario, restore_scenario
 
 
 def search_results(path, extension="dflx", **parameter_filter):

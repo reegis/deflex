@@ -7,13 +7,13 @@ SPDX-FileCopyrightText: 2016-2021 Uwe Krien <krien@uni-bremen.de>
 
 SPDX-License-Identifier: MIT
 """
-import deflex.tools
+# import deflex.tools
 
 __copyright__ = "Uwe Krien <krien@uni-bremen.de>"
 __license__ = "MIT"
 
-from deflex import postprocessing
-from deflex import postprocessing as pp
+# from deflex import postprocessing
+# from deflex import postprocessing as pp
 
 # def test_flow_results():
 #     """The flow results are not fetched or calculated correctly.n"""

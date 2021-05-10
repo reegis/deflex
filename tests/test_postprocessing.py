@@ -21,15 +21,15 @@ class TestReshapeBusView:
         my_results = pp.restore_results(fn)
 
         my_buses = sorted(
-                set(
-                    [
-                        flow[0]
-                        for flow in my_results["main"].keys()
-                        if isinstance(flow[0], solph.Bus)
-                        and flow[0].label.cat == "electricity"
-                    ]
-                )
+            set(
+                [
+                    flow[0]
+                    for flow in my_results["main"].keys()
+                    if isinstance(flow[0], solph.Bus)
+                    and flow[0].label.cat == "electricity"
+                ]
             )
+        )
 
         m_cols = pd.MultiIndex(
             levels=[[], [], [], [], []], codes=[[], [], [], [], []]
@@ -56,9 +56,7 @@ class TestReshapeBusView:
         df2 = self.df2.groupby(level=[1, 2, 3, 4], axis=1).sum().sort_index(1)
         df3 = self.df3.groupby(level=[1, 2, 3, 4], axis=1).sum().sort_index(1)
         df4 = self.df4.groupby(level=[1, 2, 3, 4], axis=1).sum().sort_index(1)
-        assert list(df1["in", "line", "electricity"].columns[:5]) == [
-            "all"
-        ]
+        assert list(df1["in", "line", "electricity"].columns[:5]) == ["all"]
         assert list(df2["in", "line", "electricity"].columns[:5]) == [
             "DE01",
             "DE02",
@@ -66,12 +64,8 @@ class TestReshapeBusView:
             "DE04",
             "DE05",
         ]
-        assert list(df3["in", "line", "electricity"].columns[:5]) == [
-            "all"
-        ]
-        assert sorted(
-            list(df4["in", "line", "electricity"].columns)[:5]
-        ) == [
+        assert list(df3["in", "line", "electricity"].columns[:5]) == ["all"]
+        assert sorted(list(df4["in", "line", "electricity"].columns)[:5]) == [
             "DE03",
             "DE04",
             "DE13",
