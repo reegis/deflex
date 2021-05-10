@@ -1,14 +1,6 @@
 Reference
 =========
 
-deflex.analyses module
-----------------------
-
-.. automodule:: deflex.analyses
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 deflex.config module
 --------------------
 
@@ -46,7 +38,7 @@ deflex.postprocessing module
 ----------------------------
 
 .. automodule:: deflex.postprocessing
-    :members:
+    :members: DeflexGraph, get_all_results
     :undoc-members:
     :show-inheritance:
 
