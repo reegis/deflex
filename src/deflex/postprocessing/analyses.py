@@ -261,7 +261,7 @@ def nodes2table(results):
     >>> my_results = postprocessing.restore_results(fn)
     >>> all_nodes = nodes2table(my_results)
     >>> len(all_nodes)
-    236
+    238
     >>> all_nodes.to_csv("your/path/file.csv")  # doctest: +SKIP
 
 

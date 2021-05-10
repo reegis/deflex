@@ -199,7 +199,7 @@ class DeflexGraph:
 
         >>> nx_graph = dflx_graph.get()
         >>> nx.number_of_nodes(nx_graph)
-        236
+        238
         >>> nx.number_weakly_connected_components(nx_graph)
         1
         >>> fn_out = fn.replace(".dflx", "_graph.graphml")
@@ -429,7 +429,7 @@ class DeflexGraph:
         >>> my_results = restore_results(fn)
         >>> dflx_graph = DeflexGraph(my_results)
         >>> round(dflx_graph.max_edge_weight()/10**6, 2)
-        8.68
+        9.17
         >>> dflx_graph.color_edges_by_weight(cmap="rainbow", max_weight=80)
         >>> edges = dflx_graph.edges
         >>> bus = [e for e in edges if "shortage" in e.nodes[0].label][0]
