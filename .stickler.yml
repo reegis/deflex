@@ -10,3 +10,8 @@ linters:
 
 fixers:
     enable: true
+
+files:
+    ignore:
+      - 'src/__init__.py'
+      - 'src/postprocessing/__init__.py'
