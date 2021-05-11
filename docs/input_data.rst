@@ -454,12 +454,12 @@ capacity: ``float``, [MW]
 efficiency:``float``, [-]
     The transmission efficiency of the power line.
     
-Electricity storage
-+++++++++++++++++++
+Electricity storages
+++++++++++++++++++++
 
-``key:`` 'storage', ``value:`` `pandas.DataFrame() <https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html>`_
+``key:`` 'storages', ``value:`` `pandas.DataFrame() <https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html>`_
 
-Electricity storage is a particular case of storages (see :ref:`Storages`). 
+Electricity storages is a particular case of storages (see :ref:`Storages`). 
 The condition to use a storage as electrcitiy storage is to use storage medium = electricity.
 
 
