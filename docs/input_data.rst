@@ -453,6 +453,15 @@ capacity: ``float``, [MW]
     
 efficiency:``float``, [-]
     The transmission efficiency of the power line.
+    
+Electricity storage
++++++++++++++++++++
+
+``key:`` 'storage', ``value:`` `pandas.DataFrame() <https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html>`_
+
+Electricity storage is a particular case of storages (see :ref:`Storages`). 
+The condition to use a storage as electrcitiy storage is to use the storage medium = electricity.
+
 
 Heating sector (optional)
 ~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -734,7 +743,7 @@ Other (optional)
     :depth: 1
     :local:
     :backlinks: top
-    
+
 
 Storages
 ++++++++++++++++++++
@@ -801,17 +810,17 @@ Other converters
 
 ``key:`` 'other converters', ``value:`` `pandas.DataFrame() <https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html>`_
 
-Here, other converters, than the ones already set can be defined, in order to link different buses. A good example here is an electrolyser which connects electricity with hydrogen. Each converter has a source and a target bus with their respective regions. Other converter´s format is analogous to that of power plants and heat plants.
+Here, other converters than the ones already set, can be defined for linking different buses. A good example here is an electrolyser which connects electricity with hydrogen. Each converter has a source and a target bus with their respective regions. Other converter´s format is analogous to that of power plants and heat plants.
 
-+------+------+----------+--------------+------------+----------------+-----------------+-------------+---------------+----------+---------------+
-|      |      | capacity | annual limit | efficiency | variable costs | downtime factor | source      | source region | target   | target region |
-+------+------+----------+--------------+------------+----------------+-----------------+-------------+---------------+----------+---------------+
-| DE   |      |          |              |            |                |                 | electricity | DE01          | hydrogen | DE            |
-+------+------+----------+--------------+------------+----------------+-----------------+-------------+---------------+----------+---------------+
-| DE   |      |          |              |            |                |                 | electricity | DE02          | hydrogen | DE            |
-+------+------+----------+--------------+------------+----------------+-----------------+-------------+---------------+----------+---------------+
-| DE01 |      |          |              |            |                |                 | S1          | DE01          | T1       | DE01          |
-+------+------+----------+--------------+------------+----------------+-----------------+-------------+---------------+----------+---------------+
++------+---------------+----------+--------------+------------+----------------+-----------------+-------------+---------------+----------+---------------+
+|      |               | capacity | annual limit | efficiency | variable costs | downtime factor | source      | source region | target   | target region |
++------+---------------+----------+--------------+------------+----------------+-----------------+-------------+---------------+----------+---------------+
+| DE   | electrolyser1 |          |              |            |                |                 | electricity | DE01          | hydrogen | DE            |
++------+---------------+----------+--------------+------------+----------------+-----------------+-------------+---------------+----------+---------------+
+| DE   | electrolyser1 |          |              |            |                |                 | electricity | DE02          | hydrogen | DE            |
++------+---------------+----------+--------------+------------+----------------+-----------------+-------------+---------------+----------+---------------+
+| DE01 | C1            |          |              |            |                |                 | S1          | DE01          | T1       | DE01          |
++------+---------------+----------+--------------+------------+----------------+-----------------+-------------+---------------+----------+---------------+
 
 **INDEX**
 
@@ -858,5 +867,47 @@ target: ``str``, [-]
 trget_region, [-]
     The target region of the target. Typically this is the region of the
     index or ``DE`` if it is a global commodity target.
+    
+Other demand series
+++++++++++++++++++
+
+``key:`` 'other demand series', ``value:`` `pandas.DataFrame() <https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html>`_
+
+Here, other demands different from electricity, heat or mobility can be entered as time series. Examples are hydrogen or synthetic fuel for the industry sector.
+The demands can be entered regionally under DEXX or supra-regional under DE. The format here is analogous to that of electricity, heat and mobility demand series.
+
+
++-------------+---------------------+---------------------+---------------------+
+|             |         DE01        |         DE02        |          DE         |
++-------------+----------+----------+----------+----------+----------+----------+
+|             |    D1    |    D2    |    D1    |    D3    | hydrogen | syn fuel |
++-------------+----------+----------+----------+----------+----------+----------+
+|             | sector 1 | sector 1 | sector 2 | sector 3 | industry | industry |
++-------------+----------+----------+----------+----------+----------+----------+
+| Time step 1 |          |          |          |          |          |          |
++-------------+----------+----------+----------+----------+----------+----------+
+| Time step 2 |          |          |          |          |          |          |
++-------------+----------+----------+----------+----------+----------+----------+
+| ...         | ...      | ...      | ...      | ...      | ...      | ...      |
++-------------+----------+----------+----------+----------+----------+----------+
+
+**INDEX**
+
+time step: ``int``
+    Number of time step. Must be uniform in all series tables.
+
+**COLUMNS**
+
+unit: ``[MW]``
+
+level 0: ``str``
+    Region (e.g. DE01, DE02 or DE).
+
+level 1: ``str``
+    Name. Specification of the series e.g. `hydrogen`, `syn fuel`.
+
+level 2: ``str``
+    Sector name. Specification of the series e.g. `industry`, `LULUCF`. This extra level is used to differentiate the sector in which the commodity is used, since the same commodity may be used in different sectors.
+
 
 
