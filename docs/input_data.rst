@@ -460,7 +460,7 @@ Electricity storage
 ``key:`` 'storage', ``value:`` `pandas.DataFrame() <https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html>`_
 
 Electricity storage is a particular case of storages (see :ref:`Storages`). 
-The condition to use a storage as electrcitiy storage is to use the storage medium = electricity.
+The condition to use a storage as electrcitiy storage is to use storage medium = electricity.
 
 
 Heating sector (optional)
@@ -817,7 +817,7 @@ Here, other converters than the ones already set, can be defined for linking dif
 +------+---------------+----------+--------------+------------+----------------+-----------------+-------------+---------------+----------+---------------+
 | DE   | electrolyser1 |          |              |            |                |                 | electricity | DE01          | hydrogen | DE            |
 +------+---------------+----------+--------------+------------+----------------+-----------------+-------------+---------------+----------+---------------+
-| DE   | electrolyser1 |          |              |            |                |                 | electricity | DE02          | hydrogen | DE            |
+| DE   | electrolyser2 |          |              |            |                |                 | electricity | DE02          | hydrogen | DE            |
 +------+---------------+----------+--------------+------------+----------------+-----------------+-------------+---------------+----------+---------------+
 | DE01 | C1            |          |              |            |                |                 | S1          | DE01          | T1       | DE01          |
 +------+---------------+----------+--------------+------------+----------------+-----------------+-------------+---------------+----------+---------------+
