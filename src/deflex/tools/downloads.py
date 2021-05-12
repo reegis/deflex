@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-"""Processing a list of power plants in Germany.
+"""Download test files.
 
 SPDX-FileCopyrightText: 2016-2021 Uwe Krien <krien@uni-bremen.de>
 

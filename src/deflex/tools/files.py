@@ -9,15 +9,17 @@ SPDX-License-Identifier: MIT
 __copyright__ = "Uwe Krien <krien@uni-bremen.de>"
 __license__ = "MIT"
 
+import logging
 import os
 import pickle
-
+import pprint as pp
+import warnings
 import pandas as pd
 
-from deflex.scenario import DeflexScenario, restore_scenario
+from deflex.scenario.scenario import DeflexScenario
 
 
-def search_results(path, extension="dflx", **parameter_filter):
+def search_scenarios(path, extension="dflx", **parameter_filter):
     """Filter results by extension and meta data.
 
     The function will search the $HOME folder recursively for files with the
@@ -44,15 +46,15 @@ def search_results(path, extension="dflx", **parameter_filter):
     >>> from deflex.tools import TEST_PATH
     >>> from deflex.tools import fetch_test_files
     >>> my_file_name = fetch_test_files("de17_heat.dflx")
-    >>> res = search_results(path=TEST_PATH, map=["de17"])
+    >>> res = search_scenarios(path=TEST_PATH, map=["de17"])
     >>> len(res)
     2
     >>> sorted(res)[0].split(os.sep)[-1]
     'de17_heat.dflx'
-    >>> res = search_results(path=TEST_PATH, map=["de17", "de21"])
+    >>> res = search_scenarios(path=TEST_PATH, map=["de17", "de21"])
     >>> len(res)
     4
-    >>> res = search_results(
+    >>> res = search_scenarios(
     ...     path=TEST_PATH, map=["de17", "de21"], heat=["True"])
     >>> len(res)
     1
@@ -82,6 +84,13 @@ def search_results(path, extension="dflx", **parameter_filter):
             if str(meta.get(filter_key)) not in filter_value:
                 files.pop(fn, None)
     return list(files.keys())
+
+
+def search_results(path, extension="dflx", **parameter_filter):
+    """Keep the old name to keep the old API"""
+    msg = "'search_results' is deprecated. Use 'search_scenarios` instead."
+    warnings.warn(msg, FutureWarning)
+    search_scenarios(path, extension, **parameter_filter)
 
 
 def restore_results(file_names, scenario_class=DeflexScenario):
@@ -133,6 +142,40 @@ def restore_results(file_names, scenario_class=DeflexScenario):
     return results
 
 
+def restore_scenario(filename, scenario_class=DeflexScenario):
+    """
+    Create a Scenario from a dump file (`.dflx`). By default a DeflexScenario
+    is created but a different Scenario class can be passed. The Scenario
+    has to be equal to the dumped Scenario otherwise the restore will fail.
+
+    Parameters
+    ----------
+    filename : str
+        The path to the dumped file (`.dflx`).
+    scenario_class : class
+        A child of the deflex.Scenario class or the Scenario class itself.
+
+    Returns
+    -------
+    deflex.Scenario
+
+    """
+    if filename.split(".")[-1] != "dflx":
+        msg = (
+            "The suffix of a valid deflex scenario has to be '.dflx'.\n"
+            "Cannot open {0}.".format(filename)
+        )
+        raise IOError(msg)
+    f = open(filename, "rb")
+    meta = pickle.load(f)
+    logging.info("Meta information:\n %s", pp.pformat(meta))
+    sc = scenario_class()
+    sc.__dict__ = pickle.load(f)
+    f.close()
+    logging.info("Results restored from %s.", filename)
+    return sc
+
+
 def dict2file(tables, path, filetype=None, drop_empty_columns=False):
 
     if filetype is None:
@@ -147,13 +190,18 @@ def dict2file(tables, path, filetype=None, drop_empty_columns=False):
         raise NotImplementedError(msg)
 
 
+def _clean_table(table, drop_empty_columns):
+    table.sort_index(axis=1, inplace=True)
+    if drop_empty_columns:
+        table = table.loc[:, (table.sum(axis=0) != 0)]
+    return table
+
+
 def dict2spreadsheet(tables, path, drop_empty_columns=False):
     writer = pd.ExcelWriter(path)
     for name, table in tables.items():
         if isinstance(table, pd.DataFrame):
-            table.sort_index(axis=1, inplace=True)
-            if drop_empty_columns:
-                table = table.loc[:, (table.sum(axis=0) != 0)]
+            table = _clean_table(table, drop_empty_columns)
         table.to_excel(writer, name)
     writer.save()
 
@@ -161,5 +209,7 @@ def dict2spreadsheet(tables, path, drop_empty_columns=False):
 def dict2csv(tables, path, drop_empty_columns=False):
     os.makedirs(path, exist_ok=True)
     for name, table in tables.items():
+        if isinstance(table, pd.DataFrame):
+            table = _clean_table(table, drop_empty_columns)
         fn = os.path.join(path, name + ".csv")
         table.to_csv(fn)
