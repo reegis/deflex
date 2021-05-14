@@ -40,7 +40,7 @@ them regional for example to add a specific limit for each region.
 In most cases it is also sufficient to model the fossil part of the mobility
 and the decentralised heating sector supra-regional. It is assumed that a
 gas boiler or a filling station is always supplied with enough fuel, so that
-the only annual values affect the model. This does not apply to electrical
+only the annual values affect the model. This does not apply to electrical
 heating systems or cars.
 
 In most spread sheet software it is possible to connect cells to increase
