@@ -419,7 +419,7 @@ Electricity storages
 
 ``key:`` 'electricity storages', ``value:`` `pandas.DataFrame() <https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html>`_
 
-A types of electricity storages can be defined in this table. All different
+All types of electricity storages can be defined in this table. All different
 storage technologies (pumped hydro, batteries, compressed air, etc) have to be
 entered in a general way. Each row can indicate one storage or a group of
 storages. It is possible to add additional columns for information purposes.
