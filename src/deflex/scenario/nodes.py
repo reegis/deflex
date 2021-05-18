@@ -196,6 +196,40 @@ def add_volatile_sources(table_collection, nodes):
                 )
 
 
+def add_sink(nodes, table, input_data, label, bus_label, sink_set):
+    if len(sink_set) < 3:
+        idx = tuple((table,)) + sink_set + tuple(("None",))
+    else:
+        idx = tuple((table,)) + sink_set
+
+    if idx in input_data["demand response"].index:
+        logging.debug("Use demand response sink for {}.".format(idx))
+        p = input_data["demand response"].loc[idx]
+        nodes[label] = solph.custom.SinkDSM(
+            label=label,
+            inputs={nodes[bus_label]: solph.Flow()},
+            capacity_up=p["capacity up"],
+            capacity_down=p["capacity down"],
+            delay_time=p["delay"],
+            shift_interval=p["shift interval"],
+            demand=input_data[table][sink_set],
+            method=p["method"],
+            cost_dsm_down=p["cost down"],
+            cost_dsm_up=p["cost up"],
+        )
+    else:
+        logging.debug("Use normal sink for {}.".format(idx))
+        nodes[label] = solph.Sink(
+            label=label,
+            inputs={
+                nodes[bus_label]: solph.Flow(
+                    fix=input_data[table][sink_set],
+                    nominal_value=1,
+                )
+            },
+        )
+
+
 def add_decentralised_heating_systems(table_collection, nodes):
     """
 
@@ -250,14 +284,13 @@ def add_decentralised_heating_systems(table_collection, nodes):
         d_heat_demand_label = Label(
             "heat demand", "decentralised", fuel, region_name
         )
-        nodes[d_heat_demand_label] = solph.Sink(
-            label=d_heat_demand_label,
-            inputs={
-                nodes[heat_bus_label]: solph.Flow(
-                    fix=dts[demand_set],
-                    nominal_value=1,
-                )
-            },
+        add_sink(
+            nodes,
+            "heat demand series",
+            table_collection,
+            d_heat_demand_label,
+            heat_bus_label,
+            demand_set,
         )
 
 
@@ -285,14 +318,13 @@ def add_electricity_demand(input_data, nodes):
             elec_demand_label = Label(
                 "electricity demand", "electricity", demand_name, region
             )
-            nodes[elec_demand_label] = solph.Sink(
-                label=elec_demand_label,
-                inputs={
-                    nodes[bus_label]: solph.Flow(
-                        fix=series,
-                        nominal_value=1,
-                    )
-                },
+            add_sink(
+                nodes,
+                "electricity demand series",
+                input_data,
+                elec_demand_label,
+                bus_label,
+                idx,
             )
 
 
@@ -320,14 +352,13 @@ def add_district_heating_demand(table_collection, nodes):
             if bus_label not in nodes:
                 nodes[bus_label] = solph.Bus(label=bus_label)
             heat_demand_label = Label("heat demand", "district", "all", region)
-            nodes[heat_demand_label] = solph.Sink(
-                label=heat_demand_label,
-                inputs={
-                    nodes[bus_label]: solph.Flow(
-                        fix=dts[demand_set],
-                        nominal_value=1,
-                    )
-                },
+            add_sink(
+                nodes,
+                "heat demand series",
+                table_collection,
+                heat_demand_label,
+                bus_label,
+                demand_set,
             )
 
 
@@ -612,14 +643,13 @@ def add_other_demand(input_data, nodes):
         if series.sum() > 0:
             bus_label = commodity_bus_label(medium, region)
             demand_label = Label("other demand", medium, demand_name, region)
-            nodes[demand_label] = solph.Sink(
-                label=demand_label,
-                inputs={
-                    nodes[bus_label]: solph.Flow(
-                        fix=series,
-                        nominal_value=1,
-                    )
-                },
+            add_sink(
+                nodes,
+                "other demand series",
+                input_data,
+                demand_label,
+                bus_label,
+                idx,
             )
 
 
@@ -715,12 +745,13 @@ def add_mobility(table_collection, nodes):
         )
 
         # Create mobility demand Sink
-        fix_value = mseries[region, name]
-        nodes[demand_label] = solph.Sink(
-            label=demand_label,
-            inputs={
-                nodes[bus_label]: solph.Flow(nominal_value=1, fix=fix_value)
-            },
+        add_sink(
+            nodes,
+            "mobility demand series",
+            table_collection,
+            demand_label,
+            bus_label,
+            (region, name),
         )
     return nodes
 
