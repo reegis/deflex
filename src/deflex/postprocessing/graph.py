@@ -56,12 +56,8 @@ class DeflexGraph:
         >>> sorted(k.__name__ for k in dflx_graph.group_nodes_by_type())
         ['Bus', 'GenericStorage', 'Sink', 'Source', 'Transformer']
         >>> nx_graph = dflx_graph.get()
-        >>> cycles = list(nx.simple_cycles(nx_graph))
-        >>> len(cycles)
+        >>> len(list(nx.simple_cycles(nx_graph)))
         9
-        >>> for c in cycles:
-        ...     if "cat='storage'" not in str(c) and "cat='line'" not in str(c):
-        ...         print(repr(c))
         >>> nx.number_of_nodes(nx_graph)
         238
         >>> nx.number_weakly_connected_components(nx_graph)
