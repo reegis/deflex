@@ -116,7 +116,7 @@ def add_source(nodes, label, bus_label, **params):
     annual_limit = params.get("annual limit", float("inf"))
     variable_costs = params.get("variable costs", 0)
     emissions = params.get("emission", solph.sequence(0))
-    capacity = params.get("capacity", 0)
+    capacity = params.get("capacity", None)
     fix = params.get("fix", None)
 
     if annual_limit <= 0:
