@@ -51,12 +51,13 @@ def pyomo_results2series(results):
 
 
 def components2table(results):
-    classes = [solph.GenericStorage, solph.custom.SinkDSM]
-
-    names = {"GenericStorage": "storage", "SinkDSM": "demand response"}
+    classes = {
+        solph.GenericStorage: "storage",
+        solph.custom.SinkDSM: "demand response",
+    }
 
     comp_results = {}
-    for cls in classes:
+    for cls in classes.keys():
         components = [
             k[0] for k in results["main"].keys() if isinstance(k[0], cls)
         ]
@@ -66,9 +67,7 @@ def components2table(results):
         components = set(components)
 
         levels = [[], [], [], [], []]
-        seq = pd.DataFrame(
-            columns=pd.MultiIndex(levels=levels, codes=levels)
-        )
+        seq = pd.DataFrame(columns=pd.MultiIndex(levels=levels, codes=levels))
         for component in components:
             for col in results["main"][component, None]["sequences"].columns:
                 seq[
@@ -79,7 +78,7 @@ def components2table(results):
                     col,
                 ] = results["main"][component, None]["sequences"][col]
         if len(seq) > 0:
-            comp_results[names[cls.__name__]] = seq
+            comp_results[classes[cls]] = seq
     return comp_results
 
 
