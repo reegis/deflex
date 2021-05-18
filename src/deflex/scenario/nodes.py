@@ -85,6 +85,8 @@ def create_solph_nodes_from_data(input_data, nodes):
     return nodes
 
 
+# ************ LABELS ********************************
+
 def electricity_bus_label(region):
     return Label("electricity", "all", "all", region)
 
@@ -93,59 +95,7 @@ def commodity_bus_label(fuel, region):
     return Label("commodity", "all", fuel, region)
 
 
-def add_commodity_sources(input_data, nodes):
-    """
-
-    Parameters
-    ----------
-    nodes
-    input_data
-
-    Returns
-    -------
-
-    """
-    for idx, params in input_data["commodity sources"].iterrows():
-        name = idx[1].replace("_", " ")
-        region = idx[0]
-
-        # Create commodity Bus
-        bus_label = commodity_bus_label(name, region)
-        nodes[commodity_bus_label(name, region)] = solph.Bus(label=bus_label)
-
-        cs_label = Label("source", "commodity", name, region)
-
-        co2_price = float(input_data["general"]["co2 price"])
-
-        variable_costs = params["emission"] * co2_price + params["costs"]
-
-        annual_limit = params.get("annual limit", float("inf"))
-        if annual_limit <= 0:
-            pass
-        elif annual_limit == float("inf"):
-            nodes[cs_label] = solph.Source(
-                label=cs_label,
-                outputs={
-                    nodes[bus_label]: solph.Flow(
-                        variable_costs=variable_costs,
-                        emission=solph.sequence(params["emission"]),
-                    )
-                },
-            )
-        else:
-            nodes[cs_label] = solph.Source(
-                label=cs_label,
-                outputs={
-                    nodes[bus_label]: solph.Flow(
-                        variable_costs=variable_costs,
-                        emission=solph.sequence(params["emission"]),
-                        nominal_value=params["annual limit"],
-                        summed_max=1,
-                    )
-                },
-            )
-    return nodes
-
+# ************ BUSES ********************************
 
 def add_electricity_bus(nodes, region):
     """Create an electricity bus for a given region."""
@@ -154,46 +104,47 @@ def add_electricity_bus(nodes, region):
         nodes[bus_label] = solph.Bus(label=bus_label)
 
 
-def add_volatile_sources(table_collection, nodes):
-    """
+def check_electricity_buses(nodes, table):
+    for region in table.index.get_level_values(0).unique():
+        if electricity_bus_label(region) not in nodes:
+            add_electricity_bus(nodes, region)
 
-    Parameters
-    ----------
-    table_collection
-    nodes
 
-    Returns
-    -------
+# ************ Objects ********************************
 
-    """
-    logging.debug("Add volatile sources to nodes dictionary.")
-    vs = table_collection["volatile plants"]
+def add_source(nodes, label, bus_label, **params):
+    annual_limit = params.get("annual limit", float("inf"))
+    variable_costs = params.get("variable costs", 0)
+    emissions = params.get("emission", solph.sequence(0))
+    capacity = params.get("capacity", 0)
+    fix = params.get("fix", None)
 
-    for region in vs.index.get_level_values(0).unique():
-        for vs_type in vs.loc[region].index:
-            vs_label = Label("source", "volatile", vs_type, region)
-            capacity = vs.loc[(region, vs_type), "capacity"]
-            try:
-                feedin = table_collection["volatile series"][region, vs_type]
-            except KeyError:
-                if capacity > 0:
-                    msg = "Missing time series for {0} (capacity: {1}) in {2}."
-                    raise ValueError(msg.format(vs_type, capacity, region))
-                feedin = [0]
-            bus_label = electricity_bus_label(region)
-            if bus_label not in nodes:
-                nodes[bus_label] = solph.Bus(label=bus_label)
-            if capacity * sum(feedin) > 0:
-                nodes[vs_label] = solph.Source(
-                    label=vs_label,
-                    outputs={
-                        nodes[bus_label]: solph.Flow(
-                            fix=feedin,
-                            nominal_value=capacity,
-                            emission=solph.sequence(0),
-                        )
-                    },
+    if annual_limit <= 0:
+        pass
+    elif annual_limit == float("inf"):
+        nodes[label] = solph.Source(
+            label=label,
+            outputs={
+                nodes[bus_label]: solph.Flow(
+                    variable_costs=variable_costs,
+                    emission=emissions,
+                    nominal_value=capacity,
+                    fix=fix,
                 )
+            },
+        )
+    else:
+        nodes[label] = solph.Source(
+            label=label,
+            outputs={
+                nodes[bus_label]: solph.Flow(
+                    variable_costs=variable_costs,
+                    emission=emissions,
+                    nominal_value=annual_limit,
+                    summed_max=1,
+                )
+            },
+        )
 
 
 def add_sink(nodes, table, input_data, label, bus_label, sink_set):
@@ -228,6 +179,75 @@ def add_sink(nodes, table, input_data, label, bus_label, sink_set):
                 )
             },
         )
+
+
+# ************ TABLES ********************************
+
+def add_commodity_sources(input_data, nodes):
+    """
+
+    Parameters
+    ----------
+    nodes
+    input_data
+
+    Returns
+    -------
+
+    """
+    for idx, params in input_data["commodity sources"].iterrows():
+        name = idx[1].replace("_", " ")
+        region = idx[0]
+
+        # Create commodity Bus
+        bus_label = commodity_bus_label(name, region)
+        nodes[commodity_bus_label(name, region)] = solph.Bus(label=bus_label)
+
+        cs_label = Label("source", "commodity", name, region)
+
+        co2_price = float(input_data["general"]["co2 price"])
+
+        params["variable costs"] = (
+            params["emission"] * co2_price + params["costs"]
+        )
+
+        add_source(nodes, cs_label, bus_label, **params)
+    return nodes
+
+
+def add_volatile_sources(table_collection, nodes):
+    """
+
+    Parameters
+    ----------
+    table_collection
+    nodes
+
+    Returns
+    -------
+
+    """
+    logging.debug("Add volatile sources to nodes dictionary.")
+    vs = table_collection["volatile plants"]
+
+    for region in vs.index.get_level_values(0).unique():
+        for vs_type in vs.loc[region].index:
+            vs_label = Label("source", "volatile", vs_type, region)
+            capacity = vs.loc[(region, vs_type), "capacity"]
+            try:
+                feedin = table_collection["volatile series"][region, vs_type]
+            except KeyError:
+                if capacity > 0:
+                    msg = "Missing time series for {0} (capacity: {1}) in {2}."
+                    raise ValueError(msg.format(vs_type, capacity, region))
+                feedin = [0]
+            bus_label = electricity_bus_label(region)
+            if bus_label not in nodes:
+                nodes[bus_label] = solph.Bus(label=bus_label)
+            if capacity * sum(feedin) > 0:
+                add_source(
+                    nodes, vs_label, bus_label, capacity=capacity, fix=feedin
+                )
 
 
 def add_decentralised_heating_systems(table_collection, nodes):
@@ -421,12 +441,6 @@ def add_transmission_lines_between_electricity_nodes(table_collection, nodes):
                         nodes[bus_label_out]: values.efficiency
                     },
                 )
-
-
-def check_electricity_buses(nodes, table):
-    for region in table.index.get_level_values(0).unique():
-        if electricity_bus_label(region) not in nodes:
-            add_electricity_bus(nodes, region)
 
 
 def add_power_plants(table_collection, nodes):
