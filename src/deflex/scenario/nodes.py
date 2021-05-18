@@ -202,7 +202,7 @@ def add_sink(nodes, table, input_data, label, bus_label, sink_set):
     else:
         idx = tuple((table,)) + sink_set
 
-    if idx in input_data["demand response"].index:
+    if idx in input_data.get("demand response", pd.DataFrame()).index:
         logging.debug("Use demand response sink for {}.".format(idx))
         p = input_data["demand response"].loc[idx]
         nodes[label] = solph.custom.SinkDSM(
