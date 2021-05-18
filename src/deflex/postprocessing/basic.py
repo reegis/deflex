@@ -50,27 +50,37 @@ def pyomo_results2series(results):
     return pyomo.sort_index()
 
 
-def storage_results2table(results):
-    storages = set(
-        [
-            k[0]
-            for k in results["main"].keys()
-            if isinstance(k[0], solph.GenericStorage)
-        ]
-    )
+def components2table(results):
+    classes = [solph.GenericStorage, solph.custom.SinkDSM]
 
-    levels = [[], [], [], [], []]
-    store = pd.DataFrame(columns=pd.MultiIndex(levels=levels, codes=levels))
-    for storage in storages:
-        for col in results["main"][storage, None]["sequences"].columns:
-            store[
-                storage.label.cat,
-                storage.label.tag,
-                storage.label.subtag,
-                storage.label.region,
-                col,
-            ] = results["main"][storage, None]["sequences"][col]
-    return store
+    names = {"GenericStorage": "storage", "SinkDSM": "demand response"}
+
+    comp_results = {}
+    for cls in classes:
+        components = [
+            k[0] for k in results["main"].keys() if isinstance(k[0], cls)
+        ]
+        components.extend(
+            [k[1] for k in results["main"].keys() if isinstance(k[1], cls)]
+        )
+        components = set(components)
+
+        levels = [[], [], [], [], []]
+        seq = pd.DataFrame(
+            columns=pd.MultiIndex(levels=levels, codes=levels)
+        )
+        for component in components:
+            for col in results["main"][component, None]["sequences"].columns:
+                seq[
+                    component.label.cat,
+                    component.label.tag,
+                    component.label.subtag,
+                    component.label.region,
+                    col,
+                ] = results["main"][component, None]["sequences"][col]
+        if len(seq) > 0:
+            comp_results[names[cls.__name__]] = seq
+    return comp_results
 
 
 def bus_flows2tables(results, bus_groups):
@@ -146,10 +156,9 @@ def get_all_results(results):
     buses = set(
         [k[0] for k in results["main"].keys() if isinstance(k[0], solph.Bus)]
     )
-
     bus_groups = group_buses(buses, ["cat", "tag"])
     tables = bus_flows2tables(results, bus_groups)
-    tables["storages"] = storage_results2table(results)
+    tables.update(components2table(results))
     tables["pyomo"] = pyomo_results2series(results)
     tables["meta"] = meta_results2series(results)
     return tables
