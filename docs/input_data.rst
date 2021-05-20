@@ -187,7 +187,7 @@ limit, for example bioenergy.
 level 0: ``str``
     Region (e.g. DE01, DE02 or DE).
 level 1: ``str``
-    Fuel type(e.g. natural gas or bionenergy).
+    Fuel type (e.g. natural gas or bionenergy).
 
 **COLUMNS**
 
