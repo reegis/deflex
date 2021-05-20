@@ -162,10 +162,10 @@ Commodity sources
 
 ``key:`` 'commodity sources', ``value:`` `pandas.DataFrame() <https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html>`_
 
-This sheet requires data fromm all the commodities used in the scenario. The
+This sheet requires data from all the commodities used in the scenario. The
 data can be provided either supra-regional under DE, regional under DEXX or as a
 combination of both, where some commodities are global and some are regional.
-Regionalised commodities are specially useful for commodities with an annual
+Regionalised commodities are especially useful for commodities with an annual
 limit, for example bioenergy.
 
 +------+-----------+---------------+------------------+--------------------+
@@ -187,7 +187,7 @@ limit, for example bioenergy.
 level 0: ``str``
     Region (e.g. DE01, DE02 or DE).
 level 1: ``str``
-    Fuel type.
+    Fuel type(e.g. natural gas or bionenergy).
 
 **COLUMNS**
 
