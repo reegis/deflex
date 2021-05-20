@@ -95,9 +95,9 @@ This table contains basic data about the scenario.
 +----------------------+------+
 | year                 |      |
 +----------------------+------+
-| number of time steps |      |
-+----------------------+------+
 | co2 price            |      |
++----------------------+------+
+| number of time steps |      |
 +----------------------+------+
 | name                 |      |
 +----------------------+------+
@@ -105,12 +105,12 @@ This table contains basic data about the scenario.
 **INDEX**
 
 year: ``int``, [-]
-    A time index will be created started with January 1, at 00:00 with the
+    A time index will be created starting with January 1, at 00:00 with the
     number of hours given in `number of time steps`.
-number of time steps: ``int``, [-]
-    The number of hourly time steps.
 co2 price: ``float``, [€/t]
     The average price for CO\ :sub:`2`  over the whole time period.
+number of time steps: ``int``, [-]
+    The number of hourly time steps.
 name: ``str``, [-]
     A name for the scenario. This name will be used to compare key values
     between different scenarios. Therefore, it should be unique within a group
