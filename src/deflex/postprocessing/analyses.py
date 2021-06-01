@@ -161,7 +161,9 @@ def _calculate_emissions_from_energy_table(table, emissions):
     emission_table["out", "electricity"] = emission_table["in"].sum(axis=1)
     # exit(0)
     table = pd.concat(
-        [table, emission_table], axis=1, keys=["energy", "emission"],
+        [table, emission_table],
+        axis=1,
+        keys=["energy", "emission"],
     )
     return table.sort_index(axis=1)
 
