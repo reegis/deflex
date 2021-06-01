@@ -377,7 +377,7 @@ capacity: ``float``, [MW]
 
 
 Volatile series
-++++++++++++++++
++++++++++++++++
 
 ``key:`` 'volatile series', ``value:`` `pandas.DataFrame() <https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html>`_
 
@@ -459,8 +459,9 @@ Electricity storages
 
 ``key:`` 'storages', ``value:`` `pandas.DataFrame() <https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html>`_
 
-Electricity storages is a particular case of storages (see :ref:`Storages`). 
-The condition to use a storage as electrcitiy storage is to use storage medium = electricity.
+Electricity storages is a particular case of storages (see
+`Storages`_). The condition to use a storage as electrcitiy storage
+is to use storage medium = electricity.
 
 
 Heating sector (optional)
@@ -737,16 +738,15 @@ source region: ``str``, [-]
     
 
 Other (optional)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~
 
 .. contents::
     :depth: 1
     :local:
     :backlinks: top
 
-
 Storages
-++++++++++++++++++++
+++++++++
 
 ``key:`` 'storages', ``value:`` `pandas.DataFrame() <https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html>`_
 
@@ -806,7 +806,7 @@ loss rate: ``float``, [-]
     reduced by `1%` in each time step.
 
 Other converters
-++++++++++++++++++++
+++++++++++++++++
 
 ``key:`` 'other converters', ``value:`` `pandas.DataFrame() <https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html>`_
 
@@ -869,7 +869,7 @@ trget_region, [-]
     index or ``DE`` if it is a global commodity target.
     
 Other demand series
-++++++++++++++++++
++++++++++++++++++++
 
 ``key:`` 'other demand series', ``value:`` `pandas.DataFrame() <https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html>`_
 
@@ -908,6 +908,3 @@ level 1: ``str``
 
 level 2: ``str``
     Sector name. Specification of the series e.g. `industry`, `LULUCF`. This extra level is used to differentiate the sector in which the commodity is used, since the same commodity may be used in different sectors.
-
-
-
