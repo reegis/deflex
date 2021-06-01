@@ -745,6 +745,7 @@ Other (optional)
     :local:
     :backlinks: top
 
+
 Storages
 ++++++++
 
@@ -908,3 +909,74 @@ level 1: ``str``
 
 level 2: ``str``
     Sector name. Specification of the series e.g. `industry`, `LULUCF`. This extra level is used to differentiate the sector in which the commodity is used, since the same commodity may be used in different sectors.
+    
+
+
+
+Demand response
+++++++++++++++++++++
+
+``key:`` 'demand response', ``value:`` `pandas.DataFrame() <https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html>`_
+
+Demand response, also known as demand side management is used to represent flexibility in the demand time series. Because of that it is applied on the four different demand series. There is the option of using two different methods of demand response: the interval and the delay one. The documentation of both methods con be found in  `SinkDSM <https://oemof-solph.readthedocs.io/en/latest/usage.html#oemof-solph-custom-sinkdsm-label>`_ where the interval method corresponds to "oemof" and the delay to "DIW" method. Depending on whether the interval or delay method is used, the shift interval or delay columns must be used. Finally, there is also the option of adding a price to use this feature.
+
++---------------------------+------+-------------+----------+-------------+---------------+----------+----------------+-------+---------+-----------+
+|                           |      |             |          | capacity up | capacity down |  method  | shift interval | delay | cost up | cost down |
++---------------------------+------+-------------+----------+-------------+---------------+----------+----------------+-------+---------+-----------+
+|   mobility demand series  | DE01 | electricity |   None   |             |               | interval | 8              | 0     |         |           |
+|                           +------+-------------+----------+-------------+---------------+----------+----------------+-------+---------+-----------+
+|                           | DE02 | electricity |   None   |             |               | interval | 8              | 0     |         |           |
+|                           +------+-------------+----------+-------------+---------------+----------+----------------+-------+---------+-----------+
+|                           |  DE  |     oil     |   None   |             |               |   delay  | 0              | 10    |         |           |
++---------------------------+------+-------------+----------+-------------+---------------+----------+----------------+-------+---------+-----------+
+| electricity demand series | DE01 |     all     |   None   |             |               | interval | 8              | 0     |         |           |
+|                           +------+-------------+----------+-------------+---------------+----------+----------------+-------+---------+-----------+
+|                           | DE02 | indsutry    |   None   |             |               | interval | 8              | 0     |         |           |
+|                           +------+-------------+----------+-------------+---------------+----------+----------------+-------+---------+-----------+
+|                           | DE02 | buildings   |   None   |             |               | interval | 8              | 0     |         |           |
++---------------------------+------+-------------+----------+-------------+---------------+----------+----------------+-------+---------+-----------+
+| heat demand series        | DE01 | heat pump   |   None   |             |               | interval | 6              | 0     |         |           |
+|                           +------+-------------+----------+-------------+---------------+----------+----------------+-------+---------+-----------+
+|                           | DE   | natural gas |   None   |             |               | delay    | 6              | 0     |         |           |
++---------------------------+------+-------------+----------+-------------+---------------+----------+----------------+-------+---------+-----------+
+| other demand series       | DE   | hydrogen    | indsutry |             |               | delay    | 0              | 12    |         |           |
++---------------------------+------+-------------+----------+-------------+---------------+----------+----------------+-------+---------+-----------+
+
+
+**INDEX**
+
+level 0: ``str``
+    Name of the demand serie.
+level 1: ``str``
+    Region (e.g. DE01, DE02 or DE)
+level 2: ``str``
+    Specification of the serie. The combination of `region` and
+    `specification of the serie` has to exist in the corresponding `demand serie` sheet.
+level 3: ``str``
+    Sector name. This extra index is for when `other demand series` is used. If this is not the case, just write `None` instead.
+
+**COLUMNS**
+
+capacity up: ``float``, [MW]
+    The maximum limit with respect to the demand, to which the demand can be increased.
+
+capacity down: ``float``, [MW]
+    The minimum limit with respect to the demand, to which the demand can be reduced.
+
+method: ``str``, [-]
+    The method chosen to be used.
+
+shift interval: ``str``, [-]
+    If the interval method is used, this column indicates the maximum interval that the demand can be shifted.
+
+delay: ``str``, [-]
+    If the deelay method is used, this column indicates the maximum delay that demand can be shifted.
+    
+cost up: ``float``, [€/MWh]
+    The variable costs per shifted up unit
+
+cost down: ``float``, [€/MWh]
+    The variable costs per shifted down unit.
+    
+
+

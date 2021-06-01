@@ -261,13 +261,11 @@ def calculate_product_fuel_balance(results, chp_method, **kwargs):
 
     # Assign inflows to cumulated product flows (fill empty tables from above)
     for t, f in transformer.items():
-        # fuel_factor = {}
         if len(f["out"]) == 1:
-            fuel_factors = allocate_fuel(list(f["out"].keys())[0][0])
+            fuel_factors = None
         else:
             fuel_factors = allocate_fuel(method=chp_method, **kwargs)
-            # fuel_factor["heat"] = fuel_factors.heat
-            # fuel_factor["electricity"] = 1 - fuel_factors.electricity
+
         for sector, outflow in f["out"].items():
             tables[sector[0]]["out", sector] += results["main"][outflow][
                 "sequences"
@@ -275,7 +273,7 @@ def calculate_product_fuel_balance(results, chp_method, **kwargs):
             for fuel, inflow in f["in"].items():
                 tables[sector[0]]["in", fuel] += results["main"][inflow][
                     "sequences"
-                ]["flow"] * getattr(fuel_factors, sector[0])
+                ]["flow"] * getattr(fuel_factors, sector[0], 1)
 
     # Add volatile source to electricity table
     volatile_output_by_region = (
@@ -293,6 +291,9 @@ def calculate_product_fuel_balance(results, chp_method, **kwargs):
             tables["electricity"][
                 "out", ("electricity", region)
             ] = volatile_output_by_region[region]
+
+    dict2file(tables, "/home/uwe/000aatemp.xlsx", "xlsx")
+    exit(0)
 
     emissions = fetch_parameter_of_commodity_sources(results)["emission"]
     emissions.index = emissions.index.to_flat_index()
@@ -320,7 +321,6 @@ def calculate_product_fuel_balance(results, chp_method, **kwargs):
     emissions = emissions.append(
         pd.Series({("electricity", "all"): avg_elec_emissions})
     )
-    print(avg_elec_emissions)
     sectors = [k for k in tables.keys() if k != "electricity"]
 
     for sector in sectors:
@@ -336,14 +336,15 @@ def calculate_product_fuel_balance(results, chp_method, **kwargs):
 
 
 if __name__ == "__main__":
-    pass
-    # from deflex import postprocessing as pp
+    # pass
+    from deflex.tools import dict2file, restore_results
+
     # import os
     #
     # allocate_fuel("finnish", eta_e=0.3, eta_th=0.5)
     # # print(finnish_method(0.3, 0.5, 0.5, 0.9))
     # exit(0)
-    # my_fn = "/home/uwe/.deflex/pedro/2030-DE02-Agora4.dflx"
+    my_fn = "/home/uwe/.deflex/pedro/2030-DE02-Agora9.dflx"
     # # fn = os.path.join(
     # #     os.path.expanduser("~"),
     # #     ".deflex",
@@ -352,15 +353,22 @@ if __name__ == "__main__":
     # #     "de03_fictive.dflx",
     # # )
     #
-    # my_results = pp.restore_results(my_fn)
+    my_results = restore_results(my_fn)
     #
     # # filename1 = fn.replace(".dflx", "_results.xlsx")
     # # all_results = get_all_results(my_results)
     # # dict2file(all_results, filename1)
     #
-    # filename2 = my_fn.replace(".dflx", "_results_emission.xlsx")
-    # my_tables = calculate_product_fuel_balance(my_results)
-    # dict2file(my_tables, filename2, drop_empty_columns=True)
+    filename2 = my_fn.replace(".dflx", "_results_emission.xlsx")
+    my_tables = calculate_product_fuel_balance(
+        my_results,
+        "finnish",
+        eta_e=0.3,
+        eta_th=0.5,
+        eta_e_ref=0.5,
+        eta_th_ref=0.9,
+    )
+    dict2file(my_tables, filename2, drop_empty_columns=True)
     # # for table in all_results._fields:
     # #     print("\n\n***************** " + table + " ****************\n")
     # #     print(getattr(all_results, table))
