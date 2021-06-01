@@ -62,11 +62,6 @@ class DeflexGraph:
         238
         >>> nx.number_weakly_connected_components(nx_graph)
         1
-        >>> fn_out = fn.replace(".dflx", "_graph.graphml")
-        >>> dflx_graph.write(fn_out)
-        >>> os.stat(fn_out).st_size > 0
-        True
-        >>> os.remove(fn_out)
         """
         self.results = results
         self.default_node_color = kwargs.get(
@@ -181,12 +176,12 @@ class DeflexGraph:
         ...     "Sink": {"bg": "#31306e", "fg": "#ffffff"},
         ... }
         >>> dflx_graph.color_nodes_by_type(my_colors)
-        >>> bus = [n for n in dflx_graph.nodes if isinstance(n, solph.Bus)][0]
+        >>> bus = [a for a in dflx_graph.nodes if isinstance(a, solph.Bus)][0]
         >>> getattr(bus, "bgcolor")
         '#00ff11'
-        >>> sorted(set([n.bgcolor for n in dflx_graph.nodes]))
+        >>> sorted(set([a.bgcolor for a in dflx_graph.nodes]))
         ['#00ff11', '#31306e', '#94221d', '#996967', '#efb507']
-        >>> sorted(set([n.fgcolor for n in dflx_graph.nodes]))
+        >>> sorted(set([a.fgcolor for a in dflx_graph.nodes]))
         ['#000000', '#ffffff']
         >>> my_colors = {
         ...     solph.Bus: {"bg": "#00ff11", "fg": "#000000"},
@@ -196,12 +191,12 @@ class DeflexGraph:
         ...     solph.Sink: {"bg": "#31306e", "fg": "#ffffff"},
         ... }
         >>> dflx_graph.color_nodes_by_type(my_colors, use_name=False)
-        >>> bus = [n for n in dflx_graph.nodes if isinstance(n, solph.Bus)][0]
+        >>> bus = [a for a in dflx_graph.nodes if isinstance(a, solph.Bus)][0]
         >>> getattr(bus, "bgcolor")
         '#00ff11'
-        >>> sorted(set([n.bgcolor for n in dflx_graph.nodes]))
+        >>> sorted(set([a.bgcolor for a in dflx_graph.nodes]))
         ['#00ff11', '#31306e', '#6a6a72', '#996967']
-        >>> sorted(set([n.fgcolor for n in dflx_graph.nodes]))
+        >>> sorted(set([a.fgcolor for a in dflx_graph.nodes]))
         ['#000000', '#ffffff']
         """
         groups = self.group_nodes_by_type(use_name)
@@ -247,8 +242,8 @@ class DeflexGraph:
         ...     "bioenergy": {"bg": "#063313", "fg": "#ffffff"},
         ... }
         >>> dflx_graph.color_nodes_by_substring(my_colors)
-        >>> node = [n for n in dflx_graph.nodes if "bioenergy" in n.label][0]
-        >>> getattr(node, "bgcolor")
+        >>> mynode = [n for n in dflx_graph.nodes if "bioenergy" in n.label][0]
+        >>> getattr(mynode, "bgcolor")
         '#063313'
         >>> sorted(set([n.bgcolor for n in dflx_graph.nodes]))
         ['#00ff11', '#063313', '#6a6a72', '#efb507']
@@ -313,6 +308,40 @@ class DeflexGraph:
         return pd.Series([e.weight for e in self.edges]).max()
 
     def create_di_graph(self, weight_exponent=0):
+        r"""
+        Create a networkx.DiGraph(). Some labels will be added to the edges and
+        nodes.
+
+        Node
+         * label: label of the Node as string
+         * bg_color: background color of the node for plots or exports
+         * fg_color: text color of the node for plots or exports
+         * type: name of the node class
+
+        Edge
+         * weight: sum of the flow variable
+         * color: color of the edge depending of the weight
+
+        Parameters
+        ----------
+        weight_exponent : int
+            Shift the decimal point: :math:`weight\cdot10^weight_exponent`
+
+        Examples
+        --------
+        >>> import os
+        >>> from deflex.tools import fetch_test_files
+        >>> from deflex.tools import restore_results
+        >>> from deflex.postprocessing import DeflexGraph
+        >>> fn = fetch_test_files("de03_fictive.dflx")
+        >>> my_results = restore_results(fn)
+        >>> dflx_graph = DeflexGraph(my_results)
+        >>> type(dflx_graph.graph)
+        <class 'NoneType'>
+        >>> dflx_graph.create_di_graph(weight_exponent=-6) # doctest: +ELLIPSIS
+        >>> type(dflx_graph.graph)
+        <class 'networkx.classes.digraph.DiGraph'>
+        """
         graph = nx.DiGraph()
         for n in self.nodes:
             graph.add_node(
@@ -329,38 +358,71 @@ class DeflexGraph:
                 e.nodes[1].label,
                 weigth=format(e.weight * 10 ** weight_exponent, ".1f"),
                 color=getattr(e, "color", self.default_edge_color),
-                sequence=str(e.sequence.values),
             )
         self.graph = graph
-        return self
 
     def write(self, filename, **kwargs):
-        nx.write_graphml(self.get(**kwargs), filename)
-
-    def relabel_nodes(self):
         """
+        Write the graph in a .graphml file.
+
+        Parameters
+        ----------
+        filename : str
+            Path of the output file e.g. /my/special/path/mygraph.graphml
+
+        Other Parameters
+        ----------------
+        weight_exponent : int
+            The parameter will be passed to the :py:meth:`create_di_graph`
+            method.
+
         Examples
         --------
+        >>> import os
         >>> from deflex.tools import fetch_test_files
-        >>> from deflex import restore_results
+        >>> from deflex.tools import restore_results
         >>> from deflex.postprocessing import DeflexGraph
-        >>> from matplotlib.cm import get_cmap
-        >>>
         >>> fn = fetch_test_files("de03_fictive.dflx")
         >>> my_results = restore_results(fn)
         >>> dflx_graph = DeflexGraph(my_results)
-        >>> g = dflx_graph.get()
-        >>> sorted(g.nodes)[0].tag
-        'bioenergy'
-        >>> g = dflx_graph.relabel_nodes()
-        >>> sorted(g.nodes)[0]
-        'chp-plant_bioenergy_bioenergy_DE01'
+        >>> fn_out = fn.replace(".dflx", "_graph.graphml")
+        >>> dflx_graph.write(fn_out, weight_exponent=-3)
+        >>> os.stat(fn_out).st_size > 0
+        True
+        >>> os.remove(fn_out)
         """
-        d = {v: str(v) for v in self.graph.nodes}
-        return nx.relabel_nodes(self.graph, d)
+        nx.write_graphml(self.get(**kwargs), filename)
 
     def get(self, **kwargs):
-        if self.graph is None:
+        """
+        Get a networkx.DiGraph().
+
+        Other Parameters
+        ----------------
+        weight_exponent : int
+            The parameter will be passed to the :py:meth:`create_di_graph`
+            method.
+
+        Returns
+        -------
+        networkx.DiGraph()
+
+        Examples
+        --------
+        >>> import os
+        >>> from deflex.tools import fetch_test_files
+        >>> from deflex.tools import restore_results
+        >>> from deflex.postprocessing import DeflexGraph
+        >>> fn = fetch_test_files("de03_fictive.dflx")
+        >>> my_results = restore_results(fn)
+        >>> dflx_graph = DeflexGraph(my_results)
+        >>> type(dflx_graph.get(weight_exponent=-3))
+        <class 'networkx.classes.digraph.DiGraph'>
+        """
+        if (
+            self.graph is None
+            or kwargs.get("weight_exponent", None) is not None
+        ):
             self.create_di_graph(
                 weight_exponent=kwargs.get("weight_exponent", 0)
             )

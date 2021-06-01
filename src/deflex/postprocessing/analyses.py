@@ -10,11 +10,86 @@ SPDX-License-Identifier: MIT
 __copyright__ = "Uwe Krien <krien@uni-bremen.de>"
 __license__ = "MIT"
 
+import operator
+from collections import namedtuple
+from functools import reduce
 
 import pandas as pd
+from networkx import simple_cycles
 from oemof import solph
 
+from deflex.postprocessing import DeflexGraph
 from deflex.tools import allocate_fuel
+
+# 1. fetch_cycles: return all cycles with time series
+# -> DF mit from, to im Index und dann zwei Spalten flow, cf, und eine
+# künstliche Zwischenspalte für den nächsten, damit alle Untereinander stehen.
+# Dann noch eine Info ob es ein theoretischer Kreis, ein wirklich genutzter
+# Kreis oder sogar ein kritischer Kreis (innerhalb eines Zeitschritts ist.
+# 2a. detect_cycles: find real cycles (all flow sums > 0)
+# 2b. detect_cycles: find time step cylces (all flows > 0 within a time step)
+# !!!2b should be False for all cycles.
+# 3. fetch_bus_cycle: Ein Bus wird übergeben und wenn der Bus in einem Kreis außer line/storage ist dann wird die Kreisbilanz zurückgegeben. Wieviel wurde in den Kreis gegeben und wieviel geholt. Das kann das verechnet werden.
+
+
+def detect_cycles(results):
+    cycles = namedtuple("GraphCycles", ["storages", "line", "other"])
+    dflx_graph = DeflexGraph(results)
+    s_cycles = simple_cycles(dflx_graph.get())
+    t_flows = [
+        f for f in results["main"] if isinstance(f[0], solph.Transformer)
+    ]
+    buses = set([f[0] for f in results["main"] if isinstance(f[0], solph.Bus)])
+    e_buses = [b.label for b in buses if b.label.cat == "electricity"]
+    for bus in e_buses:
+        print(repr(bus))
+    # for tf in t_flows:
+    #     # print(results["param"][(tf[0], None)])
+    #     # print(results["param"][tf])
+    #     print(tf[0])
+    #     for k in tf[0].conversion_factors.keys():
+    #         if k == tf[1]:
+    #             print("Key exists")
+    #             print(hash(k) == hash(tf[1]))
+    #     if tf[1] in tf[0].conversion_factors:
+    #         print("Key in keys")
+    #     else:
+    #         print("Key not in keys")
+    #     print(hash(tf[1]))
+    #     print("*********************next step")
+    #     # print(tf[0].conversion_factors[tf[1]][0])
+    # exit(0)
+    flows = [k for k in results["main"].keys() if k[1] is not None]
+    cvf = list()
+    for c in s_cycles:
+        # print(set(c))
+        # print(set(e_buses))
+        print(set(c).intersection(set(e_buses)))
+        print("######################")
+        if "cat='storage'" not in str(c) and "cat='line'" not in str(c):
+            # if 1 == 1:
+            # print(c)
+            if len(set(c).intersection(set(e_buses))) > 0:
+                print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+            for a in range(len(c)):
+                flow = [
+                    f
+                    for f in flows
+                    if (f[0].label, f[1].label) == (c[a - 1], c[a])
+                ][0]
+                if getattr(flow[0], "conversion_factors", None) is not None:
+                    print("******", flow[0], "********")
+                    inflow = [
+                        k for k in results["main"].keys() if k[1] == flow[0]
+                    ][0]
+                    print(results["main"][inflow]["sequences"]["flow"].sum())
+                    temp = results["param"][(flow[0], None)]["scalars"][
+                        "conversion_factors_{0}".format(flow[1])
+                    ]
+                    print(temp)
+                    cvf.append(temp)
+                    print(results["main"][flow]["sequences"]["flow"].sum())
+    print(reduce(operator.mul, cvf, 1))
 
 
 def get_all_nodes_from_results(results):
