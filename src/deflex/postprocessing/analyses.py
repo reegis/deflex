@@ -20,6 +20,11 @@ from oemof import solph
 
 from deflex.postprocessing import DeflexGraph
 from deflex.tools import allocate_fuel
+import warnings
+
+# from pandas.errors import PerformanceWarning
+# warnings.simplefilter("error", PerformanceWarning)
+
 
 # 1. fetch_cycles: return all cycles with time series
 # -> DF mit from, to im Index und dann zwei Spalten flow, cf, und eine
@@ -32,8 +37,106 @@ from deflex.tools import allocate_fuel
 # 3. fetch_bus_cycle: Ein Bus wird übergeben und wenn der Bus in einem Kreis außer line/storage ist dann wird die Kreisbilanz zurückgegeben. Wieviel wurde in den Kreis gegeben und wieviel geholt. Das kann das verechnet werden.
 
 
+def label2str(label):
+    return "_".join(map(str, label._asdict().values())).replace(" ", "-")
+
+
+def detect_simple_cycles(results, cycle_filter=None):
+    """
+    Detect simple cycles within the directed graph.
+
+    Use a filter to remove know cycles such as storages or power lines.
+    e.g. cycle_filter=["storage", "line"]
+    """
+    dflx_graph = DeflexGraph(results)
+    if cycle_filter is None:
+        cycle_filter = []
+    cycles = simple_cycles(dflx_graph.get())
+    for phrase in cycle_filter:
+        cycles = [c for c in cycles if phrase not in str(c)]
+    return cycles
+
+
+def drop_unused_cycles(cycles):
+    return [c for c in cycles if not (c.sum() == 0).any()]
+
+
+def get_cycle_usages(results, cycle_filter=None, drop_unused=False):
+    cycles = detect_simple_cycles(results, cycle_filter=cycle_filter)
+    flows = [f for f in results["main"] if f[1] is not None]
+
+    usages = []
+    for cycle in cycles:
+        usage = pd.DataFrame()
+        for n in range(len(cycle)):
+            flow = [
+                f
+                for f in flows
+                if (f[0].label, f[1].label) == (cycle[n - 1], cycle[n])
+            ][0]
+            name = "{0}_from_{1}".format(n, label2str(flow[0].label))
+            usage[name] = results["main"][flow]["sequences"]["flow"]
+        usages.append(usage)
+    if drop_unused is True:
+        usages = drop_unused_cycles(usages)
+    return usages
+
+
+def drop_unsuspicious_cycles(cycles):
+    return [c for c in cycles if detect_time_step_cycle(c) is not None]
+
+
+def detect_time_step_cycle(frame):
+    """
+
+    Parameters
+    ----------
+    frame : pd.DataFrame
+        A list of flows that have a circular connection.
+
+    Returns
+    -------
+
+    """
+    cycle_rows = frame.loc[(frame.round(20) != 0).all(axis=1)]
+    if len(cycle_rows) == 0:
+        return None
+    else:
+        return cycle_rows
+
+
+def test_print_cycles(cycles):
+    # # filters = ["storage", "line"]
+    # filters = None
+    # s_cycles = get_cycle_usages(
+    #     results, cycle_filter=filters, drop_unused=False
+    # )
+    for sc in cycles:
+        print("************************************")
+        print("->".join(sc.columns).replace("_from", ""))
+        tsc = detect_time_step_cycle(sc)
+        if tsc is not None:
+            print("!!!!!!!!!!!!!!")
+            print(tsc)
+        for k, v in sc.items():
+            print(k.replace("_from", ""), "->", int(v.sum() / 1000), "->")
+    exit()
+
+
 def detect_cycles(results):
-    cycles = namedtuple("GraphCycles", ["storages", "line", "other"])
+    cycles = namedtuple(
+        "GraphCycles", ["cycles", "used_cycles", "suspect_cycles"]
+    )
+    s_cycles = get_cycle_usages(my_results)
+
+    return cycles(
+        cycles=s_cycles,
+        used_cycles=drop_unused_cycles(s_cycles),
+        suspect_cycles=drop_unsuspicious_cycles(s_cycles),
+    )
+
+
+def old_Stuff(results):
     dflx_graph = DeflexGraph(results)
     s_cycles = simple_cycles(dflx_graph.get())
     t_flows = [
@@ -43,6 +146,10 @@ def detect_cycles(results):
     e_buses = [b.label for b in buses if b.label.cat == "electricity"]
     for bus in e_buses:
         print(repr(bus))
+    for sc in s_cycles:
+        print("QQQQQ", sc)
+        for n in sc:
+            print(n)
     # for tf in t_flows:
     #     # print(results["param"][(tf[0], None)])
     #     # print(results["param"][tf])
@@ -83,12 +190,18 @@ def detect_cycles(results):
                         k for k in results["main"].keys() if k[1] == flow[0]
                     ][0]
                     print(results["main"][inflow]["sequences"]["flow"].sum())
+                    print(results["param"][(flow[0], None)]["scalars"])
+                    label_name = "_".join(
+                        map(str, flow[1].label._asdict().values())
+                    ).replace(" ", "-")
                     temp = results["param"][(flow[0], None)]["scalars"][
-                        "conversion_factors_{0}".format(flow[1])
+                        "conversion_factors_{0}".format(label_name)
                     ]
                     print(temp)
                     cvf.append(temp)
                     print(results["main"][flow]["sequences"]["flow"].sum())
+    print("§§§§§")
+    print(cvf)
     print(reduce(operator.mul, cvf, 1))
 
 
@@ -230,20 +343,52 @@ def fetch_volatile_electricity_sources(results):
     return sources
 
 
-def _calculate_emissions_from_energy_table(table, emissions):
+def _calculate_emissions_from_energy_table(table, emissions, sector):
     emission_table = table["in"].mul(emissions)
     emission_table = pd.concat([emission_table], axis=1, keys=["in"])
-    emission_table["out", "electricity"] = emission_table["in"].sum(axis=1)
-    # exit(0)
+    emission_table["out", sector] = emission_table["in"].sum(axis=1)
     table = pd.concat(
         [table, emission_table],
         axis=1,
         keys=["energy", "emission"],
     )
-    return table.sort_index(axis=1)
+    table.sort_index(axis=1, inplace=True)
+    for column in table["energy", "out"].columns:
+        emissions[(sector, column[1])] = table[
+            "emission", "out", sector
+        ] / table["energy", "out"].sum(axis=1)
+
+    return table
 
 
-def calculate_product_fuel_balance(results, chp_method, **kwargs):
+def _add_emissions2emissions_table():
+    pass
+
+
+def _add_volatiles_to_electricity_table(tables, results):
+    # Add volatile source to electricity table
+    volatile_output_by_region = (
+        fetch_volatile_electricity_sources(results)
+        .groupby(level=1, axis=1)
+        .sum()
+    )
+
+    for region in volatile_output_by_region.columns:
+        if ("out", ("electricity", region)) in tables["electricity"]:
+            tables["electricity"][
+                "out", ("electricity", region)
+            ] += volatile_output_by_region[region]
+        else:
+            tables["electricity"][
+                "out", ("electricity", region)
+            ] = volatile_output_by_region[region]
+        tables["electricity"][
+            "in", ("volatiles", region)
+        ] = volatile_output_by_region[region]
+    return tables
+
+
+def energy_balance_by_sector(results, chp_method, **kwargs):
     transformer = fetch_converter_with_in_out_flows(results)
 
     # Create a dictionary of empty tables (pandas.DataFrame) for all sectors
@@ -275,26 +420,18 @@ def calculate_product_fuel_balance(results, chp_method, **kwargs):
                     "sequences"
                 ]["flow"] * getattr(fuel_factors, sector[0], 1)
 
-    # Add volatile source to electricity table
-    volatile_output_by_region = (
-        fetch_volatile_electricity_sources(results)
-        .groupby(level=1, axis=1)
-        .sum()
-    )
+    tables = _add_volatiles_to_electricity_table(tables, results)
+    return tables
 
-    for region in volatile_output_by_region.columns:
-        if ("out", ("electricity", region)) in tables["electricity"]:
-            tables["electricity"][
-                "out", ("electricity", region)
-            ] += volatile_output_by_region[region]
-        else:
-            tables["electricity"][
-                "out", ("electricity", region)
-            ] = volatile_output_by_region[region]
 
-    dict2file(tables, "/home/uwe/000aatemp.xlsx", "xlsx")
-    exit(0)
+def calculate_product_fuel_balance(
+    results, chp_method, sectors=None, **kwargs
+):
+    tables = energy_balance_by_sector(results, chp_method, **kwargs)
 
+    time_index = get_time_index(results)
+
+    # get a series with the emissions of each commodity
     emissions = fetch_parameter_of_commodity_sources(results)["emission"]
     emissions.index = emissions.index.to_flat_index()
     emission_series = (
@@ -303,35 +440,20 @@ def calculate_product_fuel_balance(results, chp_method, **kwargs):
         .mul(emissions)
     )
 
-    tables["electricity"] = _calculate_emissions_from_energy_table(
-        tables["electricity"], emission_series
-    )
+    # calculate the emissions of the electricity sector first to use it
+    # in the other sectors e.g. heat from electricity
+    if sectors is None:
+        sectors = ["electricity"]
 
-    last_key = None
-    for column in tables["electricity"]["energy", "out"].columns:
-        emission_series[("electricity", column[1])] = tables["electricity"][
-            "emission", "out", "electricity"
-        ] / tables["electricity"]["energy", "out"].sum(axis=1)
-        last_key = column[1]
-
-    avg_elec_emissions = (
-        tables["electricity"]["emission", "out", "electricity"].sum()
-        / tables["electricity"]["energy", "out"].sum().sum()
-    )
-    emissions = emissions.append(
-        pd.Series({("electricity", "all"): avg_elec_emissions})
-    )
-    sectors = [k for k in tables.keys() if k != "electricity"]
+    sectors.extend([k for k in tables.keys() if k not in sectors])
 
     for sector in sectors:
         tables[sector] = _calculate_emissions_from_energy_table(
-            tables[sector], emissions
+            tables[sector], emission_series, sector
         )
 
     tables["emissions"] = emissions.reindex(emissions.index)
-    tables["electricity emission series"] = emission_series[
-        ("electricity", last_key)
-    ]
+
     return tables
 
 
@@ -344,22 +466,28 @@ if __name__ == "__main__":
     # allocate_fuel("finnish", eta_e=0.3, eta_th=0.5)
     # # print(finnish_method(0.3, 0.5, 0.5, 0.9))
     # exit(0)
+
+    # my_fn = "/home/uwe/.deflex/pedro/2018-DE02-Agora4.dflx"
     my_fn = "/home/uwe/.deflex/pedro/2030-DE02-Agora9.dflx"
-    # # fn = os.path.join(
-    # #     os.path.expanduser("~"),
-    # #     ".deflex",
-    # #     "tmp_test_32traffic_43",
-    # #     "results_cbc",
-    # #     "de03_fictive.dflx",
-    # # )
-    #
+    # my_fn = "/home/uwe/.deflex/pedro/2050-DE02-Agora6.dflx"
+
     my_results = restore_results(my_fn)
+    # test_print_cycles(my_results)
+    my_cycles = detect_cycles(my_results)
+
+    print("Number of cycles:", len(my_cycles.cycles))
+    print("Number of used cycles:", len(my_cycles.used_cycles))
+    print("Number of critical cycles:", len(my_cycles.suspect_cycles))
+    test_print_cycles(my_cycles.suspect_cycles)
+    # print(my_cycles.suspect_cycles)
+    # exit(0)
     #
     # # filename1 = fn.replace(".dflx", "_results.xlsx")
     # # all_results = get_all_results(my_results)
     # # dict2file(all_results, filename1)
     #
     filename2 = my_fn.replace(".dflx", "_results_emission.xlsx")
+
     my_tables = calculate_product_fuel_balance(
         my_results,
         "finnish",
@@ -368,6 +496,7 @@ if __name__ == "__main__":
         eta_e_ref=0.5,
         eta_th_ref=0.9,
     )
+    print("Store file to {}".format(filename2))
     dict2file(my_tables, filename2, drop_empty_columns=True)
     # # for table in all_results._fields:
     # #     print("\n\n***************** " + table + " ****************\n")
