@@ -120,7 +120,7 @@ def test_print_cycles(cycles):
             print(tsc)
         for k, v in sc.items():
             print(k.replace("_from", ""), "->", int(v.sum() / 1000), "->")
-    exit()
+    # exit()
 
 
 def detect_cycles(results):
@@ -467,8 +467,8 @@ if __name__ == "__main__":
     # # print(finnish_method(0.3, 0.5, 0.5, 0.9))
     # exit(0)
 
-    # my_fn = "/home/uwe/.deflex/pedro/2018-DE02-Agora4.dflx"
-    my_fn = "/home/uwe/.deflex/pedro/2030-DE02-Agora9.dflx"
+    my_fn = "/home/uwe/.deflex/pedro/2018-DE02-Agora4.dflx"
+    # my_fn = "/home/uwe/.deflex/pedro/2030-DE02-Agora9.dflx"
     # my_fn = "/home/uwe/.deflex/pedro/2050-DE02-Agora6.dflx"
 
     my_results = restore_results(my_fn)
