@@ -17,7 +17,7 @@ import pandas as pd
 from networkx import simple_cycles
 from oemof import solph
 
-from .graph import DeflexGraph
+from graph import DeflexGraph
 from deflex.tools import allocate_fuel, dict2file
 
 
