@@ -11,129 +11,188 @@ __copyright__ = "Uwe Krien <krien@uni-bremen.de>"
 __license__ = "MIT"
 
 import operator
-from collections import namedtuple
 from functools import reduce
 
 import pandas as pd
 from networkx import simple_cycles
 from oemof import solph
 
-from deflex.postprocessing import DeflexGraph
-from deflex.tools import allocate_fuel
-import warnings
-
-# from pandas.errors import PerformanceWarning
-# warnings.simplefilter("error", PerformanceWarning)
-
-
-# 1. fetch_cycles: return all cycles with time series
-# -> DF mit from, to im Index und dann zwei Spalten flow, cf, und eine
-# künstliche Zwischenspalte für den nächsten, damit alle Untereinander stehen.
-# Dann noch eine Info ob es ein theoretischer Kreis, ein wirklich genutzter
-# Kreis oder sogar ein kritischer Kreis (innerhalb eines Zeitschritts ist.
-# 2a. detect_cycles: find real cycles (all flow sums > 0)
-# 2b. detect_cycles: find time step cylces (all flows > 0 within a time step)
-# !!!2b should be False for all cycles.
-# 3. fetch_bus_cycle: Ein Bus wird übergeben und wenn der Bus in einem Kreis außer line/storage ist dann wird die Kreisbilanz zurückgegeben. Wieviel wurde in den Kreis gegeben und wieviel geholt. Das kann das verechnet werden.
+from .graph import DeflexGraph
+from deflex.tools import allocate_fuel, dict2file
 
 
 def label2str(label):
+    """
+    Convert a label of type `namedtuple` to a simple `string`.
+
+    By default the string representation of a `namedtuple` contains the
+    field name and the value names. This function will return a string with
+    only the values separated by an underscore. Whitespaces are replaced by
+    dashes. This allows it to use it a human readable key.
+    """
     return "_".join(map(str, label._asdict().values())).replace(" ", "-")
 
 
-def detect_simple_cycles(results, cycle_filter=None):
-    """
-    Detect simple cycles within the directed graph.
+class Cycles:
+    def __init__(self, results, cycle_filter=None):
+        """
+        Detect all simple cycles.
 
-    Use a filter to remove know cycles such as storages or power lines.
-    e.g. cycle_filter=["storage", "line"]
-    """
-    dflx_graph = DeflexGraph(results)
-    if cycle_filter is None:
-        cycle_filter = []
-    cycles = simple_cycles(dflx_graph.get())
-    for phrase in cycle_filter:
-        cycles = [c for c in cycles if phrase not in str(c)]
-    return cycles
+        This is the main function
 
+        """
+        self._filter = None
+        self.simple_cycles = list(self._detect_simple_cycles(results))
+        self.cycles = self._get_cycle_values(results)
+        self.digits = 10
 
-def drop_unused_cycles(cycles):
-    return [c for c in cycles if not (c.sum() == 0).any()]
+    @property
+    def used_cycles(self):
+        return self.drop_unused_cycles()
 
+    @property
+    def suspicious_cycles(self):
+        return self.drop_unsuspicious_cycles()
 
-def get_cycle_usages(results, cycle_filter=None, drop_unused=False):
-    cycles = detect_simple_cycles(results, cycle_filter=cycle_filter)
-    flows = [f for f in results["main"] if f[1] is not None]
+    @property
+    def filter(self):
+        return self._filter
 
-    usages = []
-    for cycle in cycles:
-        usage = pd.DataFrame()
-        for n in range(len(cycle)):
-            flow = [
-                f
-                for f in flows
-                if (f[0].label, f[1].label) == (cycle[n - 1], cycle[n])
-            ][0]
-            name = "{0}_from_{1}".format(n, label2str(flow[0].label))
-            usage[name] = results["main"][flow]["sequences"]["flow"]
-        usages.append(usage)
-    if drop_unused is True:
-        usages = drop_unused_cycles(usages)
-    return usages
+    def add_filter(self, cycle_filter):
+        if isinstance(cycle_filter, str):
+            cycle_filter = [cycle_filter]
+        if self._filter is not None:
+            self._filter.extend(cycle_filter)
+        else:
+            self._filter = cycle_filter
+        for phrase in cycle_filter:
+            self.simple_cycles = [
+                c for c in self.simple_cycles if phrase not in str(c)
+            ]
+            self.cycles = [
+                c for c in self.cycles if phrase not in str(c.columns)
+            ]
 
+    def _detect_simple_cycles(self, results):
+        """
+        Detect simple cycles within the directed graph.
 
-def drop_unsuspicious_cycles(cycles):
-    return [c for c in cycles if detect_time_step_cycle(c) is not None]
+        Use a filter to remove know cycles such as storages or power lines.
+        e.g. cycle_filter=["storage", "line"]
 
+        Returns
+        -------
+        generator
+        """
+        dflx_graph = DeflexGraph(results)
+        if self._filter is None:
+            cycle_filter = []
+        else:
+            cycle_filter = self._filter
+        cycles = simple_cycles(dflx_graph.get())
+        for phrase in cycle_filter:
+            cycles = [c for c in cycles if phrase not in str(c)]
+        return cycles
 
-def detect_time_step_cycle(frame):
-    """
+    def _get_cycle_values(self, results):
+        """
+        Get the sum of each flow variable of each cycle as a DataFrame.
 
-    Parameters
-    ----------
-    frame : pd.DataFrame
-        A list of flows that have a circular connection.
+        Use a filter to remove know cycles such as storages or power lines.
+        e.g. cycle_filter=["storage", "line"]
 
-    Returns
-    -------
+        Set drop_unused to True to get only cycles where the sum of each flow
+        variable is greater zero.
+        """
+        flows = [f for f in results["main"] if f[1] is not None]
 
-    """
-    cycle_rows = frame.loc[(frame.round(20) != 0).all(axis=1)]
-    if len(cycle_rows) == 0:
-        return None
-    else:
-        return cycle_rows
+        usages = []
+        for cycle in self.simple_cycles:
+            usage = pd.DataFrame()
+            for n in range(len(cycle)):
+                flow = [
+                    f
+                    for f in flows
+                    if (f[0].label, f[1].label) == (cycle[n - 1], cycle[n])
+                ][0]
+                name = "{0}_from_{1}".format(n, label2str(flow[0].label))
+                usage[name] = results["main"][flow]["sequences"]["flow"]
+            usages.append(usage)
+        return usages
 
+    def drop_unused_cycles(self):
+        """
+        Drop cycles that are not used as cycles from a list of cycles.
 
-def test_print_cycles(cycles):
-    # # filters = ["storage", "line"]
-    # filters = None
-    # s_cycles = get_cycle_usages(
-    #     results, cycle_filter=filters, drop_unused=False
-    # )
-    for sc in cycles:
-        print("************************************")
-        print("->".join(sc.columns).replace("_from", ""))
-        tsc = detect_time_step_cycle(sc)
-        if tsc is not None:
-            print("!!!!!!!!!!!!!!")
-            print(tsc)
-        for k, v in sc.items():
-            print(k.replace("_from", ""), "->", int(v.sum() / 1000), "->")
-    # exit()
+        Cycles are not in use if one flow of the cycle is zero for all time steps.
+        """
+        return [
+            c
+            for c in self.cycles
+            if not (c.sum().round(self.digits) == 0).any()
+        ]
 
+    def drop_unsuspicious_cycles(self):
+        """
+        Drop cycles that are unsuspicious from a list of cycles.
 
-def detect_cycles(results):
-    cycles = namedtuple(
-        "GraphCycles", ["cycles", "used_cycles", "suspect_cycles"]
-    )
-    s_cycles = get_cycle_usages(my_results)
+        Suspicious cycles are cycles that have a non-zero value in all flows within
+        one time step.
 
-    return cycles(
-        cycles=s_cycles,
-        used_cycles=drop_unused_cycles(s_cycles),
-        suspect_cycles=drop_unsuspicious_cycles(s_cycles),
-    )
+        One can detect all cycles and drop the unsuspicious cycles to get only the
+        suspicious ones. A suspicious cycle indicates a problem in the model
+        design, so one should have a closer look at all these cycles. A typical
+        example for such cycles are storages that a charged and discharged in one
+        time step. In some rare cases suspicious cycles are fine.
+        """
+
+        def rows(frame):
+            return frame.loc[(frame.round(self.digits) != 0).all(axis=1)]
+
+        return [c for c in self.cycles if len(rows(c)) > 0]
+
+    def detect_suspicious_cycle_rows(self, **kwargs):
+        """
+        Detect the time steps of a cycle in which all flows are non-zero.
+
+        Set path and filetype to store the results to a file. See
+        :func:`~tools.files.dict2file` for more information.
+        """
+        frames = []
+        for frame in self.suspicious_cycles:
+            frames.append(
+                frame.loc[(frame.round(self.digits) != 0).all(axis=1)]
+            )
+        if kwargs.get("path") is not None and len(frames) > 0:
+            dict2file({str(v.columns[0])[:31]: v for v in frames}, **kwargs)
+        else:
+            dict2file({"no_suspicious_cycle_found": pd.DataFrame()}, **kwargs)
+        return frames
+
+    def print(self, details=False):
+        print("**** OVERVIEW **************************")
+        print()
+        print("Number of cycles:", len(self.cycles))
+        print("Number of used cycles:", len(self.used_cycles))
+        print("Number of critical cycles:", len(self.suspicious_cycles))
+        print()
+        if details:
+            print("**** DETAILS ***************************")
+            print()
+            if len(self.cycles) == 0:
+                print("No details available!")
+                print()
+            for sc in self.cycles:
+                for k, v in sc.items():
+                    print(
+                        str(k).replace("_from", ""),
+                        "->",
+                        int(v.sum() / 1000),
+                        "->",
+                    )
+                print()
+                print("************************************")
+                print("")
 
 
 def old_Stuff(results):
@@ -257,38 +316,89 @@ def nodes2table(results):
     return df.reset_index(drop=True)
 
 
-def fetch_converter_with_in_out_flows(results):
-    # Select all converters (class Transformer excluding lines)
-    transformer_objects = set(
-        [
-            k[0]
-            for k in results["main"].keys()
-            if isinstance(k[0], solph.Transformer) and k[0].label.cat != "line"
-        ]
-    )
+def get_resource_parameter(results, bus):
+    inflow = [
+        k
+        for k in results["main"].keys()
+        if k[1] == bus
+        and k[0].label.tag == "commodity"
+        and k[0].label.cat == "source"
+    ]
+    if len(inflow) > 1:
+        print("Something went wrong for Bus {0}".format(bus.label))
+    if len(inflow) < 1:
+        return None
+    return results["param"][inflow[0]]
+
+
+def fetch_converter_parameters(results, transformer):
+    """
+    Fetch relevant parameters of every Transformer of the energy system.
+
+    Returns
+    -------
+    pandas.DataFrame
+    """
 
     # Create dictionary with all converters and their in- and outflows.
-    converter = {}
-    for t in transformer_objects:
-        converter[t] = {}
-        converter[t]["in"] = {}
-        converter[t]["out"] = {}
-
+    df = pd.DataFrame()
+    for t in transformer:
+        # Get flows of the Transformer
         inflow = [k for k in results["main"].keys() if k[1] == t][0]
-        sector = inflow[0].label.subtag
-        if sector == "all":
-            key = (inflow[0].label.cat, inflow[0].label.region)
-        else:
-            key = (sector, inflow[0].label.region)
-        converter[t]["in"][key] = inflow
-
         outflows = [k for k in results["main"].keys() if k[0] == t]
-        for outflow in outflows:
-            converter[t]["out"][
-                (outflow[1].label.cat, outflow[1].label.region)
-            ] = outflow
 
-    return converter
+        # Get catgeory
+        df.loc[t, "category"] = t.label.cat
+
+        # Get parameter of the resource of the Transformer
+        fuel_parameter = get_resource_parameter(results, inflow[0])
+        if fuel_parameter is not None:
+            df.loc[t, "variable costs, fuel"] = fuel_parameter["scalars"].get(
+                "variable_costs", 0
+            )
+            df.loc[t, "emissions, fuel"] = fuel_parameter["scalars"].get(
+                "emission", 0
+            )
+
+        # Define fuel sector
+        fuel = inflow[0].label.subtag
+        if fuel == "all":
+            df.loc[t, "fuel"] = "{0}, {1}".format(
+                inflow[0].label.cat, inflow[0].label.region
+            )
+        else:
+            df.loc[t, "fuel"] = "{0}, {1}".format(fuel, inflow[0].label.region)
+
+        # Get parameter of inflow
+        df.loc[t, "variable costs, inflow"] = results["param"][inflow][
+            "scalars"
+        ].variable_costs
+        df.loc[t, "emissions, inflow"] = results["param"][inflow][
+            "scalars"
+        ].get("emission", float("nan"))
+
+        # Get parameter of outflows
+        for outflow in outflows:
+            sector = outflow[1].label.cat
+            # converter[t]["outflows"][sector] = outflow
+            key = "{0}, {1}"
+            df.loc[t, key.format("variable costs", sector)] = results["param"][
+                outflow
+            ]["scalars"].variable_costs
+            df.loc[t, key.format("emission", sector)] = results["param"][
+                outflow
+            ]["scalars"].get("emission", float("nan"))
+            df.loc[t, "efficiency, {0}".format(sector)] = results["param"][
+                t, None
+            ]["scalars"]["conversion_factors_{}".format(outflow[1].label)]
+
+    # Use efficiency of heat plants as reference efficiency for chp.
+    for i, row in df.loc[df.category == "chp plant"].iterrows():
+        df.loc[i, "efficiency, hp_ref"] = df.loc[
+            (df.fuel == row.fuel) & (df.category == "heat plant"),
+            "efficiency, heat",
+        ].mean()
+    return df.sort_index(axis=1)
 
 
 def get_time_index(results):
@@ -348,9 +458,7 @@ def _calculate_emissions_from_energy_table(table, emissions, sector):
     emission_table = pd.concat([emission_table], axis=1, keys=["in"])
     emission_table["out", sector] = emission_table["in"].sum(axis=1)
     table = pd.concat(
-        [table, emission_table],
-        axis=1,
-        keys=["energy", "emission"],
+        [table, emission_table], axis=1, keys=["energy", "emission"],
     )
     table.sort_index(axis=1, inplace=True)
     for column in table["energy", "out"].columns:
@@ -388,8 +496,107 @@ def _add_volatiles_to_electricity_table(tables, results):
     return tables
 
 
+def calculate_marginal_costs(df):
+    """
+    Kosten und Emissionen für jeden Stromtransformer aufstellen.
+
+    Bei CHP müssen die Opportunitätskosten aufgestellt werden.
+    1. Die Gesamtkosten auf den Strom abwälzen.
+    2. Die als "Abfall" entstanden Wärme pro Stromeinheit berechnen
+    3. Die Kosten für eine getrennt Erzeugung von dieser Wärmemenge
+       berechnen.
+    4. Diese Kosten von den Gesamtkosten abziehen.
+
+    marginal_costs_chp =
+    costs_fuel * (1/eta_elec - eta_th/(eta_elec*eta_th_ref))
+
+    Parameters
+    ----------
+    transformer
+
+    Returns
+    -------
+
+    """
+    df["efficiency, hp_ref"].fillna(1, inplace=True)
+    df["efficiency, heat"].fillna(0, inplace=True)
+    df["marginal costs"] = df["variable costs, fuel"] * (
+        1 / df["efficiency, electricity"]
+        - df["efficiency, heat"]
+        / (df["efficiency, electricity"] * df["efficiency, hp_ref"])
+    )
+    print(df.columns)
+    df["emissions"] = df["emissions, fuel"] * (
+        1 / df["efficiency, electricity"]
+        - df["efficiency, heat"]
+        / (df["efficiency, electricity"] * df["efficiency, hp_ref"])
+    )
+    df.to_excel("/home/uwe/0000000000000_temp.xlsx")
+    return df
+
+
+def fetch_electricity_flows(results):
+    return pd.DataFrame(
+        {
+            k[0]: v["sequences"]["flow"]
+            for k, v in results["main"].items()
+            if isinstance(k[0], solph.Transformer)
+            and k[0].label.cat != "line"
+            and k[1].label.cat == "electricity"
+        }
+    )
+    # flow_status = flows.div(flows).fillna(0)
+
+
 def energy_balance_by_sector(results, chp_method, **kwargs):
-    transformer = fetch_converter_with_in_out_flows(results)
+    from matplotlib import pyplot as plt
+    # Select all converters (class Transformer excluding lines)
+    flows = fetch_electricity_flows(results)
+    print(flows[flows < 1].sum())
+    # exit(0)
+    transformer = set(
+        [
+            k[0]
+            for k in results["main"].keys()
+            if isinstance(k[0], solph.Transformer) and k[0].label.cat != "line"
+        ]
+    )
+
+    converter_parameters = fetch_converter_parameters(results, transformer)
+
+    flow_status = flows.div(flows).fillna(0)
+
+
+    converter_parameters = calculate_marginal_costs(converter_parameters)
+
+    # print(converter_parameters["marginal costs"])
+    # print(flow_status)
+    # flow_status.mul(converter_parameters["marginal costs"]).max(1).plot()
+    # print(flow_status.mul(converter_parameters["marginal costs"]))
+    # plt.show()
+    em_max = flow_status.mul(converter_parameters["emissions"]).max(1)
+    # flow_status.mul(converter_parameters["marginal costs"]).max().plot(kind="bar")
+    # plt.show()
+    # flow_status.mul(converter_parameters["highest emissions"]).max().plot(kind="bar")
+    # plt.show()
+
+    kv = pd.DataFrame()
+
+    kv["marginal costs"] = flow_status.mul(converter_parameters["marginal costs"]).max(1)
+    kv["highest emissions"] = flow_status.mul(converter_parameters["emissions"]).max(1)
+    kv["lowest emissions"] = flow_status.mul(converter_parameters["emissions"]).min(1)
+
+    print(converter_parameters["emissions"])
+
+    print(kv)
+    kv["marginal costs power plant"] = flow_status.mul(converter_parameters["marginal costs"]).idxmax(1)
+    kv = pd.merge(kv, converter_parameters["emissions"], "left", left_on="marginal costs power plant", right_index=True)
+
+    # kv.to_excel("/home/uwe/00000000_temp.xlsx")
+    ax = kv.plot(secondary_y="marginal costs")
+    ax.set_ylim(0, 1.1)
+    plt.show()
+    exit(0)
 
     # Create a dictionary of empty tables (pandas.DataFrame) for all sectors
     tables = {}
@@ -460,6 +667,9 @@ def calculate_product_fuel_balance(
 if __name__ == "__main__":
     # pass
     from deflex.tools import dict2file, restore_results
+    from oemof.tools import logger
+
+    logger.define_logging()
 
     # import os
     #
@@ -473,19 +683,19 @@ if __name__ == "__main__":
 
     my_results = restore_results(my_fn)
     # test_print_cycles(my_results)
-    my_cycles = detect_cycles(my_results)
+    my_cycles = Cycles(my_results)
+    my_cycles.print(details=False)
+    my_cycles.add_filter("storage")
+    my_cycles.print(details=False)
+    print(my_cycles.filter)
+    my_cycles.add_filter(["line", "commodity"])
+    my_cycles.print(details=True)
+    print(my_cycles.filter)
 
-    print("Number of cycles:", len(my_cycles.cycles))
-    print("Number of used cycles:", len(my_cycles.used_cycles))
-    print("Number of critical cycles:", len(my_cycles.suspect_cycles))
-    test_print_cycles(my_cycles.suspect_cycles)
-    # print(my_cycles.suspect_cycles)
-    # exit(0)
-    #
-    # # filename1 = fn.replace(".dflx", "_results.xlsx")
-    # # all_results = get_all_results(my_results)
-    # # dict2file(all_results, filename1)
-    #
+    my_cycles.digits = 100
+    my_cycles.detect_suspicious_cycle_rows(path="/home/uwe/00asdf.xlsx")
+    # exit()
+
     filename2 = my_fn.replace(".dflx", "_results_emission.xlsx")
 
     my_tables = calculate_product_fuel_balance(

@@ -86,7 +86,7 @@ setup(
             "reegis",
             "matplotlib",
             "sphinx-autoapi",
-            "shapely"
+            "shapely",
             "requests"
         ],
         "plot": ["pygraphviz", "matplotlib"],

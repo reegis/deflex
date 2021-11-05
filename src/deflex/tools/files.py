@@ -133,8 +133,10 @@ def restore_results(file_names, scenario_class=DeflexScenario):
     results = []
 
     for path in file_names:
-        tmp_res = restore_scenario(path, scenario_class).results
+        sc = restore_scenario(path, scenario_class)
+        tmp_res = sc.results
         tmp_res["meta"]["filename"] = os.path.basename(path)
+        tmp_res["input_data"] = sc.input_data
         results.append(tmp_res)
 
     if len(results) < 2:
@@ -177,7 +179,19 @@ def restore_scenario(filename, scenario_class=DeflexScenario):
 
 
 def dict2file(tables, path, filetype=None, drop_empty_columns=False):
+    """
 
+    Parameters
+    ----------
+    tables
+    path
+    filetype
+    drop_empty_columns
+
+    Returns
+    -------
+
+    """
     if filetype is None:
         filetype = path.split(".")[-1]
 

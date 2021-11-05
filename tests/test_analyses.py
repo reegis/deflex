@@ -25,7 +25,7 @@ def test_no_time_step_cycles():
         "power-plant_H2_H2_DE01": [13, 14, 0, 16, 17, 18],
         "electricity_all_all_DE01": [19, 20, 21, 0, 23, 24],
     })
-    assert analyses.detect_time_step_cycle(test_cycle) is None
+    assert analyses.detect_suspicious_cycle_rows(test_cycle) is None
 
 
 def test_time_step_cycles():
@@ -35,7 +35,7 @@ def test_time_step_cycles():
         "power-plant_H2_H2_DE01": [13, 14, 0, 16, 17, 18],
         "electricity_all_all_DE01": [19, 20, 21, 0, 23, 24],
     })
-    rows = analyses.detect_time_step_cycle(test_cycle)
+    rows = analyses.detect_suspicious_cycle_rows(test_cycle)
     assert rows is not None
     assert len(rows) == 1
     assert rows.index[0] == 1
