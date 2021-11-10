@@ -122,8 +122,17 @@ mcp["mcp"] = kv["marginal costs"]
 
 # mcp.tz_localize(None).to_excel(mcp_file)
 # logging.info("File with mcp stored to %s.", key_values_file)
+f, ax_ar = plt.subplots(3, 1, sharey=True, figsize=(15, 5))
 
-mcp.plot()
+mcp.iloc[192:552].plot(ax=ax_ar[0], legend=False)
+mcp.iloc[936:1296].plot(ax=ax_ar[1], legend=False)
+mcp.iloc[1656:2016].plot(ax=ax_ar[2], legend=True)
+
+ax_ar[0].set_ylabel("[EUR/MWh]")
+ax_ar[1].set_ylabel("[EUR/MWh]")
+ax_ar[2].set_ylabel("[EUR/MWh]")
+
+plt.subplots_adjust(right=0.98, left=0.06, bottom=0.09, top=0.98)
 plt.show()
 out_file = file.replace(".", "_results.")
 out_path = os.path.join(path, out_file)
