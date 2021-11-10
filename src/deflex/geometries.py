@@ -19,6 +19,37 @@ import geopandas as gpd
 from deflex import config as cfg
 
 
+def deflex_geo(rmap):
+    """
+    Fetch default deflex geometries as a named tuple with the following fields:
+     * polygons
+     * lines
+     * labels
+     * line_labels
+
+    Note that some fields might be None for some region sets.
+
+    ----------
+    rmap : str
+        Name of the deflex map. Possible values are: de01, de02, de17, de21,
+        de22
+
+    Returns
+    -------
+    namedtuple
+    """
+    geo = namedtuple(
+        "geometry", ["polygons", "lines", "labels", "line_labels"]
+    )
+    polygons = deflex_regions(rmap, rtype="polygons")
+    labels = deflex_regions(rmap, rtype="labels")
+    lines = deflex_power_lines(rmap, rtype="lines")
+    line_labels = deflex_power_lines(rmap, rtype="labels")
+    return geo(
+        polygons=polygons, labels=labels, lines=lines, line_labels=line_labels
+    )
+
+
 def deflex_regions(rmap=None, rtype="polygons"):
     """
 
@@ -60,9 +91,13 @@ def deflex_regions(rmap=None, rtype="polygons"):
             suffix=".geojson", map=rmap, type=rtype
         ),
     )
-    regions = gpd.read_file(name)
-    regions.set_index("region", inplace=True)
-    regions.name = rmap
+
+    if os.path.isfile(name):
+        regions = gpd.read_file(name)
+        regions.set_index("region", inplace=True)
+        regions.name = rmap
+    else:
+        regions = None
 
     return regions
 
@@ -100,9 +135,12 @@ def deflex_power_lines(rmap=None, rtype="lines"):
             map=rmap, type=rtype, suffix=".geojson"
         ),
     )
-    lines = gpd.read_file(name)
-    lines.set_index("name", inplace=True)
-    lines.name = rmap
+    if os.path.isfile(name):
+        lines = gpd.read_file(name)
+        lines.set_index("name", inplace=True)
+        lines.name = rmap
+    else:
+        lines = None
 
     return lines
 
@@ -120,7 +158,7 @@ def divide_off_and_onshore(regions):
 
     Returns
     -------
-    named tuple
+    namedtuple
 
     Examples
     --------
@@ -146,7 +184,9 @@ def divide_off_and_onshore(regions):
         )
     )
 
-    gdf = gpd.sjoin(regions_centroid, germany_onshore, how="left", op="within")
+    gdf = gpd.sjoin(
+        regions_centroid, germany_onshore, how="left", predicate="within"
+    )
 
     onshore = list(gdf.loc[~gdf.gid.isnull()].index)
     offshore = list(gdf.loc[gdf.gid.isnull()].index)

@@ -7,5 +7,6 @@ from deflex.postprocessing.electricity import (  # noqa: F401
 from deflex.postprocessing.analyses import Cycles, calculate_product_fuel_balance  # noqa: F401
 from deflex.postprocessing.graph import DeflexGraph  # noqa: F401
 from deflex.postprocessing.views import reshape_bus_view  # noqa: F401
+from deflex.postprocessing.analyses import calculate_key_values  # noqa: F401
 
 # from deflex.postprocessing.analyses import *  # noqa: F401

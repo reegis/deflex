@@ -23,7 +23,7 @@ url = (
 )
 
 # !!! ADAPT THE PATH !!!
-path = "your/path"
+path = "/home/uwe/deflex_temp_test/"
 
 # Set logger
 logger.define_logging()

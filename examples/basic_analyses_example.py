@@ -59,7 +59,7 @@ def get_price_from_opsd(path):
 
 
 # !!! ADAPT THE PATH !!!
-my_path = "your/path"
+my_path = "/home/uwe/deflex_temp_test/"
 
 # Set logger
 logger.define_logging()

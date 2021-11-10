@@ -17,7 +17,7 @@ import pandas as pd
 from networkx import simple_cycles
 from oemof import solph
 
-from graph import DeflexGraph
+from .graph import DeflexGraph
 from deflex.tools import allocate_fuel, dict2file
 
 
@@ -392,12 +392,12 @@ def fetch_converter_parameters(results, transformer):
                 t, None
             ]["scalars"]["conversion_factors_{}".format(outflow[1].label)]
 
-    # Use efficiency of heat plants as reference efficiency for chp.
-    for i, row in df.loc[df.category == "chp plant"].iterrows():
-        df.loc[i, "efficiency, hp_ref"] = df.loc[
-            (df.fuel == row.fuel) & (df.category == "heat plant"),
-            "efficiency, heat",
-        ].mean()
+    # # Fetch efficiency of heat plants as reference efficiency for chp.
+    # for i, row in df.loc[df.category == "chp plant"].iterrows():
+    #     df.loc[i, "efficiency, hp_ref"] = df.loc[
+    #         (df.fuel == row.fuel) & (df.category == "heat plant"),
+    #         "efficiency, heat",
+    #     ].mean()
     return df.sort_index(axis=1)
 
 
@@ -458,7 +458,9 @@ def _calculate_emissions_from_energy_table(table, emissions, sector):
     emission_table = pd.concat([emission_table], axis=1, keys=["in"])
     emission_table["out", sector] = emission_table["in"].sum(axis=1)
     table = pd.concat(
-        [table, emission_table], axis=1, keys=["energy", "emission"],
+        [table, emission_table],
+        axis=1,
+        keys=["energy", "emission"],
     )
     table.sort_index(axis=1, inplace=True)
     for column in table["energy", "out"].columns:
@@ -518,8 +520,16 @@ def calculate_marginal_costs(df):
     -------
 
     """
-    df["efficiency, hp_ref"].fillna(1, inplace=True)
-    df["efficiency, heat"].fillna(0, inplace=True)
+    try:
+        df["efficiency, hp_ref"].fillna(1, inplace=True)
+    except KeyError:
+        df["efficiency, hp_ref"] = 1
+
+    try:
+        df["efficiency, heat"].fillna(0, inplace=True)
+    except KeyError:
+        df["efficiency, heat"] = 0
+
     df["marginal costs"] = df["variable costs, fuel"] * (
         1 / df["efficiency, electricity"]
         - df["efficiency, heat"]
@@ -548,61 +558,67 @@ def fetch_electricity_flows(results):
     # flow_status = flows.div(flows).fillna(0)
 
 
-def energy_balance_by_sector(results, chp_method, **kwargs):
-    from matplotlib import pyplot as plt
+def calculate_key_values(results):
+    """
+
+    Returns
+    -------
+
+    """
     # Select all converters (class Transformer excluding lines)
     flows = fetch_electricity_flows(results)
-    print(flows[flows < 1].sum())
-    # exit(0)
-    transformer = set(
-        [
-            k[0]
-            for k in results["main"].keys()
-            if isinstance(k[0], solph.Transformer) and k[0].label.cat != "line"
-        ]
+    transformer = list(
+        set(
+            [
+                k[0]
+                for k in results["main"].keys()
+                if isinstance(k[0], solph.Transformer)
+                and k[0].label.cat != "line"
+            ]
+        )
     )
 
     converter_parameters = fetch_converter_parameters(results, transformer)
-
     flow_status = flows.div(flows).fillna(0)
-
-
     converter_parameters = calculate_marginal_costs(converter_parameters)
-
-    # print(converter_parameters["marginal costs"])
-    # print(flow_status)
-    # flow_status.mul(converter_parameters["marginal costs"]).max(1).plot()
-    # print(flow_status.mul(converter_parameters["marginal costs"]))
-    # plt.show()
     em_max = flow_status.mul(converter_parameters["emissions"]).max(1)
-    # flow_status.mul(converter_parameters["marginal costs"]).max().plot(kind="bar")
-    # plt.show()
-    # flow_status.mul(converter_parameters["highest emissions"]).max().plot(kind="bar")
-    # plt.show()
 
     kv = pd.DataFrame()
 
-    kv["marginal costs"] = flow_status.mul(converter_parameters["marginal costs"]).max(1)
-    kv["highest emissions"] = flow_status.mul(converter_parameters["emissions"]).max(1)
-    kv["lowest emissions"] = flow_status.mul(converter_parameters["emissions"]).min(1)
+    kv["marginal costs"] = flow_status.mul(
+        converter_parameters["marginal costs"]
+    ).max(1)
+    kv["highest emissions"] = flow_status.mul(
+        converter_parameters["emissions"]
+    ).max(1)
+    kv["lowest emissions"] = flow_status.mul(
+        converter_parameters["emissions"]
+    ).min(1)
 
     print(converter_parameters["emissions"])
 
     print(kv)
-    kv["marginal costs power plant"] = flow_status.mul(converter_parameters["marginal costs"]).idxmax(1)
-    kv = pd.merge(kv, converter_parameters["emissions"], "left", left_on="marginal costs power plant", right_index=True)
+    kv["marginal costs power plant"] = flow_status.mul(
+        converter_parameters["marginal costs"]
+    ).idxmax(1)
+    kv = pd.merge(
+        kv,
+        converter_parameters["emissions"],
+        "left",
+        left_on="marginal costs power plant",
+        right_index=True,
+    )
+    return kv
 
-    # kv.to_excel("/home/uwe/00000000_temp.xlsx")
-    ax = kv.plot(secondary_y="marginal costs")
-    ax.set_ylim(0, 1.1)
-    plt.show()
-    exit(0)
+
+def energy_balance_by_sector(results, chp_method, **kwargs):
+    from matplotlib import pyplot as plt
 
     # Create a dictionary of empty tables (pandas.DataFrame) for all sectors
     tables = {}
     mcol = pd.MultiIndex(levels=[[], []], codes=[[], []])
     time_index = get_time_index(results)
-    for t, f in transformer.items():
+    for f in transformer:
         for k1 in f["out"].keys():
             tables.setdefault(
                 k1[0], pd.DataFrame(columns=mcol, index=time_index)
@@ -612,7 +628,7 @@ def energy_balance_by_sector(results, chp_method, **kwargs):
                 tables[k1[0]]["in", k2] = 0
 
     # Assign inflows to cumulated product flows (fill empty tables from above)
-    for t, f in transformer.items():
+    for f in transformer:
         if len(f["out"]) == 1:
             fuel_factors = None
         else:
@@ -665,49 +681,4 @@ def calculate_product_fuel_balance(
 
 
 if __name__ == "__main__":
-    # pass
-    from deflex.tools import dict2file, restore_results
-    from oemof.tools import logger
-
-    logger.define_logging()
-
-    # import os
-    #
-    # allocate_fuel("finnish", eta_e=0.3, eta_th=0.5)
-    # # print(finnish_method(0.3, 0.5, 0.5, 0.9))
-    # exit(0)
-
-    my_fn = "/home/uwe/.deflex/pedro/2018-DE02-Agora4.dflx"
-    # my_fn = "/home/uwe/.deflex/pedro/2030-DE02-Agora9.dflx"
-    # my_fn = "/home/uwe/.deflex/pedro/2050-DE02-Agora6.dflx"
-
-    my_results = restore_results(my_fn)
-    # test_print_cycles(my_results)
-    my_cycles = Cycles(my_results)
-    my_cycles.print(details=False)
-    my_cycles.add_filter("storage")
-    my_cycles.print(details=False)
-    print(my_cycles.filter)
-    my_cycles.add_filter(["line", "commodity"])
-    my_cycles.print(details=True)
-    print(my_cycles.filter)
-
-    my_cycles.digits = 100
-    my_cycles.detect_suspicious_cycle_rows(path="/home/uwe/00asdf.xlsx")
-    # exit()
-
-    filename2 = my_fn.replace(".dflx", "_results_emission.xlsx")
-
-    my_tables = calculate_product_fuel_balance(
-        my_results,
-        "finnish",
-        eta_e=0.3,
-        eta_th=0.5,
-        eta_e_ref=0.5,
-        eta_th_ref=0.9,
-    )
-    print("Store file to {}".format(filename2))
-    dict2file(my_tables, filename2, drop_empty_columns=True)
-    # # for table in all_results._fields:
-    # #     print("\n\n***************** " + table + " ****************\n")
-    # #     print(getattr(all_results, table))
+    pass

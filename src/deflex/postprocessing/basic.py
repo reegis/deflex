@@ -17,6 +17,7 @@ import pandas as pd
 from matplotlib.cm import get_cmap
 from matplotlib.colors import Normalize, rgb2hex
 from oemof import solph
+from datetime import datetime
 
 
 def get_time_index(results):
@@ -86,23 +87,26 @@ def bus_flows2tables(results, bus_groups):
     levels = [[], [], [], [], [], [], [], []]
     tables = {}
     for key, buses in bus_groups.items():
-        seq = pd.DataFrame(columns=pd.MultiIndex(levels=levels, codes=levels))
+        # seq = pd.DataFrame(columns=pd.MultiIndex(levels=levels, codes=levels))
+        seq = {}
         name = "_".join(key).replace("_all", "")
         for bus in buses:
             flows = [k for k in results["main"].keys() if k[1] == bus]
             flows.extend([k for k in results["main"].keys() if k[0] == bus])
             for f in flows:
                 seq[
-                    f[0].label.cat,
-                    f[0].label.tag,
-                    f[0].label.subtag,
-                    f[0].label.region,
-                    f[1].label.cat,
-                    f[1].label.tag,
-                    f[1].label.subtag,
-                    f[1].label.region,
+                    (
+                        f[0].label.cat,
+                        f[0].label.tag,
+                        f[0].label.subtag,
+                        f[0].label.region,
+                        f[1].label.cat,
+                        f[1].label.tag,
+                        f[1].label.subtag,
+                        f[1].label.region,
+                    )
                 ] = results["main"][f]["sequences"]["flow"]
-        tables[name] = seq.sort_index(axis=1)
+        tables[name] = pd.DataFrame(seq).sort_index(axis=1)
 
     return tables
 
@@ -156,7 +160,9 @@ def get_all_results(results):
         [k[0] for k in results["main"].keys() if isinstance(k[0], solph.Bus)]
     )
     bus_groups = group_buses(buses, ["cat", "tag"])
+    start = datetime.now()
     tables = bus_flows2tables(results, bus_groups)
+    print(datetime.now() - start)
     tables.update(components2table(results))
     tables["pyomo"] = pyomo_results2series(results)
     tables["meta"] = meta_results2series(results)
