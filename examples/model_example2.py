@@ -13,11 +13,12 @@ import logging
 import os
 from zipfile import ZipFile
 import pytz
-from datetime import datetime
+from datetime import datetime, timedelta
 import pandas as pd
 from oemof.tools import logger
 from matplotlib import pyplot as plt
 from deflex import main, postprocessing, scenario, tools
+from matplotlib.dates import DateFormatter, HourLocator
 
 OPSD_URL = (
     "https://data.open-power-system-data.org/index.php?package="
@@ -85,20 +86,20 @@ fn = os.path.join(path, file)
 # *** Long version ***
 
 # Create a scenario object
-# sc = scenario.DeflexScenario()
-#
-# # Read the input data. Use the right method (csv/xlsx) for your file type.
-# # sc.read_csv(fn)
-# sc.read_xlsx(fn)
-#
-# # Create the LP model and solve it.
-# sc.compute()
+sc = scenario.DeflexScenario()
+
+# Read the input data. Use the right method (csv/xlsx) for your file type.
+# sc.read_csv(fn)
+sc.read_xlsx(fn)
+
+# Create the LP model and solve it.
+sc.compute()
 
 # Dump the results to a sub-dir named "results_cbc".
 # dump_file = file.replace("_csv", ".dflx")
 dump_file = file.replace(".xlsx", ".dflx")
 dump_path = os.path.join(path, dump_file)
-# sc.dump(dump_path)
+sc.dump(dump_path)
 
 results = tools.restore_results(dump_path)
 
@@ -117,22 +118,46 @@ opsd = pd.concat([winter, spring, summer], axis=0)
 kv.set_index(opsd.index, inplace=True)
 
 # Add opsd day ahead prices to table
-mcp["opsd"] = opsd
-mcp["mcp"] = kv["marginal costs"]
+mcp["Entsoe"] = opsd
+mcp["de02"] = kv["marginal costs"]
 
-# mcp.tz_localize(None).to_excel(mcp_file)
-# logging.info("File with mcp stored to %s.", key_values_file)
-f, ax_ar = plt.subplots(3, 1, sharey=True, figsize=(15, 5))
+mcp.tz_localize(None).to_excel("/home/uwe/mcp_neu.xlsx")
+mcp = pd.read_excel("/home/uwe/mcp_neu.xlsx", parse_dates=True, index_col=0)
 
-mcp.iloc[192:552].plot(ax=ax_ar[0], legend=False)
-mcp.iloc[936:1296].plot(ax=ax_ar[1], legend=False)
-mcp.iloc[1656:2016].plot(ax=ax_ar[2], legend=True)
+f, ax = plt.subplots(3, 1, sharey=True, figsize=(15, 5))
 
-ax_ar[0].set_ylabel("[EUR/MWh]")
-ax_ar[1].set_ylabel("[EUR/MWh]")
-ax_ar[2].set_ylabel("[EUR/MWh]")
+year = str(mcp.index[0].year)
+iv = [("8.1.", "25.1."), ("8.4.", "25.4."), ("8.7.", "25.7.")]
 
-plt.subplots_adjust(right=0.98, left=0.06, bottom=0.09, top=0.98)
+n = 0
+for interval in iv:
+
+    start = datetime.strptime(interval[0] + year, "%d.%m.%Y")
+    start += timedelta(hours=12)
+    end = datetime.strptime(interval[1] + year, "%d.%m.%Y")
+    end += timedelta(hours=12)
+    mcp[start:end].plot(ax=ax[n], legend=False, x_compat=True)
+    ax[n].set_xlim(start, end)
+    ax[n].xaxis.set_major_locator(HourLocator(interval=72))
+    ax[n].xaxis.set_major_formatter(DateFormatter("%b-%d %H:%M"))
+    ax[n].tick_params(axis="x", rotation=0)
+    [
+        label.set_horizontalalignment("center")
+        for label in ax[n].xaxis.get_ticklabels()
+    ]
+    ax[n].set_ylabel("[EUR/MWh]")
+    ax[n].set_xlabel("")
+    n += 1
+
+sc = list(mcp.columns)
+ax[2].legend(
+    sc, bbox_to_anchor=(1.1, 1), loc="upper right",
+)
+
+
+
+
+plt.subplots_adjust(right=0.90, left=0.06, bottom=0.09, top=0.98)
 plt.show()
 out_file = file.replace(".", "_results.")
 out_path = os.path.join(path, out_file)
