@@ -154,9 +154,6 @@ ax[2].legend(
     sc, bbox_to_anchor=(1.1, 1), loc="upper right",
 )
 
-
-
-
 plt.subplots_adjust(right=0.90, left=0.06, bottom=0.09, top=0.98)
 plt.show()
 out_file = file.replace(".", "_results.")

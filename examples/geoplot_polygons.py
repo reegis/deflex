@@ -32,11 +32,8 @@ ratio.name = "value"
 # Merge geometry and data
 de21_poly = pd.concat([de21.polygons, ratio], axis=1)
 
-# Define color map
-cmap = LinearSegmentedColormap.from_list(
-    "mycmap",
-    [(0, "#aaaaaa"), (0.0001, "green"), (0.5, "yellow"), (1, "red")],
-)
+# Colormaps (cmap):
+# https://matplotlib.org/stable/tutorials/colors/colormaps.html
 
 # Plot polygons
 ax = de21_poly.plot(
@@ -45,7 +42,7 @@ ax = de21_poly.plot(
     ax=ax,
     aspect=my_aspect,
     legend=True,
-    cmap=cmap,
+    cmap="coolwarm",
 )
 
 # Add labels for regions > 30%
