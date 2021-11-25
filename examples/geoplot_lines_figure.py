@@ -88,7 +88,7 @@ def get_power_line_usage(geo, results):
     }
 
     # Get data for each power line
-    data = pd.Series()
+    data = pd.Series(dtype="float64")
     for idx in geo.lines.index:
         idx_values = idx.split("-")
         reverse_idx = "{1}-{0}".format(*idx_values)
