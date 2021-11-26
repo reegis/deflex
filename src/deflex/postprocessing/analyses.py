@@ -680,5 +680,32 @@ def calculate_product_fuel_balance(
     return tables
 
 
+def get_combined_bus_balance(results, tag=None, subtag=None, region=None):
+    buses = set(
+        [r[0] for r in results["Main"].keys() if isinstance(r[0], solph.Bus)]
+    )
+    if tag is not None:
+        buses = [b for b in buses if b.label.tag == tag]
+    if subtag is not None:
+        buses = [b for b in buses if b.label.subtag == subtag]
+    if region is not None:
+        buses = [b for b in buses if b.label.region == region]
+    dc = {}
+    for bus in buses:
+        inflows = [f for f in results["Main"].keys() if f[1] == bus]
+        outflows = [f for f in results["Main"].keys() if f[0] == bus]
+        for i in inflows:
+            label = i[0].label
+            dc[
+                ("in", label.cat, label.tag, label.subtag, label.region)
+            ] = results["Main"][i]["sequences"]["flow"]
+        for i in outflows:
+            label = i[1].label
+            dc[
+                ("out", label.cat, label.tag, label.subtag, label.region)
+            ] = results["Main"][i]["sequences"]["flow"]
+    return pd.DataFrame(dc).sort_index(axis=1)
+
+
 if __name__ == "__main__":
     pass
