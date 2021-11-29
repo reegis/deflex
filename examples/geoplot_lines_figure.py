@@ -113,7 +113,7 @@ def get_power_line_usage(geo, results):
 
 de21 = geometries.deflex_geo("de21")
 my_results = tools.restore_results(
-    "/home/uwe/deflex_2014_de21_heat_transmission.dflx"
+    "/home/uwe/deflex_temp_test/deflex_2014_de21_heat_transmission.dflx"
 )
 my_data = get_power_line_usage(de21, my_results)
 plot_power_lines(de21, my_data)
