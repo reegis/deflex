@@ -33,8 +33,8 @@ os.makedirs(path, exist_ok=True)
 fn = os.path.join(path, "deflex_scenario_examples_v03.zip")
 if not os.path.isfile(fn):
     tools.download(fn, url)
-with ZipFile(fn, "r") as zip_ref:
-    zip_ref.extractall(path)
+# with ZipFile(fn, "r") as zip_ref:
+#     zip_ref.extractall(path)
 logging.info("All v0.3.x scenarios examples extracted to %s.", path)
 
 # Look in your folder above. You should see some scenario files. The csv and
@@ -47,7 +47,7 @@ logging.info("All v0.3.x scenarios examples extracted to %s.", path)
 # time steps but you have to adapt the annual limits.
 
 # Now choose one example. We will start with a small one:
-file = "deflex_2014_de02_no-heat_csv"
+file = "deflex_2014_de02_no-heat_no-co2-costs_no-var-costs.xlsx"
 fn = os.path.join(path, file)
 
 # *** Long version ***
@@ -56,18 +56,18 @@ fn = os.path.join(path, file)
 sc = scenario.DeflexScenario()
 
 # Read the input data. Use the right method (csv/xlsx) for your file type.
-sc.read_csv(fn)
-# sc.read_xlsx(fn)
+# sc.read_csv(fn)
+sc.read_xlsx(fn)
 
 # Create the LP model and solve it.
 sc.compute()
 
 # Dump the results to a sub-dir named "results_cbc".
-dump_file = file.replace("_csv", ".dflx")
-# dump_file = file.replace(".xlsx")
+# dump_file = file.replace("_csv", ".dflx")
+dump_file = file.replace(".xlsx", ".dflx")
 dump_path = os.path.join(path, "results_cbc", dump_file)
 sc.dump(dump_path)
 
 # *** short version ***
 
-main.model_scenario(fn, file_type="csv")
+# main.model_scenario(fn, file_type="csv")

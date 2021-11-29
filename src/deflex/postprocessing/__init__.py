@@ -1,10 +1,11 @@
 from deflex.postprocessing.analyses import (  # noqa: F401; noqa: F401
-    calculate_key_values,
-)
-from deflex.postprocessing.analyses import (
     Cycles,
-    get_combined_bus_balance,
+    calculate_key_values,
+    calculate_marginal_costs,
     calculate_product_fuel_balance,
+    get_combined_bus_balance,
+    get_converter_balance,
+    fetch_parameter_of_commodity_sources
 )
 from deflex.postprocessing.basic import get_all_results  # noqa: F401
 from deflex.postprocessing.electricity import (  # noqa: F401
