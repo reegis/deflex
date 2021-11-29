@@ -389,8 +389,10 @@ def fetch_converter_parameters(results, transformer):
                 outflow
             ]["scalars"].get("emission", float("nan"))
             df.loc[t, "efficiency, {0}".format(sector)] = results["param"][
-                t, None
-            ]["scalars"]["conversion_factors_{}".format(outflow[1].label)]
+                (t, None)
+            ]["scalars"][
+                "conversion_factors_{}".format(label2str(outflow[1].label))
+            ]
 
     # # Fetch efficiency of heat plants as reference efficiency for chp.
     # for i, row in df.loc[df.category == "chp plant"].iterrows():
@@ -514,7 +516,7 @@ def calculate_marginal_costs(df):
 
     Parameters
     ----------
-    transformer
+    df
 
     Returns
     -------
@@ -541,7 +543,7 @@ def calculate_marginal_costs(df):
         - df["efficiency, heat"]
         / (df["efficiency, electricity"] * df["efficiency, hp_ref"])
     )
-    df.to_excel("/home/uwe/0000000000000_temp.xlsx")
+    # df.to_excel("/home/uwe/0000000000000_temp.xlsx")
     return df
 
 
@@ -580,6 +582,7 @@ def calculate_key_values(results):
 
     converter_parameters = fetch_converter_parameters(results, transformer)
     flow_status = flows.div(flows).fillna(0)
+    print(converter_parameters)
     converter_parameters = calculate_marginal_costs(converter_parameters)
     em_max = flow_status.mul(converter_parameters["emissions"]).max(1)
 
@@ -678,6 +681,71 @@ def calculate_product_fuel_balance(
     tables["emissions"] = emissions.reindex(emissions.index)
 
     return tables
+
+
+def get_combined_bus_balance(
+    results, cat=None, tag=None, subtag=None, region=None
+):
+    buses = set(
+        [r[0] for r in results["Main"].keys() if isinstance(r[0], solph.Bus)]
+    )
+    if cat is not None:
+        buses = [b for b in buses if b.label.cat == cat]
+    if tag is not None:
+        buses = [b for b in buses if b.label.tag == tag]
+    if subtag is not None:
+        buses = [b for b in buses if b.label.subtag == subtag]
+    if region is not None:
+        buses = [b for b in buses if b.label.region == region]
+    dc = {}
+    for bus in buses:
+        inflows = [f for f in results["Main"].keys() if f[1] == bus]
+        outflows = [f for f in results["Main"].keys() if f[0] == bus]
+        for i in inflows:
+            label = i[0].label
+            dc[
+                ("in", label.cat, label.tag, label.subtag, label.region)
+            ] = results["Main"][i]["sequences"]["flow"]
+        for i in outflows:
+            label = i[1].label
+            dc[
+                ("out", label.cat, label.tag, label.subtag, label.region)
+            ] = results["Main"][i]["sequences"]["flow"]
+    return pd.DataFrame(dc).sort_index(axis=1)
+
+
+def get_converter_balance(
+    results, cat=None, tag=None, subtag=None, region=None
+):
+    converters = set(
+        [
+            r[0]
+            for r in results["Main"].keys()
+            if isinstance(r[0], solph.Transformer)
+        ]
+    )
+    if cat is not None:
+        converters = [b for b in converters if b.label.cat == cat]
+    if tag is not None:
+        converters = [b for b in converters if b.label.tag == tag]
+    if subtag is not None:
+        converters = [b for b in converters if b.label.subtag == subtag]
+    if region is not None:
+        converters = [b for b in converters if b.label.region == region]
+    dc = {}
+    for cnv in converters:
+        inflows = [f for f in results["Main"].keys() if f[1] == cnv]
+        outflows = [f for f in results["Main"].keys() if f[0] == cnv]
+        label = cnv.label
+        for i in inflows:
+            dc[
+                ("in", label.cat, label.tag, label.subtag, label.region)
+            ] = results["Main"][i]["sequences"]["flow"]
+        for o in outflows:
+            dc[
+                ("out", label.cat, label.tag, label.subtag, label.region)
+            ] = results["Main"][o]["sequences"]["flow"]
+    return pd.DataFrame(dc).sort_index(axis=1)
 
 
 if __name__ == "__main__":
