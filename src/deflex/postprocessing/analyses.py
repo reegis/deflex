@@ -537,7 +537,7 @@ def calculate_marginal_costs(df):
         - df["efficiency, heat"]
         / (df["efficiency, electricity"] * df["efficiency, hp_ref"])
     )
-    print(df.columns)
+
     df["emissions"] = df["emissions, fuel"] * (
         1 / df["efficiency, electricity"]
         - df["efficiency, heat"]
@@ -582,7 +582,7 @@ def calculate_key_values(results):
 
     converter_parameters = fetch_converter_parameters(results, transformer)
     flow_status = flows.div(flows).fillna(0)
-    print(converter_parameters)
+
     converter_parameters = calculate_marginal_costs(converter_parameters)
     em_max = flow_status.mul(converter_parameters["emissions"]).max(1)
 
@@ -598,9 +598,6 @@ def calculate_key_values(results):
         converter_parameters["emissions"]
     ).min(1)
 
-    print(converter_parameters["emissions"])
-
-    print(kv)
     kv["marginal costs power plant"] = flow_status.mul(
         converter_parameters["marginal costs"]
     ).idxmax(1)

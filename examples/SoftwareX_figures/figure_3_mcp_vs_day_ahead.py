@@ -59,7 +59,7 @@ path = "/home/uwe/"
 
 # Set logger
 logger.define_logging()
-
+plt.rcParams.update({"font.size": 18})
 # # Download and unzip scenarios (if zip-file does not exist)
 # os.makedirs(path, exist_ok=True)
 # fn = os.path.join(path, "deflex_scenario_examples_v03.zip")
@@ -79,27 +79,26 @@ logger.define_logging()
 # time steps but you have to adapt the annual limits.
 
 # Now choose one example. We will start with a small one:
+path = "/home/uwe/"
 file = "deflex_2014_de02_no-heat_no-co2-costs_no-var-costs_3_month_test.xlsx"
 fn = os.path.join(path, file)
-
-
-# *** Long version ***
-
-# Create a scenario object
-sc = scenario.DeflexScenario()
-
-# Read the input data. Use the right method (csv/xlsx) for your file type.
-# sc.read_csv(fn)
-sc.read_xlsx(fn)
-
-# Create the LP model and solve it.
-sc.compute()
-
-# Dump the results to a sub-dir named "results_cbc".
-# dump_file = file.replace("_csv", ".dflx")
 dump_file = file.replace(".xlsx", ".dflx")
 dump_path = os.path.join(path, dump_file)
-sc.dump(dump_path)
+results = tools.restore_results(dump_path)
+# *** Long version ***
+
+# # Create a scenario object
+# sc = scenario.DeflexScenario()
+#
+# # Read the input data. Use the right method (csv/xlsx) for your file type.
+# # sc.read_csv(fn)
+# sc.read_xlsx(fn)
+
+# # Create the LP model and solve it.
+# sc.compute()
+#
+# # Dump the results to a sub-dir named "results_cbc".
+# sc.dump(dump_path)
 
 results = tools.restore_results(dump_path)
 
@@ -151,10 +150,11 @@ for interval in iv:
 
 sc = list(mcp.columns)
 ax[2].legend(
-    sc, bbox_to_anchor=(1.1, 1), loc="upper right",
+    sc, bbox_to_anchor=(1.156, 1), loc="upper right",
 )
 
-plt.subplots_adjust(right=0.90, left=0.06, bottom=0.09, top=0.98)
+plt.subplots_adjust(right=0.88, left=0.06, bottom=0.09, top=0.98, hspace=0.3)
+plt.savefig("/home/uwe/Dokumente/chiba/UniBremen/deflex - flexible heat and power model/v0.2/mcp.pdf")
 plt.show()
 out_file = file.replace(".", "_results.")
 out_path = os.path.join(path, out_file)

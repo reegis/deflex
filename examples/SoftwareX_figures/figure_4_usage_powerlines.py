@@ -8,6 +8,7 @@ from deflex import geometries, tools
 
 def plot_power_lines(geo, data):
     """Plot line geometry with data"""
+    plt.rcParams.update({"font.size": 12})
     data.name = "value"
     my_aspect = "equal"  # try "auto" instead
 
@@ -34,7 +35,7 @@ def plot_power_lines(geo, data):
             v["geometry"].centroid.y,
             str(i),
             color="#000000",
-            fontsize=8.5,
+            fontsize=9.5,
             ma="center",
         )
 
@@ -58,9 +59,9 @@ def plot_power_lines(geo, data):
             ax.text(
                 v["geometry"].centroid.x,
                 v["geometry"].centroid.y,
-                "{0} {1}".format(int(v["value"]), "%"),
+                "{0}".format(int(v["value"])),
                 color="#000000",
-                fontsize=9.5,
+                fontsize=12,
                 ma="center",
                 path_effects=[
                     patheffects.withStroke(linewidth=3, foreground="w")
@@ -69,8 +70,9 @@ def plot_power_lines(geo, data):
 
     # Adjust and show plot
     ax.axis("off")
-    plt.title("Percentage of something with random (!) data.")
+    # plt.title("Hours of the year in which usage of the line is over 95%.")
     plt.subplots_adjust(right=1.0, left=0.0, bottom=0.02, top=0.99)
+    plt.savefig("/home/uwe/Dokumente/chiba/UniBremen/deflex - flexible heat and power model/v0.2/transmission.pdf")
     plt.show()
 
 
@@ -107,7 +109,7 @@ def get_power_line_usage(geo, results):
             temp = df / results["param"][outflow]["scalars"]["nominal_value"]
         except KeyError:
             temp = df * 0
-        data[idx] = round(len(temp[temp > 0.9]) / 87.60)
+        data[idx] = round(len(temp[temp > 0.95]))
     return data
 
 
