@@ -72,7 +72,9 @@ def plot_power_lines(geo, data):
     ax.axis("off")
     # plt.title("Hours of the year in which usage of the line is over 95%.")
     plt.subplots_adjust(right=1.0, left=0.0, bottom=0.02, top=0.99)
-    plt.savefig("/home/uwe/Dokumente/chiba/UniBremen/deflex - flexible heat and power model/v0.2/transmission.pdf")
+    plt.savefig(
+        "/home/uwe/Dokumente/chiba/UniBremen/deflex - flexible heat and power model/v0.2/transmission.pdf"
+    )
     plt.show()
 
 

@@ -150,11 +150,15 @@ for interval in iv:
 
 sc = list(mcp.columns)
 ax[2].legend(
-    sc, bbox_to_anchor=(1.156, 1), loc="upper right",
+    sc,
+    bbox_to_anchor=(1.156, 1),
+    loc="upper right",
 )
 
 plt.subplots_adjust(right=0.88, left=0.06, bottom=0.09, top=0.98, hspace=0.3)
-plt.savefig("/home/uwe/Dokumente/chiba/UniBremen/deflex - flexible heat and power model/v0.2/mcp.pdf")
+plt.savefig(
+    "/home/uwe/Dokumente/chiba/UniBremen/deflex - flexible heat and power model/v0.2/mcp.pdf"
+)
 plt.show()
 out_file = file.replace(".", "_results.")
 out_path = os.path.join(path, out_file)

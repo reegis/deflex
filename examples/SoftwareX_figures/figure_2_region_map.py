@@ -15,8 +15,8 @@ else:
 
 f, ax = plt.subplots(1, 3, figsize=(15, 4))
 cmap = LinearSegmentedColormap.from_list(
-                "mycmap", [(0, "#a5bfdd"), (0.5, "red"), (1, "#badd69")]
-        )
+    "mycmap", [(0, "#a5bfdd"), (0.5, "red"), (1, "#badd69")]
+)
 # Fetch geometries
 geo = {}
 i = 0

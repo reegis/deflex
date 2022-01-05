@@ -1,6 +1,7 @@
 from deflex.tools import dict2file, restore_results
 from oemof.tools import logger
 from deflex.postprocessing import Cycles, calculate_product_fuel_balance
+
 logger.define_logging()
 
 # import os
