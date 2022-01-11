@@ -208,5 +208,3 @@ if not os.path.isfile(files["out"]) or FORCE_COMPUTING:
 # Show and save the plot
 plt.savefig(files["plot"])
 plt.show()
-
-

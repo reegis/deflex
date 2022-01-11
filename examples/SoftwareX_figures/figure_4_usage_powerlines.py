@@ -160,7 +160,8 @@ p1 = Process(target=plot_power_lines, args=(de21, my_data, files["plot"]))
 p1.start()
 
 if not os.path.isfile(files["out"]) or FORCE_COMPUTING:
-    logging.info("Writing results to an excel file."
-                 "This will take some minutes...")
+    logging.info(
+        "Writing results to an excel file." "This will take some minutes..."
+    )
     tools.dict2file(postprocessing.get_all_results(my_results), files["out"])
     logging.info("File written to {0}".format(files["out"]))
