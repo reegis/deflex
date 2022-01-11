@@ -6,7 +6,7 @@ from matplotlib.colors import LinearSegmentedColormap
 from deflex import geometries, tools
 
 
-def plot_power_lines(geo, data):
+def plot_power_lines(geo, data, plot_file):
     """Plot line geometry with data"""
     plt.rcParams.update({"font.size": 12})
     data.name = "value"
@@ -72,9 +72,7 @@ def plot_power_lines(geo, data):
     ax.axis("off")
     # plt.title("Hours of the year in which usage of the line is over 95%.")
     plt.subplots_adjust(right=1.0, left=0.0, bottom=0.02, top=0.99)
-    plt.savefig(
-        "/home/uwe/Dokumente/chiba/UniBremen/deflex - flexible heat and power model/v0.2/transmission.pdf"
-    )
+    plt.savefig(plot_file)
     plt.show()
 
 
@@ -111,13 +109,21 @@ def get_power_line_usage(geo, results):
             temp = df / results["param"][outflow]["scalars"]["nominal_value"]
         except KeyError:
             temp = df * 0
-        data[idx] = round(len(temp[temp > 0.95]))
+        data[idx] = round(len(temp[temp > 0.9]))
     return data
 
 
+import os
+
 de21 = geometries.deflex_geo("de21")
-my_results = tools.restore_results(
-    "/home/uwe/deflex_temp_test/deflex_2014_de21_heat_transmission.dflx"
-)
-my_data = get_power_line_usage(de21, my_results)
-plot_power_lines(de21, my_data)
+p = "/home/uwe/.deflex/deflex_softwareX_2022/results_cbc/final"
+fn_p = "deflex_2014_de21_heat_transmission_{0}.dflx"
+for t in ["master", "dev"]:
+    fn = os.path.join(p, fn_p.format(t))
+    plot_fn = fn.replace(".dflx", ".png")
+    scenario = tools.restore_scenario(fn)
+    # tools.dict2file(
+    #     scenario.input_data, fn.replace(".dflx", "_csv"), "csv"
+    # )
+    my_data = get_power_line_usage(de21, scenario.results)
+    plot_power_lines(de21, my_data, plot_fn)
