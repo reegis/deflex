@@ -160,9 +160,7 @@ def get_all_results(results):
         [k[0] for k in results["main"].keys() if isinstance(k[0], solph.Bus)]
     )
     bus_groups = group_buses(buses, ["cat", "tag"])
-    start = datetime.now()
     tables = bus_flows2tables(results, bus_groups)
-    print(datetime.now() - start)
     tables.update(components2table(results))
     tables["pyomo"] = pyomo_results2series(results)
     tables["meta"] = meta_results2series(results)
