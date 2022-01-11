@@ -1,12 +1,37 @@
+import logging
+import os
+from multiprocessing import Process
+from zipfile import ZipFile
+
 import pandas as pd
 from matplotlib import patheffects
 from matplotlib import pyplot as plt
 from matplotlib.colors import LinearSegmentedColormap
+from oemof.tools import logger
 
-from deflex import geometries, tools
+from deflex import geometries, main, postprocessing, tools
+
+EXAMPLES_URL = (
+    "https://files.de-1.osf.io/v1/resources/9krgp/providers/osfstorage"
+    "/61d6b20972da2312ccbfa1f8?action=download&direct&version=1"
+)
+
+BASIC_PATH = os.path.join(os.path.expanduser("~"), "deflex_temp")
+INPUT_FILE = "deflex_2014_de21_heat_transmission.xlsx"
+FORCE_COMPUTING = False
 
 
-def plot_power_lines(geo, data):
+def get_example_files():
+    """Download and unzip scenarios (if zip-file does not exist)"""
+    fn = os.path.join(BASIC_PATH, "deflex_softwarex_examples_v04.zip")
+    if not os.path.isfile(fn):
+        tools.download(fn, EXAMPLES_URL)
+    with ZipFile(fn, "r") as zip_ref:
+        zip_ref.extractall(BASIC_PATH)
+    logging.info("All software examples extracted to %s.", BASIC_PATH)
+
+
+def plot_power_lines(geo, data, plot_file):
     """Plot line geometry with data"""
     plt.rcParams.update({"font.size": 12})
     data.name = "value"
@@ -72,7 +97,7 @@ def plot_power_lines(geo, data):
     ax.axis("off")
     # plt.title("Hours of the year in which usage of the line is over 95%.")
     plt.subplots_adjust(right=1.0, left=0.0, bottom=0.02, top=0.99)
-    plt.savefig("/home/uwe/Dokumente/chiba/UniBremen/deflex - flexible heat and power model/v0.2/transmission.pdf")
+    plt.savefig(plot_file)
     plt.show()
 
 
@@ -113,9 +138,29 @@ def get_power_line_usage(geo, results):
     return data
 
 
+logger.define_logging()
+os.makedirs(BASIC_PATH, exist_ok=True)
+get_example_files()
+
+files = {"input": INPUT_FILE}
+
+files["dump"] = files["input"].replace(".xlsx", ".dflx")
+files["out"] = files["input"].replace(".xlsx", "_results.xlsx")
+files["plot"] = files["input"].replace(".xlsx", ".png")
+
+files = {k: os.path.join(BASIC_PATH, v) for k, v in files.items()}
+
+if not os.path.isfile(files["dump"]) or FORCE_COMPUTING:
+    main.model_scenario(files["input"], "xlsx", files["dump"])
+my_results = tools.restore_results(files["dump"])
 de21 = geometries.deflex_geo("de21")
-my_results = tools.restore_results(
-    "/home/uwe/deflex_temp_test/deflex_2014_de21_heat_transmission.dflx"
-)
 my_data = get_power_line_usage(de21, my_results)
-plot_power_lines(de21, my_data)
+
+p1 = Process(target=plot_power_lines, args=(de21, my_data, files["plot"]))
+p1.start()
+
+if not os.path.isfile(files["out"]) or FORCE_COMPUTING:
+    logging.info("Writing results to an excel file."
+                 "This will take some minutes...")
+    tools.dict2file(postprocessing.get_all_results(my_results), files["out"])
+    logging.info("File written to {0}".format(files["out"]))

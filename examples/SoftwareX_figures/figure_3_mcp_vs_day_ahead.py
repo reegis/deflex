@@ -8,17 +8,18 @@ SPDX-FileCopyrightText: 2021 Uwe Krien <krien@uni-bremen.de>
 SPDX-License-Identifier: MIT
 """
 
-
 import logging
 import os
-from zipfile import ZipFile
-import pytz
 from datetime import datetime, timedelta
+from zipfile import ZipFile
+
 import pandas as pd
-from oemof.tools import logger
+import pytz
 from matplotlib import pyplot as plt
-from deflex import main, postprocessing, scenario, tools
 from matplotlib.dates import DateFormatter, HourLocator
+from oemof.tools import logger
+
+from deflex import main, postprocessing, tools
 
 OPSD_URL = (
     "https://data.open-power-system-data.org/index.php?package="
@@ -28,6 +29,15 @@ OPSD_URL = (
     "=2019-05-01&filter%5BRegion%5D%5B%5D=DE&filter%5BVariable%5D%5B"
     "%5D=price_day_ahead&downloadCSV=Download+CSV"
 )
+
+EXAMPLES_URL = (
+    "https://files.de-1.osf.io/v1/resources/9krgp/providers/osfstorage"
+    "/61d6b20972da2312ccbfa1f8?action=download&direct&version=1"
+)
+
+BASIC_PATH = os.path.join(os.path.expanduser("~"), "deflex_temp")
+INPUT_FILE = "deflex_2014_de02_3_month_test.xlsx"
+FORCE_COMPUTING = False
 
 
 def get_price_from_opsd(path):
@@ -49,65 +59,40 @@ def get_price_from_opsd(path):
     return de_ts.loc[start_date:end_date, "DE_price_day_ahead"]
 
 
-url = (
-    "https://files.de-1.osf.io/v1/resources/a5xrj/providers/osfstorage"
-    "/605c566be12b600065aa635f?action=download&direct&version=1"
-)
+def get_example_files():
+    """Download and unzip scenarios (if zip-file does not exist)"""
+    fn = os.path.join(BASIC_PATH, "deflex_softwarex_examples_v04.zip")
+    if not os.path.isfile(fn):
+        tools.download(fn, EXAMPLES_URL)
+    with ZipFile(fn, "r") as zip_ref:
+        zip_ref.extractall(BASIC_PATH)
+    logging.info("All software examples extracted to %s.", BASIC_PATH)
 
-# !!! ADAPT THE PATH !!!
-path = "/home/uwe/"
 
-# Set logger
 logger.define_logging()
 plt.rcParams.update({"font.size": 18})
-# # Download and unzip scenarios (if zip-file does not exist)
-# os.makedirs(path, exist_ok=True)
-# fn = os.path.join(path, "deflex_scenario_examples_v03.zip")
-# if not os.path.isfile(fn):
-#     tools.download(fn, url)
-# with ZipFile(fn, "r") as zip_ref:
-#     zip_ref.extractall(path)
-# logging.info("All v0.3.x scenarios examples extracted to %s.", path)
+os.makedirs(BASIC_PATH, exist_ok=True)
+get_example_files()
 
-# Look in your folder above. You should see some scenario files. The csv and
-# the xlsx scenarios are the same. The csv-directories cen be read faster by
-# the computer but the xlsx-files are easier to read for humans because all
-# sheets are in one file.
+files = {"input": INPUT_FILE}
 
-# NOTE: Large models will need up to 24 GB of RAM, so start with small models
-# and increase the size step by step. You can also use large models with less
-# time steps but you have to adapt the annual limits.
+files["dump"] = files["input"].replace(".xlsx", ".dflx")
+files["out"] = files["input"].replace(".xlsx", "_results.xlsx")
+files["plot"] = files["input"].replace(".xlsx", ".png")
 
-# Now choose one example. We will start with a small one:
-path = "/home/uwe/"
-file = "deflex_2014_de02_no-heat_no-co2-costs_no-var-costs_3_month_test.xlsx"
-fn = os.path.join(path, file)
-dump_file = file.replace(".xlsx", ".dflx")
-dump_path = os.path.join(path, dump_file)
-results = tools.restore_results(dump_path)
-# *** Long version ***
+files = {k: os.path.join(BASIC_PATH, v) for k, v in files.items()}
 
-# # Create a scenario object
-# sc = scenario.DeflexScenario()
-#
-# # Read the input data. Use the right method (csv/xlsx) for your file type.
-# # sc.read_csv(fn)
-# sc.read_xlsx(fn)
+if not os.path.isfile(files["dump"]) or FORCE_COMPUTING:
+    main.model_scenario(files["input"], "xlsx", files["dump"])
 
-# # Create the LP model and solve it.
-# sc.compute()
-#
-# # Dump the results to a sub-dir named "results_cbc".
-# sc.dump(dump_path)
-
-results = tools.restore_results(dump_path)
+results = tools.restore_results(files["dump"])
 
 kv = postprocessing.calculate_key_values(results)
 
 mcp = pd.DataFrame()
 
 # Download Entsoe day ahead prices from OPSD
-opsd = get_price_from_opsd(path)
+opsd = get_price_from_opsd(BASIC_PATH)
 
 winter = opsd[0:744]
 spring = opsd[2159:2879]
@@ -128,9 +113,9 @@ f, ax = plt.subplots(3, 1, sharey=True, figsize=(15, 5))
 year = str(mcp.index[0].year)
 iv = [("8.1.", "25.1."), ("8.4.", "25.4."), ("8.7.", "25.7.")]
 
+# Create subplots for each date interval
 n = 0
 for interval in iv:
-
     start = datetime.strptime(interval[0] + year, "%d.%m.%Y")
     start += timedelta(hours=12)
     end = datetime.strptime(interval[1] + year, "%d.%m.%Y")
@@ -148,19 +133,18 @@ for interval in iv:
     ax[n].set_xlabel("")
     n += 1
 
+# Create legend
 sc = list(mcp.columns)
 ax[2].legend(
-    sc, bbox_to_anchor=(1.156, 1), loc="upper right",
+    sc,
+    bbox_to_anchor=(1.156, 1),
+    loc="upper right",
 )
-
+# Adjust plot
 plt.subplots_adjust(right=0.88, left=0.06, bottom=0.09, top=0.98, hspace=0.3)
-plt.savefig("/home/uwe/Dokumente/chiba/UniBremen/deflex - flexible heat and power model/v0.2/mcp.pdf")
+
+if not os.path.isfile(files["out"]) or FORCE_COMPUTING:
+    tools.dict2file(postprocessing.get_all_results(results), files["out"])
+
+plt.savefig(files["plot"])
 plt.show()
-out_file = file.replace(".", "_results.")
-out_path = os.path.join(path, out_file)
-tools.dict2file(postprocessing.get_all_results(results), out_path)
-
-
-# *** short version ***
-
-# main.model_scenario(fn, file_type="csv")

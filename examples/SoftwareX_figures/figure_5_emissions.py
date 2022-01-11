@@ -1,16 +1,23 @@
 import datetime
+import logging
 import os
+from zipfile import ZipFile
 
 import oemof_visio
 import pandas as pd
 from matplotlib import pyplot as plt
 from oemof.tools import logger
 
-from deflex import postprocessing, scenario, tools
+from deflex import main, postprocessing, tools
 
-# if the model is solved and dump you can skip the solver to show the plots
-# faster.
-skip_computing = True
+EXAMPLES_URL = (
+    "https://files.de-1.osf.io/v1/resources/9krgp/providers/osfstorage"
+    "/61d6b20972da2312ccbfa1f8?action=download&direct&version=1"
+)
+
+BASIC_PATH = os.path.join(os.path.expanduser("~"), "deflex_temp")
+INPUT_FILE = "deflex_2014_de02_august_test.xlsx"
+FORCE_COMPUTING = False
 
 # Basic parameters
 plot_colors = {
@@ -43,32 +50,41 @@ electricity_groups = {
     "natural gas": "natural gas",
 }
 
-fontsize = 18
 
+def get_example_files():
+    """Download and unzip scenarios (if zip-file does not exist)"""
+    fn = os.path.join(BASIC_PATH, "deflex_softwarex_examples_v04.zip")
+    if not os.path.isfile(fn):
+        tools.download(fn, EXAMPLES_URL)
+    with ZipFile(fn, "r") as zip_ref:
+        zip_ref.extractall(BASIC_PATH)
+    logging.info("All software examples extracted to %s.", BASIC_PATH)
+
+
+logger.define_logging()
+os.makedirs(BASIC_PATH, exist_ok=True)
+get_example_files()
+
+files = {"input": INPUT_FILE}
+
+files["dump"] = files["input"].replace(".xlsx", ".dflx")
+files["out"] = files["input"].replace(".xlsx", "_results.xlsx")
+files["plot"] = files["input"].replace(".xlsx", ".png")
+
+files = {k: os.path.join(BASIC_PATH, v) for k, v in files.items()}
+
+# Define plots
+fontsize = 18
 f, ax = plt.subplots(2, 1, sharex=True, figsize=(15, 6))
 plt.rcParams.update({"font.size": fontsize})
 
-basic_path = "/home/uwe/"
-in_file = "deflex_2014_de02_no-heat_no-co2-costs_no-var-costs_august_test.xlsx"
-dump_file = in_file.replace(".xlsx", ".dflx")
-
 logger.define_logging()
 
-if skip_computing is False:
-    # create a scenario object
-    sc = scenario.DeflexScenario()
-
-    # read the input data. Use the right method (csv/xlsx) for your file type.
-    sc.read_xlsx(os.path.join(basic_path, in_file))
-
-    # create the LP model and solve it.
-    sc.compute()
-
-    # dump the results to file
-    sc.dump(os.path.join(basic_path, dump_file))
+if not os.path.isfile(files["dump"]) or FORCE_COMPUTING:
+    main.model_scenario(files["input"], "xlsx", files["dump"])
 
 # restore the results from file
-my_results = tools.restore_results(os.path.join(basic_path, dump_file))
+my_results = tools.restore_results(files["dump"])
 
 # fetch commodity parameter
 commodity = postprocessing.fetch_parameter_of_commodity_sources(my_results)
@@ -184,5 +200,13 @@ ax[1].legend(bbox_to_anchor=(1, 1.4), loc="upper left", **ioplot)
 plt.subplots_adjust(
     right=0.798, left=0.055, bottom=0.06, top=0.99, hspace=0.03
 )
-# plt.show()
-plt.savefig("/home/uwe/deflex_emission_plot.pdf")
+
+# Write out the results
+if not os.path.isfile(files["out"]) or FORCE_COMPUTING:
+    tools.dict2file(postprocessing.get_all_results(my_results), files["out"])
+
+# Show and save the plot
+plt.savefig(files["plot"])
+plt.show()
+
+
