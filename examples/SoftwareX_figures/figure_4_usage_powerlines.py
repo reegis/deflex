@@ -1,3 +1,14 @@
+# -*- coding: utf-8 -*-
+
+"""
+Plotting the hours in which the usage of the power line is higher than 95% of
+the maximal capacity. Try to change the usage limit to 80% or 100%.
+
+SPDX-FileCopyrightText: Uwe Krien <krien@uni-bremen.de>
+
+SPDX-License-Identifier: MIT
+"""
+
 import logging
 import os
 from multiprocessing import Process
@@ -13,12 +24,13 @@ from deflex import geometries, main, postprocessing, tools
 
 EXAMPLES_URL = (
     "https://files.de-1.osf.io/v1/resources/9krgp/providers/osfstorage"
-    "/61d6b20972da2312ccbfa1f8?action=download&direct&version=1"
+    "/61def8c4bc925b00fed4b1d7?action=download&direct&version=1"
 )
 
-BASIC_PATH = os.path.join(os.path.expanduser("~"), "deflex_temp")
-INPUT_FILE = "deflex_2014_de21_heat_transmission.xlsx"
-FORCE_COMPUTING = False
+BASIC_PATH = os.path.join(os.path.expanduser("~"), "deflex", "softwarex")
+INPUT_FILE = "deflex_2014_de21_heat_restricted-transmission.xlsx"
+FORCE_COMPUTING = False  # Use True to compute the model (large model, slow)
+USAGE = 95  # %
 
 
 def get_example_files():
@@ -134,7 +146,7 @@ def get_power_line_usage(geo, results):
             temp = df / results["param"][outflow]["scalars"]["nominal_value"]
         except KeyError:
             temp = df * 0
-        data[idx] = round(len(temp[temp > 0.95]))
+        data[idx] = round(len(temp[temp > USAGE / 100]))
     return data
 
 
@@ -160,7 +172,8 @@ p1 = Process(target=plot_power_lines, args=(de21, my_data, files["plot"]))
 p1.start()
 
 if not os.path.isfile(files["out"]) or FORCE_COMPUTING:
-    logging.info("Writing results to an excel file."
-                 "This will take some minutes...")
+    logging.info(
+        "Writing results to an excel file." "This will take some minutes..."
+    )
     tools.dict2file(postprocessing.get_all_results(my_results), files["out"])
     logging.info("File written to {0}".format(files["out"]))

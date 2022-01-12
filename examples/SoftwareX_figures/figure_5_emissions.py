@@ -1,3 +1,21 @@
+# -*- coding: utf-8 -*-
+
+"""
+Plotting the emissions of the most expensive power plant and the average
+emissions. The most expensive power plant would be expelled by an additional
+capacity (e.g. PV, wind power plant). The second plot illustrates the power
+plant mix, which makes it easier to understand the emission values.
+
+Change the `FORCE_COMPUTING` parameter to True to compute the scenario on your
+computer. This enables you to change the input data, compute the model and see
+how the plot changes (e.g. change the specific emissions of the commodity
+sources).
+
+SPDX-FileCopyrightText: Uwe Krien <krien@uni-bremen.de>
+
+SPDX-License-Identifier: MIT
+"""
+
 import datetime
 import logging
 import os
@@ -12,12 +30,12 @@ from deflex import main, postprocessing, tools
 
 EXAMPLES_URL = (
     "https://files.de-1.osf.io/v1/resources/9krgp/providers/osfstorage"
-    "/61d6b20972da2312ccbfa1f8?action=download&direct&version=1"
+    "/61def8c4bc925b00fed4b1d7?action=download&direct&version=1"
 )
 
-BASIC_PATH = os.path.join(os.path.expanduser("~"), "deflex_temp")
+BASIC_PATH = os.path.join(os.path.expanduser("~"), "deflex", "softwarex")
 INPUT_FILE = "deflex_2014_de02_august_test.xlsx"
-FORCE_COMPUTING = False
+FORCE_COMPUTING = False  # Use True to compute the model (small model, fast)
 
 # Basic parameters
 plot_colors = {
@@ -208,5 +226,3 @@ if not os.path.isfile(files["out"]) or FORCE_COMPUTING:
 # Show and save the plot
 plt.savefig(files["plot"])
 plt.show()
-
-

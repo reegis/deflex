@@ -1,9 +1,16 @@
 # -*- coding: utf-8 -*-
 
 """
-Example, which shows two different ways of solving a deflex scenario.
+Plotting the Market Clearing Price (MCP) from the model and the day ahead price
+from the Entso-e transparency platform (downloaded from OPSD[1]).
 
-SPDX-FileCopyrightText: 2021 Uwe Krien <krien@uni-bremen.de>
+Change the `FORCE_COMPUTING` parameter to True to compute the scenario on your
+computer. This enables you to change the input data, compute the model and see
+how the plot changes (e.g. add a CO2 price).
+
+[1] OPSD: https://open-power-system-data.org
+
+SPDX-FileCopyrightText: Uwe Krien <krien@uni-bremen.de>
 
 SPDX-License-Identifier: MIT
 """
@@ -32,12 +39,12 @@ OPSD_URL = (
 
 EXAMPLES_URL = (
     "https://files.de-1.osf.io/v1/resources/9krgp/providers/osfstorage"
-    "/61d6b20972da2312ccbfa1f8?action=download&direct&version=1"
+    "/61def8c4bc925b00fed4b1d7?action=download&direct&version=1"
 )
 
-BASIC_PATH = os.path.join(os.path.expanduser("~"), "deflex_temp")
+BASIC_PATH = os.path.join(os.path.expanduser("~"), "deflex", "softwarex")
 INPUT_FILE = "deflex_2014_de02_3_month_test.xlsx"
-FORCE_COMPUTING = False
+FORCE_COMPUTING = False  # Use True to compute the model (small model, fast)
 
 
 def get_price_from_opsd(path):
@@ -74,22 +81,22 @@ plt.rcParams.update({"font.size": 18})
 os.makedirs(BASIC_PATH, exist_ok=True)
 get_example_files()
 
+# Define the filenames
 files = {"input": INPUT_FILE}
-
 files["dump"] = files["input"].replace(".xlsx", ".dflx")
 files["out"] = files["input"].replace(".xlsx", "_results.xlsx")
 files["plot"] = files["input"].replace(".xlsx", ".png")
-
 files = {k: os.path.join(BASIC_PATH, v) for k, v in files.items()}
 
+print(files["dump"])
+# Compute the model if the dump file does not exist or computing is forced
 if not os.path.isfile(files["dump"]) or FORCE_COMPUTING:
     main.model_scenario(files["input"], "xlsx", files["dump"])
 
+# Restore dumped file to create the plot
 results = tools.restore_results(files["dump"])
 
 kv = postprocessing.calculate_key_values(results)
-
-mcp = pd.DataFrame()
 
 # Download Entsoe day ahead prices from OPSD
 opsd = get_price_from_opsd(BASIC_PATH)
@@ -102,6 +109,7 @@ opsd = pd.concat([winter, spring, summer], axis=0)
 kv.set_index(opsd.index, inplace=True)
 
 # Add opsd day ahead prices to table
+mcp = pd.DataFrame()
 mcp["Entsoe"] = opsd
 mcp["de02"] = kv["marginal costs"]
 
