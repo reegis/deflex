@@ -82,7 +82,7 @@ def load_scenario(path, file_type=None):
     return sc
 
 
-def fetch_scenarios_from_dir(path, csv=True, xlsx=False):
+def fetch_scenarios_from_dir(path, csv=True, xlsx=False, exclude=None):
     """
     Search for files with an .xlsx extension or directories ending with '_csv'.
 
@@ -100,7 +100,9 @@ def fetch_scenarios_from_dir(path, csv=True, xlsx=False):
         Search for csv directories.
     xlsx : bool
         Search for xls files.
-
+    exclude : str
+        A string that is not allowed in the filename. Filenames containing this
+        strings will be excluded.
     Returns
     -------
     list : Scenarios found in the given directory.
@@ -108,7 +110,8 @@ def fetch_scenarios_from_dir(path, csv=True, xlsx=False):
     Examples
     --------
     >>> import shutil
-    >>> from deflex.tools import TEST_PATH
+    >>> from deflex.tools import TEST_PATH, fetch_test_files
+    >>> test_path = fetch_test_files("de02_heat.xlsx")
     >>> my_csv = fetch_scenarios_from_dir(TEST_PATH)
     >>> len(my_csv)
     10
@@ -121,10 +124,14 @@ def fetch_scenarios_from_dir(path, csv=True, xlsx=False):
     'de02_heat.xlsx'
     >>> len(fetch_scenarios_from_dir(TEST_PATH, xlsx=True))
     21
-    >>> s = load_scenario([e for e in my_xlsx][0])
+    >>> scenario = load_scenario([e for e in my_xlsx][0])
     >>> csv_path = os.path.join(TEST_PATH, "de02_new_csv")
-    >>> s.to_csv(csv_path)
+    >>> scenario.to_csv(csv_path)
     >>> len(fetch_scenarios_from_dir(TEST_PATH, xlsx=True))
+    22
+    >>> len(fetch_scenarios_from_dir(TEST_PATH, xlsx=True, exclude="de02"))
+    15
+    >>> len(fetch_scenarios_from_dir(TEST_PATH, xlsx=True, exclude="test"))
     22
     >>> shutil.rmtree(csv_path)  # remove test results, skip this line to go on
 
@@ -140,7 +147,12 @@ def fetch_scenarios_from_dir(path, csv=True, xlsx=False):
     xls_scenarios = sorted(xlsx_scenarios)
     logging.debug("Found xlsx scenario: %s", str(xls_scenarios))
     logging.debug("Found csv scenario: %s", str(csv_scenarios))
-    return csv_scenarios + xls_scenarios
+    all_scenarios = csv_scenarios + xls_scenarios
+    if exclude is not None:
+        all_scenarios = [
+            s for s in all_scenarios if exclude not in os.path.basename(s)
+        ]
+    return all_scenarios
 
 
 def model_multi_scenarios(scenarios, cpu_fraction=0.2, log_file=None):
