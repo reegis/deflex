@@ -1,9 +1,23 @@
+# -*- coding: utf-8 -*-
+
+"""
+Example of plotting data with lines.
+
+* Map data to a region (polygon) plot
+* Use of a predefined color map
+  https://matplotlib.org/stable/tutorials/colors/colormaps.html
+* Add description for values > 0
+
+SPDX-FileCopyrightText: Uwe Krien <krien@uni-bremen.de>
+
+SPDX-License-Identifier: MIT
+"""
+
 import random
 
 import pandas as pd
 from matplotlib import patheffects
 from matplotlib import pyplot as plt
-from matplotlib.colors import LinearSegmentedColormap
 
 from deflex import geometries
 
@@ -47,7 +61,7 @@ ax = de21_poly.plot(
 
 # Add labels for regions > 30%
 for i, v in de21_poly.iterrows():
-    if v["value"] > -1:
+    if v["value"] > 0:
         ax.text(
             v["geometry"].centroid.x,
             v["geometry"].centroid.y,

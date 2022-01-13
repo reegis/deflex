@@ -33,8 +33,8 @@ os.makedirs(path, exist_ok=True)
 fn = os.path.join(path, "deflex_scenario_examples_v03.zip")
 if not os.path.isfile(fn):
     tools.download(fn, url)
-# with ZipFile(fn, "r") as zip_ref:
-#     zip_ref.extractall(path)
+with ZipFile(fn, "r") as zip_ref:
+    zip_ref.extractall(path)
 logging.info("All v0.3.x scenarios examples extracted to %s.", path)
 
 # Look in your folder above. You should see some scenario files. The csv and
@@ -59,6 +59,11 @@ sc = scenario.DeflexScenario()
 # sc.read_csv(fn)
 sc.read_xlsx(fn)
 
+# It can be useful to write the xlsx using pandas. This version is very
+# should be used to share it with others because it is faster to read than
+# a manual created xlsx-file.
+sc.to_xlsx(fn)
+
 # Create the LP model and solve it.
 sc.compute()
 
@@ -67,7 +72,3 @@ sc.compute()
 dump_file = file.replace(".xlsx", ".dflx")
 dump_path = os.path.join(path, "results_cbc", dump_file)
 sc.dump(dump_path)
-
-# *** short version ***
-
-# main.model_scenario(fn, file_type="csv")

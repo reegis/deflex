@@ -1,3 +1,18 @@
+# -*- coding: utf-8 -*-
+
+"""
+Example of plotting data with lines.
+
+* Map data to a line plot, using polygons as background.
+* Use of a self-defined color map (can be replaced by predefined color maps)
+  https://matplotlib.org/stable/tutorials/colors/colormaps.html
+* Add description for values > 70
+
+SPDX-FileCopyrightText: Uwe Krien <krien@uni-bremen.de>
+
+SPDX-License-Identifier: MIT
+"""
+
 import random
 
 import pandas as pd
