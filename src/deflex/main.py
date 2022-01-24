@@ -20,7 +20,7 @@ from datetime import datetime
 import pandas as pd
 
 from deflex import config as cfg
-from deflex import scenario
+from deflex.tools.files import create_scenario
 
 
 def stopwatch():
@@ -28,120 +28,6 @@ def stopwatch():
     if not hasattr(stopwatch, "start"):
         stopwatch.start = datetime.now()
     return str(datetime.now() - stopwatch.start)[:-7]
-
-
-def load_scenario(path, file_type=None):
-    """
-    Create a deflex scenario object from file.
-
-    Parameters
-    ----------
-    path : str
-        A valid deflex scenario file.
-    file_type : str or None
-        Type of the input data. Valid values are 'csv', 'xlsx', None. If the
-        input is non the path should end on 'csv', '.xlsx' to allow
-        auto-detection.
-
-    Returns
-    -------
-    deflex.DeflexScenario
-
-    Examples
-    --------
-    >>> from deflex.tools import fetch_test_files, TEST_PATH
-    >>> fn = fetch_test_files("de17_heat.xlsx")
-    >>> s = load_scenario(fn, file_type="xlsx")
-    >>> type(s)
-    <class 'deflex.scenario.DeflexScenario'>
-    >>> int(s.input_data["volatile plants"]["capacity"]["DE01", "wind"])
-    3815
-    >>> type(load_scenario(fn))
-    <class 'deflex.scenario.DeflexScenario'>
-    >>> load_scenario(fn, file_type="csv")  # doctest: +IGNORE_EXCEPTION_DETAIL
-    Traceback (most recent call last):
-     ...
-    NotADirectoryError: [Errno 20] Not a directory:
-
-    """
-    sc = scenario.DeflexScenario()
-
-    if path is not None:
-        if file_type is None:
-            if ".xlsx" in path[-5:]:
-                file_type = "xlsx"
-            elif "csv" in path[-4:]:
-                file_type = "csv"
-            else:
-                file_type = None
-        logging.info("Reading file: %s", path)
-        if file_type == "xlsx":
-            sc.read_xlsx(path)
-            sc.to_xlsx(path)
-        elif file_type == "csv":
-            sc.read_csv(path)
-    return sc
-
-
-def fetch_scenarios_from_dir(path, csv=True, xlsx=False):
-    """
-    Search for files with an .xlsx extension or directories ending with '_csv'.
-
-    By now it is not possible to distinguish between valid deflex scenarios and
-    other xlsx-files or directories ending with '_csv'. Therefore, the given
-    directory should only contain valid scenarios.
-
-    The function will not search recursively.
-
-    Parameters
-    ----------
-    path : str
-        Directory with valid deflex scenarios.
-    csv : bool
-        Search for csv directories.
-    xlsx : bool
-        Search for xls files.
-
-    Returns
-    -------
-    list : Scenarios found in the given directory.
-
-    Examples
-    --------
-    >>> import shutil
-    >>> from deflex.tools import TEST_PATH
-    >>> my_csv = fetch_scenarios_from_dir(TEST_PATH)
-    >>> len(my_csv)
-    10
-    >>> os.path.basename(my_csv[0])
-    'de02_heat_csv'
-    >>> my_xlsx = fetch_scenarios_from_dir(TEST_PATH, csv=False, xlsx=True)
-    >>> len(my_xlsx)
-    11
-    >>> os.path.basename([e for e in my_xlsx][0])
-    'de02_heat.xlsx'
-    >>> len(fetch_scenarios_from_dir(TEST_PATH, xlsx=True))
-    21
-    >>> s = load_scenario([e for e in my_xlsx][0])
-    >>> csv_path = os.path.join(TEST_PATH, "de02_new_csv")
-    >>> s.to_csv(csv_path)
-    >>> len(fetch_scenarios_from_dir(TEST_PATH, xlsx=True))
-    22
-    >>> shutil.rmtree(csv_path)  # remove test results, skip this line to go on
-
-    """
-    xlsx_scenarios = []
-    csv_scenarios = []
-    for name in os.listdir(path):
-        if name[-4:] == "xlsx" and xlsx is True:
-            xlsx_scenarios.append(os.path.join(path, name))
-        if name[-4:] == "_csv" and csv is True:
-            csv_scenarios.append(os.path.join(path, name))
-    csv_scenarios = sorted(csv_scenarios)
-    xls_scenarios = sorted(xlsx_scenarios)
-    logging.debug("Found xlsx scenario: %s", str(xls_scenarios))
-    logging.debug("Found csv scenario: %s", str(csv_scenarios))
-    return csv_scenarios + xls_scenarios
 
 
 def model_multi_scenarios(scenarios, cpu_fraction=0.2, log_file=None):
@@ -254,8 +140,8 @@ def batch_model_scenario(path, named=True, file_type=None, ignore_errors=True):
     Welcome to the CBC MILP ...
     >>> r.name
     'de02_heat_csv'
-    >>> result_file = r.result_file
-    >>> os.path.basename(result_file)
+    >>> my_result_file = r.result_file
+    >>> os.path.basename(my_result_file)
     'de02_heat.dflx'
     >>> r.trace
     >>> r.return_value.year > 2019
@@ -346,7 +232,7 @@ def model_scenario(
     }
     logging.info("Start modelling: %s", stopwatch())
 
-    sc = load_scenario(path, file_type)
+    sc = create_scenario(path, file_type)
 
     # If a meta table exists in the table collection update meta dict
     sc.meta.update(meta)

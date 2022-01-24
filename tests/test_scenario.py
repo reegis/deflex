@@ -17,18 +17,17 @@ import pandas as pd
 import pytest
 
 from deflex import scenario
-from deflex.tools import TEST_PATH
-from deflex.tools import fetch_test_files
+from deflex.tools import TEST_PATH, fetch_test_files, restore_scenario
 
 
 def test_basic_scenario_class():
-    sc = scenario.Scenario()
+    sc = scenario.scenario.Scenario()
     sc.create_nodes()
 
 
 def test_scenario_building():
     sc = scenario.DeflexScenario(name="test", year=2014)
-    csv_path = os.path.join(TEST_PATH, "de22_heat_transmission_csv")
+    csv_path = fetch_test_files("de22_heat_transmission_csv")
     sc.read_csv(csv_path)
     sc.table2es()
     sc.check_input_data()
@@ -119,15 +118,15 @@ def test_build_model_manually():
     plot_fn = os.path.join(TEST_PATH, "test_plot_X343.graphml")
     sc.plot_nodes(plot_fn)
     assert os.path.isfile(plot_fn)
-    scenario.restore_scenario(dump_fn)
-    assert int(sc.meta["year"]) == 2014
+    sc_new = restore_scenario(dump_fn)
+    assert int(sc_new.meta["year"]) == 2014
     os.remove(dump_fn)
     os.remove(plot_fn)
 
 
 def test_corrupt_data():
     sc = scenario.DeflexScenario(year=2014)
-    csv_path = os.path.join(TEST_PATH, "de03_fictive_csv")
+    csv_path = fetch_test_files("de03_fictive_csv")
     sc.read_csv(csv_path)
     sc.input_data["volatile series"].drop(
         ("DE02", "solar"), inplace=True, axis=1
@@ -141,14 +140,14 @@ def test_restore_an_invalid_scenario():
     filename = fetch_test_files("de02_heat.xlsx")
     msg = "The suffix of a valid deflex scenario has to be '.dflx'."
     with pytest.raises(IOError, match=msg):
-        scenario.restore_scenario(filename)
+        restore_scenario(filename)
 
 
 class TestInputDataCheck:
     @classmethod
     def setup_class(cls):
         cls.sc = scenario.DeflexScenario()
-        fn = os.path.join(TEST_PATH, "de02_no-heat.xlsx")
+        fn = fetch_test_files("de02_no-heat.xlsx")
         cls.sc.read_xlsx(fn)
         cls.sc.input_data["general"]["regions"] = float("nan")
 
