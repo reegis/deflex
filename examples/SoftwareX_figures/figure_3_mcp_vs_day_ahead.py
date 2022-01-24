@@ -88,7 +88,6 @@ files["out"] = files["input"].replace(".xlsx", "_results.xlsx")
 files["plot"] = files["input"].replace(".xlsx", ".png")
 files = {k: os.path.join(BASIC_PATH, v) for k, v in files.items()}
 
-print(files["dump"])
 # Compute the model if the dump file does not exist or computing is forced
 if not os.path.isfile(files["dump"]) or FORCE_COMPUTING:
     main.model_scenario(files["input"], "xlsx", files["dump"])

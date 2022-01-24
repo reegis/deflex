@@ -15,7 +15,7 @@ from zipfile import ZipFile
 
 from oemof.tools import logger
 
-from deflex import main, scenario, tools
+from deflex import scenario, tools
 
 url = (
     "https://files.de-1.osf.io/v1/resources/a5xrj/providers/osfstorage"

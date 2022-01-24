@@ -13,6 +13,7 @@ SPDX-License-Identifier: MIT
 
 from oemof.tools import logger
 
+import deflex.tools.files
 from deflex import main
 
 # !!! ADAPT THE PATH !!!
@@ -26,7 +27,7 @@ logger.define_logging()
 # not have other files xlsx-files in the given path. You can exclude a specific
 # pattern if you have input and e.g. result files in the given path and the
 # string "result" is part of the name of the result files.
-files = main.fetch_scenarios_from_dir(
+files = deflex.tools.files.search_input_scenarios(
     path, xlsx=True, csv=True, exclude="result"
 )
 

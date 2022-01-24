@@ -1,5 +1,5 @@
 from deflex.postprocessing import get_all_results
-from deflex.tools import restore_results, dict2file
+from deflex.tools import dict2file, restore_results
 
 my_fn = "/home/uwe/.deflex/pedro/2018-DE02-Agora4.dflx"
 # my_fn = "/home/uwe/.deflex/pedro/2030-DE02-Agora9.dflx"

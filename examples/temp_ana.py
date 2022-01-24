@@ -1,6 +1,7 @@
-from deflex.tools import dict2file, restore_results
 from oemof.tools import logger
-from deflex.postprocessing import Cycles, calculate_product_fuel_balance
+
+from deflex.postprocessing import Cycles
+from deflex.tools import restore_results
 
 logger.define_logging()
 
@@ -31,16 +32,16 @@ my_cycles.detect_suspicious_cycle_rows(path="/home/uwe/00asdf.xlsx")
 
 filename2 = my_fn.replace(".dflx", "_results_emission.xlsx")
 
-my_tables = calculate_product_fuel_balance(
-    my_results,
-    "finnish",
-    eta_e=0.3,
-    eta_th=0.5,
-    eta_e_ref=0.5,
-    eta_th_ref=0.9,
-)
+# my_tables = calculate_product_fuel_balance(
+#     my_results,
+#     "finnish",
+#     eta_e=0.3,
+#     eta_th=0.5,
+#     eta_e_ref=0.5,
+#     eta_th_ref=0.9,
+# )
 print("Store file to {}".format(filename2))
-dict2file(my_tables, filename2, drop_empty_columns=False)
+# dict2file(my_tables, filename2, drop_empty_columns=False)
 # # for table in all_results._fields:
 # #     print("\n\n***************** " + table + " ****************\n")
 # #     print(getattr(all_results, table))
