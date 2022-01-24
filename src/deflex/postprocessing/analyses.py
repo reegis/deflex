@@ -35,17 +35,48 @@ def label2str(label):
 
 
 class Cycles:
-    def __init__(self, results, cycle_filter=None):
-        """
-        Detect all simple cycles.
+    """
+    Detect all simple cycles and get the flows of each cycle as
+    pandas.DataFrame. For a large number of cycles getting the values may take
+    a while so it is possible to skip this step setting the `no_values`
+    parameter to True.
 
-        This is the main function
+    Parameters
+    ----------
+    results
+    storages
+    lines
+    digits
+    no_values
 
-        """
-        self._filter = None
-        self.simple_cycles = list(self._detect_simple_cycles(results))
-        self.cycles = self._get_cycle_values(results)
-        self.digits = 10
+    Examples
+    --------
+    >>> from deflex.tools import restore_results, fetch_test_files
+    >>> fn = fetch_test_files("de03_fictive.dflx")
+    >>> c = Cycles(restore_results(fn), storages=True, lines=True)
+    >>> len(list(c.simple_cycles))
+    9
+    >>> c = Cycles(restore_results(fn), storages=False, lines=True)
+    >>> len(list(c.simple_cycles))
+    7
+    >>> c = Cycles(restore_results(fn), storages=False, lines=False)
+    >>> len(list(c.simple_cycles))
+    2
+    """
+
+    def __init__(
+        self, results, storages=True, lines=True, digits=10, no_values=False
+    ):
+        self.name = results["Input data"]["general"]["name"]
+        self.storages = storages
+        self.lines = lines
+        self.simple_cycles = None
+        self._detect_simple_cycles(results)
+        if no_values is False:
+            self.cycles = self._get_cycle_values(results)
+        else:
+            self.cycles = None
+        self.digits = digits
 
     @property
     def used_cycles(self):
@@ -55,23 +86,20 @@ class Cycles:
     def suspicious_cycles(self):
         return self.drop_unsuspicious_cycles()
 
-    @property
-    def filter(self):
-        return self._filter
-
-    def add_filter(self, cycle_filter):
-        if isinstance(cycle_filter, str):
-            cycle_filter = [cycle_filter]
-        if self._filter is not None:
-            self._filter.extend(cycle_filter)
-        else:
-            self._filter = cycle_filter
-        for phrase in cycle_filter:
+    def filter_simple_cycles(self):
+        if self.storages is False:
             self.simple_cycles = [
-                c for c in self.simple_cycles if phrase not in str(c)
+                simple_cycle
+                for simple_cycle in self.simple_cycles
+                if len([c for c in simple_cycle if c.cat != "storage"])
+                == len(simple_cycle)
             ]
-            self.cycles = [
-                c for c in self.cycles if phrase not in str(c.columns)
+        if self.lines is False:
+            self.simple_cycles = [
+                simple_cycle
+                for simple_cycle in self.simple_cycles
+                if len([c for c in simple_cycle if c.cat != "line"])
+                != len(simple_cycle) / 2
             ]
 
     def _detect_simple_cycles(self, results):
@@ -86,14 +114,8 @@ class Cycles:
         generator
         """
         dflx_graph = DeflexGraph(results)
-        if self._filter is None:
-            cycle_filter = []
-        else:
-            cycle_filter = self._filter
-        cycles = simple_cycles(dflx_graph.get())
-        for phrase in cycle_filter:
-            cycles = [c for c in cycles if phrase not in str(c)]
-        return cycles
+        self.simple_cycles = list(nx_simple_cycles(dflx_graph.get()))
+        self.filter_simple_cycles()
 
     def _get_cycle_values(self, results):
         """
@@ -108,8 +130,22 @@ class Cycles:
         flows = [f for f in results["main"] if f[1] is not None]
 
         usages = []
+        noc = len(self.simple_cycles)
+        noc_base = noc
+        if noc_base > 500:
+            logging.warning(
+                "{} cycles have been found. Getting the flows for all cycles"
+                " may take a while. Use the filter function or skip this step"
+                " by setting the `no_values` parameter to True.".format(
+                    noc_base
+                )
+            )
         for cycle in self.simple_cycles:
-            usage = pd.DataFrame()
+            if noc % ceil(noc_base / 10) == 0:
+                if noc_base > 500:
+                    print(100 - int(round(noc / (noc_base / 100))), "%")
+            noc -= 1
+            usage = {}
             for n in range(len(cycle)):
                 flow = [
                     f
@@ -118,39 +154,47 @@ class Cycles:
                 ][0]
                 name = "{0}_from_{1}".format(n, label2str(flow[0].label))
                 usage[name] = results["main"][flow]["sequences"]["flow"]
-            usages.append(usage)
+            usages.append(pd.DataFrame(usage))
         return usages
 
     def drop_unused_cycles(self):
         """
         Drop cycles that are not used as cycles from a list of cycles.
 
-        Cycles are not in use if one flow of the cycle is zero for all time steps.
+        Cycles are not in use if one flow of the cycle is zero for all time
+        steps.
         """
-        return [
-            c
-            for c in self.cycles
-            if not (c.sum().round(self.digits) == 0).any()
-        ]
+        if self.cycles is not None:
+            return [
+                c
+                for c in self.cycles
+                if not (c.sum().round(self.digits) == 0).any()
+            ]
+        else:
+            return None
 
     def drop_unsuspicious_cycles(self):
         """
         Drop cycles that are unsuspicious from a list of cycles.
 
-        Suspicious cycles are cycles that have a non-zero value in all flows within
-        one time step.
+        Suspicious cycles are cycles that have a non-zero value in all flows
+        within one time step.
 
-        One can detect all cycles and drop the unsuspicious cycles to get only the
-        suspicious ones. A suspicious cycle indicates a problem in the model
-        design, so one should have a closer look at all these cycles. A typical
-        example for such cycles are storages that a charged and discharged in one
-        time step. In some rare cases suspicious cycles are fine.
+        One can detect all cycles and drop the unsuspicious cycles to get only
+        the suspicious ones. A suspicious cycle indicates a problem in the
+        model design, so one should have a closer look at all these cycles. A
+        typical example for such cycles are storages that a charged and
+        discharged in one time step. In some rare cases suspicious cycles are
+        fine.
         """
 
         def rows(frame):
             return frame.loc[(frame.round(self.digits) != 0).all(axis=1)]
 
-        return [c for c in self.cycles if len(rows(c)) > 0]
+        if self.cycles is not None:
+            return [c for c in self.cycles if len(rows(c)) > 0]
+        else:
+            return None
 
     def detect_suspicious_cycle_rows(self, **kwargs):
         """
@@ -170,19 +214,31 @@ class Cycles:
             dict2file({"no_suspicious_cycle_found": pd.DataFrame()}, **kwargs)
         return frames
 
-    def print(self, details=False):
-        print("**** OVERVIEW **************************")
+    def __str__(self):
+        number = {}
+        for p in [
+            (self.simple_cycles, "sic"),
+            (self.used_cycles, "uc"),
+            (self.suspicious_cycles, "suc"),
+        ]:
+            if p[0] is None:
+                number[p[1]] = None
+            else:
+                number[p[1]] = len(p[0])
+
+        output = "*** Cycle object of scenario: {0} ***\n\n"
+        output += "Number of cycles: {0}\n".format(number["sic"])
+        output += "Number of used cycles: {0}\n".format(number["uc"])
+        output += "Number of critical cycles: {0}\n".format(number["suc"])
+        return output.format(self.name)
+
+    def details(self):
+        print("**** DETAILS ***************************")
         print()
-        print("Number of cycles:", len(self.cycles))
-        print("Number of used cycles:", len(self.used_cycles))
-        print("Number of critical cycles:", len(self.suspicious_cycles))
-        print()
-        if details:
-            print("**** DETAILS ***************************")
+        if self.cycles is None or len(self.cycles) == 0:
+            print("No details available!")
             print()
-            if len(self.cycles) == 0:
-                print("No details available!")
-                print()
+        else:
             for sc in self.cycles:
                 for k, v in sc.items():
                     print(
