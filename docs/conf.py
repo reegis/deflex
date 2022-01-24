@@ -40,6 +40,8 @@ MOCK_MODULES = [
     "networkx",
     "deflex.config",
     "matplotlib",
+    "matplotlib.cm",
+    "matplotlib.colors",
     "oemof",
     "oemof.tools",
     "oemof.network",
@@ -79,6 +81,7 @@ numpydoc_show_class_members = False
 
 #
 autoclass_content = "both"
+nitpicky = True
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
@@ -97,6 +100,8 @@ my_copyleft = "CC BY 4.0 - Uwe Krien"
 project = "deflex"
 copyright = my_copyleft
 author = "Uwe Krien"
+
+linkcheck_ignore = [r"https://requires.io/.*", r"https://matrix.to/*"]
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
