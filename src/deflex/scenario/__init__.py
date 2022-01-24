@@ -1,1 +1,1 @@
-from deflex.scenario.scenario import DeflexScenario, NodeDict
+from deflex.scenario.scenario import DeflexScenario, NodeDict  # noqa: F401
