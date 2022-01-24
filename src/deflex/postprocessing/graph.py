@@ -11,7 +11,6 @@ import networkx as nx
 import pandas as pd
 from matplotlib.cm import get_cmap
 from matplotlib.colors import Normalize, rgb2hex
-from oemof import solph
 
 
 class Edge:

@@ -23,6 +23,7 @@ from oemof import solph
 from oemof.network import graph
 
 from deflex import config as cfg
+
 from .nodes import create_solph_nodes_from_data
 
 if sys.getrecursionlimit() < 3000:
@@ -441,6 +442,3 @@ class DeflexScenario(Scenario):
         nodes = NodeDict()
 
         return create_solph_nodes_from_data(self.input_data, nodes)
-
-
-

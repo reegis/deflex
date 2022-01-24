@@ -26,8 +26,8 @@ from scenario_builder import (
 
 from deflex import __file__ as dfile
 from deflex import config as cfg
-from deflex import scenario
 from deflex.creator import transmission
+from deflex.scenario import scenario
 
 
 def scenario_default_decentralised_heat():

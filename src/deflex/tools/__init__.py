@@ -5,8 +5,10 @@ from deflex.tools.downloads import (  # noqa: F401
     fetch_test_files,
 )
 from deflex.tools.files import (  # noqa: F401
+    create_scenario,
     dict2file,
     restore_results,
     restore_scenario,
-    search_scenarios,
+    search_dumped_scenarios,
+    search_input_scenarios,
 )

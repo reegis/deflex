@@ -10,15 +10,16 @@ SPDX-License-Identifier: MIT
 __copyright__ = "Uwe Krien <krien@uni-bremen.de>"
 __license__ = "MIT"
 
-import operator
-from functools import reduce
+import logging
+from math import ceil
 
 import pandas as pd
-from networkx import simple_cycles
+from networkx import simple_cycles as nx_simple_cycles
 from oemof import solph
 
+from deflex.tools import dict2file
+
 from .graph import DeflexGraph
-from deflex.tools import allocate_fuel, dict2file
 
 
 def label2str(label):

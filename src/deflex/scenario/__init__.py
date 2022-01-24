@@ -1,1 +1,1 @@
-from deflex.scenario.scenario import DeflexScenario
+from deflex.scenario.scenario import DeflexScenario, NodeDict
