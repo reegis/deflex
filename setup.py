@@ -23,7 +23,7 @@ def read(*names, **kwargs):
 
 setup(
     name="deflex",
-    version="0.3.0",
+    version="0.3.1dev0",
     license="MIT",
     description=(
         "deflex - flexible multi-regional energy system model for "
