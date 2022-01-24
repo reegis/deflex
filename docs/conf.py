@@ -101,6 +101,8 @@ project = "deflex"
 copyright = my_copyleft
 author = "Uwe Krien"
 
+linkcheck_ignore = [r"https://requires.io/.*", r"https://matrix.to/*"]
+
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
 # built documents.
