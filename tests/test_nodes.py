@@ -275,7 +275,7 @@ class TestNodes:
             ("oil", "DE"),
             ("other", "DE"),
             ("waste", "DE"),
-            ("H2", "DE")
+            ("H2", "DE"),
         ]
         for c in sources:
             label = nd.commodity_bus_label(c[0], c[1])
