@@ -11,9 +11,9 @@ import pandas as pd
 import pytest
 from oemof import solph
 
-from deflex import main
-from deflex.scenario import nodes as nd
+import deflex.tools.files
 from deflex import scenario
+from deflex.scenario import nodes as nd
 from deflex.tools import fetch_test_files
 
 
@@ -21,24 +21,24 @@ class TestNodes:
     @classmethod
     def setup_class(cls):
         fn = fetch_test_files("de03_fictive_csv")
-        cls.sc = main.load_scenario(fn, file_type="csv")
+        cls.sc = deflex.tools.files.create_scenario(fn, file_type="csv")
 
     def test_fuel_bus_with_source(self):
         self.sc.initialise_energy_system()
         nodes = scenario.NodeDict()
         nodes = nd.add_commodity_sources(self.sc.input_data, nodes)
         nodes_copy = nodes.copy()
-        # nodes = nd.create_fuel_bus_with_source(
-        #     nodes, "lignite", "DE", self.sc.input_data
-        # )
         assert nodes == nodes_copy
+
         self.sc.add_nodes_to_es(nodes)
         src = [v for k, v in nodes.items() if k.cat == "source"][1]
         trg = [v for k, v in nodes.items() if isinstance(v, solph.Bus)][1]
         flow = self.sc.es.flows()[(src, trg)]
+        assert flow.label[0].label.subtag == "lignite"
+        print(flow.emission)
         assert flow.variable_costs[0] == 11.988
         assert flow.nominal_value is None
-        assert flow.emission[0] == 0.404
+        assert flow.emission == 0.404
 
     def test_electricity_bus(self):
         self.sc.initialise_energy_system()
@@ -93,7 +93,7 @@ class TestNodes:
         nodes = scenario.NodeDict()
         nd.add_commodity_sources(self.sc.input_data, nodes)
         nd.add_decentralised_heating_systems(self.sc.input_data, nodes)
-        assert len(nodes) == 44
+        assert len(nodes) == 42
         self.sc.add_nodes_to_es(nodes)
         oil_heat_bus = [
             v
@@ -250,8 +250,8 @@ class TestNodes:
         flow1_3 = self.sc.es.flows()[(trsf1_3, ebus3)]
         flow3_1 = self.sc.es.flows()[(trsf3_1, ebus1)]
         assert flow1_2.nominal_value is None
-        assert flow1_3.nominal_value == 500.0
-        assert flow3_1.nominal_value == 500.0
+        assert flow1_3.nominal_value == 9876.0
+        assert flow3_1.nominal_value == 9876.0
         assert (
             flow1_3.nominal_value
             == self.sc.input_data["power lines"].loc["DE01-DE03", "capacity"]
@@ -275,6 +275,7 @@ class TestNodes:
             ("oil", "DE"),
             ("other", "DE"),
             ("waste", "DE"),
+            ("H2", "DE")
         ]
         for c in sources:
             label = nd.commodity_bus_label(c[0], c[1])
@@ -335,13 +336,13 @@ class TestNodes:
         assert eflow1.nominal_value is None
         assert int(fflow1.nominal_value) == 27440
         assert hflow1.nominal_value is None
-        assert round(fflow1.summed_max, 1) == 15.0
+        assert round(fflow1.summed_max, 1) == 97.9
         assert chp1.conversion_factors[elec][0] == 0.25
         assert chp1.conversion_factors[heat][0] == 0.41
         assert hp2.conversion_factors[heat][0] == 0.75
         assert fflow2.nominal_value is None
         assert int(hflow2.nominal_value) == 6775
-        assert round(hflow2.summed_max, 1) == 17.7
+        assert round(hflow2.summed_max, 1) == 1054.1
 
     def test_deprecated_electricity_storages(self):
         self.sc.initialise_energy_system()

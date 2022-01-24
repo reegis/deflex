@@ -13,36 +13,36 @@ __copyright__ = "Uwe Krien <krien@uni-bremen.de>"
 __license__ = "MIT"
 
 # from deflex import postprocessing
-import pandas as pd
-
-from deflex.postprocessing import analyses
-
-
-def test_no_time_step_cycles():
-    test_cycle = pd.DataFrame(
-        {
-            "other-converter_Electrolysis_electricity_DE": [0, 2, 3, 4, 0, 6],
-            "commodity_all_H2_DE": [7, 0, 9, 10, 11, 0],
-            "power-plant_H2_H2_DE01": [13, 14, 0, 16, 17, 18],
-            "electricity_all_all_DE01": [19, 20, 21, 0, 23, 24],
-        }
-    )
-    assert analyses.detect_suspicious_cycle_rows(test_cycle) is None
+# import pandas as pd
+#
+# from deflex.postprocessing import analyses
 
 
-def test_time_step_cycles():
-    test_cycle = pd.DataFrame(
-        {
-            "other-converter_Electrolysis_electricity_DE": [0, 2, 3, 4, 0, 6],
-            "commodity_all_H2_DE": [7, 8, 9, 10, 11, 0],
-            "power-plant_H2_H2_DE01": [13, 14, 0, 16, 17, 18],
-            "electricity_all_all_DE01": [19, 20, 21, 0, 23, 24],
-        }
-    )
-    rows = analyses.detect_suspicious_cycle_rows(test_cycle)
-    assert rows is not None
-    assert len(rows) == 1
-    assert rows.index[0] == 1
+# def test_no_time_step_cycles():
+#     test_cycle = pd.DataFrame(
+#         {
+#         "other-converter_Electrolysis_electricity_DE": [0, 2, 3, 4, 0, 6],
+#         "commodity_all_H2_DE": [7, 0, 9, 10, 11, 0],
+#         "power-plant_H2_H2_DE01": [13, 14, 0, 16, 17, 18],
+#         "electricity_all_all_DE01": [19, 20, 21, 0, 23, 24],
+#         }
+#     )
+#     assert analyses.detect_suspicious_cycle_rows(test_cycle) is None
+#
+#
+# def test_time_step_cycles():
+#     test_cycle = pd.DataFrame(
+#         {
+#         "other-converter_Electrolysis_electricity_DE": [0, 2, 3, 4, 0, 6],
+#         "commodity_all_H2_DE": [7, 8, 9, 10, 11, 0],
+#         "power-plant_H2_H2_DE01": [13, 14, 0, 16, 17, 18],
+#         "electricity_all_all_DE01": [19, 20, 21, 0, 23, 24],
+#         }
+#     )
+#     rows = analyses.detect_suspicious_cycle_rows(test_cycle)
+#     assert rows is not None
+#     assert len(rows) == 1
+#     assert rows.index[0] == 1
 
 
 # def test_flow_results():

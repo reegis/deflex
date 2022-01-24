@@ -23,13 +23,13 @@ from deflex import config as cfg
 from deflex import scenario as st
 from deflex.creator import scenario_creator
 from deflex.geometries import deflex_power_lines, deflex_regions
-from deflex.tools import TEST_PATH
+from deflex.tools import fetch_test_files
 
 
 class TestScenarioCreationFull:
     @classmethod
     def setup_class(cls):
-        path = os.path.join(TEST_PATH, "de22_heat_transmission_csv")
+        path = fetch_test_files("de22_heat_transmission_csv")
         sc = st.DeflexScenario()
         sc.read_csv(path)
         cls.tables = sc.input_data
@@ -201,7 +201,7 @@ class TestScenarioCreationFull:
 class TestScenarioCreationPart:
     @classmethod
     def setup_class(cls):
-        path = os.path.join(TEST_PATH, "de21_no-heat_csv")
+        path = fetch_test_files("de21_no-heat_csv")
         sc = st.DeflexScenario()
         sc.read_csv(path)
         cls.tables = sc.input_data
@@ -335,7 +335,7 @@ class TestScenarioCreationPart:
         )
 
     def test_length(self):
-        assert len(self.tables.keys()) == len(self.input_data.keys())
+        # assert len(self.tables.keys()) == len(self.input_data.keys())
         assert sorted(list(self.tables.keys())) == sorted(
             list(self.input_data.keys())
         )

@@ -87,6 +87,7 @@ def create_solph_nodes_from_data(input_data, nodes):
 
 # ************ LABELS ********************************
 
+
 def electricity_bus_label(region):
     return Label("electricity", "all", "all", region)
 
@@ -96,6 +97,7 @@ def commodity_bus_label(fuel, region):
 
 
 # ************ BUSES ********************************
+
 
 def add_electricity_bus(nodes, region):
     """Create an electricity bus for a given region."""
@@ -111,6 +113,7 @@ def check_electricity_buses(nodes, table):
 
 
 # ************ Objects ********************************
+
 
 def add_source(nodes, label, bus_label, **params):
     annual_limit = params.get("annual limit", float("inf"))
@@ -182,6 +185,7 @@ def add_sink(nodes, table, input_data, label, bus_label, sink_set):
 
 
 # ************ TABLES ********************************
+
 
 def add_commodity_sources(input_data, nodes):
     """
@@ -532,9 +536,7 @@ def add_heat_and_chp_plants(table_collection, nodes):
                 "chp plant", name, params.fuel.replace("_", " "), region
             )
 
-            smax = (params.limit_heat_chp / params.efficiency_heat_chp) / (
-                params["capacity_heat_chp"] / params.efficiency_heat_chp
-            )
+            smax = params.limit_heat_chp / params["capacity_heat_chp"]
 
             nodes[chp_label] = solph.Transformer(
                 label=chp_label,
@@ -792,5 +794,5 @@ def add_shortage_excess(nodes):
         shortage_label = Label("shortage", key.cat, key.subtag, key.region)
         nodes[shortage_label] = solph.Source(
             label=shortage_label,
-            outputs={nodes[key]: solph.Flow(variable_costs=900)},
+            outputs={nodes[key]: solph.Flow(variable_costs=9999)},
         )

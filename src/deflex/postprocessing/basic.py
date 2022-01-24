@@ -9,15 +9,10 @@ SPDX-License-Identifier: MIT
 
 __all__ = [
     "get_all_results",
-    "DeflexGraph",
 ]
 
-import networkx as nx
 import pandas as pd
-from matplotlib.cm import get_cmap
-from matplotlib.colors import Normalize, rgb2hex
 from oemof import solph
-from datetime import datetime
 
 
 def get_time_index(results):
@@ -84,10 +79,8 @@ def components2table(results):
 
 
 def bus_flows2tables(results, bus_groups):
-    levels = [[], [], [], [], [], [], [], []]
     tables = {}
     for key, buses in bus_groups.items():
-        # seq = pd.DataFrame(columns=pd.MultiIndex(levels=levels, codes=levels))
         seq = {}
         name = "_".join(key).replace("_all", "")
         for bus in buses:
@@ -146,7 +139,7 @@ def get_all_results(results):
     >>> sorted(list(all_results.keys()))[:4]
     ['commodity', 'electricity', 'heat_decentralised', 'heat_district']
     >>> sorted(list(all_results.keys()))[-5:]
-    ['heat_district', 'meta', 'mobility', 'pyomo', 'storages']
+    ['heat_district', 'meta', 'mobility', 'pyomo', 'storage']
     >>> fn_out = fn.replace(".dflx", "_all_results.csv")
     >>> dict2file(all_results, fn_out, "csv", drop_empty_columns=True)
     >>> my_bool = []

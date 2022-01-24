@@ -14,12 +14,13 @@ import os
 import pickle
 import pprint as pp
 import warnings
+
 import pandas as pd
 
 from deflex.scenario.scenario import DeflexScenario
 
 
-def search_scenarios(path, extension="dflx", **parameter_filter):
+def search_dumped_scenarios(path, extension="dflx", **parameter_filter):
     """Filter results by extension and meta data.
 
     The function will search the $HOME folder recursively for files with the
@@ -46,20 +47,20 @@ def search_scenarios(path, extension="dflx", **parameter_filter):
     >>> from deflex.tools import TEST_PATH
     >>> from deflex.tools import fetch_test_files
     >>> my_file_name = fetch_test_files("de17_heat.dflx")
-    >>> res = search_scenarios(path=TEST_PATH, map=["de17"])
+    >>> res = search_dumped_scenarios(path=TEST_PATH, map=["de17"])
     >>> len(res)
     2
     >>> sorted(res)[0].split(os.sep)[-1]
     'de17_heat.dflx'
-    >>> res = search_scenarios(path=TEST_PATH, map=["de17", "de21"])
+    >>> res = search_dumped_scenarios(path=TEST_PATH, map=["de17", "de21"])
     >>> len(res)
-    4
-    >>> res = search_scenarios(
+    6
+    >>> res = search_dumped_scenarios(
     ...     path=TEST_PATH, map=["de17", "de21"], heat=["True"])
     >>> len(res)
-    1
+    3
     >>> res[0].split(os.sep)[-1]
-    'de17_heat.dflx'
+    'de21_heat_transmission.dflx'
     """
     result_files = []
     for root, dirs, files in os.walk(path):
@@ -86,11 +87,88 @@ def search_scenarios(path, extension="dflx", **parameter_filter):
     return list(files.keys())
 
 
+def search_input_scenarios(path, csv=True, xlsx=False, exclude=None):
+    """
+    Search for files with an .xlsx extension or directories ending with '_csv'.
+
+    By now it is not possible to distinguish between valid deflex scenarios and
+    other xlsx-files or directories ending with '_csv'. Therefore, the given
+    directory should only contain valid scenarios.
+
+    The function will not search recursively.
+
+    Parameters
+    ----------
+    path : str
+        Directory with valid deflex scenarios.
+    csv : bool
+        Search for csv directories.
+    xlsx : bool
+        Search for xls files.
+    exclude : str
+        A string that is not allowed in the filename. Filenames containing this
+        strings will be excluded.
+    Returns
+    -------
+    list : Scenarios found in the given directory.
+
+    Examples
+    --------
+    >>> import shutil
+    >>> from deflex.tools import fetch_test_files
+    >>> test_file = fetch_test_files("de02_heat.xlsx")
+    >>> test_path = os.path.dirname(test_file)
+    >>> my_csv = search_input_scenarios(test_path)
+    >>> len(my_csv)
+    15
+    >>> os.path.basename(my_csv[0])
+    'de02_heat_csv'
+    >>> my_xlsx = search_input_scenarios(test_path, csv=False, xlsx=True)
+    >>> len(my_xlsx)
+    16
+    >>> os.path.basename([e for e in my_xlsx][0])
+    'de02_heat.xlsx'
+    >>> len(search_input_scenarios(test_path, xlsx=True))
+    31
+    >>> scenario = create_scenario([e for e in my_xlsx][0])
+    >>> csv_path = os.path.join(test_path, "de02_new_csv")
+    >>> scenario.to_csv(csv_path)
+    >>> len(search_input_scenarios(test_path, xlsx=True))
+    32
+    >>> len(search_input_scenarios(test_path, xlsx=True, exclude="de02"))
+    23
+    >>> len(search_input_scenarios(test_path, xlsx=True, exclude="test"))
+    32
+    >>> shutil.rmtree(csv_path)  # remove test results, skip this line to go on
+
+    """
+    xlsx_scenarios = []
+    csv_scenarios = []
+    for name in os.listdir(path):
+        if name[-4:] == "xlsx" and xlsx is True:
+            xlsx_scenarios.append(os.path.join(path, name))
+        if name[-4:] == "_csv" and csv is True:
+            csv_scenarios.append(os.path.join(path, name))
+    csv_scenarios = sorted(csv_scenarios)
+    xls_scenarios = sorted(xlsx_scenarios)
+    logging.debug("Found xlsx scenario: %s", str(xls_scenarios))
+    logging.debug("Found csv scenario: %s", str(csv_scenarios))
+    all_scenarios = csv_scenarios + xls_scenarios
+    if exclude is not None:
+        all_scenarios = [
+            s for s in all_scenarios if exclude not in os.path.basename(s)
+        ]
+    return all_scenarios
+
+
 def search_results(path, extension="dflx", **parameter_filter):
     """Keep the old name to keep the old API"""
-    msg = "'search_results' is deprecated. Use 'search_scenarios` instead."
+    msg = (
+        "'search_results' is deprecated. Use 'search_dumped_scenarios` "
+        "instead."
+    )
     warnings.warn(msg, FutureWarning)
-    search_scenarios(path, extension, **parameter_filter)
+    search_dumped_scenarios(path, extension, **parameter_filter)
 
 
 def restore_results(file_names, scenario_class=DeflexScenario):
@@ -124,9 +202,9 @@ def restore_results(file_names, scenario_class=DeflexScenario):
     >>> fn1 = fetch_test_files("de21_no-heat_transmission.dflx")
     >>> fn2 = fetch_test_files("de02_no-heat.dflx")
     >>> sorted(restore_results(fn1).keys())
-    ['Main', 'Meta', 'Param', 'Problem', 'Solution', 'Solver']
+    ['Input data', 'Main', 'Meta', 'Param', 'Problem', 'Solution', 'Solver']
     >>> sorted(restore_results([fn1, fn2])[0].keys())
-    ['Main', 'Meta', 'Param', 'Problem', 'Solution', 'Solver']
+    ['Input data', 'Main', 'Meta', 'Param', 'Problem', 'Solution', 'Solver']
     """
     if not isinstance(file_names, list):
         file_names = list((file_names,))
@@ -175,6 +253,59 @@ def restore_scenario(filename, scenario_class=DeflexScenario):
     sc.__dict__ = pickle.load(f)
     f.close()
     logging.info("Results restored from %s.", filename)
+    return sc
+
+
+def create_scenario(path, file_type=None):
+    """
+    Create a deflex scenario object from file.
+
+    Parameters
+    ----------
+    path : str
+        A valid deflex scenario file.
+    file_type : str or None
+        Type of the input data. Valid values are 'csv', 'xlsx', None. If the
+        input is non the path should end on 'csv', '.xlsx' to allow
+        auto-detection.
+
+    Returns
+    -------
+    deflex.DeflexScenario
+
+    Examples
+    --------
+    >>> from deflex.tools import fetch_test_files, TEST_PATH
+    >>> fn = fetch_test_files("de17_heat.xlsx")
+    >>> s = create_scenario(fn, file_type="xlsx")
+    >>> type(s)
+    <class 'deflex.scenario.scenario.DeflexScenario'>
+    >>> int(s.input_data["volatile plants"]["capacity"]["DE01", "wind"])
+    3815
+    >>> type(create_scenario(fn))
+    <class 'deflex.scenario.scenario.DeflexScenario'>
+    >>> create_scenario(fn, file_type="csv"
+    ...     )  # doctest: +IGNORE_EXCEPTION_DETAIL
+    Traceback (most recent call last):
+     ...
+    NotADirectoryError: [Errno 20] Not a directory:
+
+    """
+    sc = DeflexScenario()
+
+    if path is not None:
+        if file_type is None:
+            if ".xlsx" in path[-5:]:
+                file_type = "xlsx"
+            elif "csv" in path[-4:]:
+                file_type = "csv"
+            else:
+                file_type = None
+        logging.info("Reading file: %s", path)
+        if file_type == "xlsx":
+            sc.read_xlsx(path)
+        elif file_type == "csv":
+            sc.read_csv(path)
     return sc
 
 

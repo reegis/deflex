@@ -263,7 +263,7 @@ computing the scenario and storing the results) the
 :py:func:`~deflex.main.model_scenario` function can be used.
 
 To collect all scenarios from a given directory the function
-:py:func:`~deflex.main.fetch_scenarios_from_dir` can be used. The function will
+:py:func:`~deflex.main.search_input_scenarios` can be used. The function will
 search for ``.xlsx`` files or paths that end on ``_csv`` and cannot
 distinguish between a valid scenario and any ``.xlsx`` file or paths that
 accidentally contain ``_csv``.

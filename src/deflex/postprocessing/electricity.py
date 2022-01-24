@@ -47,8 +47,8 @@ def merit_order_from_scenario(
     --------
     >>> import os
     >>> from deflex import DeflexScenario
-    >>> from deflex.tools import TEST_PATH
-    >>> my_path = os.path.join(TEST_PATH, "de02_no-heat_csv")
+    >>> from deflex.tools import fetch_test_files
+    >>> my_path = fetch_test_files("de02_no-heat_csv")
     >>> sc = DeflexScenario()
     >>> mo1 = merit_order_from_scenario(sc.read_csv(my_path))
     >>> round(mo1.capacity_cum.iloc[-1], 4)
@@ -122,9 +122,9 @@ def merit_order_from_results(result):
 
     Examples
     --------
-    >>> from deflex import tools, postprocessing
+    >>> from deflex import tools
     >>> fn = tools.fetch_test_files("de02_no-heat.dflx")
-    >>> my_results = postprocessing.restore_results(fn)
+    >>> my_results = tools.files.restore_results(fn)
     >>> a = merit_order_from_results(my_results)
     """
     # TODO: If there is a transmission limit or transmission losses
@@ -237,9 +237,9 @@ def check_comparision_of_merit_order(scenario):
 
     Examples
     --------
-    >>> from deflex import tools, scenario
+    >>> from deflex import tools
     >>> my_path = tools.fetch_test_files("de02_no-heat.dflx")
-    >>> sc = scenario.restore_scenario(my_path)
+    >>> sc = tools.files.restore_scenario(my_path)
     >>> check_comparision_of_merit_order(sc)
     Check passed! Both merit order DataFrame tables are the same.
     """

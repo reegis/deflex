@@ -58,7 +58,7 @@ class DeflexGraph:
         >>> len(list(nx.simple_cycles(nx_graph)))
         9
         >>> nx.number_of_nodes(nx_graph)
-        238
+        226
         >>> nx.number_weakly_connected_components(nx_graph)
         1
         """
@@ -283,15 +283,15 @@ class DeflexGraph:
         >>> my_results = restore_results(fn)
         >>> dflx_graph = DeflexGraph(my_results)
         >>> round(dflx_graph.max_edge_weight()/10**6, 2)
-        9.17
+        8.79
         >>> dflx_graph.color_edges_by_weight(cmap="rainbow", max_weight=80)
         >>> edges = dflx_graph.edges
-        >>> bus = [edg for edg in edges if "shortage" in edg.nodes[0].label][0]
+        >>> bus = [edg for edg in edges if "wind" in edg.nodes[0].label][0]
         >>> getattr(bus, "color")
         '#ff0000'
         >>> w = bus.weight
         >>> int(w)
-        1954798
+        336973
         >>> rgb2hex(get_cmap("rainbow")(w))
         '#ff0000'
         """

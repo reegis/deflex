@@ -252,75 +252,6 @@ class Cycles:
                 print("")
 
 
-def old_Stuff(results):
-    dflx_graph = DeflexGraph(results)
-    s_cycles = simple_cycles(dflx_graph.get())
-    t_flows = [
-        f for f in results["main"] if isinstance(f[0], solph.Transformer)
-    ]
-    buses = set([f[0] for f in results["main"] if isinstance(f[0], solph.Bus)])
-    e_buses = [b.label for b in buses if b.label.cat == "electricity"]
-    for bus in e_buses:
-        print(repr(bus))
-    for sc in s_cycles:
-        print("QQQQQ", sc)
-        for n in sc:
-            print(n)
-    # for tf in t_flows:
-    #     # print(results["param"][(tf[0], None)])
-    #     # print(results["param"][tf])
-    #     print(tf[0])
-    #     for k in tf[0].conversion_factors.keys():
-    #         if k == tf[1]:
-    #             print("Key exists")
-    #             print(hash(k) == hash(tf[1]))
-    #     if tf[1] in tf[0].conversion_factors:
-    #         print("Key in keys")
-    #     else:
-    #         print("Key not in keys")
-    #     print(hash(tf[1]))
-    #     print("*********************next step")
-    #     # print(tf[0].conversion_factors[tf[1]][0])
-    # exit(0)
-    flows = [k for k in results["main"].keys() if k[1] is not None]
-    cvf = list()
-    for c in s_cycles:
-        # print(set(c))
-        # print(set(e_buses))
-        print(set(c).intersection(set(e_buses)))
-        print("######################")
-        if "cat='storage'" not in str(c) and "cat='line'" not in str(c):
-            # if 1 == 1:
-            # print(c)
-            if len(set(c).intersection(set(e_buses))) > 0:
-                print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-            for a in range(len(c)):
-                flow = [
-                    f
-                    for f in flows
-                    if (f[0].label, f[1].label) == (c[a - 1], c[a])
-                ][0]
-                if getattr(flow[0], "conversion_factors", None) is not None:
-                    print("******", flow[0], "********")
-                    inflow = [
-                        k for k in results["main"].keys() if k[1] == flow[0]
-                    ][0]
-                    print(results["main"][inflow]["sequences"]["flow"].sum())
-                    print(results["param"][(flow[0], None)]["scalars"])
-                    label_name = "_".join(
-                        map(str, flow[1].label._asdict().values())
-                    ).replace(" ", "-")
-                    temp = results["param"][(flow[0], None)]["scalars"][
-                        "conversion_factors_{0}".format(label_name)
-                    ]
-                    print(temp)
-                    cvf.append(temp)
-                    print(results["main"][flow]["sequences"]["flow"].sum())
-    print("§§§§§")
-    print(cvf)
-    print(reduce(operator.mul, cvf, 1))
-
-
 def get_all_nodes_from_results(results):
     keys = sorted(list(results["main"].keys()))
     unique_nodes = []
@@ -347,12 +278,11 @@ def nodes2table(results):
     Examples
     --------
     >>> from deflex import tools
-    >>> from deflex import postprocessing
     >>> fn = tools.fetch_test_files("de03_fictive.dflx")
-    >>> my_results = postprocessing.restore_results(fn)
+    >>> my_results = tools.files.restore_results(fn)
     >>> all_nodes = nodes2table(my_results)
     >>> len(all_nodes)
-    238
+    226
     >>> all_nodes.to_csv("your/path/file.csv")  # doctest: +SKIP
 
 
@@ -641,7 +571,7 @@ def calculate_key_values(results):
     flow_status = flows.div(flows).fillna(0)
 
     converter_parameters = calculate_marginal_costs(converter_parameters)
-    em_max = flow_status.mul(converter_parameters["emissions"]).max(1)
+    # em_max = flow_status.mul(converter_parameters["emissions"]).max(1)
 
     kv = pd.DataFrame()
 
@@ -666,75 +596,6 @@ def calculate_key_values(results):
         right_index=True,
     )
     return kv
-
-
-def energy_balance_by_sector(results, chp_method, **kwargs):
-    from matplotlib import pyplot as plt
-
-    # Create a dictionary of empty tables (pandas.DataFrame) for all sectors
-    tables = {}
-    mcol = pd.MultiIndex(levels=[[], []], codes=[[], []])
-    time_index = get_time_index(results)
-    for f in transformer:
-        for k1 in f["out"].keys():
-            tables.setdefault(
-                k1[0], pd.DataFrame(columns=mcol, index=time_index)
-            )
-            tables[k1[0]]["out", k1] = 0
-            for k2 in f["in"].keys():
-                tables[k1[0]]["in", k2] = 0
-
-    # Assign inflows to cumulated product flows (fill empty tables from above)
-    for f in transformer:
-        if len(f["out"]) == 1:
-            fuel_factors = None
-        else:
-            fuel_factors = allocate_fuel(method=chp_method, **kwargs)
-
-        for sector, outflow in f["out"].items():
-            tables[sector[0]]["out", sector] += results["main"][outflow][
-                "sequences"
-            ]["flow"]
-            for fuel, inflow in f["in"].items():
-                tables[sector[0]]["in", fuel] += results["main"][inflow][
-                    "sequences"
-                ]["flow"] * getattr(fuel_factors, sector[0], 1)
-
-    tables = _add_volatiles_to_electricity_table(tables, results)
-    return tables
-
-
-def calculate_product_fuel_balance(
-    results, chp_method, sectors=None, **kwargs
-):
-    tables = energy_balance_by_sector(results, chp_method, **kwargs)
-
-    time_index = get_time_index(results)
-
-    # get a series with the emissions of each commodity
-    emissions = fetch_parameter_of_commodity_sources(results)["emission"]
-    emissions.index = emissions.index.to_flat_index()
-    emission_series = (
-        pd.DataFrame(index=time_index, columns=emissions.index)
-        .fillna(1)
-        .mul(emissions)
-    )
-
-    # calculate the emissions of the electricity sector first to use it
-    # in the other sectors e.g. heat from electricity
-    if sectors is None:
-        sectors = ["electricity"]
-
-    sectors.extend([k for k in tables.keys() if k not in sectors])
-
-    for sector in sectors:
-        tables[sector] = _calculate_emissions_from_energy_table(
-            tables[sector], emission_series, sector
-        )
-
-    tables["emissions"] = emissions.reindex(emissions.index)
-
-    return tables
 
 
 def get_combined_bus_balance(
