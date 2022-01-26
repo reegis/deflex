@@ -69,7 +69,6 @@ class TestCycles:
         c.details()
         captured = capsys.readouterr()
         expected_string = (
-            "**** DETAILS ***************************\n\n"
             "Node 1 -> 0 ->\n"
             "Node 2 -> 0 ->\n"
             "Node 3 -> 0 ->\n"
@@ -77,7 +76,6 @@ class TestCycles:
             "Node 5 -> 46 ->\n"
             "Node 6 -> 0 ->\n\n"
             "************************************\n\n"
-            "Node 1 -> 1 ->\n"
         )
         assert expected_string in captured.out
 

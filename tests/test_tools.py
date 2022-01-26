@@ -13,10 +13,12 @@ __license__ = "MIT"
 import logging
 import os
 
+import pytest
+
+from deflex import tools
+
 
 def test_download(caplog, monkeypatch):
-    from deflex import tools
-
     url = (
         "https://files.de-1.osf.io/v1/resources/a5xrj/providers/osfstorage/"
         "5fdc7e3df0df5405452ef7ae?action=download&direct&version=1"
@@ -31,3 +33,9 @@ def test_download(caplog, monkeypatch):
     tools.download(fn, url)
     assert "Downloading" not in caplog.text
     os.remove(fn)
+
+
+def test_fetching_not_existing_file():
+    msg = "Example file 'not_existing_file.xlsx' not in"
+    with pytest.raises(ValueError, match=msg):
+        tools.fetch_test_files("not_existing_file.xlsx")

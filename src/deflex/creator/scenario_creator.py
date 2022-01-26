@@ -28,6 +28,7 @@ from deflex import __file__ as dfile
 from deflex import config as cfg
 from deflex.creator import transmission
 from deflex.scenario import scenario
+from deflex.tools import download
 
 
 def scenario_default_decentralised_heat():
@@ -138,6 +139,14 @@ def create_scenario(regions, year, name, lines, opsd_version=None):
 
     logging.info("BASIC SCENARIO - MOBILITY")
     if cfg.get("creator", "mobility"):
+        fn = os.path.join(
+            os.path.expanduser("~"),
+            "reegis",
+            "data",
+            "general",
+            "mileage_table_kba.xlsx",
+        )
+        download(fn, cfg.get("url", "mobility"))
         table_collection = mobility.scenario_mobility(year, table_collection)
     else:
         logging.info("...skipped")

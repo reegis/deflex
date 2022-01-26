@@ -21,6 +21,25 @@ TEST_PATH = os.path.join(
 
 
 def download(fn, url, force=False):
+    """
+    Download a file from a given url into a specific file if the file does not
+    exist. Use `force=True` to force the download.
+
+    Parameters
+    ----------
+    fn : str
+        Filename with the full path, where to store the downloaded file.
+    url : str
+        Full url of the file including (https:// etc.)
+    force : bool
+        Set to `True` to download the file even if it already exists.
+
+    Examples
+    --------
+    >>> my_url = "https://upload.wikimedia.org/wikipedia/commons/d/d3/Test.pdf"
+    >>> download("/home/name/Downloads/filename.pdf", my_url)  # doctest: +SKIP
+
+    """
     if not os.path.isfile(fn) or force:
         logging.info("Downloading '%s' from %s", os.path.basename(fn), url)
         req = requests.get(url)
