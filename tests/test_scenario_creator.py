@@ -335,7 +335,7 @@ class TestScenarioCreationPart:
         )
 
     def test_length(self):
-        # assert len(self.tables.keys()) == len(self.input_data.keys())
+        assert len(self.tables.keys()) == len(self.input_data.keys())
         assert sorted(list(self.tables.keys())) == sorted(
             list(self.input_data.keys())
         )
