@@ -19,8 +19,8 @@ from datetime import datetime
 
 import pandas as pd
 
-from deflex.tools import create_scenario, dict2file
 from deflex.postprocessing import get_all_results
+from deflex.tools import create_scenario, dict2file
 
 
 def stopwatch():

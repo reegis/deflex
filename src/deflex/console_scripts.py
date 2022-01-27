@@ -3,7 +3,6 @@ import argparse
 from oemof.tools import logger
 
 import deflex
-import sys
 
 
 def main():
