@@ -131,6 +131,7 @@ def get_all_results(results):
     Examples
     --------
     >>> import os
+    >>> import shutil
     >>> from deflex.tools import restore_results, dict2file
     >>> from deflex.tools import fetch_test_files
     >>> fn = fetch_test_files("de03_fictive.dflx")
@@ -148,6 +149,7 @@ def get_all_results(results):
     ...     my_bool.append(os.path.isfile(fn_test))
     >>> my_bool
     [True, True, True, True, True, True, True, True]
+    >>> shutil.rmtree(fn_out)
     """
     buses = set(
         [k[0] for k in results["main"].keys() if isinstance(k[0], solph.Bus)]
