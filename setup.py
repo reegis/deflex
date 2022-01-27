@@ -108,4 +108,7 @@ setup(
             "*.ini",
         ]
     },
+    entry_points={
+        "console_scripts": ["deflex-compute = deflex.console_scripts:main"]
+    },
 )
