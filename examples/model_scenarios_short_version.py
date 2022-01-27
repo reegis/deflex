@@ -13,8 +13,7 @@ SPDX-License-Identifier: MIT
 
 from oemof.tools import logger
 
-import deflex.tools.files
-from deflex import main
+import deflex
 
 # !!! ADAPT THE PATH !!!
 path = "your/path"
@@ -33,7 +32,7 @@ files = deflex.tools.files.search_input_scenarios(
 
 # Modelling scenarios in a row
 for file in files:
-    main.model_scenario(file)
+    deflex.model_scenario(file)
 
 # Modelling scenarios in parallel
-# main.model_multi_scenarios(files, cpu_fraction=0.5)
+# model_multi_scenarios(files, cpu_fraction=0.5)

@@ -19,8 +19,8 @@ from datetime import datetime
 
 import pandas as pd
 
-from deflex import config as cfg
-from deflex.tools.files import create_scenario
+from deflex.tools import create_scenario, dict2file
+from deflex.postprocessing import get_all_results
 
 
 def stopwatch():
@@ -62,7 +62,7 @@ def model_multi_scenarios(scenarios, cpu_fraction=0.2, log_file=None):
     >>> good["trace"]
     nan
     >>> os.path.basename(good["result_file"])
-    'de03_fictive.dflx'
+    'de03_fictive_csv.dflx'
     >>> broken = my_log.loc["de03_fictive_broken.xlsx"]
     >>> broken["return_value"].replace("'", "")  # doctest: +ELLIPSIS
     'ValueError(Missing time series for geothermal (capacity: 12.56) in DE02...
@@ -71,6 +71,7 @@ def model_multi_scenarios(scenarios, cpu_fraction=0.2, log_file=None):
     >>> broken["result_file"]
     nan
     >>> os.remove(my_log_file)
+    >>> os.remove(good["result_file"])
     """
     start = datetime.now()
     maximal_number_of_cores = int(
@@ -110,7 +111,9 @@ def model_multi_scenarios(scenarios, cpu_fraction=0.2, log_file=None):
         logging.info(failing)
 
 
-def batch_model_scenario(path, named=True, file_type=None, ignore_errors=True):
+def batch_model_scenario(
+    path, named=True, file_type=None, ignore_errors=True, dump_path=None
+):
     """
     Model a single scenario in batch mode. By default errors will be ignored
     and returned together with the traceback.
@@ -122,8 +125,10 @@ def batch_model_scenario(path, named=True, file_type=None, ignore_errors=True):
     file_type : str or None
         Type of the input data. Valid values are 'csv', 'xlsx', None. If the
         input is non the path should end on 'csv', '.xlsx'.
+    dump_path : str or None
+        Path relative to the path where the scenario is located.
     named : bool
-        If True a named tuple with the following fields will be returned
+        If True a named tuple with the following fields will be returned...
     ignore_errors : bool
         Set True to stop the script if an error occurs for debugging. By
         default errors are ignored and returned.
@@ -142,7 +147,7 @@ def batch_model_scenario(path, named=True, file_type=None, ignore_errors=True):
     'de02_heat_csv'
     >>> my_result_file = r.result_file
     >>> os.path.basename(my_result_file)
-    'de02_heat.dflx'
+    'de02_heat_csv.dflx'
     >>> r.trace
     >>> r.return_value.year > 2019
     True
@@ -155,6 +160,7 @@ def batch_model_scenario(path, named=True, file_type=None, ignore_errors=True):
     >>> r.result_file
     >>> r.trace  # doctest: +ELLIPSIS
     'Traceback (most recent call last):...
+    >>> os.remove(my_result_file)
     """
     out = namedtuple(
         "out", ["name", "return_value", "trace", "result_file", "start_time"]
@@ -162,9 +168,13 @@ def batch_model_scenario(path, named=True, file_type=None, ignore_errors=True):
     name = os.path.basename(path)
     logging.info("Next scenario: %s", name)
     start_time = datetime.now()
+    if dump_path is None:
+        dump_path = path
+    else:
+        dump_path = os.path.join(path, dump_path)
     if ignore_errors:
         try:
-            result_file = model_scenario(path, file_type)
+            result_file = model_scenario(path, file_type, dump=dump_path)
             return_value = datetime.now()
             trace = None
         except Exception as e:
@@ -172,7 +182,7 @@ def batch_model_scenario(path, named=True, file_type=None, ignore_errors=True):
             return_value = e
             result_file = None
     else:
-        result_file = model_scenario(path, file_type)
+        result_file = model_scenario(path, file_type, dump=dump_path)
         return_value = datetime.now()
         trace = None
 
@@ -189,9 +199,7 @@ def batch_model_scenario(path, named=True, file_type=None, ignore_errors=True):
 
 
 def model_scenario(
-    path=None,
-    file_type=None,
-    result_path=None,
+    path=None, file_type=None, dump=None, results=None, solver="cbc"
 ):
     """
     Compute a deflex scenario with the full work flow:
@@ -209,7 +217,7 @@ def model_scenario(
     file_type : str or None
         Type of the input data. Valid values are 'csv', 'xlsx', None. If the
         input is non the path should end on 'csv' or '.xlsx'.
-    result_path : str or None
+    dump : str, True or None
         Path to store the output file. If None the results will be stored along
         with the scenarios.
 
@@ -220,17 +228,34 @@ def model_scenario(
     --------
     >>> from deflex.tools import fetch_test_files, TEST_PATH
     >>> fn = fetch_test_files("de02_no-heat.xlsx")
-    >>> r = model_scenario(fn, file_type="xlsx")  # doctest: +ELLIPSIS
+    >>> r = model_scenario(fn, file_type="xlsx", dump=True
+    ...     )  # doctest: +ELLIPSIS
     Welcome to the CBC MILP ...
+    >>> os.remove(fn.replace(".xlsx", ".dflx"))
     """
     stopwatch()
 
+    if dump is None and results is None:
+        msg = (
+            "You cannot compute a scenario without storing or dumping the "
+            "results in any form,\nSet 'dump' or 'results' to True or define "
+            "a dump path or a results path to store the results or dump the "
+            "scenario."
+        )
+        raise AttributeError(msg)
+
     meta = {
         "model_base": "deflex",
-        "solver": cfg.get("general", "solver"),
+        "solver": solver,
         "start_time": datetime.now(),
     }
     logging.info("Start modelling: %s", stopwatch())
+
+    if file_type is None:
+        if "xlsx" in os.path.basename(path):
+            file_type = "xlsx"
+        else:
+            file_type = "csv"
 
     sc = create_scenario(path, file_type)
 
@@ -244,30 +269,45 @@ def model_scenario(
     if "name" not in sc.meta:
         sc.meta["name"] = sc.meta["auto_name"]
 
-    if result_path is None:
-        result_path = os.path.join(
-            os.path.dirname(path),
-            "results_{0}".format(cfg.get("general", "solver")),
-            str(os.path.basename(path).split(".")[0]).replace("_csv", "")
-            + ".dflx",
-        )
-
     logging.info("Solve the optimisation model: %s", stopwatch())
-    sc.compute(solver=cfg.get("general", "solver"))
+    sc.compute(solver=solver)
 
     logging.info("Solved. Dump results: %s", stopwatch())
-    os.makedirs(os.path.dirname(result_path), exist_ok=True)
 
-    logging.info("Dump file to %s", result_path)
-    sc.meta["end_time"] = datetime.now()
-    sc.dump(result_path)
+    if dump is True:
+        if file_type == "xlsx":
+            dump = path.replace(".xlsx", ".dflx")
+        else:
+            dump = path + ".dflx"
+
+    if dump is not None:
+        os.makedirs(os.path.dirname(dump), exist_ok=True)
+        logging.info("Dump file to %s", dump)
+        sc.meta["end_time"] = datetime.now()
+        if dump[-5:] != ".dflx":
+            dump += ".dflx"
+        sc.dump(dump)
+
+    if results is True:
+        if file_type == "xlsx":
+            results = path.replace(".xlsx", "_results.xlsx")
+        else:
+            results = path + "_results"
+
+    if results is not None:
+        os.makedirs(os.path.dirname(results), exist_ok=True)
+        res = sc.results
+        res["input_data"] = sc.input_data
+        all_results = get_all_results(res)
+        dict2file(all_results, results, file_type, drop_empty_columns=True)
+        logging.info("Results have been written to %s", results)
 
     logging.info(
         "%s - deflex scenario finished without errors: %s",
         stopwatch(),
         sc.meta["name"],
     )
-    return result_path
+    return dump
 
 
 if __name__ == "__main__":
