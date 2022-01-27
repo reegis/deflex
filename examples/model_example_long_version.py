@@ -42,9 +42,9 @@ logging.info("All v0.3.x scenarios examples extracted to %s.", path)
 # the computer but the xlsx-files are easier to read for humans because all
 # sheets are in one file.
 
-# NOTE: Large models will need up to 24 GB of RAM, so start with small models
-# and increase the size step by step. You can also use large models with less
-# time steps but you have to adapt the annual limits.
+# NOTE: Large models will need up to 24 GB of RAM and up to one hour, so start
+# with small models and increase the size step by step. You can also use large
+# models with less time steps but you have to adapt the annual limits.
 
 # Now choose one example. We will start with a small one:
 file = "deflex_2014_de02_no-heat_no-co2-costs_no-var-costs.xlsx"
