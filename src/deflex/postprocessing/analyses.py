@@ -321,7 +321,8 @@ def nodes2table(results, no_sums=False):
                     v["sequences"]["flow"]
                     for k, v in results["Main"].items()
                     if getattr(k[1], "label", "") == label
-                ])
+                ]
+            )
             if isinstance(to_node, pd.Series):
                 to_node = to_node.sum()
             dc["out"] = from_node
