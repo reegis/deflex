@@ -262,18 +262,26 @@ def get_all_nodes_from_results(results):
     return set(unique_nodes)
 
 
-def nodes2table(results):
+def nodes2table(results, no_sums=False):
     """
-    Get a table with all nodes (class, category, tag, subtag, region) from a
-    results dictionary.
+    Get a table with all nodes as a MultiIndex with the sum of their in an out
+    flows.
+
+    The index contains the following levels: class, category, tag, subtag,
+    region
+
+    The sums can be found in the columns "in" and "out".
 
     Parameters
     ----------
     results : dict
+        Deflex results dictionary.
+    no_sums : bool
+        Set to False to get an empty DataFrame with no sums (default: True)
 
     Returns
     -------
-    Table with all nodes : pandas.DataFrame
+    Table with all nodes and sums : pandas.DataFrame
 
     Examples
     --------
@@ -288,22 +296,73 @@ def nodes2table(results):
 
     """
     unique_nodes = get_all_nodes_from_results(results)
-    df = pd.DataFrame()
-    n = 0
+    nodes = []
     for node in unique_nodes:
+        dc = {}
         solph_class = type(node)
         label = node.label
-        n += 1
-        df.loc[n, "class"] = str(solph_class).split(".")[-1].replace("'>", "")
-        df.loc[n, "cat"] = label.cat
-        df.loc[n, "tag"] = label.tag
-        df.loc[n, "subtag"] = label.subtag
-        df.loc[n, "region"] = label.region
+        dc["class"] = str(solph_class).split(".")[-1].replace("'>", "")
+        dc["cat"] = label.cat
+        dc["tag"] = label.tag
+        dc["subtag"] = label.subtag
+        dc["region"] = label.region
+        if no_sums is False:
+            from_node = sum(
+                [
+                    v["sequences"]["flow"]
+                    for k, v in results["Main"].items()
+                    if k[0].label == label and k[1] is not None
+                ]
+            )
+            if isinstance(from_node, pd.Series):
+                from_node = from_node.sum()
+            to_node = sum(
+                [
+                    v["sequences"]["flow"]
+                    for k, v in results["Main"].items()
+                    if getattr(k[1], "label", "") == label
+                ])
+            if isinstance(to_node, pd.Series):
+                to_node = to_node.sum()
+            dc["out"] = from_node
+            dc["in"] = to_node
+        nodes.append(dc)
+    df = pd.DataFrame(nodes)
     df.sort_values(by=list(df.columns), inplace=True)
-    return df.reset_index(drop=True)
+    df.reset_index(drop=True, inplace=True)
+    return df.set_index(["class", "cat", "tag", "subtag", "region"], drop=True)
 
 
-def get_resource_parameter(results, bus):
+def get_resource_parameters(results, bus):
+    """
+    Get the parameters of a commodity bus.
+
+    Transformers like power plants are connected to commodity buses. This
+    function can be used to get specific emission or the variable costs of the
+    connected commodity source.
+
+    Parameters
+    ----------
+    results : dict
+        Deflex results dictionary.
+    bus : solph.Bus
+        A commodity Bus object.
+
+    Examples
+    --------
+    >>> from deflex import tools
+    >>> fn = tools.fetch_test_files("de03_fictive.dflx")
+    >>> my_results = tools.files.restore_results(fn)
+    >>> flow_to_power_plant = [
+    ...     b for b in my_results["main"].keys()
+    ...     if b[1] is not None
+    ...     and b[1].label.cat == "power plant"
+    ...     and b[1].label.subtag == "natural gas"
+    ... ][0]
+    >>> get_resource_parameters(my_results, flow_to_power_plant[0]
+    ...     )["scalars"].emission
+    0.201
+    """
     inflow = [
         k
         for k in results["main"].keys()
@@ -338,7 +397,7 @@ def fetch_converter_parameters(results, transformer):
         df.loc[t, "category"] = t.label.cat
 
         # Get parameter of the resource of the Transformer
-        fuel_parameter = get_resource_parameter(results, inflow[0])
+        fuel_parameter = get_resource_parameters(results, inflow[0])
         if fuel_parameter is not None:
             df.loc[t, "variable costs, fuel"] = fuel_parameter["scalars"].get(
                 "variable_costs", 0
@@ -414,79 +473,6 @@ def fetch_parameter_of_commodity_sources(results):
     return parameter
 
 
-def fetch_volatile_electricity_sources(results):
-    """
-
-    Parameters
-    ----------
-    results
-
-    Returns
-    -------
-    pandas.DataFrame
-
-    """
-    volatile_sources = [
-        k
-        for k in results["main"].keys()
-        if isinstance(k[0], solph.Source) and k[0].label.tag == "volatile"
-    ]
-    sources = pd.DataFrame(
-        columns=pd.MultiIndex(levels=[[], []], codes=[[], []])
-    )
-
-    for src in volatile_sources:
-        sources[src[0].label.subtag, src[0].label.region] = results["main"][
-            src
-        ]["sequences"]["flow"]
-    return sources
-
-
-def _calculate_emissions_from_energy_table(table, emissions, sector):
-    emission_table = table["in"].mul(emissions)
-    emission_table = pd.concat([emission_table], axis=1, keys=["in"])
-    emission_table["out", sector] = emission_table["in"].sum(axis=1)
-    table = pd.concat(
-        [table, emission_table],
-        axis=1,
-        keys=["energy", "emission"],
-    )
-    table.sort_index(axis=1, inplace=True)
-    for column in table["energy", "out"].columns:
-        emissions[(sector, column[1])] = table[
-            "emission", "out", sector
-        ] / table["energy", "out"].sum(axis=1)
-
-    return table
-
-
-def _add_emissions2emissions_table():
-    pass
-
-
-def _add_volatiles_to_electricity_table(tables, results):
-    # Add volatile source to electricity table
-    volatile_output_by_region = (
-        fetch_volatile_electricity_sources(results)
-        .groupby(level=1, axis=1)
-        .sum()
-    )
-
-    for region in volatile_output_by_region.columns:
-        if ("out", ("electricity", region)) in tables["electricity"]:
-            tables["electricity"][
-                "out", ("electricity", region)
-            ] += volatile_output_by_region[region]
-        else:
-            tables["electricity"][
-                "out", ("electricity", region)
-            ] = volatile_output_by_region[region]
-        tables["electricity"][
-            "in", ("volatiles", region)
-        ] = volatile_output_by_region[region]
-    return tables
-
-
 def calculate_marginal_costs(df):
     """
     Kosten und Emissionen für jeden Stromtransformer aufstellen.
@@ -530,7 +516,6 @@ def calculate_marginal_costs(df):
         - df["efficiency, heat"]
         / (df["efficiency, electricity"] * df["efficiency, hp_ref"])
     )
-    # df.to_excel("/home/uwe/0000000000000_temp.xlsx")
     return df
 
 
