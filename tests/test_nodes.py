@@ -168,14 +168,14 @@ class TestNodes:
         ] = 0
         nd.add_district_heating_demand(self.sc.input_data, nodes)
         self.sc.add_nodes_to_es(nodes)
-        snk = [v for k, v in nodes.items() if k.cat == "demand"]
+        snk = [v for k, v in nodes.items() if k.cat == "heat demand"]
         values = {"DE01": 1276776}
         for s in snk:
             region = s.label.region
             bus = [
                 v
                 for k, v in nodes.items()
-                if k.cat == "bus" and k.region == region
+                if k.cat == "heat" and k.region == region
             ][0]
             flow = self.sc.es.flows()[(bus, s)]
             idx = (region, "district heating")
