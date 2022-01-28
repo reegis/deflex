@@ -137,17 +137,17 @@ class TestNodes:
         self.sc.input_data["electricity demand series"][("DE01", "new")] = 0
         nd.add_electricity_demand(self.sc.input_data, nodes)
         self.sc.add_nodes_to_es(nodes)
-        snk = [v for k, v in nodes.items() if k.cat == "demand"]
+        snk = [v for k, v in nodes.items() if k.cat == "electricity demand"]
         values = {
-            "demand_electricity_all_DE01": 1509776,
-            "demand_electricity_all_DE02": 1006517,
+            "electricity-demand_electricity_all_DE01": 1509776,
+            "electricity-demand_electricity_all_DE02": 1006517,
         }
         for s in snk:
             region = s.label.region
             bus = [
                 v
                 for k, v in nodes.items()
-                if k.cat == "bus" and k.region == region
+                if k.cat == "electricity" and k.region == region
             ][0]
             flow = self.sc.es.flows()[(bus, s)]
             idx = (region, s.label.subtag)
