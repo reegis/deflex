@@ -301,7 +301,9 @@ def nodes2table(results, no_sums=False):
         dc = {}
         solph_class = type(node)
         label = node.label
-        dc["class"] = str(solph_class).split(".")[-1].replace("'>", "")
+        dc["class"] = (
+            str(solph_class).rsplit(".", maxsplit=1)[-1].replace("'>", "")
+        )
         dc["cat"] = label.cat
         dc["tag"] = label.tag
         dc["subtag"] = label.subtag
@@ -321,7 +323,8 @@ def nodes2table(results, no_sums=False):
                     v["sequences"]["flow"]
                     for k, v in results["Main"].items()
                     if getattr(k[1], "label", "") == label
-                ])
+                ]
+            )
             if isinstance(to_node, pd.Series):
                 to_node = to_node.sum()
             dc["out"] = from_node
