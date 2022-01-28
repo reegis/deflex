@@ -88,6 +88,7 @@ setup(
             "sphinx-autoapi",
             "shapely",
             "requests",
+            "termcolor"
         ],
         "plot": ["pygraphviz", "matplotlib"],
         "scenario": ["scenario_builder", "reegis"],
