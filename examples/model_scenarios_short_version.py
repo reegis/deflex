@@ -11,12 +11,14 @@ SPDX-FileCopyrightText: 2021 Uwe Krien <krien@uni-bremen.de>
 SPDX-License-Identifier: MIT
 """
 
+import os
+
 from oemof.tools import logger
 
 import deflex
 
 # !!! ADAPT THE PATH !!!
-path = "your/path"
+path = os.path.join(os.path.expanduser("~"), ".deflex", "my_scenarios")
 
 # Set logger
 logger.define_logging()

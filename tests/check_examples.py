@@ -1,9 +1,10 @@
+import datetime
 import os
-from termcolor import colored
+import warnings
+
 import matplotlib
 from matplotlib import pyplot as plt
-import warnings
-import datetime
+from termcolor import colored
 
 warnings.filterwarnings("ignore", "", UserWarning)
 matplotlib.use("Agg")
@@ -30,7 +31,7 @@ for root, dirs, files in sorted(os.walk(fullpath)):
                 try:
                     exec(open(fn).read())
                     checker[name] = "okay"
-                except:
+                except Exception:
                     checker[name] = "failed"
         plt.close()
 

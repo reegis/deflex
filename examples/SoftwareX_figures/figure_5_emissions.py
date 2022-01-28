@@ -26,7 +26,7 @@ import pandas as pd
 from matplotlib import pyplot as plt
 from oemof.tools import logger
 
-from deflex import main, postprocessing, tools
+from deflex import postprocessing, scripts, tools
 
 EXAMPLES_URL = (
     "https://files.de-1.osf.io/v1/resources/9krgp/providers/osfstorage"
@@ -99,7 +99,7 @@ plt.rcParams.update({"font.size": fontsize})
 logger.define_logging()
 
 if not os.path.isfile(files["dump"]) or FORCE_COMPUTING:
-    main.model_scenario(files["input"], "xlsx", files["dump"])
+    scripts.model_scenario(files["input"], "xlsx", files["dump"])
 
 # restore the results from file
 my_results = tools.restore_results(files["dump"])

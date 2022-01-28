@@ -26,7 +26,7 @@ from matplotlib import pyplot as plt
 from matplotlib.dates import DateFormatter, HourLocator
 from oemof.tools import logger
 
-from deflex import main, postprocessing, tools
+from deflex import postprocessing, scripts, tools
 
 OPSD_URL = (
     "https://data.open-power-system-data.org/index.php?package="
@@ -90,7 +90,7 @@ files = {k: os.path.join(BASIC_PATH, v) for k, v in files.items()}
 
 # Compute the model if the dump file does not exist or computing is forced
 if not os.path.isfile(files["dump"]) or FORCE_COMPUTING:
-    main.model_scenario(files["input"], "xlsx", files["dump"])
+    scripts.model_scenario(files["input"], "xlsx", files["dump"])
 
 # Restore dumped file to create the plot
 results = tools.restore_results(files["dump"])

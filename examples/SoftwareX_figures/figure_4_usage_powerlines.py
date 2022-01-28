@@ -20,7 +20,7 @@ from matplotlib import pyplot as plt
 from matplotlib.colors import LinearSegmentedColormap
 from oemof.tools import logger
 
-from deflex import geometries, main, postprocessing, tools
+from deflex import geometries, postprocessing, scripts, tools
 
 EXAMPLES_URL = (
     "https://files.de-1.osf.io/v1/resources/9krgp/providers/osfstorage"
@@ -163,7 +163,7 @@ files["plot"] = files["input"].replace(".xlsx", ".png")
 files = {k: os.path.join(BASIC_PATH, v) for k, v in files.items()}
 
 if not os.path.isfile(files["dump"]) or FORCE_COMPUTING:
-    main.model_scenario(files["input"], "xlsx", files["dump"])
+    scripts.model_scenario(files["input"], "xlsx", files["dump"])
 my_results = tools.restore_results(files["dump"])
 de21 = geometries.deflex_geo("de21")
 my_data = get_power_line_usage(de21, my_results)
