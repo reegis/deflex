@@ -21,7 +21,7 @@ def main():
     parser.add_argument(
         "--version",
         action="version",
-        version="deflex {}".format(deflex.__version__),
+        version=f"deflex {deflex.__version__}"
     )
     parser.add_argument("path", type=str, help="Input file or directory.")
     parser.add_argument(
