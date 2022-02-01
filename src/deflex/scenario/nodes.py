@@ -167,9 +167,12 @@ def add_sink(nodes, table, input_data, label, bus_label, sink_set):
             delay_time=p["delay"],
             shift_interval=p["shift interval"],
             demand=input_data[table][sink_set],
-            method=p["method"],
+            approach=p["approach"],
             cost_dsm_down=p["cost down"],
             cost_dsm_up=p["cost up"],
+            max_capacity_up=1,
+            max_capacity_down=1,
+            max_demand=1,
         )
     else:
         logging.debug("Use normal sink for {}.".format(idx))
