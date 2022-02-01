@@ -5,9 +5,11 @@ from deflex.postprocessing.analyses import (  # noqa: F401; noqa: F401
     fetch_parameter_of_commodity_sources,
     get_combined_bus_balance,
     get_converter_balance,
+)
+from deflex.postprocessing.basic import (  # noqa: F401
+    get_all_results,
     nodes2table,
 )
-from deflex.postprocessing.basic import get_all_results  # noqa: F401
 from deflex.postprocessing.electricity import (  # noqa: F401
     check_comparision_of_merit_order,
     merit_order_from_results,

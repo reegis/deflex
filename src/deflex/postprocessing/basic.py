@@ -9,6 +9,7 @@ SPDX-License-Identifier: MIT
 
 __all__ = [
     "get_all_results",
+    "nodes2table"
 ]
 
 import pandas as pd
@@ -102,6 +103,90 @@ def bus_flows2tables(results, bus_groups):
         tables[name] = pd.DataFrame(seq).sort_index(axis=1)
 
     return tables
+
+
+def get_all_nodes_from_results(results):
+    keys = sorted(list(results["main"].keys()))
+    unique_nodes = []
+    for nodes in keys:
+        unique_nodes.append(nodes[0])
+        if nodes[1] is not None:
+            unique_nodes.append(nodes[1])
+    return set(unique_nodes)
+
+
+def nodes2table(results, no_sums=False):
+    """
+    Get a table with all nodes as a MultiIndex with the sum of their in an out
+    flows.
+
+    The index contains the following levels: class, category, tag, subtag,
+    region
+
+    The sums can be found in the columns "in" and "out".
+
+    Parameters
+    ----------
+    results : dict
+        Deflex results dictionary.
+    no_sums : bool
+        Set to False to get an empty DataFrame with no sums (default: True)
+
+    Returns
+    -------
+    Table with all nodes and sums : pandas.DataFrame
+
+    Examples
+    --------
+    >>> from deflex import tools
+    >>> fn = tools.fetch_test_files("de03_fictive.dflx")
+    >>> my_results = tools.files.restore_results(fn)
+    >>> all_nodes = nodes2table(my_results)
+    >>> len(all_nodes)
+    226
+    >>> all_nodes.to_csv("your/path/file.csv")  # doctest: +SKIP
+
+
+    """
+    unique_nodes = get_all_nodes_from_results(results)
+    nodes = []
+    for node in unique_nodes:
+        dc = {}
+        solph_class = type(node)
+        label = node.label
+        dc["class"] = (
+            str(solph_class).rsplit(".", maxsplit=1)[-1].replace("'>", "")
+        )
+        dc["cat"] = label.cat
+        dc["tag"] = label.tag
+        dc["subtag"] = label.subtag
+        dc["region"] = label.region
+        if no_sums is False:
+            from_node = sum(
+                [
+                    v["sequences"]["flow"]
+                    for k, v in results["Main"].items()
+                    if k[0].label == label and k[1] is not None
+                ]
+            )
+            if isinstance(from_node, pd.Series):
+                from_node = from_node.sum()
+            to_node = sum(
+                [
+                    v["sequences"]["flow"]
+                    for k, v in results["Main"].items()
+                    if getattr(k[1], "label", "") == label
+                ]
+            )
+            if isinstance(to_node, pd.Series):
+                to_node = to_node.sum()
+            dc["out"] = from_node
+            dc["in"] = to_node
+        nodes.append(dc)
+    df = pd.DataFrame(nodes)
+    df.sort_values(by=list(df.columns), inplace=True)
+    df.reset_index(drop=True, inplace=True)
+    return df.set_index(["class", "cat", "tag", "subtag", "region"], drop=True)
 
 
 def group_buses(buses, fields):

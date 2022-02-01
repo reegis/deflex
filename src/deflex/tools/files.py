@@ -59,8 +59,8 @@ def search_dumped_scenarios(path, extension="dflx", **parameter_filter):
     ...     path=TEST_PATH, map=["de17", "de21"], heat=["True"])
     >>> len(res)
     3
-    >>> res[0].split(os.sep)[-1]
-    'de21_heat_transmission.dflx'
+    >>> sorted(res)[0].split(os.sep)[-1]
+    'de17_heat.dflx'
     """
     result_files = []
     for root, dirs, files in os.walk(path):
@@ -115,7 +115,7 @@ def search_input_scenarios(path, csv=True, xlsx=False, exclude=None):
     Examples
     --------
     >>> import shutil
-    >>> from deflex.tools import fetch_test_files
+    >>> from deflex.tools import fetch_test_files, search_input_scenarios
     >>> test_file = fetch_test_files("de02_heat.xlsx")
     >>> test_path = os.path.dirname(test_file)
     >>> my_csv = search_input_scenarios(test_path)
