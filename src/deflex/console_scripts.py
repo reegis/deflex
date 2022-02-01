@@ -28,7 +28,10 @@ def main():
         const=True,
         default=True,
         nargs="?",
-        help="The name of the results file or directory.",
+        help=(
+            "The name of the results file or directory or False to get no "
+            "result file."
+        ),
     )
     parser.add_argument(
         "--dump",
@@ -36,7 +39,9 @@ def main():
         const=True,
         default=None,
         nargs="?",
-        help="The name of the dump file.",
+        help=(
+            "The name of the dump file. Leave empty for the default file name."
+        ),
     )
     parser.add_argument(
         "--solver",
