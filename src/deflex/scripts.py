@@ -9,13 +9,13 @@ SPDX-License-Identifier: MIT
 __copyright__ = "Uwe Krien <krien@uni-bremen.de>"
 __license__ = "MIT"
 
-
 import logging
 import multiprocessing
 import os
 import traceback
 from collections import namedtuple
 from datetime import datetime
+from functools import partial
 
 import pandas as pd
 
@@ -30,7 +30,9 @@ def stopwatch():
     return str(datetime.now() - stopwatch.start)[:-7]
 
 
-def model_multi_scenarios(scenarios, cpu_fraction=0.2, log_file=None):
+def model_multi_scenarios(
+    scenarios, cpu_fraction=0.2, log_file=None, results=False
+):
     """
     Model multi scenarios in parallel. Keep in mind that the memory usage
     is the critical resource for large models. So start with a low
@@ -45,6 +47,8 @@ def model_multi_scenarios(scenarios, cpu_fraction=0.2, log_file=None):
         A resulting dezimal number of cores will be rounded up to an integer.
     log_file : str
         Filename to store the log file.
+    results : bool
+        Store an spreadsheet results file (default: False).
 
     Examples
     --------
@@ -55,47 +59,68 @@ def model_multi_scenarios(scenarios, cpu_fraction=0.2, log_file=None):
     >>> my_scenarios = [fn1, fn2]
     >>> model_multi_scenarios(my_scenarios, log_file=my_log_file)
     >>> my_log = pd.read_csv(my_log_file, index_col=[0])
+    >>> my_log.to_csv("/home/uwe/00000000.csv")
     >>> good = my_log.loc["de03_fictive_csv"]
     >>> rv = good["return_value"]
     >>> datetime.strptime(rv, "%Y-%m-%d %H:%M:%S.%f").year > 2019
     True
     >>> good["trace"]
     nan
-    >>> os.path.basename(good["result_file"])
+    >>> os.path.basename(good["dump"])
     'de03_fictive_csv.dflx'
+    >>> good["results"]
+    False
     >>> broken = my_log.loc["de03_fictive_broken.xlsx"]
     >>> broken["return_value"].replace("'", "")  # doctest: +ELLIPSIS
     'ValueError(Missing time series for geothermal (capacity: 12.56) in DE02...
     >>> broken["trace"]  # doctest: +ELLIPSIS
     'Traceback (most recent call last)...
-    >>> broken["result_file"]
+    >>> broken["dump"]
     nan
     >>> os.remove(my_log_file)
-    >>> os.remove(good["result_file"])
+    >>> os.remove(good["dump"])
     """
     start = datetime.now()
     maximal_number_of_cores = int(
         round(multiprocessing.cpu_count() * cpu_fraction + 0.4999)
     )
-
+    logging.info(f"Multiprocessing will use {maximal_number_of_cores} cores.")
     p = multiprocessing.Pool(maximal_number_of_cores)
-
-    logs = p.starmap(
-        batch_model_scenario, zip(scenarios, [False] * len(scenarios))
-    )
+    bms = partial(batch_model_scenario, results=results, flat_tuple=True)
+    logs = p.map(bms, scenarios)
     p.close()
     p.join()
-    failing = {n: r for n, r, t, f, s in logs if isinstance(r, BaseException)}
-
+    out = namedtuple(
+        "out",
+        ["name", "return_value", "trace", "dump", "results", "start_time"],
+    )
+    logs = [
+        out(
+            name=lo[0],
+            return_value=lo[1],
+            trace=lo[2],
+            dump=lo[3],
+            results=lo[4],
+            start_time=lo[5],
+        )
+        for lo in logs
+    ]
+    failing = {
+        log.name: log.return_value
+        for log in logs
+        if isinstance(log.return_value, BaseException)
+    }
     logger = pd.DataFrame()
     for log in logs:
-        logger.loc[log[0], "start"] = start
-        if isinstance(log[1], BaseException):
-            logger.loc[log[0], "return_value"] = repr(log[1])
+        logger.loc[log.name, "start"] = start
+        logger.loc[log.name, "start_time"] = log.start_time
+        if isinstance(log.return_value, BaseException):
+            logger.loc[log.name, "return_value"] = repr(log.return_value)
         else:
-            logger.loc[log[0], "return_value"] = log[1]
-        logger.loc[log[0], "trace"] = log[2]
-        logger.loc[log[0], "result_file"] = log[3]
+            logger.loc[log.name, "return_value"] = log.return_value
+        logger.loc[log.name, "trace"] = log.trace
+        logger.loc[log.name, "dump"] = log.dump
+        logger.loc[log.name, "results"] = log.results
 
     if log_file is None:
         log_file = os.path.join(
@@ -112,7 +137,7 @@ def model_multi_scenarios(scenarios, cpu_fraction=0.2, log_file=None):
 
 
 def batch_model_scenario(
-    path, named=True, file_type=None, ignore_errors=True, dump_path=None
+    path, file_type=None, ignore_errors=True, flat_tuple=False, **kwargs
 ):
     """
     Model a single scenario in batch mode. By default errors will be ignored
@@ -125,13 +150,25 @@ def batch_model_scenario(
     file_type : str or None
         Type of the input data. Valid values are 'csv', 'xlsx', None. If the
         input is non the path should end on 'csv', '.xlsx'.
-    dump_path : str or None
-        Path relative to the path where the scenario is located.
-    named : bool
-        If True a named tuple with the following fields will be returned...
     ignore_errors : bool
         Set True to stop the script if an error occurs for debugging. By
         default errors are ignored and returned.
+    flat_tuple : bool
+        Return a normal tuple instead of a named tuple. This is needed for
+        multi-process use. (default: False)
+
+    Other Parameters
+    ----------------
+    dump : str or bool
+        Path to store the dump file. If True the results will be stored along
+        with the scenarios using the same name and the suffix `.dflx`. If False
+        no dump will be stored (default: True).
+    results : str or bool
+        Path to store the results in an spreadsheet. If True the results will
+        be stored along with the scenarios using the same name and the suffix
+        `_results.xlsx`. If False no results will be stored (default: False).
+    solver : str
+        The solver to use for the optimisation (default: cbc).
 
     Returns
     -------
@@ -140,66 +177,70 @@ def batch_model_scenario(
     Examples
     --------
     >>> from deflex.tools import fetch_test_files
-    >>> fn = fetch_test_files("de02_heat_csv")
-    >>> r = batch_model_scenario(fn, ignore_errors=False)  # doctest: +ELLIPSIS
+    >>> fi = fetch_test_files("de02_heat_csv")
+    >>> r = batch_model_scenario(fi, ignore_errors=False)  # doctest: +ELLIPSIS
     Welcome to the CBC MILP ...
     >>> r.name
     'de02_heat_csv'
-    >>> my_result_file = r.result_file
-    >>> os.path.basename(my_result_file)
+    >>> my_dump_file = r.dump
+    >>> os.path.basename(my_dump_file)
     'de02_heat_csv.dflx'
     >>> r.trace
     >>> r.return_value.year > 2019
     True
-    >>> fn = os.path.join("wrong_file.xlsx")
-    >>> r = batch_model_scenario(fn)
+    >>> f_wrong = os.path.join("wrong_file.xlsx")
+    >>> r = batch_model_scenario(f_wrong)
     >>> r.name
     'wrong_file.xlsx'
     >>> repr(r.return_value)
     "FileNotFoundError(2, 'No such file or directory')"
-    >>> r.result_file
+    >>> r.results
     >>> r.trace  # doctest: +ELLIPSIS
     'Traceback (most recent call last):...
-    >>> os.remove(my_result_file)
+    >>> os.remove(my_dump_file)
     """
     out = namedtuple(
-        "out", ["name", "return_value", "trace", "result_file", "start_time"]
+        "out",
+        ["name", "return_value", "trace", "dump", "results", "start_time"],
     )
     name = os.path.basename(path)
     logging.info("Next scenario: %s", name)
     start_time = datetime.now()
-    if dump_path is None:
-        dump_path = path
-    else:
-        dump_path = os.path.join(path, dump_path)
+
     if ignore_errors:
         try:
-            result_file = model_scenario(path, file_type, dump=dump_path)
-            return_value = datetime.now()
-            trace = None
+            back = model_scenario(path, file_type, **kwargs)
+            rv = None
         except Exception as e:
-            trace = traceback.format_exc()
-            return_value = e
-            result_file = None
+            back = None
+            rv = out(
+                name=name,
+                return_value=e,
+                trace=traceback.format_exc(),
+                dump=None,
+                results=None,
+                start_time=start_time,
+            )
     else:
-        result_file = model_scenario(path, file_type, dump=dump_path)
-        return_value = datetime.now()
-        trace = None
+        back = model_scenario(path, file_type, **kwargs)
+        rv = None
 
-    if not named:
-        return name, return_value, trace, result_file, start_time
-
-    return out(
-        name=name,
-        return_value=return_value,
-        trace=trace,
-        result_file=result_file,
-        start_time=start_time,
-    )
+    if rv is None:
+        rv = out(
+            name=name,
+            return_value=datetime.now(),
+            trace=None,
+            dump=back.dump,
+            results=back.results,
+            start_time=start_time,
+        )
+    if flat_tuple is True:
+        rv = tuple([getattr(rv, f) for f in rv._fields])
+    return rv
 
 
 def model_scenario(
-    path=None, file_type=None, dump=None, results=None, solver="cbc"
+    path=None, file_type=None, dump=True, results=False, solver="cbc"
 ):
     """
     Compute a deflex scenario with the full work flow:
@@ -217,9 +258,16 @@ def model_scenario(
     file_type : str or None
         Type of the input data. Valid values are 'csv', 'xlsx', None. If the
         input is non the path should end on 'csv' or '.xlsx'.
-    dump : str, True or None
-        Path to store the output file. If None the results will be stored along
-        with the scenarios.
+    dump : str or bool
+        Path to store the dump file. If True the results will be stored along
+        with the scenarios using the same name and the suffix `.dflx`. If False
+        no dump will be stored (default: True).
+    results : str or bool
+        Path to store the results in an spreadsheet. If True the results will
+        be stored along with the scenarios using the same name and the suffix
+        `_results.xlsx`. If False no results will be stored (default: False).
+    solver : str
+        The solver to use for the optimisation (default: cbc).
 
     Returns
     -------
@@ -234,6 +282,11 @@ def model_scenario(
     >>> os.remove(fn.replace(".xlsx", ".dflx"))
     """
     stopwatch()
+
+    out = namedtuple(
+        "out",
+        ["dump", "results"],
+    )
 
     if dump is None and results is None:
         msg = (
@@ -294,7 +347,7 @@ def model_scenario(
         else:
             results = path + "_results"
 
-    if results is not None:
+    if results:
         os.makedirs(os.path.dirname(results), exist_ok=True)
         res = sc.results
         res["input_data"] = sc.input_data
@@ -307,7 +360,7 @@ def model_scenario(
         stopwatch(),
         sc.meta["name"],
     )
-    return dump
+    return out(dump=dump, results=results)
 
 
 if __name__ == "__main__":
