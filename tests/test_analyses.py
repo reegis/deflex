@@ -34,9 +34,7 @@ class TestAnalysis:
         cls.results = restore_results(fetch_test_files("de02_no-heat.dflx"))
 
     def test_all_nodes_from_results(self):
-        nodes = postprocessing.basic.get_all_nodes_from_results(
-            self.results
-        )
+        nodes = postprocessing.basic.get_all_nodes_from_results(self.results)
         assert len(nodes) == 141
         # 15 + 26 + 87 + 1 + 12 = 141
         assert len([n for n in nodes if isinstance(n, Sink)]) == 15
@@ -48,9 +46,7 @@ class TestAnalysis:
 
     def test_graph_and_nodes(self):
         graph = postprocessing.DeflexGraph(self.results)
-        nodes = postprocessing.basic.get_all_nodes_from_results(
-            self.results
-        )
+        nodes = postprocessing.basic.get_all_nodes_from_results(self.results)
         n = 0
         for k, v in graph.group_nodes_by_type().items():
             n += len(v)
@@ -74,9 +70,7 @@ class TestAnalysis:
         )
 
     def test_resource_parameter(self):
-        nodes = postprocessing.basic.get_all_nodes_from_results(
-            self.results
-        )
+        nodes = postprocessing.basic.get_all_nodes_from_results(self.results)
         buses = [
             n
             for n in nodes
@@ -97,9 +91,7 @@ class TestAnalysis:
         assert round(emission / number, 4) == 0.1804
 
     def test_converter_parameters(self):
-        nodes = postprocessing.basic.get_all_nodes_from_results(
-            self.results
-        )
+        nodes = postprocessing.basic.get_all_nodes_from_results(self.results)
         transformer = [
             n
             for n in nodes
@@ -121,9 +113,7 @@ class TestAnalysis:
         postprocessing.fetch_parameter_of_commodity_sources(self.results)
 
     def test_marginal_costs(self):
-        nodes = postprocessing.basic.get_all_nodes_from_results(
-            self.results
-        )
+        nodes = postprocessing.basic.get_all_nodes_from_results(self.results)
         transformer = [
             n
             for n in nodes
