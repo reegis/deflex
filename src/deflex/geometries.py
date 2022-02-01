@@ -37,6 +37,22 @@ def deflex_geo(rmap):
     Returns
     -------
     namedtuple
+
+    Examples
+    --------
+    >>> de02 = deflex_geo("de02")
+    >>> list(de02.polygons.index)
+    ['DE01', 'DE02']
+    >>> p = de02.labels.loc["DE01"].geometry
+    >>> p.x, p.y
+    (10.0, 51.6)
+    >>> de02.lines.index
+    Index(['DE01-DE02'], dtype='object', name='name')
+    >>> de02.line_labels.iloc[0]
+    gid                        246
+    rotation                   -42
+    geometry    POINT (7.61 53.78)
+    Name: DE01-DE02, dtype: object
     """
     geo = namedtuple(
         "geometry", ["polygons", "lines", "labels", "line_labels"]
@@ -82,6 +98,8 @@ def deflex_regions(rmap=None, rtype="polygons"):
     'de22'
     >>> list(deflex_regions('de02').index)
     ['DE01', 'DE02']
+    >>> print(deflex_regions("de05"))
+    None
     """
     name = os.path.join(
         os.path.dirname(__file__),
@@ -126,6 +144,8 @@ def deflex_power_lines(rmap=None, rtype="lines"):
     'DE01-DE02'
     >>> deflex_power_lines(rmap="de21").name
     'de21'
+    >>> print(deflex_regions("de05"))
+    None
     """
     name = os.path.join(
         os.path.dirname(__file__),
