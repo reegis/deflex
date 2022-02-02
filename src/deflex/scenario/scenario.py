@@ -251,6 +251,7 @@ class Scenario:
         """
         self.table2es()
         model = self.create_model()
+        model.receive_duals()
         self.solve(model, solver=solver, **kwargs)
 
     def add_nodes_to_es(self, nodes):
