@@ -343,6 +343,7 @@ def _clean_table(table, drop_empty_columns):
 
 
 def dict2spreadsheet(tables, path, drop_empty_columns=False):
+    logging.info(f"Writing table to {path}")
     writer = pd.ExcelWriter(path)
     for name, table in tables.items():
         if isinstance(table, pd.DataFrame):
@@ -353,6 +354,7 @@ def dict2spreadsheet(tables, path, drop_empty_columns=False):
 
 def dict2csv(tables, path, drop_empty_columns=False):
     os.makedirs(path, exist_ok=True)
+    logging.info(f"Writing table to {path}")
     for name, table in tables.items():
         if isinstance(table, pd.DataFrame):
             table = _clean_table(table, drop_empty_columns)
