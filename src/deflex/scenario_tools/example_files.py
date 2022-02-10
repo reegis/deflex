@@ -11,41 +11,23 @@ import logging
 import os
 from zipfile import ZipFile
 
-import requests
-
 from deflex import config as cfg
+from deflex.tools.files import download
 
 TEST_PATH = os.path.join(
     os.path.expanduser("~"), ".deflex", "tmp_test_32traffic_43"
 )
 
 
-def download(fn, url, force=False):
-    """
-    Download a file from a given url into a specific file if the file does not
-    exist. Use `force=True` to force the download.
-
-    Parameters
-    ----------
-    fn : str
-        Filename with the full path, where to store the downloaded file.
-    url : str
-        Full url of the file including (https:// etc.)
-    force : bool
-        Set to `True` to download the file even if it already exists.
-
-    Examples
-    --------
-    >>> my_url = "https://upload.wikimedia.org/wikipedia/commons/d/d3/Test.pdf"
-    >>> download("/home/name/Downloads/filename.pdf", my_url)  # doctest: +SKIP
-
-    """
-    if not os.path.isfile(fn) or force:
-        logging.info("Downloading '%s' from %s", os.path.basename(fn), url)
-        req = requests.get(url)
-        with open(fn, "wb") as fout:
-            fout.write(req.content)
-            logging.info("%s downloaded from %s.", url, fn)
+def fetch_example_files(path):
+    """Download and unzip scenarios (if zip-file does not exist)"""
+    fn = os.path.join(path, "deflex_softwarex_examples_v04.zip")
+    url = cfg.get("url", "softwarex_examples")
+    if not os.path.isfile(fn):
+        download(fn, url)
+    with ZipFile(fn, "r") as zip_ref:
+        zip_ref.extractall(path)
+    logging.info("All software examples extracted to %s.", url)
 
 
 def fetch_test_files(path, subdir="scenarios"):

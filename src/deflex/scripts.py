@@ -19,8 +19,9 @@ from functools import partial
 
 import pandas as pd
 
-from deflex.postprocessing import get_all_results
-from deflex.tools import create_scenario, dict2file
+from deflex.scenario_tools.scenario_io import create_scenario
+from deflex.tools.files import dict2file
+from deflex.postprocessing.basic import get_all_results
 
 
 def stopwatch():
@@ -52,7 +53,7 @@ def model_multi_scenarios(
 
     Examples
     --------
-    >>> from deflex.tools import fetch_test_files, TEST_PATH
+    >>> from deflex import fetch_test_files, TEST_PATH
     >>> fn1 = fetch_test_files("de03_fictive_csv")
     >>> fn2 = fetch_test_files("de03_fictive_broken.xlsx")
     >>> my_log_file = os.path.join(TEST_PATH, "my_log_file.csv")
@@ -176,7 +177,7 @@ def batch_model_scenario(
 
     Examples
     --------
-    >>> from deflex.tools import fetch_test_files
+    >>> from deflex import fetch_test_files
     >>> fi = fetch_test_files("de02_heat_csv")
     >>> r = batch_model_scenario(fi, ignore_errors=False)  # doctest: +ELLIPSIS
     Welcome to the CBC MILP ...
@@ -274,7 +275,7 @@ def model_scenario(
 
     Examples
     --------
-    >>> from deflex.tools import fetch_test_files, TEST_PATH
+    >>> from deflex import fetch_test_files, TEST_PATH
     >>> fn = fetch_test_files("de02_no-heat.xlsx")
     >>> r = model_scenario(fn, file_type="xlsx", dump=True
     ...     )  # doctest: +ELLIPSIS

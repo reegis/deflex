@@ -9,7 +9,6 @@ SPDX-License-Identifier: MIT
 __copyright__ = "Uwe Krien <krien@uni-bremen.de>"
 __license__ = "MIT"
 
-import calendar
 import datetime
 import logging
 import os
@@ -23,8 +22,7 @@ from oemof import solph
 from oemof.network import graph
 
 from deflex import config as cfg
-
-from .nodes import create_solph_nodes_from_data
+from deflex.scenario_tools.nodes import create_solph_nodes_from_data
 
 if sys.getrecursionlimit() < 3000:
     sys.setrecursionlimit(3000)
@@ -76,11 +74,11 @@ class Scenario:
 
     """
 
-    def __init__(self, **kwargs):
-        self.meta = kwargs.get("meta", {})
-        self.input_data = kwargs.get("input_data", {})
-        self.es = kwargs.get("es", None)
-        self.results = kwargs.get("results", None)
+    def __init__(self, meta=None, input_data=None, es=None, results=None):
+        self.meta = {} if meta is None else meta
+        self.input_data = {} if input_data is None else input_data
+        self.es = es
+        self.results = results
 
     def initialise_energy_system(self):
         """
@@ -100,12 +98,6 @@ class Scenario:
             )
         year = int(self.input_data["general"]["year"])
         time_steps = int(self.input_data["general"]["number of time steps"])
-        # increment = self.input_data["general"]["time increment"]
-
-        # Check leap year
-        if calendar.isleap(year) and time_steps != 8784:
-            msg = "{0} is a leap year but the number of time steps is {1}."
-            warnings.warn(msg.format(year, time_steps), UserWarning)
 
         # Check series tables
         for key in [t for t in self.input_data.keys() if "series" in t]:
@@ -126,7 +118,20 @@ class Scenario:
         return self
 
     def read_xlsx(self, filename):
-        """Load scenario from an xlsx file. The full path has to be passed."""
+        """
+        Load scenario data from an xlsx file. The full path has to be passed.
+
+        Examples
+        --------
+        >>> import deflex as dflx
+        >>> fn = dflx.fetch_test_files("de02_no-heat.xlsx")
+        >>> sc = dflx.DeflexScenario()
+        >>> len(sc.input_data)
+        0
+        >>> sc = sc.read_xlsx(fn)
+        >>> len(sc.input_data)
+        11
+        """
         xlsx = pd.ExcelFile(filename)
         for sheet in xlsx.sheet_names:
             table_index_header = cfg.get_list("table_index_header", sheet)
@@ -134,16 +139,30 @@ class Scenario:
                 sheet,
                 index_col=list(range(int(table_index_header[0]))),
                 header=list(range(int(table_index_header[1]))),
-                squeeze=("series" not in sheet),
             )
-        self.check_input_data(warning=False)
-        self.add_meta_data()
+            if "series" not in sheet:
+                self.input_data[sheet] = self.input_data[sheet].squeeze(
+                    "columns"
+                )
+        self.check_input_data()
+        self._add_meta_data()
         return self
 
     def read_csv(self, path):
         """
         Load scenario from a csv-collection. The path of the directory has
         to be passed.
+
+        Examples
+        --------
+        >>> import deflex as dflx
+        >>> fn = dflx.fetch_test_files("de02_no-heat_csv")
+        >>> sc = dflx.DeflexScenario()
+        >>> len(sc.input_data)
+        0
+        >>> sc = sc.read_csv(fn)
+        >>> len(sc.input_data)
+        11
         """
         for file in os.listdir(path):
             if file[-4:] == ".csv":
@@ -154,23 +173,42 @@ class Scenario:
                     filename,
                     index_col=list(range(int(table_index_header[0]))),
                     header=list(range(int(table_index_header[1]))),
-                    squeeze=("series" not in name),
                 )
-        self.check_input_data(warning=False)
-        self.add_meta_data()
+                if "series" not in name:
+                    self.input_data[name] = self.input_data[name].squeeze(
+                        "columns"
+                    )
+        self.check_input_data()
+        self._add_meta_data()
         return self
 
-    def add_meta_data(self):
+    def _add_meta_data(self):
         if "info" in self.input_data:
             self.meta.update(self.input_data["info"].to_dict())
         self.meta.update(self.input_data["general"].to_dict())
 
-    def check_input_data(self, warning=False):
+    def check_input_data(self):
         """
-        Check the input data for NaN values. If warning is True a warning
-        for all tables is raised that contain NaN values. Otherwise an
-        exception is raised on the first occurrence of NaN values.
+        Check the input data for NaN values.
+        If warning is True (default: False) a warning for all tables is raised
+        that contain NaN values. This is useful if you suspect many NaN values
+        in your data set, so you get a good overview over all the corrupt
+        columns. Otherwise an exception is raised on the first occurrence of
+        NaN values.
+
+        Examples
+        --------
+        >>> import deflex as dflx
+        >>> fn = dflx.fetch_test_files("de02_no-heat_csv")
+        >>> sc = dflx.create_scenario(fn, "csv")
+        >>> sc.input_data["electricity demand series"].iloc[15] = float("nan")
+        >>> sc.input_data["volatile series"].iloc[11] = float("nan")
+        >>> sc.check_input_data()  # doctest: +IGNORE_EXCEPTION_DETAIL
+        Traceback (most recent call last):
+        ...
+        ValueError: NaN values found in the following tables: electricity...
         """
+        has_warning = []
         for sheet, table in self.input_data.items():
             msg = (
                 "NaN values found in table:'{0}', column(s): {1}.\n"
@@ -180,15 +218,13 @@ class Scenario:
                 "or 1 might be neutral values to replace NaN values."
             )
             if isinstance(table, pd.DataFrame):
-                table.dropna(thresh=1, inplace=True, axis=0)
-                table.dropna(thresh=1, inplace=True, axis=1)
+                # table.dropna(thresh=1, inplace=True, axis=0)
+                # table.dropna(thresh=1, inplace=True, axis=1)
                 if table.isnull().any().any():
                     columns = tuple(table.loc[:, table.isnull().any()].columns)
                     msg = msg.format(sheet, columns)
-                    if warning is True:
-                        warnings.warn(msg, UserWarning)
-                    else:
-                        raise ValueError(msg)
+                    warnings.warn(msg, UserWarning)
+                    has_warning.append(sheet)
                 self.input_data[sheet] = table.dropna(
                     thresh=(len(table.columns))
                 )
@@ -196,19 +232,39 @@ class Scenario:
                 if table.isnull().any():
                     value = table.loc[table.isnull()].index
                     msg = msg.format(sheet, value)
-                    if warning is True:
-                        warnings.warn(msg, UserWarning)
-                    else:
-                        raise ValueError(msg)
+                    warnings.warn(msg, UserWarning)
+                    has_warning.append(sheet)
 
         if isinstance(self.input_data["volatile plants"], pd.Series):
             self.input_data["volatile plants"] = pd.DataFrame(
                 self.input_data["volatile plants"],
                 columns=[self.input_data["volatile plants"].name],
             )
+        if len(has_warning) > 0:
+            msg = (
+                "NaN values found in the following tables: {0}\n"
+                "See the warning above for more information"
+            )
+            raise ValueError(msg.format(", ".join(has_warning)))
 
     def to_xlsx(self, filename):
-        """Dump the input data as an xlsx-file."""
+        """
+        Store the input data into an xlsx-file.
+
+        filename : str
+            Full path to the filename.
+
+        Examples
+        --------
+        >>> import deflex as dflx
+        >>> fn = dflx.fetch_test_files("de02_no-heat_csv")
+        >>> sc = dflx.DeflexScenario()
+        >>> # read scenario from xlsx-file
+        >>> sc = sc.read_csv(fn)
+        >>> # store scenario as csv-collection.
+        >>> sc.to_xlsx(fn.replace("_csv", ".xlsx"))
+
+        """
         # create path if it does not exist
         suffix = filename.split(".")[-1]
         if not suffix == "xlsx":
@@ -221,7 +277,23 @@ class Scenario:
         logging.info("Scenario saved as excel file to %s", filename)
 
     def to_csv(self, path):
-        """Dump input data as a csv-collection."""
+        """
+        Store the input data as a csv-collection.
+
+        filename : str
+            Full path to the filename.
+
+        Examples
+        --------
+        >>> import deflex as dflx
+        >>> fn = dflx.fetch_test_files("de02_no-heat.xlsx")
+        >>> sc = dflx.DeflexScenario()
+        >>> # read scenario from xlsx-file
+        >>> sc = sc.read_xlsx(fn)
+        >>> # store scenario as csv collection.
+        >>> sc.to_csv(fn.replace(".xlsx", "_csv"))
+
+        """
         if os.path.isdir(path):
             shutil.rmtree(os.path.join(path))
         os.makedirs(path)
@@ -235,7 +307,7 @@ class Scenario:
     def create_nodes(self):
         """This method is a placeholder for the child classes."""
 
-    def compute(self, solver="cbc", **kwargs):
+    def compute(self, solver="cbc", with_duals=True, **kwargs):
         """
         Create a solph.Model from the input data and optimise it using an
         external solver. Afterwards the results are stored in the results
@@ -244,15 +316,26 @@ class Scenario:
         Parameters
         ----------
         solver : str
-            The name of the solver as used in the Pyomo package (cbc, glpk,
-            gurobi, cplex...).
+            The name of the solver as used in the Pyomo package like cbc, glpk,
+            gurobi, cplex... (default: cbc).
+        with_duals : bool
+            Receive the dual variables of all buses in the results (default:
+            True).
 
-
+        Examples
+        --------
+        >>> import deflex as dflx
+        >>> fn = dflx.fetch_test_files("de02_no-heat_csv")
+        >>> sc = dflx.create_scenario(fn, "csv")
+        >>> sc.results is None
+        True
+        >>> sc.compute()  # doctest: +ELLIPSIS
+        Welcome to the CBC MILP ...
+        >>> sc.results.keys()
+        ['Problem', 'Solver', 'Solution', 'Main', 'Param', 'Meta']
         """
         self.table2es()
-        model = self.create_model()
-        model.receive_duals()
-        self.solve(model, solver=solver, **kwargs)
+        self.solve(self.create_model(), solver=solver, **kwargs)
 
     def add_nodes_to_es(self, nodes):
         """
@@ -276,13 +359,25 @@ class Scenario:
 
     def table2es(self):
         """
-        Create a populated solph.EnergySystem from the input data. This method
-        is included in the :py:meth:`~deflex.scenario.Scenario.compute()`
+        Create a populated solph.EnergySystem from the input data.
+
+        The EnergySystem object will be stored in the
+        :py:attr:`~deflex.scenario.DeflexScenario.es` attribute.
+
+        This method is included in the
+        :py:meth:`~deflex.scenario.Scenario.compute()`
         method and is only needed for advanced usage.
 
-        Returns
-        -------
-        self
+        Examples
+        --------
+        >>> import deflex as dflx
+        >>> fn = dflx.fetch_test_files("de02_no-heat_csv")
+        >>> sc = dflx.create_scenario(fn, "csv")
+        >>> sc.es is None
+        True
+        >>> sc.table2es()
+        >>> type(sc.es)
+        <class 'oemof.solph.network.energy_system.EnergySystem'>
 
         """
         if self.es is None:
@@ -291,7 +386,6 @@ class Scenario:
         logging.info("Creating nodes...")
         self.es.add(*self.create_nodes().values())
         logging.info("Done. Nodes added to the energy system.")
-        return self
 
     def create_model(self):
         """
@@ -302,6 +396,15 @@ class Scenario:
         Returns
         -------
         solph.Model
+
+        Examples
+        --------
+        >>> import deflex as dflx
+        >>> fn = dflx.fetch_test_files("de02_no-heat_csv")
+        >>> sc = dflx.create_scenario(fn, "csv")
+        >>> sc.table2es()
+        >>> type(sc.create_model())
+        <class 'oemof.solph.models.Model'>
 
         """
         logging.info("Creating the model this may take a while...")
@@ -332,9 +435,35 @@ class Scenario:
 
     def dump(self, filename):
         """
-        Store the scenario class into the binary pickle format with the suffix
-        `.dflx`. If the given filename does not contain the suffix, it will be
-        added to the filename.
+        Store a solved scenario class into the binary pickle format.
+
+        The file will be stored with the suffix `.dflx`. If the given filename
+        does not contain the suffix, it will be added to the filename.
+
+        It is possible to restore the dump but it is not possible to compute
+        a restored dump. Unsolved scenarios should be stored in the xlsx or
+        csv format.
+
+        >>> import os
+        >>> import deflex as dflx
+        >>> fn = dflx.fetch_test_files("de02_no-heat_csv")
+        >>> sc = dflx.create_scenario(fn, "csv")
+        >>> sc.results is None
+        True
+        >>> sc.compute()  # doctest: +ELLIPSIS
+        Welcome to the CBC MILP ...
+        >>> fn_dump = fn.replace("_csv", ".dflx")
+        >>> os.path.basename(fn_dump)
+        'de02_no-heat.dflx'
+        >>> sc.dump(fn_dump)
+        >>> os.path.isfile(fn_dump)
+        True
+        >>> sc2 = dflx.restore_scenario(fn_dump)
+        >>> type(sc2)
+        <class 'deflex.scenario.DeflexScenario'>
+        >>> sc2.results.keys()
+        ['Problem', 'Solver', 'Solution', 'Main', 'Param', 'Meta']
+        >>> os.remove(fn_dump)
         """
         suffix = filename.split(".")[-1]
         if not suffix == "dflx":
@@ -346,7 +475,7 @@ class Scenario:
         f.close()
         logging.info("Results dumped to %s.", filename)
 
-    def solve(self, model, solver="cbc", with_duals=False, **solver_kwargs):
+    def solve(self, model, solver="cbc", with_duals=True, **solver_kwargs):
         """
         Solve the solph.Model. This method is included in the
         :py:meth:`~deflex.scenario.Scenario.compute()` method and is only
@@ -365,13 +494,25 @@ class Scenario:
         logfile : str
             Define the path where to store the log file of the solver.
 
+        Examples
+        --------
+        >>> import deflex as dflx
+        >>> fn = dflx.fetch_test_files("de02_no-heat_csv")
+        >>> sc = dflx.create_scenario(fn, "csv")
+        >>> sc.table2es()
+        >>> my_model = sc.create_model()
+        >>> sc.solve(my_model, with_duals=False)  # doctest: +ELLIPSIS
+        Welcome to the CBC MILP ...
+        >>> sc.results.keys()
+        ['Problem', 'Solver', 'Solution', 'Main', 'Param', 'Meta']
+
         """
         logging.info("Optimising using %s.", solver)
 
         solver_kwargs["tee"] = solver_kwargs.get("tee", True)
 
         self.meta["solph_version"] = solph.__version__
-        self.meta["solver"] = solver
+        self.meta["solver_name"] = solver
         self.meta["solver_start"] = datetime.datetime.now()
 
         if with_duals:
@@ -388,45 +529,68 @@ class Scenario:
 
         self.results = self.es.results
 
-    def plot_nodes(self, filename=None, **kwargs):
+    def store_graph(self, filename, **kwargs):
         """
-        Plot a graph plot of the energy system and store it into a `.graphml`
-        file. The kwargs are passed to the oemof.network function
+        Store the EnergySystem graph into a `.graphml` file.
+
+        The kwargs are passed to the oemof.network function
         `create_nx_graph()
         <https://github.com/oemof/oemof.network/blob/dev/src/oemof/network/graph.py#L15>`_.
 
         Parameters
         ----------
-        filename
-        kwargs
+        filename : str
+            Full path of the graphml-file.
 
-        Returns
-        -------
+        Examples
+        --------
+        >>> import os
+        >>> import deflex as dflx
+        >>> fn = dflx.fetch_test_files("de02_no-heat_csv")
+        >>> sc = dflx.create_scenario(fn, "csv")
+        >>> sc.table2es()
+        >>> fn_graph = fn.replace("_csv", ".graphml")
+        >>> os.path.basename(fn_graph)
+        'de02_no-heat.graphml'
+        >>> sc.store_graph(fn_graph)
+        >>> os.path.isfile(fn_graph)
+        True
+        >>> os.remove(fn_graph)
 
         """
 
-        g = graph.create_nx_graph(self.es, filename=filename, **kwargs)
-
-        return g
+        graph.create_nx_graph(self.es, filename=filename, **kwargs)
 
 
 class DeflexScenario(Scenario):
     """
-    The Deflex Scenario inherits from the Scenario class and extends the
+    The Deflex Scenario is the center of a deflex energy model. It can store
+    the needed input data and the results after a successful optimisation.
+    a inherits from the Scenario class and extends the
     Scenario class with valid nodes creation. Additionally one can define
     an extra_regions attribute to create an extra commodity source for these
     regions. This makes it possible to create a source balance for these
     regions.
 
-    Attributes
+    Parameters
     ----------
-    extra_regions : list
-        All regions with separate commodity sources. This will blow up the
-        model a bit but makes it easier to create separate source balances.
+    meta : dict
+        Meta information of the DeflexScenario (optional).
+    input_data : dict
+        A dictionary of tables in the deflex scenario style (optional).
+    es : oemof.solph.EnergySystem class
+        An Energy system (optional).
+    results : dict
+        A valid Deflex results dictionary (optional).
+
     """
 
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+    __doc__ += "\n".join(Scenario.__doc__.split("\n")[2:])
+
+    def __init__(self, meta=None, input_data=None, es=None, results=None):
+        super().__init__(
+            meta=meta, input_data=input_data, es=es, results=results
+        )
 
     def create_nodes(self):
         """
