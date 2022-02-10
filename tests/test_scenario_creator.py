@@ -20,17 +20,17 @@ from scenario_builder import demand, feedin, powerplants
 
 from deflex import __file__ as dfile
 from deflex import config as cfg
-from deflex import scenario as st
+from deflex import DeflexScenario
 from deflex.creator import scenario_creator
 from deflex.geometries import deflex_power_lines, deflex_regions
-from deflex.tools import fetch_test_files
+from deflex import fetch_test_files
 
 
 class TestScenarioCreationFull:
     @classmethod
     def setup_class(cls):
         path = fetch_test_files("de22_heat_transmission_csv")
-        sc = st.DeflexScenario()
+        sc = DeflexScenario()
         sc.read_csv(path)
         cls.tables = sc.input_data
         tmp_tables = {}
@@ -110,8 +110,8 @@ class TestScenarioCreationFull:
         )
 
     def test_storages(self):
-        a = self.tables["electricity storages"].apply(pd.to_numeric)
-        b = self.input_data["electricity storages"].apply(pd.to_numeric)
+        a = self.tables["storages"].apply(pd.to_numeric, errors='coerce')
+        b = self.input_data["storages"].apply(pd.to_numeric, errors='coerce')
         b["energy inflow"] *= 48 / 8760
         for col in a.columns:
             pd.testing.assert_series_equal(a[col], b[col])
@@ -202,7 +202,7 @@ class TestScenarioCreationPart:
     @classmethod
     def setup_class(cls):
         path = fetch_test_files("de21_no-heat_csv")
-        sc = st.DeflexScenario()
+        sc = DeflexScenario()
         sc.read_csv(path)
         cls.tables = sc.input_data
         tmp_tables = {}
@@ -260,7 +260,7 @@ class TestScenarioCreationPart:
             csv_path=path.format("_csv"),
         )
 
-        sc_new = st.DeflexScenario()
+        sc_new = DeflexScenario()
         sc_new.read_csv(path.format("_csv"))
         cls.input_data = sc_new.input_data
 
@@ -276,8 +276,8 @@ class TestScenarioCreationPart:
         )
 
     def test_storages(self):
-        a = self.tables["electricity storages"].apply(pd.to_numeric)
-        b = self.input_data["electricity storages"].apply(pd.to_numeric)
+        a = self.tables["storages"].apply(pd.to_numeric, errors='coerce')
+        b = self.input_data["storages"].apply(pd.to_numeric, errors='coerce')
         b["energy inflow"] *= 48 / 8760
         for col in a.columns:
             pd.testing.assert_series_equal(a[col], b[col])

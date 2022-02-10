@@ -16,30 +16,37 @@ import shutil
 import pandas as pd
 import pytest
 
-from deflex import scenario
-from deflex.tools import TEST_PATH, fetch_test_files, restore_scenario
+from deflex import (
+    Scenario,
+    DeflexScenario,
+    TEST_PATH,
+    fetch_test_files,
+    restore_scenario,
+    NodeDict,
+)
 
 
 def test_basic_scenario_class():
-    sc = scenario.scenario.Scenario()
+    sc = Scenario()
     sc.create_nodes()
 
 
 def test_scenario_building():
-    sc = scenario.DeflexScenario(name="test", year=2014)
+    sc = DeflexScenario()
     csv_path = fetch_test_files("de22_heat_transmission_csv")
     sc.read_csv(csv_path)
     sc.table2es()
     sc.check_input_data()
     sc.input_data["volatile series"].loc[5, ("DE01", "wind")] = float("nan")
     with pytest.raises(
-        ValueError, match=r"NaN values found in table:'volatile series'"
+        ValueError,
+        match=r"NaN values found in the following tables: volatile series",
     ):
         sc.check_input_data()
 
 
 def test_node_dict():
-    nc = scenario.NodeDict()
+    nc = NodeDict()
     nc["g"] = 5
     nc["h"] = 6
     msg = (
@@ -56,12 +63,10 @@ def test_scenario_es_init():
             {"year": 2013, "name": "test", "number of time steps": 8760}
         )
     }
-    sc = scenario.DeflexScenario(input_data=data)
+    sc = DeflexScenario(input_data=data)
     es1 = sc.initialise_energy_system().es
-    sc = scenario.DeflexScenario(input_data=data)
+    sc = DeflexScenario(input_data=data)
     sc.input_data["general"]["year"] = 2012
-    with pytest.warns(UserWarning, match="2012 is a leap year but the"):
-        print(sc.initialise_energy_system().es)
     sc.input_data["general"]["number of time steps"] = 8784
     es2 = sc.initialise_energy_system().es
     assert len(es1.timeindex) == 8760
@@ -69,14 +74,14 @@ def test_scenario_es_init():
 
 
 def test_scenario_es_init_error():
-    sc = scenario.DeflexScenario()
+    sc = DeflexScenario()
     msg = "There is no input data in the scenario. You cannot initialise an"
     with pytest.raises(ValueError, match=msg):
         sc.initialise_energy_system()
 
 
 def test_excel_reader():
-    sc = scenario.DeflexScenario()
+    sc = DeflexScenario()
     xls_fn = fetch_test_files("de02_heat.xlsx")
     sc.read_xlsx(xls_fn)
     sc.initialise_energy_system()
@@ -92,7 +97,7 @@ def test_excel_reader():
 
 
 def test_build_model():
-    sc = scenario.DeflexScenario(debug=True)
+    sc = DeflexScenario()
     xls_fn = fetch_test_files("de02_heat.xlsx")
     sc.read_xlsx(xls_fn)
     sc.compute()
@@ -100,7 +105,7 @@ def test_build_model():
 
 
 def test_build_model_manually():
-    sc = scenario.DeflexScenario(debug=True)
+    sc = DeflexScenario()
     xls_fn = fetch_test_files("de02_no-heat.xlsx")
     sc.read_xlsx(xls_fn)
     sc.initialise_energy_system()
@@ -116,7 +121,7 @@ def test_build_model_manually():
     dump_fn += ".dflx"
     sc.dump(dump_fn)
     plot_fn = os.path.join(TEST_PATH, "test_plot_X343.graphml")
-    sc.plot_nodes(plot_fn)
+    sc.store_graph(plot_fn)
     assert os.path.isfile(plot_fn)
     sc_new = restore_scenario(dump_fn)
     assert int(sc_new.meta["year"]) == 2014
@@ -125,7 +130,7 @@ def test_build_model_manually():
 
 
 def test_corrupt_data():
-    sc = scenario.DeflexScenario(year=2014)
+    sc = DeflexScenario()
     csv_path = fetch_test_files("de03_fictive_csv")
     sc.read_csv(csv_path)
     sc.input_data["volatile series"].drop(
@@ -146,20 +151,21 @@ def test_restore_an_invalid_scenario():
 class TestInputDataCheck:
     @classmethod
     def setup_class(cls):
-        cls.sc = scenario.DeflexScenario()
+        cls.sc = DeflexScenario()
         fn = fetch_test_files("de02_no-heat.xlsx")
         cls.sc.read_xlsx(fn)
         cls.sc.input_data["general"]["regions"] = float("nan")
 
     def test_nan_value_in_general_table_series(self):
-        with pytest.raises(ValueError, match="'general'"):
+        with pytest.raises(ValueError, match="general"):
             self.sc.check_input_data()
 
     def test_nan_values_warnings(self, recwarn):
         self.sc.input_data["volatile series"].loc[5, ("DE01", "wind")] = float(
             "nan"
         )
-        self.sc.check_input_data(warning=True)
+        with pytest.raises(ValueError):
+            self.sc.check_input_data()
         assert len(recwarn) == 2
         assert "table:'general', column(s): Index(['regions']" in str(
             recwarn[0].message

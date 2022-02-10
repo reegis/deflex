@@ -15,7 +15,8 @@ import os
 
 import pytest
 
-from deflex import tools
+from deflex import fetch_test_files
+from deflex.scenario_tools.example_files import _download as download
 
 
 def test_download(caplog, monkeypatch):
@@ -26,11 +27,11 @@ def test_download(caplog, monkeypatch):
     fn = os.path.join(os.path.expanduser("~"), ".tmp_test_x456FG6")
     caplog.set_level(logging.DEBUG)
     assert not os.path.isfile(fn)
-    tools.download(fn, url)
+    download(fn, url)
     assert ".tmp_test_x456FG6" in caplog.text
     assert os.path.isfile(fn)
     caplog.clear()
-    tools.download(fn, url)
+    download(fn, url)
     assert "Downloading" not in caplog.text
     os.remove(fn)
 
@@ -38,4 +39,4 @@ def test_download(caplog, monkeypatch):
 def test_fetching_not_existing_file():
     msg = "Example file 'not_existing_file.xlsx' not in"
     with pytest.raises(ValueError, match=msg):
-        tools.fetch_test_files("not_existing_file.xlsx")
+        fetch_test_files("not_existing_file.xlsx")

@@ -2,8 +2,7 @@ import os
 
 import pandas as pd
 
-from deflex.postprocessing import analyses
-from deflex.tools import fetch_test_files, restore_results
+from deflex import Cycles, fetch_test_files, restore_results
 
 
 class TestCycles:
@@ -28,7 +27,7 @@ class TestCycles:
         cls.cycles = cycles
 
     def test_cycle_from_results(self, capsys):
-        c = analyses.Cycles(self.results)
+        c = Cycles(self.results)
         print(c)
         captured = capsys.readouterr()
         expected_string = (
@@ -38,34 +37,23 @@ class TestCycles:
         )
         assert captured.out == expected_string
 
-    def test_cycles_without_values(self, capsys):
-        c = analyses.Cycles(self.results, no_values=True)
-        print(c)
-        captured = capsys.readouterr()
-        expected_string = (
-            "*** Cycle object of scenario: de03_fictive_test ***\n\nNumber of "
-            "cycles: 9\nNumber of used cycles: None\nNumber of critical "
-            "cycles: None\n\n"
-        )
-        assert captured.out == expected_string
-
     def test_storage_filter(self):
-        c = analyses.Cycles(self.results, no_values=True, storages=False)
+        c = Cycles(self.results, storages=False)
         assert len(c.simple_cycles) == 7
 
     def test_power_line_filter(self):
-        c = analyses.Cycles(self.results, no_values=True, lines=False)
+        c = Cycles(self.results, lines=False)
         assert len(c.simple_cycles) == 4
 
     def test_suspicious_cycles(self):
-        c = analyses.Cycles(self.results, no_values=True)
-        c.cycles = self.cycles
+        c = Cycles(self.results)
+        c._cycles = self.cycles
         assert len(c.used_cycles) == 4
         assert len(c.suspicious_cycles) == 2
 
     def test_details_output(self, capsys):
-        c = analyses.Cycles(self.results, no_values=True)
-        c.cycles = self.cycles
+        c = Cycles(self.results)
+        c._cycles = self.cycles
         c.details()
         captured = capsys.readouterr()
         expected_string = (
@@ -78,14 +66,3 @@ class TestCycles:
             "************************************\n\n"
         )
         assert expected_string in captured.out
-
-    def test_details_output_with_none(self, capsys):
-        c = analyses.Cycles(self.results, no_values=True)
-        # c.cycles = self.cycles
-        c.details()
-        captured = capsys.readouterr()
-        expected_string = (
-            "**** DETAILS ***************************\n\n"
-            "No details available!\n\n"
-        )
-        assert expected_string == captured.out

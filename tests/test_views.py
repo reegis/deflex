@@ -1,7 +1,7 @@
 from oemof import solph
 
-from deflex.postprocessing import reshape_bus_view
-from deflex.tools import fetch_test_files, restore_results
+from deflex import reshape_bus_view
+from deflex import fetch_test_files, restore_results
 
 
 class TestCycles:

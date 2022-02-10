@@ -14,12 +14,29 @@ __license__ = "MIT"
 
 from oemof.solph import Bus, GenericStorage, Sink, Source, Transformer
 
-from deflex import postprocessing, scenario
-from deflex.tools import fetch_test_files, restore_results
+from deflex import (
+    DeflexGraph,
+    calculate_key_values,
+    fetch_attributes_of_commodity_sources,
+    fetch_test_files,
+    get_combined_bus_balance,
+    get_converter_balance,
+    nodes2table,
+    postprocessing,
+    restore_results,
+    scenario_tools,
+    get_time_index,
+)
+from deflex.postprocessing.analyses import (
+    fetch_converter_parameters,
+    _calculate_marginal_costs,
+    _fetch_electricity_flows,
+)
+from deflex.postprocessing.basic import _get_all_nodes_from_results
 
 
 def test_string_label():
-    label = scenario.nodes.Label(
+    label = scenario_tools.nodes.Label(
         cat="my*category", tag="my+tag", subtag="my-subtag", region="my-region"
     )
     assert label.tag == "my+tag"
@@ -34,7 +51,7 @@ class TestAnalysis:
         cls.results = restore_results(fetch_test_files("de02_no-heat.dflx"))
 
     def test_all_nodes_from_results(self):
-        nodes = postprocessing.basic.get_all_nodes_from_results(self.results)
+        nodes = _get_all_nodes_from_results(self.results)
         assert len(nodes) == 141
         # 15 + 26 + 87 + 1 + 12 = 141
         assert len([n for n in nodes if isinstance(n, Sink)]) == 15
@@ -45,8 +62,8 @@ class TestAnalysis:
         print(set([type(n) for n in nodes]))
 
     def test_graph_and_nodes(self):
-        graph = postprocessing.DeflexGraph(self.results)
-        nodes = postprocessing.basic.get_all_nodes_from_results(self.results)
+        graph = DeflexGraph(self.results)
+        nodes = postprocessing.basic._get_all_nodes_from_results(self.results)
         n = 0
         for k, v in graph.group_nodes_by_type().items():
             n += len(v)
@@ -60,7 +77,7 @@ class TestAnalysis:
         In the de02-example the sum of the outflows of the electricity Bus must
         equal the input flows of the storage and the demand Sink.
         """
-        all_nodes = postprocessing.nodes2table(self.results)
+        all_nodes = nodes2table(self.results)
         assert int(all_nodes.sum()["out"]) == int(all_nodes.sum()["in"])
         assert int(
             all_nodes.loc[("Bus", "electricity", "all", "all", "DE01"), "out"]
@@ -70,7 +87,8 @@ class TestAnalysis:
         )
 
     def test_resource_parameter(self):
-        nodes = postprocessing.basic.get_all_nodes_from_results(self.results)
+        nodes = postprocessing.basic._get_all_nodes_from_results(self.results)
+        cdf = fetch_attributes_of_commodity_sources(self.results)
         buses = [
             n
             for n in nodes
@@ -81,17 +99,13 @@ class TestAnalysis:
         number = 0
         for bus in buses:
             number += 1
-            all_costs += postprocessing.analyses.get_resource_parameters(
-                self.results, bus
-            )["scalars"]["variable_costs"]
-            emission += postprocessing.analyses.get_resource_parameters(
-                self.results, bus
-            )["scalars"]["emission"]
+            all_costs += float(cdf.loc[cdf.to_node == bus]["variable_costs"])
+            emission += float(cdf.loc[cdf.to_node == bus]["emission"])
         assert round(all_costs / number, 2) == 19.19
         assert round(emission / number, 4) == 0.1804
 
     def test_converter_parameters(self):
-        nodes = postprocessing.basic.get_all_nodes_from_results(self.results)
+        nodes = postprocessing.basic._get_all_nodes_from_results(self.results)
         transformer = [
             n
             for n in nodes
@@ -104,35 +118,33 @@ class TestAnalysis:
         assert round(cp["efficiency, electricity"].mean(), 3) == 0.361
 
     def test_time_index(self):
-        time_index = postprocessing.analyses.get_time_index(self.results)
+        time_index = get_time_index(self.results)
         assert len(time_index) == 48
         assert time_index[5].year == 2014
         assert time_index[20].hour == 20
 
     def test_parameter_of_commodity_sources(self):
-        postprocessing.fetch_parameter_of_commodity_sources(self.results)
+        fetch_attributes_of_commodity_sources(self.results)
 
     def test_marginal_costs(self):
-        nodes = postprocessing.basic.get_all_nodes_from_results(self.results)
+        nodes = postprocessing.basic._get_all_nodes_from_results(self.results)
         transformer = [
             n
             for n in nodes
             if isinstance(n, Transformer) and n.label.subtag == "hard coal"
         ]
-        cp = postprocessing.analyses.fetch_converter_parameters(
-            self.results, transformer
-        )
-        mc = postprocessing.calculate_marginal_costs(cp)
+        cp = fetch_converter_parameters(self.results, transformer)
+        mc = _calculate_marginal_costs(cp)
         assert round(mc["marginal costs"].mean(), 2) == 47.51
 
     def test_electricity_flows(self):
-        postprocessing.analyses.fetch_electricity_flows(self.results)
+        _fetch_electricity_flows(self.results)
 
     def test_calculate_key_values(self):
-        postprocessing.calculate_key_values(self.results)
+        calculate_key_values(self.results)
 
     def test_combined_bus_balance(self):
-        postprocessing.get_combined_bus_balance(self.results)
+        get_combined_bus_balance(self.results)
 
     def test_converter_balance(self):
-        postprocessing.get_converter_balance(self.results)
+        get_converter_balance(self.results)
