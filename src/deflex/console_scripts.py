@@ -6,6 +6,35 @@ import deflex
 
 
 def main():
+    """
+    deflex-compute [-h] [--version] [--results [RESULTS]]
+    [--dump [DUMP]] [--solver [SOLVER]] path
+
+
+    Computing a deflex scenario. By default the name of the result file is
+    derived from the name of the input file by adding '_results but it is
+    possible to define a custom path. The results will be of the same
+    file format as the input scenario. Optionally a dump-file can be stored.
+    If no path is given the path is derived from the path of the input
+    scenario. The suffix of the dump is '.dflx'.
+
+    **Positional Arguments**
+
+    ::
+
+       path      Input file or directory.
+
+    **Optional Arguments**
+
+    -h, --help            show this help message and exit
+    --version             show program's version number and exit
+    --results <RESULTS>   The name of the results file or directory or False
+                          to get no result file
+    --dump <DUMP>         The name of the dump file. Leave empty for the
+                          default file name
+    --solver <SOLVER>     Solver to use for computing (default cbc)
+
+    """
     long_description = (
         "Computing a deflex scenario. By default the name of the result file "
         "is derived from the name of the input file by adding '_results but "
