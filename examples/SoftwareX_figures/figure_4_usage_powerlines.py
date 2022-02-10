@@ -20,7 +20,14 @@ from matplotlib import pyplot as plt
 from matplotlib.colors import LinearSegmentedColormap
 from oemof.tools import logger
 
-from deflex import geometries, postprocessing, scripts, tools
+from deflex import (
+    dict2file,
+    download,
+    geometries,
+    get_all_results,
+    restore_results,
+    scripts,
+)
 
 EXAMPLES_URL = (
     "https://files.de-1.osf.io/v1/resources/9krgp/providers/osfstorage"
@@ -37,7 +44,7 @@ def get_example_files():
     """Download and unzip scenarios (if zip-file does not exist)"""
     fn = os.path.join(BASIC_PATH, "deflex_softwarex_examples_v04.zip")
     if not os.path.isfile(fn):
-        tools.download(fn, EXAMPLES_URL)
+        download(fn, EXAMPLES_URL)
     with ZipFile(fn, "r") as zip_ref:
         zip_ref.extractall(BASIC_PATH)
     logging.info("All software examples extracted to %s.", BASIC_PATH)
@@ -164,7 +171,7 @@ files = {k: os.path.join(BASIC_PATH, v) for k, v in files.items()}
 
 if not os.path.isfile(files["dump"]) or FORCE_COMPUTING:
     scripts.model_scenario(files["input"], "xlsx", files["dump"])
-my_results = tools.restore_results(files["dump"])
+my_results = restore_results(files["dump"])
 de21 = geometries.deflex_geo("de21")
 my_data = get_power_line_usage(de21, my_results)
 
@@ -175,5 +182,5 @@ if not os.path.isfile(files["out"]) or FORCE_COMPUTING:
     logging.info(
         "Writing results to an excel file." "This will take some minutes..."
     )
-    tools.dict2file(postprocessing.get_all_results(my_results), files["out"])
+    dict2file(get_all_results(my_results), files["out"])
     logging.info("File written to {0}".format(files["out"]))

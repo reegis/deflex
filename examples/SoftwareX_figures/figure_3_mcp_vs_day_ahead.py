@@ -24,9 +24,8 @@ import pandas as pd
 import pytz
 from matplotlib import pyplot as plt
 from matplotlib.dates import DateFormatter, HourLocator
-from oemof.tools import logger
 
-from deflex import postprocessing, scripts, tools
+import deflex as dflx
 
 OPSD_URL = (
     "https://data.open-power-system-data.org/index.php?package="
@@ -44,13 +43,13 @@ EXAMPLES_URL = (
 
 BASIC_PATH = os.path.join(os.path.expanduser("~"), "deflex", "softwarex")
 INPUT_FILE = "deflex_2014_de02_3_month_test.xlsx"
-FORCE_COMPUTING = False  # Use True to compute the model (small model, fast)
+FORCE_COMPUTING = True  # Use True to compute the model (small model, fast)
 
 
 def get_price_from_opsd(path):
     """Get day ahead prices from opsd time series."""
     fn = os.path.join(path, "opsd_day_ahead_prices.csv")
-    tools.download(fn, OPSD_URL)
+    dflx.download(fn, OPSD_URL)
 
     de_ts = pd.read_csv(
         fn,
@@ -66,20 +65,10 @@ def get_price_from_opsd(path):
     return de_ts.loc[start_date:end_date, "DE_price_day_ahead"]
 
 
-def get_example_files():
-    """Download and unzip scenarios (if zip-file does not exist)"""
-    fn = os.path.join(BASIC_PATH, "deflex_softwarex_examples_v04.zip")
-    if not os.path.isfile(fn):
-        tools.download(fn, EXAMPLES_URL)
-    with ZipFile(fn, "r") as zip_ref:
-        zip_ref.extractall(BASIC_PATH)
-    logging.info("All software examples extracted to %s.", BASIC_PATH)
-
-
-logger.define_logging()
+dflx.use_logging()
 plt.rcParams.update({"font.size": 18})
 os.makedirs(BASIC_PATH, exist_ok=True)
-get_example_files()
+# get_example_files()
 
 # Define the filenames
 files = {"input": INPUT_FILE}
@@ -90,12 +79,12 @@ files = {k: os.path.join(BASIC_PATH, v) for k, v in files.items()}
 
 # Compute the model if the dump file does not exist or computing is forced
 if not os.path.isfile(files["dump"]) or FORCE_COMPUTING:
-    scripts.model_scenario(files["input"], "xlsx", files["dump"])
+    dflx.model_scenario(files["input"], "xlsx", files["dump"])
 
 # Restore dumped file to create the plot
-results = tools.restore_results(files["dump"])
+results = dflx.restore_results(files["dump"])
 
-kv = postprocessing.calculate_key_values(results)
+kv = dflx.calculate_key_values(results)
 
 # Download Entsoe day ahead prices from OPSD
 opsd = get_price_from_opsd(BASIC_PATH)
@@ -111,6 +100,16 @@ kv.set_index(opsd.index, inplace=True)
 mcp = pd.DataFrame()
 mcp["Entsoe"] = opsd
 mcp["de02"] = kv["marginal costs"]
+
+
+dual = dflx.fetch_dual_results(results)
+dual.set_index(opsd.index, inplace=True)
+electricity_bus = [
+    b
+    for b in dual.columns
+    if b.label.cat == "electricity" and b.label.region == "DE01"
+][0]
+mcp["duals"] = dual[electricity_bus]
 
 mcp.tz_localize(None).to_excel("/home/uwe/mcp_neu.xlsx")
 mcp = pd.read_excel("/home/uwe/mcp_neu.xlsx", parse_dates=True, index_col=0)
@@ -151,7 +150,7 @@ ax[2].legend(
 plt.subplots_adjust(right=0.88, left=0.06, bottom=0.09, top=0.98, hspace=0.3)
 
 if not os.path.isfile(files["out"]) or FORCE_COMPUTING:
-    tools.dict2file(postprocessing.get_all_results(results), files["out"])
+    dflx.dict2file(dflx.get_all_results(results), files["out"])
 
 plt.savefig(files["plot"])
 plt.show()

@@ -21,6 +21,7 @@ from matplotlib import pyplot as plt
 from matplotlib.colors import LinearSegmentedColormap
 
 from deflex import geometries
+from deflex.postprocessing.electricity import merit_order_from_results
 
 my_aspect = "equal"  # try "auto" instead
 

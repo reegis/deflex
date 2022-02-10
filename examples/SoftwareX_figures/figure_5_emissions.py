@@ -26,7 +26,7 @@ import pandas as pd
 from matplotlib import pyplot as plt
 from oemof.tools import logger
 
-from deflex import postprocessing, scripts, tools
+import deflex as dflx
 
 EXAMPLES_URL = (
     "https://files.de-1.osf.io/v1/resources/9krgp/providers/osfstorage"
@@ -73,7 +73,7 @@ def get_example_files():
     """Download and unzip scenarios (if zip-file does not exist)"""
     fn = os.path.join(BASIC_PATH, "deflex_softwarex_examples_v04.zip")
     if not os.path.isfile(fn):
-        tools.download(fn, EXAMPLES_URL)
+        dflx.download(fn, EXAMPLES_URL)
     with ZipFile(fn, "r") as zip_ref:
         zip_ref.extractall(BASIC_PATH)
     logging.info("All software examples extracted to %s.", BASIC_PATH)
@@ -99,17 +99,17 @@ plt.rcParams.update({"font.size": fontsize})
 logger.define_logging()
 
 if not os.path.isfile(files["dump"]) or FORCE_COMPUTING:
-    scripts.model_scenario(files["input"], "xlsx", files["dump"])
+    dflx.scripts.model_scenario(files["input"], "xlsx", files["dump"])
 
 # restore the results from file
-my_results = tools.restore_results(files["dump"])
+my_results = dflx.restore_results(files["dump"])
 
 # fetch commodity parameter
-commodity = postprocessing.fetch_parameter_of_commodity_sources(my_results)
+commodity = dflx.fetch_attributes_of_commodity_sources(my_results)
 commodity.index = commodity.index.droplevel(1)
 
 # fetch power plant in an out flows (fix datetime index)
-pp = postprocessing.get_converter_balance(my_results, cat="power plant")
+pp = dflx.get_converter_balance(my_results, cat="power plant")
 pp.set_index(
     pd.to_datetime(pp.index.values) + pd.Timedelta(hours=5088), inplace=True
 )
@@ -127,14 +127,14 @@ total_emissions = (
 total_electricity_converter = pp["out"].sum(axis=1)
 
 # fetch emissions of most expensive power plant (fix datetime index)
-key_values = postprocessing.calculate_key_values(my_results)
+key_values = dflx.calculate_key_values(my_results)
 key_values.set_index(
     pd.to_datetime(key_values.index.values) + pd.Timedelta(hours=5088),
     inplace=True,
 )
 
 # fetch all in- and outflows of the electricity buses (fix datetime index)
-ebus = postprocessing.get_combined_bus_balance(my_results, cat="electricity")
+ebus = dflx.get_combined_bus_balance(my_results, cat="electricity")
 ebus.set_index(
     pd.to_datetime(ebus.index.values) + pd.Timedelta(hours=5088), inplace=True
 )
@@ -180,7 +180,7 @@ outorder = ["demand", "storage"]
 
 # plot the emissions
 key_values = pd.concat([key_values, average_emissions], axis=1)
-key_values["most expensive"] = key_values["emissions"]
+key_values["most expensive"] = key_values["emission"]
 ax[0] = (
     key_values[["most expensive", "average"]]
     .reset_index(drop=True)
@@ -221,7 +221,7 @@ plt.subplots_adjust(
 
 # Write out the results
 if not os.path.isfile(files["out"]) or FORCE_COMPUTING:
-    tools.dict2file(postprocessing.get_all_results(my_results), files["out"])
+    dflx.dict2file(dflx.get_all_results(my_results), files["out"])
 
 # Show and save the plot
 plt.savefig(files["plot"])

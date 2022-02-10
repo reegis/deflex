@@ -15,7 +15,7 @@ from zipfile import ZipFile
 
 from oemof.tools import logger
 
-from deflex import scenario, tools
+import deflex as dflx
 
 url = (
     "https://files.de-1.osf.io/v1/resources/a5xrj/providers/osfstorage"
@@ -32,7 +32,7 @@ logger.define_logging()
 os.makedirs(path, exist_ok=True)
 fn = os.path.join(path, "deflex_scenario_examples_v03.zip")
 if not os.path.isfile(fn):
-    tools.download(fn, url)
+    dflx.download(fn, url)
 with ZipFile(fn, "r") as zip_ref:
     zip_ref.extractall(path)
 logging.info("All v0.3.x scenarios examples extracted to %s.", path)
@@ -53,7 +53,7 @@ fn = os.path.join(path, file)
 # *** Long version ***
 
 # Create a scenario object
-sc = scenario.DeflexScenario()
+sc = dflx.DeflexScenario()
 
 # Read the input data. Use the right method (csv/xlsx) for your file type.
 # sc.read_csv(fn)
