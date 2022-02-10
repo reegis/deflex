@@ -27,8 +27,8 @@ from scenario_builder import (
 from deflex import __file__ as dfile
 from deflex import config as cfg
 from deflex.creator import transmission
-from deflex.scenario import scenario
-from deflex.tools import download
+from deflex import Scenario
+from deflex.scenario_tools.example_files import _download as download
 
 
 def scenario_default_decentralised_heat():
@@ -81,7 +81,7 @@ def create_scenario(regions, year, name, lines, opsd_version=None):
     table_collection = {"general": pd.DataFrame()}
 
     logging.info("BASIC SCENARIO - STORAGES")
-    table_collection["electricity storages"] = storages.scenario_storages(
+    table_collection["storages"] = storages.scenario_storages(
         regions, year, name
     )
 
@@ -348,7 +348,7 @@ def create_basic_reegis_scenario(
     )
 
     logging.info(
-        "The following configuration is used to build the scenario:" " %s",
+        "The following configuration is used to build the scenario: %s",
         configuration,
     )
     paths = namedtuple("paths", "xls, csv")
@@ -357,8 +357,7 @@ def create_basic_reegis_scenario(
 
     table_collection = clean_time_series(table_collection)
 
-    name = table_collection["general"].get("name")
-    sce = scenario.Scenario(input_data=table_collection, name=name, year=year)
+    sce = Scenario(input_data=table_collection)
 
     if csv_path is not None:
         os.makedirs(csv_path, exist_ok=True)
