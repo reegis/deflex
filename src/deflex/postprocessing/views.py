@@ -20,6 +20,7 @@ def reshape_bus_view(results, buses, aggregate=None):
     first column level contains ``'in'`` or ``'out'`` for ingoing and outgoing
     flows.
 
+    Replaced by `get_combined_bus_balance`?
 
     Parameters
     ----------
@@ -53,9 +54,9 @@ def reshape_bus_view(results, buses, aggregate=None):
     Examples
     --------
     >>> from oemof import solph
-    >>> from deflex.tools import fetch_test_files, restore_results
-    >>> fn = fetch_test_files("de02_heat.dflx")
-    >>> my_results = restore_results(fn)
+    >>> import deflex as dflx
+    >>> fn = dflx.fetch_test_files("de02_heat.dflx")
+    >>> my_results = dflx.restore_results(fn)
     >>> my_buses = list(set([flow[0] for flow in my_results["main"].keys() if
     ...            isinstance(flow[0], solph.Bus) and
     ...            flow[0].label.cat == "electricity"]))

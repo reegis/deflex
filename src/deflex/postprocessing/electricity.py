@@ -14,9 +14,15 @@ SPDX-License-Identifier: MIT
 __copyright__ = "Uwe Krien <krien@uni-bremen.de>"
 __license__ = "MIT"
 
+__all__ = [
+    "merit_order_from_scenario",
+    "merit_order_from_results",
+]
+
 import pandas as pd
 from oemof import solph
 from pandas.testing import assert_frame_equal
+from deflex.scenario_tools.helpers import label2str
 
 
 def merit_order_from_scenario(
@@ -24,11 +30,6 @@ def merit_order_from_scenario(
 ):
     """
     Create a merit order from a deflex scenario.
-
-    TODO: Check transmission.
-    TODO: Add volatile sources as an optional feature
-    TODO: Check chp. Warn if chp are present. Add chp as an option
-    TODO: Or warn if no chp are present, installed capacity might be too high
 
     Parameters
     ----------
@@ -46,11 +47,10 @@ def merit_order_from_scenario(
     Examples
     --------
     >>> import os
-    >>> from deflex import DeflexScenario
-    >>> from deflex.tools import fetch_test_files
-    >>> my_path = fetch_test_files("de02_no-heat_csv")
-    >>> sc = DeflexScenario()
-    >>> mo1 = merit_order_from_scenario(sc.read_csv(my_path))
+    >>> import deflex as dflx
+    >>> my_path = dflx.fetch_test_files("de02_no-heat_csv")
+    >>> sc = dflx.DeflexScenario()
+    >>> mo1 = dflx.merit_order_from_scenario(sc.read_csv(my_path))
     >>> round(mo1.capacity_cum.iloc[-1], 4)
     86.7028
     >>> round(mo1.capacity.sum(), 1)
@@ -67,6 +67,10 @@ def merit_order_from_scenario(
     43.58
 
     """
+    # TODO: Check transmission.
+    # TODO: Add volatile sources as an optional feature
+    # TODO: Check chp. Warn if chp are present. Add chp as an option
+    # TODO: Or warn if no chp are present, installed capacity might be too high
     sc = scenario
     sc.name = sc.input_data["general"].get("name")
     transf = sc.input_data["power plants"]
@@ -122,9 +126,9 @@ def merit_order_from_results(result):
 
     Examples
     --------
-    >>> from deflex import tools
-    >>> fn = tools.fetch_test_files("de02_no-heat.dflx")
-    >>> my_results = tools.files.restore_results(fn)
+    >>> import deflex as dflx
+    >>> fn = dflx.fetch_test_files("de02_no-heat.dflx")
+    >>> my_results = dflx.restore_results(fn)
     >>> a = merit_order_from_results(my_results)
     """
     # TODO: If there is a transmission limit or transmission losses
@@ -166,7 +170,9 @@ def merit_order_from_results(result):
             ]["scalars"].variable_costs
 
             # Efficiency of the component if component is a transformer.
-            parameter_name = "conversion_factors_{0}".format(electricity_bus)
+            parameter_name = "conversion_factors_{0}".format(
+                label2str(electricity_bus.label)
+            )
             values.loc[label, "efficiency"] = result["Param"][
                 (component, None)
             ]["scalars"][parameter_name]
@@ -237,9 +243,9 @@ def check_comparision_of_merit_order(scenario):
 
     Examples
     --------
-    >>> from deflex import tools
-    >>> my_path = tools.fetch_test_files("de02_no-heat.dflx")
-    >>> sc = tools.files.restore_scenario(my_path)
+    >>> import deflex as dflx
+    >>> my_path = dflx.fetch_test_files("de02_no-heat.dflx")
+    >>> sc = dflx.restore_scenario(my_path)
     >>> check_comparision_of_merit_order(sc)
     Check passed! Both merit order DataFrame tables are the same.
     """
