@@ -1,13 +1,13 @@
 from oemof import solph
 
-from deflex.postprocessing import reshape_bus_view
-from deflex.tools import fetch_test_files, restore_results
+from deflex import fetch_test_files, reshape_bus_view, restore_results
 
 
 class TestCycles:
     @classmethod
     def setup_class(cls):
         fn = fetch_test_files("de02_heat.dflx")
+        print(fn)
         results1 = restore_results(fn)
         results2 = restore_results(fn)
         buses1 = list(

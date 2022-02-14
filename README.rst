@@ -114,15 +114,9 @@ Use example
 
 1. Run ``pip install deflex[example]``
 2. Create a local directory (e.g. /home/user/deflex_examples).
-3. Download the example scripts to this directory. There are two example. The
-   `model_example.py
-   <https://files.osf.io/v1/resources/a5xrj/providers/github/examples/model_example.py?action=download&direct&version>`_
-   will explain the modelling process, the
-   `basic_analyses_example.py
-   <https://files.osf.io/v1/resources/a5xrj/providers/github/examples/basic_analyses_example.py?action=download&direct&version>`_
-   will show you how to analyse the results.
+3. The examples for deflex v0.4.x can be downloaded as zip file (coming soon)
 4. Read the comments of each example, execute it and modify it to your needs.
-   Do not forget to set the ``my_path`` in the examples first.
+   Do not forget to set a local path in the examples if needed.
 5. In parallel you should read the ``usage guide`` of the documentation to get
    the full picture.
 

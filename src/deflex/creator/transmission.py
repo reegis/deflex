@@ -76,8 +76,8 @@ def get_electrical_transmission_default(power_lines, both_directions=False):
     >>> df=get_electrical_transmission_default(de21.index)
     >>> df.loc['DE10-DE12', 'capacity']
     inf
-    >>> df.loc['DE10-DE12', 'distance']
-    nan
+    >>> df.loc['DE10-DE12'].get('distance', "column does not exist")
+    'column does not exist'
     >>> df.loc['DE10-DE12', 'efficiency']
     1.0
     >>> len(df)
@@ -105,7 +105,6 @@ def get_electrical_transmission_default(power_lines, both_directions=False):
 
     for line_name in power_lines:
         trans.loc[line_name, "capacity"] = float("inf")
-        trans.loc[line_name, "distance"] = float("nan")
         trans.loc[line_name, "efficiency"] = 1
 
     if both_directions is True:
@@ -233,14 +232,12 @@ def scenario_transmission(regions, lines, rmap=None, copperplate=None):
     >>> lines=scenario_transmission(my_regions, my_lines, copperplate=True)
     >>> float(lines.loc["DE07-DE05", "capacity"])
     inf
-    >>> float(lines.loc["DE07-DE05", "distance"])
-    nan
+    >>> lines.loc["DE07-DE05"].get('distance', "column does not exist")
+    'column does not exist'
     >>> float(lines.loc["DE07-DE05", "efficiency"])
     1.0
     """
 
-    # This should be done automatic e.g. if representative point outside the
-    # landmass polygon.
     offshore_regions = geometries.divide_off_and_onshore(regions).offshore
 
     if rmap is None:

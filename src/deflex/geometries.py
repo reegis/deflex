@@ -10,6 +10,7 @@ SPDX-License-Identifier: MIT
 __copyright__ = "Uwe Krien <krien@uni-bremen.de>"
 __license__ = "MIT"
 
+__all__ = ["deflex_geo", "divide_off_and_onshore"]
 
 import os
 from collections import namedtuple
@@ -37,6 +38,25 @@ def deflex_geo(rmap):
     Returns
     -------
     namedtuple
+
+    Examples
+    --------
+    >>> de02 = deflex_geo("de02")
+    >>> list(de02.polygons.index)
+    ['DE01', 'DE02']
+    >>> p = de02.labels.loc["DE01"].geometry
+    >>> p.x, p.y
+    (10.0, 51.6)
+    >>> de02.lines.index
+    Index(['DE01-DE02'], dtype='object', name='name')
+    >>> de02.line_labels.iloc[0]
+    gid                        246
+    rotation                   -42
+    geometry    POINT (7.61 53.78)
+    Name: DE01-DE02, dtype: object
+    >>> de01 = deflex_geo("de01")
+    >>> print(de01.lines)
+    None
     """
     geo = namedtuple(
         "geometry", ["polygons", "lines", "labels", "line_labels"]
@@ -52,6 +72,7 @@ def deflex_geo(rmap):
 
 def deflex_regions(rmap=None, rtype="polygons"):
     """
+    Get the geometries of deflex example regions.
 
     Parameters
     ----------
@@ -82,6 +103,8 @@ def deflex_regions(rmap=None, rtype="polygons"):
     'de22'
     >>> list(deflex_regions('de02').index)
     ['DE01', 'DE02']
+    >>> print(deflex_regions("de05"))
+    None
     """
     name = os.path.join(
         os.path.dirname(__file__),
@@ -104,6 +127,7 @@ def deflex_regions(rmap=None, rtype="polygons"):
 
 def deflex_power_lines(rmap=None, rtype="lines"):
     """
+    Get the geometries of deflex example power lines.
 
     Parameters
     ----------
@@ -126,6 +150,8 @@ def deflex_power_lines(rmap=None, rtype="lines"):
     'DE01-DE02'
     >>> deflex_power_lines(rmap="de21").name
     'de21'
+    >>> print(deflex_regions("de05"))
+    None
     """
     name = os.path.join(
         os.path.dirname(__file__),
@@ -147,7 +173,9 @@ def deflex_power_lines(rmap=None, rtype="lines"):
 
 def divide_off_and_onshore(regions):
     """
-    Sort regions into onshore and offshore regions. A namedtuple with two list
+    Sort regions into onshore and offshore regions (Germany).
+
+    A namedtuple with two list
     of regions ids will be returned. Fetch the `onshore` and `offshore`
     attribute of the named tuple to get the list.
 

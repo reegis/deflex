@@ -12,7 +12,6 @@ SPDX-License-Identifier: MIT
 import logging
 import os
 from multiprocessing import Process
-from zipfile import ZipFile
 
 import pandas as pd
 from matplotlib import patheffects
@@ -20,27 +19,24 @@ from matplotlib import pyplot as plt
 from matplotlib.colors import LinearSegmentedColormap
 from oemof.tools import logger
 
-from deflex import geometries, main, postprocessing, tools
+from deflex import (
+    dict2file,
+    fetch_published_figures_example_files,
+    geometries,
+    get_all_results,
+    restore_results,
+    scripts,
+)
 
 EXAMPLES_URL = (
     "https://files.de-1.osf.io/v1/resources/9krgp/providers/osfstorage"
     "/61def8c4bc925b00fed4b1d7?action=download&direct&version=1"
 )
 
-BASIC_PATH = os.path.join(os.path.expanduser("~"), "deflex", "softwarex")
+BASIC_PATH = os.path.join(os.path.expanduser("~"), "deflex", "figures")
 INPUT_FILE = "deflex_2014_de21_heat_restricted-transmission.xlsx"
 FORCE_COMPUTING = False  # Use True to compute the model (large model, slow)
 USAGE = 95  # %
-
-
-def get_example_files():
-    """Download and unzip scenarios (if zip-file does not exist)"""
-    fn = os.path.join(BASIC_PATH, "deflex_softwarex_examples_v04.zip")
-    if not os.path.isfile(fn):
-        tools.download(fn, EXAMPLES_URL)
-    with ZipFile(fn, "r") as zip_ref:
-        zip_ref.extractall(BASIC_PATH)
-    logging.info("All software examples extracted to %s.", BASIC_PATH)
 
 
 def plot_power_lines(geo, data, plot_file):
@@ -152,7 +148,7 @@ def get_power_line_usage(geo, results):
 
 logger.define_logging()
 os.makedirs(BASIC_PATH, exist_ok=True)
-get_example_files()
+fetch_published_figures_example_files(BASIC_PATH)
 
 files = {"input": INPUT_FILE}
 
@@ -163,8 +159,8 @@ files["plot"] = files["input"].replace(".xlsx", ".png")
 files = {k: os.path.join(BASIC_PATH, v) for k, v in files.items()}
 
 if not os.path.isfile(files["dump"]) or FORCE_COMPUTING:
-    main.model_scenario(files["input"], "xlsx", files["dump"])
-my_results = tools.restore_results(files["dump"])
+    scripts.model_scenario(files["input"], "xlsx", files["dump"])
+my_results = restore_results(files["dump"])
 de21 = geometries.deflex_geo("de21")
 my_data = get_power_line_usage(de21, my_results)
 
@@ -175,5 +171,5 @@ if not os.path.isfile(files["out"]) or FORCE_COMPUTING:
     logging.info(
         "Writing results to an excel file." "This will take some minutes..."
     )
-    tools.dict2file(postprocessing.get_all_results(my_results), files["out"])
+    dict2file(get_all_results(my_results), files["out"])
     logging.info("File written to {0}".format(files["out"]))

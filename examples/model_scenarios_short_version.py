@@ -11,13 +11,14 @@ SPDX-FileCopyrightText: 2021 Uwe Krien <krien@uni-bremen.de>
 SPDX-License-Identifier: MIT
 """
 
+import os
+
 from oemof.tools import logger
 
-import deflex.tools.files
-from deflex import main
+import deflex as dflx
 
 # !!! ADAPT THE PATH !!!
-path = "your/path"
+path = os.path.join(os.path.expanduser("~"), ".deflex", "my_scenarios")
 
 # Set logger
 logger.define_logging()
@@ -27,13 +28,13 @@ logger.define_logging()
 # not have other files xlsx-files in the given path. You can exclude a specific
 # pattern if you have input and e.g. result files in the given path and the
 # string "result" is part of the name of the result files.
-files = deflex.tools.files.search_input_scenarios(
+files = dflx.search_input_scenarios(
     path, xlsx=True, csv=True, exclude="result"
 )
 
 # Modelling scenarios in a row
 for file in files:
-    main.model_scenario(file)
+    dflx.model_scenario(file)
 
 # Modelling scenarios in parallel
-# main.model_multi_scenarios(files, cpu_fraction=0.5)
+# model_multi_scenarios(files, cpu_fraction=0.5)

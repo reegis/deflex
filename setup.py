@@ -49,9 +49,9 @@ setup(
         "Operating System :: POSIX",
         "Operating System :: Microsoft :: Windows",
         "Programming Language :: Python",
-        "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
         "Topic :: Utilities",
     ],
     project_urls={
@@ -62,11 +62,11 @@ setup(
     keywords=[
         # eg: 'keyword1', 'keyword2', 'keyword3',
     ],
-    python_requires=">=3.7",
+    python_requires=">=3.8",
     install_requires=[
         "oemof.solph > 0.4",
         "oemof.network",
-        "pandas > 1.0",
+        "pandas > 1.4",
         "requests",
         "networkx > 2.0",
         "numpy >= 1.19.4",
@@ -88,6 +88,7 @@ setup(
             "sphinx-autoapi",
             "shapely",
             "requests",
+            "termcolor",
         ],
         "plot": ["pygraphviz", "matplotlib"],
         "scenario": ["scenario_builder", "reegis"],
@@ -106,6 +107,12 @@ setup(
             join("data", "geometries", "*.csv"),
             join("data", "geometries", "*.geojson"),
             "*.ini",
+        ]
+    },
+    entry_points={
+        "console_scripts": [
+            "deflex-compute = deflex.console_scripts:main",
+            "deflex-results = deflex.console_scripts:result",
         ]
     },
 )

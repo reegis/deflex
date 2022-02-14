@@ -9,13 +9,11 @@ SPDX-License-Identifier: MIT
 """
 
 
-import logging
 import os
-from zipfile import ZipFile
 
 from oemof.tools import logger
 
-from deflex import scenario, tools
+import deflex as dflx
 
 url = (
     "https://files.de-1.osf.io/v1/resources/a5xrj/providers/osfstorage"
@@ -29,31 +27,25 @@ path = "/home/uwe/deflex_temp_test/"
 logger.define_logging()
 
 # Download and unzip scenarios (if zip-file does not exist)
-os.makedirs(path, exist_ok=True)
-fn = os.path.join(path, "deflex_scenario_examples_v03.zip")
-if not os.path.isfile(fn):
-    tools.download(fn, url)
-with ZipFile(fn, "r") as zip_ref:
-    zip_ref.extractall(path)
-logging.info("All v0.3.x scenarios examples extracted to %s.", path)
+dflx.download_full_examples(path)
 
 # Look in your folder above. You should see some scenario files. The csv and
 # the xlsx scenarios are the same. The csv-directories can be read faster by
 # the computer but the xlsx-files are easier to read for humans because all
 # sheets are in one file.
 
-# NOTE: Large models will need up to 24 GB of RAM, so start with small models
-# and increase the size step by step. You can also use large models with less
-# time steps but you have to adapt the annual limits.
+# NOTE: Large models will need up to 24 GB of RAM and up to one hour, so start
+# with small models and increase the size step by step. You can also use large
+# models with less time steps but you have to adapt the annual limits.
 
 # Now choose one example. We will start with a small one:
-file = "deflex_2014_de02_no-heat_no-co2-costs_no-var-costs.xlsx"
+file = "scenarios/de02_no-heat.xlsx"
 fn = os.path.join(path, file)
 
 # *** Long version ***
 
 # Create a scenario object
-sc = scenario.DeflexScenario()
+sc = dflx.DeflexScenario()
 
 # Read the input data. Use the right method (csv/xlsx) for your file type.
 # sc.read_csv(fn)

@@ -7,7 +7,7 @@ source =
     src
     tests
 parallel = true
-omit = *snippets*
+omit = *check_examples*
 
 [report]
 show_missing = true

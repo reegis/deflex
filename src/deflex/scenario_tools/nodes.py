@@ -38,7 +38,8 @@ def create_solph_nodes_from_data(input_data, nodes):
 
     """
     # Commodity sources
-    add_commodity_sources(input_data, nodes)
+    if "commodity sources" in input_data:
+        add_commodity_sources(input_data, nodes)
 
     # Electricity demand
     add_electricity_demand(input_data, nodes)
@@ -47,7 +48,8 @@ def create_solph_nodes_from_data(input_data, nodes):
     add_volatile_sources(input_data, nodes)
 
     # Power plants
-    add_power_plants(input_data, nodes)
+    if "power plants" in input_data:
+        add_power_plants(input_data, nodes)
 
     # Decentralised heating systems
     if "decentralised heat" in input_data:
@@ -167,9 +169,12 @@ def add_sink(nodes, table, input_data, label, bus_label, sink_set):
             delay_time=p["delay"],
             shift_interval=p["shift interval"],
             demand=input_data[table][sink_set],
-            method=p["method"],
+            approach=p["approach"],
             cost_dsm_down=p["cost down"],
             cost_dsm_up=p["cost up"],
+            max_capacity_up=1,
+            max_capacity_down=1,
+            max_demand=1,
         )
     else:
         logging.debug("Use normal sink for {}.".format(idx))

@@ -74,6 +74,7 @@ def init(files=None, paths=None):
     cfg.read(files, encoding="utf-8")
     global _loaded
     _loaded = True
+    _set_base_path()
 
 
 def load():
@@ -152,3 +153,9 @@ def tmp_set(section, key, value):
     """
     load()
     return cfg.set(section, key, value)
+
+
+def _set_base_path():
+    if cfg.get("path", "base") == "$HOME/.deflex":
+        basepath = os.path.join(os.path.expanduser("~"), ".deflex")
+        tmp_set("path", "base", basepath)

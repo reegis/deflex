@@ -11,21 +11,19 @@ import pandas as pd
 import pytest
 from oemof import solph
 
-import deflex.tools.files
-from deflex import scenario
-from deflex.scenario import nodes as nd
-from deflex.tools import fetch_test_files
+from deflex import NodeDict, create_scenario, fetch_test_files
+from deflex.scenario_tools import nodes as nd
 
 
 class TestNodes:
     @classmethod
     def setup_class(cls):
         fn = fetch_test_files("de03_fictive_csv")
-        cls.sc = deflex.tools.files.create_scenario(fn, file_type="csv")
+        cls.sc = create_scenario(fn, file_type="csv")
 
     def test_fuel_bus_with_source(self):
         self.sc.initialise_energy_system()
-        nodes = scenario.NodeDict()
+        nodes = NodeDict()
         nodes = nd.add_commodity_sources(self.sc.input_data, nodes)
         nodes_copy = nodes.copy()
         assert nodes == nodes_copy
@@ -42,7 +40,7 @@ class TestNodes:
 
     def test_electricity_bus(self):
         self.sc.initialise_energy_system()
-        nodes = scenario.NodeDict()
+        nodes = NodeDict()
         nd.add_electricity_bus(nodes, "DE01")
         nodes_copy = nodes.copy()
         nd.add_electricity_bus(nodes, "DE01")
@@ -54,7 +52,7 @@ class TestNodes:
 
     def test_volatile_sources(self):
         self.sc.initialise_energy_system()
-        nodes = scenario.NodeDict()
+        nodes = NodeDict()
         nd.add_volatile_sources(self.sc.input_data, nodes)
         self.sc.add_nodes_to_es(nodes)
         src = [v for k, v in nodes.items() if k.cat == "source"]
@@ -90,7 +88,7 @@ class TestNodes:
 
     def test_decentralised_heating_systems(self):
         self.sc.initialise_energy_system()
-        nodes = scenario.NodeDict()
+        nodes = NodeDict()
         nd.add_commodity_sources(self.sc.input_data, nodes)
         nd.add_decentralised_heating_systems(self.sc.input_data, nodes)
         assert len(nodes) == 42
@@ -132,22 +130,22 @@ class TestNodes:
 
     def test_add_electricity_demand(self):
         self.sc.initialise_energy_system()
-        nodes = scenario.NodeDict()
+        nodes = NodeDict()
         nd.add_electricity_bus(nodes, "DE01")
         self.sc.input_data["electricity demand series"][("DE01", "new")] = 0
         nd.add_electricity_demand(self.sc.input_data, nodes)
         self.sc.add_nodes_to_es(nodes)
-        snk = [v for k, v in nodes.items() if k.cat == "demand"]
+        snk = [v for k, v in nodes.items() if k.cat == "electricity demand"]
         values = {
-            "demand_electricity_all_DE01": 1509776,
-            "demand_electricity_all_DE02": 1006517,
+            "electricity-demand_electricity_all_DE01": 1509776,
+            "electricity-demand_electricity_all_DE02": 1006517,
         }
         for s in snk:
             region = s.label.region
             bus = [
                 v
                 for k, v in nodes.items()
-                if k.cat == "bus" and k.region == region
+                if k.cat == "electricity" and k.region == region
             ][0]
             flow = self.sc.es.flows()[(bus, s)]
             idx = (region, s.label.subtag)
@@ -160,7 +158,7 @@ class TestNodes:
 
     def test_district_heating_demand(self):
         self.sc.initialise_energy_system()
-        nodes = scenario.NodeDict()
+        nodes = NodeDict()
         bus_label = nd.Label("bus", "heat", "district", "DE01")
         nodes[bus_label] = solph.Bus(label=bus_label)
         self.sc.input_data["heat demand series"][
@@ -168,14 +166,14 @@ class TestNodes:
         ] = 0
         nd.add_district_heating_demand(self.sc.input_data, nodes)
         self.sc.add_nodes_to_es(nodes)
-        snk = [v for k, v in nodes.items() if k.cat == "demand"]
+        snk = [v for k, v in nodes.items() if k.cat == "heat demand"]
         values = {"DE01": 1276776}
         for s in snk:
             region = s.label.region
             bus = [
                 v
                 for k, v in nodes.items()
-                if k.cat == "bus" and k.region == region
+                if k.cat == "heat" and k.region == region
             ][0]
             flow = self.sc.es.flows()[(bus, s)]
             idx = (region, "district heating")
@@ -188,7 +186,7 @@ class TestNodes:
 
     def test_transmission_lines_between_electricity_nodes_errors(self):
         self.sc.initialise_energy_system()
-        nodes = scenario.NodeDict()
+        nodes = NodeDict()
         msg = "Bus electricity_all_all_{0} missing for power line from "
         with pytest.raises(ValueError, match=msg.format("DE01")):
             nd.add_transmission_lines_between_electricity_nodes(
@@ -202,7 +200,7 @@ class TestNodes:
 
     def test_transmission_lines_between_electricity_nodes(self):
         self.sc.initialise_energy_system()
-        nodes = scenario.NodeDict()
+        nodes = NodeDict()
         nd.add_electricity_bus(nodes, "DE01")
         nd.add_electricity_bus(nodes, "DE02")
         nd.add_electricity_bus(nodes, "DE03")
@@ -264,7 +262,7 @@ class TestNodes:
 
     def test_power_plants(self):
         self.sc.initialise_energy_system()
-        nodes = scenario.NodeDict()
+        nodes = NodeDict()
         sources = [
             ("bioenergy", "DE01"),
             ("bioenergy", "DE02"),
@@ -291,7 +289,7 @@ class TestNodes:
 
     def test_heat_and_chp_plants(self):
         self.sc.initialise_energy_system()
-        nodes = scenario.NodeDict()
+        nodes = NodeDict()
         sources = [
             ("bioenergy", "DE01"),
             ("natural gas", "DE"),
@@ -350,7 +348,7 @@ class TestNodes:
         self.sc.input_data["electricity storages"] = pd.read_csv(
             fn, index_col=[0, 1]
         )
-        nodes = scenario.NodeDict()
+        nodes = NodeDict()
         nd.add_electricity_bus(nodes, "DE01")
         error_msg = "'electricity storages' tables are deprecated and cannot"
         with pytest.raises(ValueError, match=error_msg):
@@ -362,7 +360,7 @@ class TestNodes:
 
     def test_storages(self):
         self.sc.initialise_energy_system()
-        nodes = scenario.NodeDict()
+        nodes = NodeDict()
         nd.add_electricity_bus(nodes, "DE01")
         nodes[nd.commodity_bus_label("H2", "DE")] = solph.Bus(
             label=nd.commodity_bus_label("H2", "DE")
@@ -371,7 +369,7 @@ class TestNodes:
 
     def test_mobility(self):
         self.sc.initialise_energy_system()
-        nodes = scenario.NodeDict()
+        nodes = NodeDict()
         mobility_table = self.sc.input_data["mobility"]
         # There should be 3 different regions in the test table
         assert len(set(mobility_table["source region"].values)) == 3
@@ -386,7 +384,7 @@ class TestNodes:
 
     def test_other_demand(self):
         self.sc.initialise_energy_system()
-        nodes = scenario.NodeDict()
+        nodes = NodeDict()
         for medium in ["H2", "syn fuel"]:
             bus_label_h2 = nd.commodity_bus_label(medium, "DE")
             nodes[bus_label_h2] = solph.Bus(label=bus_label_h2)
@@ -394,15 +392,14 @@ class TestNodes:
 
     def test_other_converter(self):
         self.sc.initialise_energy_system()
-        nodes = scenario.NodeDict()
+        nodes = NodeDict()
         nd.add_electricity_bus(nodes, "DE01")
         for medium in ["H2", "syn fuel"]:
             bus_label = nd.commodity_bus_label(medium, "DE")
             nodes[bus_label] = solph.Bus(label=bus_label)
-        print(nodes)
         nd.add_other_converters(self.sc.input_data, nodes)
 
     def test_shortage_excess(self):
         self.sc.initialise_energy_system()
-        nodes = scenario.NodeDict()
+        nodes = NodeDict()
         nd.add_shortage_excess(nodes)
