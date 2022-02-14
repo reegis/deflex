@@ -12,7 +12,6 @@ SPDX-License-Identifier: MIT
 import logging
 import os
 from multiprocessing import Process
-from zipfile import ZipFile
 
 import pandas as pd
 from matplotlib import patheffects
@@ -22,7 +21,7 @@ from oemof.tools import logger
 
 from deflex import (
     dict2file,
-    download,
+    fetch_published_figures_example_files,
     geometries,
     get_all_results,
     restore_results,
@@ -34,20 +33,10 @@ EXAMPLES_URL = (
     "/61def8c4bc925b00fed4b1d7?action=download&direct&version=1"
 )
 
-BASIC_PATH = os.path.join(os.path.expanduser("~"), "deflex", "softwarex")
+BASIC_PATH = os.path.join(os.path.expanduser("~"), "deflex", "figures")
 INPUT_FILE = "deflex_2014_de21_heat_restricted-transmission.xlsx"
 FORCE_COMPUTING = False  # Use True to compute the model (large model, slow)
 USAGE = 95  # %
-
-
-def get_example_files():
-    """Download and unzip scenarios (if zip-file does not exist)"""
-    fn = os.path.join(BASIC_PATH, "deflex_softwarex_examples_v04.zip")
-    if not os.path.isfile(fn):
-        download(fn, EXAMPLES_URL)
-    with ZipFile(fn, "r") as zip_ref:
-        zip_ref.extractall(BASIC_PATH)
-    logging.info("All software examples extracted to %s.", BASIC_PATH)
 
 
 def plot_power_lines(geo, data, plot_file):
@@ -159,7 +148,7 @@ def get_power_line_usage(geo, results):
 
 logger.define_logging()
 os.makedirs(BASIC_PATH, exist_ok=True)
-get_example_files()
+fetch_published_figures_example_files(BASIC_PATH)
 
 files = {"input": INPUT_FILE}
 

@@ -15,10 +15,8 @@ SPDX-FileCopyrightText: Uwe Krien <krien@uni-bremen.de>
 SPDX-License-Identifier: MIT
 """
 
-import logging
 import os
 from datetime import datetime, timedelta
-from zipfile import ZipFile
 
 import pandas as pd
 import pytz
@@ -36,14 +34,9 @@ OPSD_URL = (
     "%5D=price_day_ahead&downloadCSV=Download+CSV"
 )
 
-EXAMPLES_URL = (
-    "https://files.de-1.osf.io/v1/resources/9krgp/providers/osfstorage"
-    "/61def8c4bc925b00fed4b1d7?action=download&direct&version=1"
-)
-
-BASIC_PATH = os.path.join(os.path.expanduser("~"), "deflex", "softwarex")
+BASIC_PATH = os.path.join(os.path.expanduser("~"), "deflex", "figures")
 INPUT_FILE = "deflex_2014_de02_3_month_test.xlsx"
-FORCE_COMPUTING = True  # Use True to compute the model (small model, fast)
+FORCE_COMPUTING = False  # Use True to compute the model (small model, fast)
 
 
 def get_price_from_opsd(path):
@@ -68,7 +61,7 @@ def get_price_from_opsd(path):
 dflx.use_logging()
 plt.rcParams.update({"font.size": 18})
 os.makedirs(BASIC_PATH, exist_ok=True)
-# get_example_files()
+dflx.fetch_published_figures_example_files(BASIC_PATH)
 
 # Define the filenames
 files = {"input": INPUT_FILE}

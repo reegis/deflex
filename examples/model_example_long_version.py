@@ -9,9 +9,7 @@ SPDX-License-Identifier: MIT
 """
 
 
-import logging
 import os
-from zipfile import ZipFile
 
 from oemof.tools import logger
 
@@ -29,13 +27,7 @@ path = "/home/uwe/deflex_temp_test/"
 logger.define_logging()
 
 # Download and unzip scenarios (if zip-file does not exist)
-os.makedirs(path, exist_ok=True)
-fn = os.path.join(path, "deflex_scenario_examples_v03.zip")
-if not os.path.isfile(fn):
-    dflx.download(fn, url)
-with ZipFile(fn, "r") as zip_ref:
-    zip_ref.extractall(path)
-logging.info("All v0.3.x scenarios examples extracted to %s.", path)
+dflx.download_full_examples(path)
 
 # Look in your folder above. You should see some scenario files. The csv and
 # the xlsx scenarios are the same. The csv-directories can be read faster by
@@ -47,7 +39,7 @@ logging.info("All v0.3.x scenarios examples extracted to %s.", path)
 # models with less time steps but you have to adapt the annual limits.
 
 # Now choose one example. We will start with a small one:
-file = "deflex_2014_de02_no-heat_no-co2-costs_no-var-costs.xlsx"
+file = "scenarios/de02_no-heat.xlsx"
 fn = os.path.join(path, file)
 
 # *** Long version ***
