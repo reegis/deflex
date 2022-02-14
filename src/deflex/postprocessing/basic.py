@@ -14,7 +14,7 @@ __all__ = [
     "group_buses",
     "solver_results2series",
     "meta_results2series",
-    "get_time_index"
+    "get_time_index",
 ]
 
 import pandas as pd

@@ -81,9 +81,7 @@ def create_scenario(regions, year, name, lines, opsd_version=None):
     table_collection = {"general": pd.DataFrame()}
 
     logging.info("BASIC SCENARIO - STORAGES")
-    stor = storages.scenario_storages(
-        regions, year, name
-    )
+    stor = storages.scenario_storages(regions, year, name)
     if "storage medium" not in stor:
         stor["storage medium"] = "electricity"
     table_collection["storages"] = stor

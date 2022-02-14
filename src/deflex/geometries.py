@@ -10,10 +10,7 @@ SPDX-License-Identifier: MIT
 __copyright__ = "Uwe Krien <krien@uni-bremen.de>"
 __license__ = "MIT"
 
-__all__ = [
-    "deflex_geo",
-    "divide_off_and_onshore"
-]
+__all__ = ["deflex_geo", "divide_off_and_onshore"]
 
 import os
 from collections import namedtuple
