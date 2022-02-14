@@ -60,7 +60,6 @@ def model_multi_scenarios(
     >>> my_scenarios = [fn1, fn2]
     >>> model_multi_scenarios(my_scenarios, log_file=my_log_file)
     >>> my_log = pd.read_csv(my_log_file, index_col=[0])
-    >>> my_log.to_csv("/home/uwe/00000000.csv")
     >>> good = my_log.loc["de03_fictive_csv"]
     >>> rv = good["return_value"]
     >>> datetime.strptime(rv, "%Y-%m-%d %H:%M:%S.%f").year > 2019
