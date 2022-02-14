@@ -26,6 +26,8 @@ from deflex.postprocessing.views import reshape_bus_view  # noqa: F401
 from deflex.scenario import DeflexScenario, NodeDict, Scenario  # noqa: F401
 from deflex.scenario_tools.example_files import (  # noqa: F401
     TEST_PATH,
+    download_full_examples,
+    fetch_published_figures_example_files,
     fetch_test_files,
 )
 from deflex.scenario_tools.nodes import Label  # noqa: F401
