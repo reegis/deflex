@@ -66,7 +66,7 @@ setup(
     install_requires=[
         "oemof.solph > 0.4",
         "oemof.network",
-        "pandas > 1.0",
+        "pandas > 1.4",
         "requests",
         "networkx > 2.0",
         "numpy >= 1.19.4",
