@@ -110,6 +110,7 @@ setup(
         ]
     },
     entry_points={
-        "console_scripts": ["deflex-compute = deflex.console_scripts:main"]
+        "console_scripts": ["deflex-compute = deflex.console_scripts:main",
+                            "deflex-results = deflex.console_scripts:result"]
     },
 )
