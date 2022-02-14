@@ -16,7 +16,7 @@ import os
 import pytest
 
 from deflex import fetch_test_files
-from deflex.scenario_tools.example_files import _download as download
+from deflex.scenario_tools.example_files import download
 
 
 def test_download(caplog, monkeypatch):

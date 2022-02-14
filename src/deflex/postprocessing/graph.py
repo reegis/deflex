@@ -11,6 +11,7 @@ import networkx as nx
 import pandas as pd
 from matplotlib.cm import get_cmap
 from matplotlib.colors import Normalize, rgb2hex
+
 from deflex.scenario_tools.helpers import label2str
 
 
@@ -33,6 +34,7 @@ class Edge:
     color : str
         A color string for plots/drawings of the graph.
     """
+
     def __init__(self, **kwargs):
         self.nodes = kwargs.get("nodes", None)
         self.label = kwargs.get("label", None)
@@ -106,6 +108,7 @@ class DeflexGraph:
     >>> nx.number_weakly_connected_components(nx_graph)
     1
     """
+
     def __init__(self, results, **kwargs):
         self._results = results
         self._graph = None

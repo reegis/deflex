@@ -22,6 +22,7 @@ __all__ = [
 import pandas as pd
 from oemof import solph
 from pandas.testing import assert_frame_equal
+
 from deflex.scenario_tools.helpers import label2str
 
 
@@ -49,19 +50,19 @@ def merit_order_from_scenario(
     >>> import os
     >>> import deflex as dflx
     >>> my_path = dflx.fetch_test_files("de02_no-heat_csv")
-    >>> sc = dflx.DeflexScenario()
-    >>> mo1 = dflx.merit_order_from_scenario(sc.read_csv(my_path))
+    >>> my_sc = dflx.DeflexScenario()
+    >>> mo1 = dflx.merit_order_from_scenario(my_sc.read_csv(my_path))
     >>> round(mo1.capacity_cum.iloc[-1], 4)
     86.7028
     >>> round(mo1.capacity.sum(), 1)
     86702.8
     >>> round(mo1.loc[("DE01", "natural gas - 0.55"), "costs_total"], 2)
     49.37
-    >>> mo2 = merit_order_from_scenario(sc.read_csv(my_path),
+    >>> mo2 = merit_order_from_scenario(my_sc.read_csv(my_path),
     ...                                 with_downtime=False)
     >>> int(round(mo2.capacity.sum(), 0))
     101405
-    >>> mo3 = merit_order_from_scenario(sc.read_csv(my_path),
+    >>> mo3 = merit_order_from_scenario(my_sc.read_csv(my_path),
     ...                                 with_co2_price=False)
     >>> round(mo3.loc[("DE01", "natural gas - 0.55"), "costs_total"], 2)
     43.58

@@ -11,6 +11,7 @@ __copyright__ = "Uwe Krien <krien@uni-bremen.de>"
 __license__ = "MIT"
 
 from collections import namedtuple
+
 from deflex import config as cfg
 
 
@@ -230,7 +231,7 @@ def allocate_fuel(method, eta_e, eta_th, **kwargs):
         ).format(method)
         raise NotImplementedError(msg)
 
-    return fuel_factors(heat=(1 - f_elec)/eta_th, electricity=f_elec/eta_e)
+    return fuel_factors(heat=(1 - f_elec) / eta_th, electricity=f_elec / eta_e)
 
 
 def _check_input(name, *mandatory_parameters, **kwargs):

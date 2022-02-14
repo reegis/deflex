@@ -17,12 +17,12 @@ import pandas as pd
 import pytest
 
 from deflex import (
-    Scenario,
-    DeflexScenario,
     TEST_PATH,
+    DeflexScenario,
+    NodeDict,
+    Scenario,
     fetch_test_files,
     restore_scenario,
-    NodeDict,
 )
 
 

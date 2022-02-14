@@ -24,11 +24,11 @@ from scenario_builder import (
     storages,
 )
 
+from deflex import Scenario
 from deflex import __file__ as dfile
 from deflex import config as cfg
 from deflex.creator import transmission
-from deflex import Scenario
-from deflex.scenario_tools.example_files import _download as download
+from deflex.scenario_tools.example_files import download
 
 
 def scenario_default_decentralised_heat():
@@ -81,9 +81,12 @@ def create_scenario(regions, year, name, lines, opsd_version=None):
     table_collection = {"general": pd.DataFrame()}
 
     logging.info("BASIC SCENARIO - STORAGES")
-    table_collection["storages"] = storages.scenario_storages(
+    stor = storages.scenario_storages(
         regions, year, name
     )
+    if "storage medium" not in stor:
+        stor["storage medium"] = "electricity"
+    table_collection["storages"] = stor
 
     logging.info("BASIC SCENARIO - POWER PLANTS")
     pp = powerplants.scenario_powerplants(

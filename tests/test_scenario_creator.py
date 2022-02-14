@@ -18,12 +18,12 @@ import pandas as pd
 from reegis import config
 from scenario_builder import demand, feedin, powerplants
 
+from deflex import DeflexScenario
 from deflex import __file__ as dfile
 from deflex import config as cfg
-from deflex import DeflexScenario
+from deflex import fetch_test_files
 from deflex.creator import scenario_creator
 from deflex.geometries import deflex_power_lines, deflex_regions
-from deflex import fetch_test_files
 
 
 class TestScenarioCreationFull:
@@ -110,8 +110,12 @@ class TestScenarioCreationFull:
         )
 
     def test_storages(self):
-        a = self.tables["storages"].apply(pd.to_numeric, errors='coerce')
-        b = self.input_data["storages"].apply(pd.to_numeric, errors='coerce')
+        pd.testing.assert_series_equal(
+            self.tables["storages"].pop("storage medium"),
+            self.input_data["storages"].pop("storage medium"),
+        )
+        a = self.tables["storages"].apply(pd.to_numeric)
+        b = self.input_data["storages"].apply(pd.to_numeric)
         b["energy inflow"] *= 48 / 8760
         for col in a.columns:
             pd.testing.assert_series_equal(a[col], b[col])
@@ -276,8 +280,8 @@ class TestScenarioCreationPart:
         )
 
     def test_storages(self):
-        a = self.tables["storages"].apply(pd.to_numeric, errors='coerce')
-        b = self.input_data["storages"].apply(pd.to_numeric, errors='coerce')
+        a = self.tables["storages"].apply(pd.to_numeric, errors="coerce")
+        b = self.input_data["storages"].apply(pd.to_numeric, errors="coerce")
         b["energy inflow"] *= 48 / 8760
         for col in a.columns:
             pd.testing.assert_series_equal(a[col], b[col])

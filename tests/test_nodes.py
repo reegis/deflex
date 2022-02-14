@@ -11,10 +11,8 @@ import pandas as pd
 import pytest
 from oemof import solph
 
-from deflex import create_scenario
+from deflex import NodeDict, create_scenario, fetch_test_files
 from deflex.scenario_tools import nodes as nd
-from deflex import fetch_test_files
-from deflex import NodeDict
 
 
 class TestNodes:

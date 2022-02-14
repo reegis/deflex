@@ -105,7 +105,7 @@ def solver_results2series(results):
     >>> list(slvr.index.get_level_values(0).unique())[:4]
     ['Problem', 'Solution', 'Solver', 'Solver Black box']
     >>> round(slvr["Solver", "Time"],5)
-    0.07489
+    0.07627
     >>> int(slvr["Solution", "Objective"])
     7516285616
 

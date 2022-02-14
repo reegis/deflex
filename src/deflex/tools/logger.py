@@ -1,6 +1,8 @@
-from oemof.tools import logger
-from deflex import config as cfg
 from logging import CRITICAL
+
+from oemof.tools import logger
+
+from deflex import config as cfg
 
 
 def use_logging(**kwargs):

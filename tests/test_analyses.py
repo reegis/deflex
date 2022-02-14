@@ -21,16 +21,16 @@ from deflex import (
     fetch_test_files,
     get_combined_bus_balance,
     get_converter_balance,
+    get_time_index,
     nodes2table,
     postprocessing,
     restore_results,
     scenario_tools,
-    get_time_index,
 )
 from deflex.postprocessing.analyses import (
-    fetch_converter_parameters,
     _calculate_marginal_costs,
     _fetch_electricity_flows,
+    fetch_converter_parameters,
 )
 from deflex.postprocessing.basic import _get_all_nodes_from_results
 

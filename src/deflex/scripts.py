@@ -19,9 +19,9 @@ from functools import partial
 
 import pandas as pd
 
+from deflex.postprocessing.basic import get_all_results
 from deflex.scenario_tools.scenario_io import create_scenario
 from deflex.tools.files import dict2file
-from deflex.postprocessing.basic import get_all_results
 
 
 def stopwatch():
