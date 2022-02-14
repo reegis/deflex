@@ -31,7 +31,7 @@ from deflex.scenario_tools.example_files import (  # noqa: F401
     fetch_test_files,
 )
 from deflex.scenario_tools.nodes import Label  # noqa: F401
-from deflex.scenario_tools.scenario_io import (
+from deflex.scenario_tools.scenario_io import (  # noqa: F401
     create_scenario,
     restore_results,
     restore_scenario,
