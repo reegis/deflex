@@ -109,12 +109,13 @@ To run `deflex` you have to install the Python package and a solver:
 \* Proprietary solver
 
 
-Use example
------------
+Examples
+--------
 
-1. Run ``pip install deflex[example]``
+1. Run ``pip install deflex[example]`` to get all dependencies.
 2. Create a local directory (e.g. /home/user/deflex_examples).
-3. The examples for deflex v0.4.x can be downloaded as zip file (coming soon)
+3. Browse the `examples <https://osf.io/9krgp/files/>`_ for deflex v0.4.x or
+   download all examples as `zip file <https://files.de-1.osf.io/v1/resources/9krgp/providers/osfstorage/620b67ed11da1c0120f56939/?zip=>`_ and copy/extract them to your local directory.
 4. Read the comments of each example, execute it and modify it to your needs.
    Do not forget to set a local path in the examples if needed.
 5. In parallel you should read the ``usage guide`` of the documentation to get
