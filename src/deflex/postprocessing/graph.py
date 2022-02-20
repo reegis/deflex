@@ -398,8 +398,8 @@ class DeflexGraph:
         Other Parameters
         ----------------
         weight_exponent : int
-            The parameter will be passed to the :py:meth:`create_di_graph`
-            method.
+            Shift the decimal point:
+            :math:`weight = weight\cdot10^{weight\_exponent}`
 
         Examples
         --------

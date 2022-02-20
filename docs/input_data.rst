@@ -1,8 +1,7 @@
 Input data
 ----------
 
-The input data is stored in the
-:py:attr:`~deflex.scenario.Scenario.input_data` attribute of the
+The input data is stored in the `input_data` attribute of the
 :py:class:`~deflex.scenario.DeflexScenario`
 class (s. :ref:`deflex_scenario`). It is a dictionary with the name of the
 data set as key and the data table itself as value (pandas.DataFrame or
@@ -11,10 +10,9 @@ pandas.Series).
 The input data is divided into four main topics: High-level-inputs, electricity
 sector, heating sector (optional) and mobility sector (optional).
 
-Download a fictive `input data example
-<https://files.de-1.osf.io/v1/resources/a5xrj/providers/osfstorage/605b1ed7818bde00cd3a6063?action=download&direct&version=1>`_
-to get an idea of the structure. Then go on with the following chapter to learn
-everything about how to define the data for a deflex model.
+Download examples (link) to get an idea of the typical structure. Then go on
+with the following chapter to learn everything about how to define the data of
+a deflex model.
 
 .. contents::
     :depth: 1
@@ -77,6 +75,9 @@ equally!
     be left out, but if a column is present there have to be values in every
     row. Neutral values can be ``0``, ``1`` or ``inf``.
 
+.. note:
+
+
 High-level-input (mandatory)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -124,27 +125,15 @@ Info
 
 On this sheet, additional information that characterizes the scenario can be
 added. The idea behind Info is that the user can filter stored scenarios using
-the :py:func:`~deflex.postprocessing.search_results` function.
+the :py:func:`~deflex.search_dumped_scenarios` function.
 
-You can create any key-value pair which is suitable for you group of scenarios.
+You can create any key-value pair which is suitable for a group of scenarios.
 
 e.g. key: ``scenario_type`` value: ``foo`` / ``bar`` / ``foobar``
 
 Afterwards you can search for all scenarios where the ``scenario_type`` is
-``foo`` using:
-
-.. code-block:: python
-
-    search_results(path=my_path, scenario_type=["foo"])
-
-or with other keys and multiple values:
-
-.. code-block:: python
-
-    search_results(path=my_path, scenario_type=["foo", "bar"], my_key["v1"])
-
-The second code line will return only files with (``foo`` or ``bar``) and
-``v1``.
+``foo`` using :py:func:`~deflex.search_dumped_scenarios`. See
+documentation and examples of this function for more details.
 
 +------+--------+
 | key1 |        |

@@ -16,7 +16,9 @@ def main():
     Computing a deflex scenario. By default the name of the result file is
     derived from the name of the input file by adding '_results but it is
     possible to define a custom path. The results will be of the same
-    file format as the input scenario. Optionally a dump-file can be stored.
+    file format as the input scenario.
+
+    Optionally a dump-file can be stored.
     If no path is given the path is derived from the path of the input
     scenario. The suffix of the dump is '.dflx'. The dump can be processed
     using `deflex_result`.
@@ -31,8 +33,9 @@ def main():
 
     -h, --help            show this help message and exit
     --version             show program's version number and exit
-    --results <RESULTS>   The name of the results file or directory or False
-                          to get no result file
+    --results <RESULTS>   The name of the results file or directory or False to
+                          get no result file. By default the path is derived
+                          from scenario path.
     --dump <DUMP>         The name of the dump file. Leave empty for the
                           default file name
     --solver <SOLVER>     Solver to use for computing (default cbc)
@@ -40,15 +43,17 @@ def main():
     """
     long_description = (
         "Computing a deflex scenario. By default the name of the result file "
-        "is derived from the name of the input file by adding '_results but "
+        "is derived from the name of the input file but by adding '--results` "
         "it is possible to define a custom path. The results will be of the "
-        "same file format as the input scenario.\n\n"
+        "same file format as the input scenario.\n"
         "Optionally a dump-file can be stored. If no path is given the path "
         "is derived from the path of the input scenario. The suffix of the "
         "dump is '.dflx'."
     )
     parser = argparse.ArgumentParser(
-        prog="deflex-compute", description=long_description
+        prog="deflex-compute",
+        description=long_description,
+        formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     parser.add_argument(
         "--version", action="version", version=f"deflex {deflex.__version__}"
@@ -62,7 +67,7 @@ def main():
         nargs="?",
         help=(
             "The name of the results file or directory or False to get no "
-            "result file."
+            "result file. By default the path is derived from scenario path."
         ),
     )
     parser.add_argument(
@@ -92,12 +97,41 @@ def main():
 
 
 def result():
+    """
+    deflex-results [-h] [--version] [--filetype [FILETYPE]] function in_path
+    out_path
+
+    Processing the results from a computed deflex dump file. The following
+    functions are available:
+
+     * calculate_key_values :py:func:`~deflex.calculate_key_values`
+     * something
+
+    See the documentation for more details.
+
+    **Positional Arguments**
+
+    ::
+
+        function              Post-processing function to use.
+        in_path               Input file or directory.
+        out_path              Output file or directory.
+
+    **Optional Arguments**
+
+    -h, --help                show this help message and exit
+    --version                 show program's version number and exit
+    --filetype <FILETYPE>     The file_type of the output file xlsx or csv. By
+                              default the suffix of the output file is used, if
+                              possible.
+
+    """
+
     long_description = (
         "Processing the results from a computed deflex dump file. The "
         "following functions are available:\n\n"
         "* calculate_key_values\n"
-        "* dsafd\n"
-        "* asdf\n"
+        "* something\n"
         "\nSee the documentation for more details."
     )
     parser = argparse.ArgumentParser(

@@ -188,7 +188,7 @@ class Cycles:
 
         Returns
         -------
-        One table for each cycle with all suspicious rows.
+        One table for each cycle with all suspicious rows : list
 
         Examples
         --------

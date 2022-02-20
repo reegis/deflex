@@ -94,9 +94,9 @@ def solver_results2series(results):
 
     Returns
     -------
-    pd.Series
+    pandas.Series
 
-    Examples
+    Example
     --------
     >>> import deflex as dflx
     >>> fn = dflx.fetch_test_files("de02_heat.dflx")
@@ -289,7 +289,7 @@ def group_buses(buses, fields):
 
     Returns
     -------
-    Grouped buses : dict of lists
+    Grouped buses : dict
 
     Examples
     --------
@@ -342,7 +342,7 @@ def get_all_results(results):
 
     Returns
     -------
-    dict of pandas.DataFrame
+    dict
 
     Examples
     --------

@@ -11,7 +11,14 @@ def search_dumped_scenarios(path, extension="dflx", **parameter_filter):
     """Filter results by extension and meta data.
 
     The function will search the $HOME folder recursively for files with the
-    '.esys' extension. Afterwards all files will filtered by the meta data.
+    '.dflx' extension. Afterwards all files will filtered by the meta data.
+
+    If there is an `info` table in your input data, the keys and values can be
+    used to filter the values. For example different region sets are defined
+    as maps with `de21`, `de22` and `de17` and different years were modelled.
+    Futhermore some are modelled with the heating sector (heat: True) and some
+    not (heat: False). See the example below on how to search for these
+    scenarios.
 
     Parameters
     ----------
@@ -102,7 +109,7 @@ def search_input_scenarios(path, csv=True, xlsx=False, exclude=None):
         strings will be excluded.
     Returns
     -------
-    list : Scenarios found in the given directory.
+    Scenarios found in the given directory : list
 
     Examples
     --------
@@ -165,8 +172,9 @@ def search_results(path, extension="dflx", **parameter_filter):
 
 def restore_results(file_names, scenario_class=DeflexScenario):
     """
-    Load results from a file or a list of files. The results will be a deflex
-    result dictionary with the following keys:
+    Restore only the result dictionary from a dumped scenario or a list of
+    dumped scenarios. The results will be a deflex result dictionary with the
+    following keys:
 
      * main – Results of all variables
      * param – Input parameter
@@ -180,13 +188,13 @@ def restore_results(file_names, scenario_class=DeflexScenario):
     ----------
     file_names : list or string
         All file names (full path) that should be loaded.
-    scenario_class : deflex.Scenario
-        The Scenario class. ToDo How to reference the class and an object.
+    scenario_class : class
+        A child of the deflex.Scenario class or the Scenario class itself.
 
     Returns
     -------
-    list : A list of results dictionaries or a single dictionary if one file
-        name is given.
+    A list of results dictionaries or a single dictionary if one file name is
+    given : list or dict
 
     Examples
     --------
@@ -216,9 +224,13 @@ def restore_results(file_names, scenario_class=DeflexScenario):
 
 def restore_scenario(filename, scenario_class=DeflexScenario):
     """
-    Create a Scenario from a dump file (`.dflx`). By default a DeflexScenario
-    is created but a different Scenario class can be passed. The Scenario
-    has to be equal to the dumped Scenario otherwise the restore will fail.
+    Restore a full Scenario from a dump file (`.dflx`).
+
+    If only the results are needed use
+    :py:func:`~deflex.restore_results` instead.
+    By default a DeflexScenario is created but a different Scenario class can
+    be passed The Scenario has to be equal to the dumped Scenario otherwise the
+    restore will fail.
 
     Parameters
     ----------

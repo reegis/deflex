@@ -7,6 +7,7 @@ from deflex.postprocessing.analyses import (  # noqa: F401; noqa: F401
     fetch_attributes_of_commodity_sources,
     get_combined_bus_balance,
     get_converter_balance,
+    fetch_converter_parameters,
 )
 from deflex.postprocessing.basic import (  # noqa: F401
     fetch_dual_results,
