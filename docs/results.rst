@@ -52,6 +52,12 @@ additional key values from the results or to prepare the results to calculate
 further values. Furthermore, it is possible to get the result from all
 model variables in the ``xlsx`` or ``csv`` format.
 
+For most postprocessing calculations cycles can cause problems because
+assumptions are needed on how to deal with the cycles and it is difficult to
+implement all possible assumptions in the functions. Therefore it might be
+easier to use the basic preparation functions and write your own calculations.
+See below on how to identify different kind of cycles.
+
 Export all results
 ++++++++++++++++++
 
@@ -67,3 +73,42 @@ Get common values from results
 ++++++++++++++++++++++++++++++
 
 ...work in progress.
+
+Analyse flow cycles
++++++++++++++++++++
+
+As a directed graph is used to define an energy system. Cycles are defined as
+a group of successive directed flows, where the first and the last node or bus
+are the same. Small cycles are all storages. As this is a trivial solution of
+a cycle analysis storages can be excluded. Another kind of cycles are the
+combination of electrolysis and hydrogen power plants. Power lines will also
+cause cycles. Pure power line cycles can also be excluded but this will not
+exclude a cycle cause by an electrolysis in one region and a hydrogen power
+plant in another even though a power line is included in this cycle.
+
+A cycle may not be a problem if it is not used as a cycle in the system. So it
+is also possible to analyse the usage of the cycle:
+
+ 1. cycle -- a cycle that can be used within the model
+ 2. used cycle -- a cycle in which all involved flows are used at least once.
+ 3. suspicious cycle -- a cycle in which all involved flows are used within one
+    time step.
+
+The following functions are available
+
+ * :py:func:`~deflex.Cycles` -- initialise a Cycle object
+ * :py:func:`~deflex.Cycles.cycles` -- all cycles in one table per cycle
+ * :py:func:`~deflex.Cycles.used_cycles` -- all used cycles in one table per
+   cycle
+ * :py:func:`~deflex.Cycles.suspicious_cycles` -- all suspicious cycles in one
+   table per cycle
+ * :py:func:`~deflex.Cycles.get_suspicious_time_steps` -- get the time steps in
+   which all flows are active
+ * :py:func:`~deflex.Cycles.print` -- print an overview of all existing cycles
+ * :py:func:`~deflex.Cycles.details` -- print a more detailed overview of all
+   existing cycles
+
+Analyse the energy system graph
++++++++++++++++++++++++++++++++
+
+
