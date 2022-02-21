@@ -45,25 +45,25 @@ functions from above.
 Postprocessing
 ~~~~~~~~~~~~~~
 
-There are many functions...
+There are different types of postprocessing functions available. Some can be
+used to verify the overall behaviour of the model. This can be used for
+debugging but also for plausibility checks. Some can be used to calculated
+additional key values from the results or to prepare the results to calculate
+further values. Furthermore, it is possible to get the result from all
+model variables in the ``xlsx`` or ``csv`` format.
+
+Export all results
+++++++++++++++++++
+
+To export the results from all variables into the ``xlsx`` or ``csv`` format,
+the results can be stored in a collection of pandas.DataFrame. This collection
+can be stored into a file. An example for this workflow can be found in the
+documentation of the function:
+
+ * :py:func:`~deflex.get_all_results` -- get all results as dictionary
+ * :py:func:`~deflex.dict2file` -- store the dictionary into a file
 
 Get common values from results
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+++++++++++++++++++++++++++++++
 
-Common values are emissions, costs and energy of the flows. The function
-..... returns a MultiIndex
-DataFrame with the costs, emissions and the energy of all flows. The values
-are absolute and specific. The specific values are divided by the power so
-that the specific power gives you the status (on/off).
-
-At the moment this works only with hourly time steps. The units are as flows:
-
- * absolute emissions -> tons
- * specific emissions -> tons/MWh
- * absolute costs -> EUR
- * specific costs -> EUR/MWh
- * absolute energy -> MWh
- * specific energy -> --
-
-The resulting table of the function can be stored as a ``.csv`` or ``.xlsx``
-file. The input is one results dictionary:
+...work in progress.
