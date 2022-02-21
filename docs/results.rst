@@ -111,4 +111,22 @@ The following functions are available
 Analyse the energy system graph
 +++++++++++++++++++++++++++++++
 
+It is possible to convert the graph of the EnergySystem class into an nxgraph
+of networkx. So, it is possible to use all methods and functions of networkx
+associate with a directed graph (DiGraph). Furthermore, deflex provides some
+function to associate colors with types of nodes or with the total weight of an
+edge (flow). This can be used if the graph is exported to a ``graphml`` file.
+Such a file can be opened in e.g. yEd where the colors can be used to display
+the nodes and edges in the associated colors.
 
+ * :py:func:`~deflex.DeflexGraph` -- initialise a `DeflexGraph` object
+ * :py:func:`~deflex.DeflexGraph.nxgraph` -- get an `DiGraph` of networkx
+ * :py:func:`~deflex.DeflexGraph.write` -- export the graph to a `graphml` file
+ * :py:func:`~deflex.DeflexGraph.color_edges_by_weight` -- associate a color
+   from a color map according to the total weight
+ * :py:func:`~deflex.DeflexGraph.color_nodes_by_type` -- associate a color by
+   the type of the node
+ * :py:func:`~deflex.DeflexGraph.color_nodes_by_substring` -- associate a color
+   by a substring of the label of the node
+ * :py:func:`~deflex.DeflexGraph.group_nodes_by_type` -- group all nodes of the
+   graph by their type
