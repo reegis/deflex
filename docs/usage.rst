@@ -174,3 +174,5 @@ possible to catch a memory error. A log-file will log all failing and
 successful runs.
 
 .. include:: input_data.rst
+
+.. include:: results.rst

@@ -12,7 +12,6 @@ Contents
    readme
    installation
    usage
-   results
    reference
    contributing
    authors
