@@ -176,3 +176,32 @@ successful runs.
 .. include:: input_data.rst
 
 .. include:: results.rst
+
+Plots
+-----
+
+Deflex does not include plotting function as plotting is mostly a very
+individual part and there are already a lot of useful packages available.
+Nevertheless, deflex provides maps for the default region sets and some example
+on how to create spatial plots. The maps can be access using the following
+functions.
+
+ * :py:func:`~deflex.deflex_geo` -- Get the default maps of deflex
+ * :py:func:`~deflex.divide_off_and_onshore` -- distinguish offshore and
+   onshore regions in a given map
+
+
+General tools
+-------------
+
+Solph and deflex use logging messages to give a feedback from the running
+program, so deflex provides an easy function to activate the logger on the
+INFO level:
+
+ * :py:func:`~deflex.use_logging`
+
+Some functions does not return a table but a set of table. To store these set
+of tables in a xlsx-map or a collection of csv-files the following function
+can be used.
+
+ * :py:func:`~deflex.dict2file`

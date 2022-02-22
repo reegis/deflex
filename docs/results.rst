@@ -59,7 +59,7 @@ easier to use the basic preparation functions and write your own calculations.
 See below on how to identify different kind of cycles.
 
 Export all results
-++++++++++++++++++
+~~~~~~~~~~~~~~~~~~
 
 To export the results from all variables into the ``xlsx`` or ``csv`` format,
 the results can be stored in a collection of pandas.DataFrame. This collection
@@ -70,12 +70,14 @@ documentation of the function:
  * :py:func:`~deflex.dict2file` -- store the dictionary into a file
 
 Get common values from results
-++++++++++++++++++++++++++++++
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+:py:func:`deflex.calculate_key_values`
 
 ...work in progress.
 
 Analyse flow cycles
-+++++++++++++++++++
+~~~~~~~~~~~~~~~~~~~
 
 As a directed graph is used to define an energy system. Cycles are defined as
 a group of successive directed flows, where the first and the last node or bus
@@ -109,7 +111,7 @@ The following functions are available
    existing cycles
 
 Analyse the energy system graph
-+++++++++++++++++++++++++++++++
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 It is possible to convert the graph of the EnergySystem class into an nxgraph
 of networkx. So, it is possible to use all methods and functions of networkx
@@ -130,3 +132,46 @@ the nodes and edges in the associated colors.
    by a substring of the label of the node
  * :py:func:`~deflex.DeflexGraph.group_nodes_by_type` -- group all nodes of the
    graph by their type
+
+Get dual variables
+~~~~~~~~~~~~~~~~~~
+
+The dual variable is available for all buses in the energy system.
+
+:py:func:`~deflex.fetch_dual_results` -- Get the resulta of the dual variables
+of all buses in one table
+
+
+CHP allocation
+~~~~~~~~~~~~~~
+
+These tool are mostly not connected to deflex but could be used in any context.
+The functions just implement typical allocation methods in Python code:
+
+ * :py:func:`~deflex.allocate_fuel_deflex` --
+ * :py:func:`~deflex.allocate_fuel` --
+ * :py:func:`~deflex.efficiency_method` --
+ * :py:func:`~deflex.exergy_method` --
+ * :py:func:`~deflex.finnish_method` --
+ * :py:func:`~deflex.iea_method` --
+
+
+Arrange parts of the results
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+ * :py:func:`~deflex.solver_results2series` --
+ * :py:func:`~deflex.meta_results2series` --
+ * :py:func:`~deflex.group_buses` --
+ * :py:func:`~deflex.get_time_index` --
+ * :py:func:`~deflex.nodes2table` --
+
+Combine results and parameter
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+ * :py:func:`~deflex.fetch_converter_parameters` --
+ * :py:func:`~deflex.fetch_attributes_of_commodity_sources` --
+ * :py:func:`~deflex.get_combined_bus_balance` --
+ * :py:func:`~deflex.get_converter_balance` --
+
+
+TABLE of LABELS!!!!
