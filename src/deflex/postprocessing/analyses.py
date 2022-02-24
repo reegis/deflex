@@ -458,8 +458,8 @@ def fetch_converter_parameters(results, transformer, remove_null_columns=True):
             ]
 
         fuel_factor = _allocate_outflows(
-            eta_e=df.loc[t].get("efficiency, {0}".format("electricity"), 1),
-            eta_th=df.loc[t].get("efficiency, {0}".format("heat"), 1),
+            eta_e=df.loc[t].get("efficiency, {0}".format("electricity"), float("nan")),
+            eta_th=df.loc[t].get("efficiency, {0}".format("heat"), float("nan")),
         )
 
         # Calculate specific values for outflow sectors
