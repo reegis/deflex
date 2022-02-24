@@ -5,9 +5,9 @@ from deflex.postprocessing.analyses import (  # noqa: F401; noqa: F401
     Cycles,
     calculate_key_values,
     fetch_attributes_of_commodity_sources,
+    fetch_converter_parameters,
     get_combined_bus_balance,
     get_converter_balance,
-    fetch_converter_parameters,
 )
 from deflex.postprocessing.basic import (  # noqa: F401
     fetch_dual_results,
@@ -31,6 +31,7 @@ from deflex.scenario_tools.example_files import (  # noqa: F401
     fetch_published_figures_example_files,
     fetch_test_files,
 )
+from deflex.scenario_tools.helpers import label2str  # noqa: F401
 from deflex.scenario_tools.nodes import Label  # noqa: F401
 from deflex.scenario_tools.scenario_io import (  # noqa: F401
     create_scenario,

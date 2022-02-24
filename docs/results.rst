@@ -58,6 +58,106 @@ implement all possible assumptions in the functions. Therefore it might be
 easier to use the basic preparation functions and write your own calculations.
 See below on how to identify different kind of cycles.
 
+Custom postprocessing
+~~~~~~~~~~~~~~~~~~~~~
+
+For a custom post processing it is possible to filter, group and prepare the
+results to ones own needs. Use dictionary and list comprehensions to find the
+needed flows and groups. The label and the class of the nodes can be used to
+filter the nodes.
+
+The keys of the ``results["main"]`` dictionary are tuples.
+
+ * FLows: (<from_node>, <to_node>)
+ * Components (<component>, None)
+ * Buses (<bus>, None)
+
+A node can be a component or a bus. The values of the tuples are the objects
+or None.
+
+Get the keys of all buses:
+
+.. code-block:: python
+
+    from oemof.solph import Bus
+    bus_keys = [k for k in results["Main"].keys()
+                if isinstance(k[0], Bus) and k[1] is None]
+
+
+Get a list of buses:
+
+.. code-block:: python
+
+    from oemof.solph import Bus
+    buses = [k[0] for k in results["Main"].keys()
+             if isinstance(k[0], Bus) and k[1] is None]
+
+
+Get a table of all flows from `pv` sources:
+
+Long version:
+
+.. code-block:: python
+
+    import pandas as pd
+    pv_keys = [
+        k
+        for k in results["Main"].keys()
+        if k[0].label.tag == "volatile" and k[0].label.subtag == "solar"
+    ]
+    pv = {}
+    for pv_key in pv_keys:
+        pv[dflx.label2str(pv_key[0].label)] = results["Main"][pv_key][
+            "sequences"
+        ]["flow"]
+    print(pd.DataFrame(pv))
+
+Short version:
+
+.. code-block:: python
+
+    import pandas as pd
+    pv = {
+        dflx.label2str(k[0].label): v["sequences"]["flow"]
+        for k, v in results["Main"].items()
+        if k[0].label.tag == "volatile" and k[0].label.subtag == "solar"
+    }
+    print(pd.DataFrame(pv))
+
+For more information about the results handling also see the
+`results chapter of the oemof.solph documentation
+<https://oemof-solph.readthedocs.io/en/latest/usage.html#handling-results>`_.
+
+The following table gives an overview over the used classes and the naming of
+the label of the deflex components and buses. Each label is a nametuple with
+the fields `cat`, `tag`, `subtag` and `region`.
+
+.. csv-table:: Classes and labels of deflex nodes
+   :header: "", "class", "cat", "tag", "subtag", "region"
+
+    **commodity bus**,Bus,commodity,all,<fuel>,<region>
+    **electricity bus**,Bus,electricity,all,all,<region>
+    **district heating bus**,Bus,heat,district,all,<region>
+    **decentralised heat bus**,Bus,heat,decentralised,<fuel>,<region>
+    **mobility bus**,Bus,mobility,all,<name>,<region>
+    **shortage source**,Source,shortage,<cat of bus>,<subtag of bus>,<region>
+    **commodity source**,Source,source,commodity,<fuel>,<region>
+    **volatile source**,Source,source,volatile,<name>,<region>
+    **power line**,Transformer,line,electricity,<from region>,<to region>
+    **mobility system**,Transformer,mobility system,<name>,<fuel>,<region>
+    **chp plant**,Transformer,chp plant,<name>,<fuel>,<region>
+    **decentralised heat system**,Transformer,decentralised heat,<name>,<fuel>,<region>
+    **heat plant**,Transformer,heat plant,<name>,<fuel>,<region>
+    **power plant**,Transformer,power plant,<name>,<fuel>,<region>
+    **other converter**,Transformer,other converter,<name>,<fuel>,<region>
+    **excess sink**,Sink,excess,<cat of bus>,<subtag of bus>,<region>
+    **electricity demand**,Sink,electricity demand,electricity,<name>,<region>
+    **district heat demand**,Sink,heat demand,district,all,<region>
+    **decentralised heat demand**,Sink,heat demand,decentralised,<fuel>,<region>
+    **mobility demand**,Sink,mobility demand,mobility,<name>,<region>
+    **other demand**,Sink,other demand,other,<fuel>,<region>
+    **storages**,GenericStorage,storage,<medium>,<name>,<region>
+
 Export all results
 ~~~~~~~~~~~~~~~~~~
 
@@ -72,9 +172,20 @@ documentation of the function:
 Get common values from results
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-:py:func:`deflex.calculate_key_values`
+The following values will be returned on an hourly base:
 
-...work in progress.
+     * marginal costs [EUR/MWh]
+     * highest emission [tons/MWh]
+     * lowest emission [tons/MWh]
+     * marginal costs power plant [-]
+     * emission of marginal costs power plant [tons/MWh]
+
+ * :py:func:`deflex.calculate_key_values` -- get key values on an hourly base
+
+At the moment this works only with hourly time steps. This function is still
+work in progress and may return more key values in the future. Please write an
+issue on `github <https://github.com/reegis/deflex>`_ for a discussion about
+further values.
 
 Analyse flow cycles
 ~~~~~~~~~~~~~~~~~~~
@@ -148,30 +259,42 @@ CHP allocation
 These tool are mostly not connected to deflex but could be used in any context.
 The functions just implement typical allocation methods in Python code:
 
- * :py:func:`~deflex.allocate_fuel_deflex` --
- * :py:func:`~deflex.allocate_fuel` --
- * :py:func:`~deflex.efficiency_method` --
- * :py:func:`~deflex.exergy_method` --
- * :py:func:`~deflex.finnish_method` --
- * :py:func:`~deflex.iea_method` --
+ * :py:func:`~deflex.allocate_fuel_deflex` -- allocate the fuel with default values from a config file
+ * :py:func:`~deflex.allocate_fuel` -- allocate the fuel with all values
+   defined by the user
+ * :py:func:`~deflex.efficiency_method` -- efficiency method
+ * :py:func:`~deflex.exergy_method` -- carnot or exergy method
+ * :py:func:`~deflex.finnish_method` -- alternative_generation or finnish
+   method
+ * :py:func:`~deflex.iea_method` -- IEA method
 
 
 Arrange parts of the results
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
- * :py:func:`~deflex.solver_results2series` --
- * :py:func:`~deflex.meta_results2series` --
- * :py:func:`~deflex.group_buses` --
- * :py:func:`~deflex.get_time_index` --
- * :py:func:`~deflex.nodes2table` --
+This parts can be used for plots and identification of the model
+
+ * :py:func:`~deflex.solver_results2series` -- get the results returned from
+   the external solver
+ * :py:func:`~deflex.meta_results2series` -- get some general and meta results
+ * :py:func:`~deflex.group_buses` -- group all buses by label
+ * :py:func:`~deflex.get_time_index` -- get the used time index
+ * :py:func:`~deflex.nodes2table` -- get an overview about all nodes and their total in- and outflows
 
 Combine results and parameter
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
- * :py:func:`~deflex.fetch_converter_parameters` --
- * :py:func:`~deflex.fetch_attributes_of_commodity_sources` --
- * :py:func:`~deflex.get_combined_bus_balance` --
- * :py:func:`~deflex.get_converter_balance` --
+The following functions can be used for further calculations. See the
+examples for more information.
+
+ * :py:func:`~deflex.fetch_converter_parameters` -- get all values related to
+   the converter
+ * :py:func:`~deflex.fetch_attributes_of_commodity_sources` -- get the values
+   of the commodity sources
+ * :py:func:`~deflex.get_combined_bus_balance` -- combine buses in a
+   multiregion model
+ * :py:func:`~deflex.get_converter_balance` -- the energy balance around
+   converter to calculate emissions and costs
 
 
 TABLE of LABELS!!!!
