@@ -625,7 +625,7 @@ def _fetch_electricity_flows(results):
     )
 
 
-def calculate_key_values(results):
+def calculate_key_values(results, ignore_chp=True):
     """
     Get time series of typical key values.
 
@@ -633,12 +633,14 @@ def calculate_key_values(results):
      * highest emission
      * lowest emission
      * marginal costs power plant
-     * emission
+     * emission of marginal costs power plant
 
     Parameters
     ----------
     results : dict
         Deflex results dictionary.
+    ignore_chp : bool
+        Set False to include the chp-plants (default: True).
 
     Returns
     -------
@@ -649,22 +651,36 @@ def calculate_key_values(results):
     >>> import deflex as dflx
     >>> fn = dflx.fetch_test_files("de03_fictive.dflx")
     >>> my_results = dflx.restore_results(fn)
-    >>> df = calculate_key_values(my_results)
+    >>> df = calculate_key_values(my_results, ignore_chp=False)
     >>> list(df.columns)[:3]
     ['marginal costs', 'highest emission', 'lowest emission']
     >>> row = df.iloc[24]
     >>> row.pop("marginal costs power plant").label
     Label(cat='chp plant', tag='bioenergy', subtag='bioenergy', region='DE01')
     >>> row
-    marginal costs      47.573824
-    highest emission         1.01
-    lowest emission           0.0
-    emission             0.016992
+    marginal costs                           47.573824
+    highest emission                              1.01
+    lowest emission                                0.0
+    emission of marginal cost power plant     0.016992
     Name: 2022-01-02 00:00:00, dtype: object
     >>> min_mc = df["marginal costs"].min()
     >>> max_mc = df["marginal costs"].max()
     >>> print("{0} - {1}".format(round(min_mc, 2), round(max_mc, 2)))
     47.57 - 65.35
+    >>> df = calculate_key_values(my_results, ignore_chp=True)
+    >>> row = df.iloc[45]
+    >>> str(row.pop("marginal costs power plant").label)
+    'power-plant_natural-gas_06_natural-gas_DE01'
+    >>> row
+    marginal costs                           46.230384
+    highest emission                          1.299035
+    lowest emission                                0.0
+    emission of marginal cost power plant     0.335559
+    Name: 2022-01-02 21:00:00, dtype: object
+    >>> min_mc = df["marginal costs"].min()
+    >>> max_mc = df["marginal costs"].max()
+    >>> print("{0} - {1}".format(round(min_mc, 2), round(max_mc, 2)))
+    29.97 - 47.58
     """
     # Select all converters (class Transformer excluding lines)
     flows = _fetch_electricity_flows(results)
@@ -678,6 +694,9 @@ def calculate_key_values(results):
             ]
         )
     )
+
+    if ignore_chp is True:
+        transformer = [t for t in transformer if t.label.cat != "chp plant"]
 
     converter_parameters = fetch_converter_parameters(
         results, transformer, remove_null_columns=False
@@ -701,6 +720,7 @@ def calculate_key_values(results):
     kv["marginal costs power plant"] = flow_status.mul(
         converter_parameters["marginal costs"]
     ).idxmax(1)
+
     kv = pd.merge(
         kv,
         converter_parameters["emission"],
@@ -708,6 +728,9 @@ def calculate_key_values(results):
         left_on="marginal costs power plant",
         right_index=True,
     )
+
+    kv["emission of marginal cost power plant"] = kv.pop("emission")
+
     return kv
 
 
@@ -805,10 +828,10 @@ def get_converter_balance(
     results, cat=None, tag=None, subtag=None, region=None
 ):
     """
-    Combine different buses of the same type.
+    Get the balance around the converters of the system.
 
-    The combined buses can be restricted by the label fields (cat, tag, subtag,
-    region). Only buses with the same label fields will be combined.
+    The converters can be restricted by the label fields (cat, tag, subtag,
+    region). Only converters with the same label fields will be shown.
 
     Parameters
     ----------
@@ -858,6 +881,7 @@ def get_converter_balance(
         outflows = [f for f in results["Main"].keys() if f[0] == cnv]
         label = cnv.label
         for i in inflows:
+
             dc[
                 ("in", label.cat, label.tag, label.subtag, label.region)
             ] = results["Main"][i]["sequences"]["flow"]
