@@ -381,7 +381,7 @@ class DeflexGraph:
                 label="{0} -> {1}".format(
                     label2str(e.nodes[0].label), label2str(e.nodes[1].label)
                 ),
-                weigth=format(e.weight * 10 ** weight_exponent, ".1f"),
+                weigth=format(e.weight * 10**weight_exponent, ".1f"),
                 color=getattr(e, "color", self.default_edge_color),
             )
         return graph

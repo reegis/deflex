@@ -54,17 +54,15 @@ class TestCycles:
         ]
 
     def test_aggregated_power_plants(self):
-        assert (
-            list(
-                self.df_agg.loc[
-                    (slice(None)),
-                    ("in", "power plant", slice(None), "natural gas"),
-                ]
-                .sum()
-                .index.get_level_values(2)
-            )
-            == ["all"]
-        )
+        assert list(
+            self.df_agg.loc[
+                (slice(None)),
+                ("in", "power plant", slice(None), "natural gas"),
+            ]
+            .sum()
+            .index.get_level_values(2)
+        ) == ["all"]
+
         assert sorted(
             list(
                 self.df.loc[
