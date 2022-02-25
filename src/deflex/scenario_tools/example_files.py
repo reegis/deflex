@@ -21,7 +21,7 @@ TEST_PATH = os.path.join(
 
 def fetch_full_examples(path):
     """Download and unzip scenarios (if zip-file does not exist)"""
-    zipfile = "deflex_full_examples_v04.zip"
+    zipfile = "v0.4_scenario_examples_csv.zip"
     urlname = "examples"
     fetch_examples(path, zipfile, urlname)
 
@@ -37,11 +37,12 @@ def fetch_examples(path, zipfile, urlname):
     """Download and unzip example scenarios (if zip-file does not exist)"""
     fn = os.path.join(path, zipfile)
     url = cfg.get("url", "osfbase") + cfg.get("url", urlname)
+    os.makedirs(os.path.dirname(fn), exist_ok=True)
     if not os.path.isfile(fn):
         download(fn, url)
     with ZipFile(fn, "r") as zip_ref:
         zip_ref.extractall(path)
-    logging.info("All examples extracted to %s.", url)
+    logging.info("All examples extracted to %s.", path)
 
 
 def fetch_test_files(path, subdir="scenarios"):

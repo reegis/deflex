@@ -16,7 +16,7 @@ from oemof.tools import logger
 import deflex as dflx
 
 # !!! ADAPT THE PATH !!!
-path = "/home/uwe/deflex_temp_test/"
+path = os.path.join(os.path.expanduser("~"), "deflex", "my_scenarios")
 
 # Set logger
 logger.define_logging()
@@ -34,7 +34,7 @@ dflx.fetch_full_examples(path)
 # models with less time steps but you have to adapt the annual limits.
 
 # Now choose one example. We will start with a small one:
-file = "scenarios/de02_no-heat.xlsx"
+file = "deflex_2014_de02_no-heat_csv"
 fn = os.path.join(path, file)
 
 # *** Long version ***
@@ -43,19 +43,20 @@ fn = os.path.join(path, file)
 sc = dflx.DeflexScenario()
 
 # Read the input data. Use the right method (csv/xlsx) for your file type.
-# sc.read_csv(fn)
-sc.read_xlsx(fn)
+sc.read_csv(fn)
+# sc.read_xlsx(fn)
 
 # It can be useful to write the xlsx using pandas. This version is very
 # should be used to share it with others because it is faster to read than
 # a manual created xlsx-file.
+fn = fn.replace("_csv", ".xlsx")
 sc.to_xlsx(fn)
 
 # Create the LP model and solve it.
 sc.compute()
 
 # Dump the results to a sub-dir named "results_cbc".
-# dump_file = file.replace("_csv", ".dflx")
-dump_file = file.replace(".xlsx", ".dflx")
-dump_path = os.path.join(path, "results_cbc", dump_file)
+dump_file = file.replace("_csv", ".dflx")
+# dump_file = file.replace(".xlsx", ".dflx")
+dump_path = os.path.join(path, dump_file)
 sc.dump(dump_path)
