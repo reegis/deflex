@@ -35,6 +35,15 @@ in order to keep the computing time low it is recommended to define them
 supra-regional using ``DE`` without a number. It is still possible to define
 them regional for example to add a specific limit for each region.
 
+.. note::
+   The nomenclature above is the one used in the examples. It is also possible
+   to extend it e.g. for surrounding countries (``AT``, ``FR``, ``PL``...) or
+   to totally deviate from it. Nevertheless, it might be helpful to keep the
+   basic idea of using the country code of the `top level domain
+   <https://en.wikipedia.org/wiki/Country_code_top-level_domain>`_ followed by
+   a number if subregions exist or without a number. This will help other users
+   to understand your data.
+
 In most cases it is also sufficient to model the fossil part of the mobility
 and the decentralised heating sector supra-regional. It is assumed that a
 gas boiler or a filling station is always supplied with enough fuel, so that
@@ -74,8 +83,6 @@ equally!
     NaN-values are not allowed in any table. Some columns are optional and can
     be left out, but if a column is present there have to be values in every
     row. Neutral values can be ``0``, ``1`` or ``inf``.
-
-.. note:
 
 
 High-level-input (mandatory)
@@ -449,8 +456,8 @@ Electricity storages
 ``key:`` 'storages', ``value:`` `pandas.DataFrame() <https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html>`_
 
 Electricity storages is a particular case of storages (see
-`Storages`_). The condition to use a storage as electrcitiy storage
-is to use storage medium = electricity.
+`Storages`_). The condition to use a storage as an electricity storage
+is to define ``electricity`` in the ``storage medium`` column.
 
 
 Heating sector (optional)
