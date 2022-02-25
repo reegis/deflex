@@ -4,7 +4,6 @@ import logging
 import pandas as pd
 
 import deflex
-from deflex import use_logging
 
 
 def main():
@@ -91,7 +90,7 @@ def main():
 
     args = parser.parse_args()
 
-    use_logging()
+    deflex.use_logging()
 
     deflex.scripts.model_scenario(**vars(args))
 
