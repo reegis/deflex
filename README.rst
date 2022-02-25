@@ -121,6 +121,10 @@ Examples
 5. In parallel you should read the ``usage guide`` of the documentation to get
    the full picture.
 
+The example scripts will download the example scenarios to the $HOME/deflex
+folder. It is also possible to browse the
+`example scenarios <https://osf.io/9krgp/files/>`_.
+
 Improve deflex
 --------------
 
