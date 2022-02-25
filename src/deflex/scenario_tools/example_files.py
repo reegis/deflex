@@ -44,7 +44,6 @@ def fetch_examples(path, zipfile, urlname):
     logging.info("All examples extracted to %s.", url)
 
 
-
 def fetch_test_files(path, subdir="scenarios"):
     """Download example results to enable tests.
 
