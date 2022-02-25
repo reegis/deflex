@@ -15,9 +15,12 @@ __all__ = ["deflex_geo", "divide_off_and_onshore"]
 import os
 from collections import namedtuple
 
-import geopandas as gpd
-
 from deflex import config as cfg
+
+try:
+    import geopandas as gpd
+except ImportError:
+    gpd = None
 
 
 def deflex_geo(rmap):
