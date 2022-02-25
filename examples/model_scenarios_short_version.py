@@ -20,6 +20,9 @@ import deflex as dflx
 # !!! ADAPT THE PATH !!!
 path = os.path.join(os.path.expanduser("~"), ".deflex", "my_scenarios")
 
+# Download and unzip scenarios (if zip-file does not exist)
+dflx.fetch_full_examples(path)
+
 # Set logger
 logger.define_logging()
 
@@ -37,4 +40,5 @@ for file in files:
     dflx.model_scenario(file)
 
 # Modelling scenarios in parallel
+# Note: In most case the limit is the available RAM.
 # model_multi_scenarios(files, cpu_fraction=0.5)

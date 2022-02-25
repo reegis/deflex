@@ -15,11 +15,6 @@ from oemof.tools import logger
 
 import deflex as dflx
 
-url = (
-    "https://files.de-1.osf.io/v1/resources/a5xrj/providers/osfstorage"
-    "/605c566be12b600065aa635f?action=download&direct&version=1"
-)
-
 # !!! ADAPT THE PATH !!!
 path = "/home/uwe/deflex_temp_test/"
 
@@ -27,7 +22,7 @@ path = "/home/uwe/deflex_temp_test/"
 logger.define_logging()
 
 # Download and unzip scenarios (if zip-file does not exist)
-dflx.download_full_examples(path)
+dflx.fetch_full_examples(path)
 
 # Look in your folder above. You should see some scenario files. The csv and
 # the xlsx scenarios are the same. The csv-directories can be read faster by

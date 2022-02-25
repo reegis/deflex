@@ -19,26 +19,30 @@ TEST_PATH = os.path.join(
 )
 
 
-def download_full_examples(path):
+def fetch_full_examples(path):
     """Download and unzip scenarios (if zip-file does not exist)"""
-    fn = os.path.join(path, "deflex_full_examples_v04.zip")
-    url = cfg.get("url", "osfbase") + cfg.get("url", "examples")
-    if not os.path.isfile(fn):
-        download(fn, url)
-    with ZipFile(fn, "r") as zip_ref:
-        zip_ref.extractall(path)
-    logging.info("All software examples extracted to %s.", url)
+    zipfile = "deflex_full_examples_v04.zip"
+    urlname = "examples"
+    fetch_examples(path, zipfile, urlname)
 
 
 def fetch_published_figures_example_files(path):
     """Download and unzip scenarios (if zip-file does not exist)"""
-    fn = os.path.join(path, "deflex_softwarex_examples_v04.zip")
-    url = cfg.get("url", "osfbase") + cfg.get("url", "published_figures")
+    zipfile = "deflex_softwarex_examples_v04.zip"
+    urlname = "published_figures"
+    fetch_examples(path, zipfile, urlname)
+
+
+def fetch_examples(path, zipfile, urlname):
+    """Download and unzip example scenarios (if zip-file does not exist)"""
+    fn = os.path.join(path, zipfile)
+    url = cfg.get("url", "osfbase") + cfg.get("url", urlname)
     if not os.path.isfile(fn):
         download(fn, url)
     with ZipFile(fn, "r") as zip_ref:
         zip_ref.extractall(path)
-    logging.info("All software examples extracted to %s.", url)
+    logging.info("All examples extracted to %s.", url)
+
 
 
 def fetch_test_files(path, subdir="scenarios"):
