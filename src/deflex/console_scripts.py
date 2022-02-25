@@ -90,7 +90,7 @@ def main():
 
     args = parser.parse_args()
 
-    deflex.use_logging()
+    deflex.tools.logger.use_logging()
 
     deflex.scripts.model_scenario(**vars(args))
 
