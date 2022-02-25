@@ -62,7 +62,8 @@ class Scenario:
         There are different sub-sections of the results. The dictionary has
         got the following keys:
 
-         * main -- Results of all variables (result dictionary from oemof.solph)
+         * main -- Results of all variables
+           (result dictionary from oemof.solph)
          * param -- Input parameter
          * meta -- Meta information and tags of the scenario
          * problem -- Information about the linear problem such as
@@ -348,7 +349,9 @@ class Scenario:
         ['Problem', 'Solver', 'Solution', 'Main', 'Param', 'Meta']
         """
         self.table2es()
-        self.solve(self.create_model(), solver=solver, **kwargs)
+        self.solve(
+            self.create_model(), solver=solver, with_duals=with_duals, **kwargs
+        )
 
     def add_nodes_to_es(self, nodes):
         """

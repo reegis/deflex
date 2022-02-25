@@ -387,7 +387,7 @@ class DeflexGraph:
         return graph
 
     def write(self, filename, **kwargs):
-        """
+        r"""
         Write the graph into a .graphml file.
 
         Parameters

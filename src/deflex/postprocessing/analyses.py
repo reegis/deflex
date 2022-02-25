@@ -351,7 +351,7 @@ def _allocate_outflows(eta_e, eta_th):
     return allocation
 
 
-def fetch_converter_parameters(results, transformer, remove_null_columns=True):
+def fetch_converter_parameters(results, transformer):
     """
     Fetch relevant parameters of every Transformer of the energy system.
 
@@ -458,8 +458,12 @@ def fetch_converter_parameters(results, transformer, remove_null_columns=True):
             ]
 
         fuel_factor = _allocate_outflows(
-            eta_e=df.loc[t].get("efficiency, {0}".format("electricity"), float("nan")),
-            eta_th=df.loc[t].get("efficiency, {0}".format("heat"), float("nan")),
+            eta_e=df.loc[t].get(
+                "efficiency, {0}".format("electricity"), float("nan")
+            ),
+            eta_th=df.loc[t].get(
+                "efficiency, {0}".format("heat"), float("nan")
+            ),
         )
 
         # Calculate specific values for outflow sectors
@@ -698,9 +702,7 @@ def calculate_key_values(results, ignore_chp=True):
     if ignore_chp is True:
         transformer = [t for t in transformer if t.label.cat != "chp plant"]
 
-    converter_parameters = fetch_converter_parameters(
-        results, transformer, remove_null_columns=False
-    )
+    converter_parameters = fetch_converter_parameters(results, transformer)
     flow_status = flows.div(flows).fillna(0)
 
     converter_parameters = _calculate_marginal_costs(converter_parameters)
