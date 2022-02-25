@@ -90,7 +90,7 @@ def main():
 
     args = parser.parse_args()
 
-    deflex.tools.logger.use_logging()
+    deflex.use_logging()
 
     deflex.scripts.model_scenario(**vars(args))
 
@@ -159,7 +159,7 @@ def result():
     )
     args = parser.parse_args()
 
-    use_logging()
+    deflex.use_logging()
 
     if args.function == "calculate_key_values":
         results = deflex.restore_results(args.in_path)
