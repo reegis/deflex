@@ -119,28 +119,53 @@ IMPORTANT: This is just an example and not a source for the actual merit order
 in Germany.
 
 
-Parallel computing of scenarios
--------------------------------
+Scripts
+-------
+
+Console scripts
+~~~~~~~~~~~~~~~
+
+The console scripts can be used to model a scenario without using Python
+directly (Python need to be installed, though).
+
+Get the help message by typing
+
+``deflex-compute --help``
+
+The reference can also be found here: :py:func:`~deflex.console_scripts.main`
+
+If you dumped your results you can also use postprocessing tools. Read the help
+message for more information by typing:
+
+``deflex-result --help``
+
+The reference can also be found here: :py:func:`~deflex.console_scripts.result`
+See the results section for more information about the postprocessing function
+and classes. Not all postprocessing tools can be used with the console script.
+
+
+Python scripts
+~~~~~~~~~~~~~~
 
 For the typical work flow (creating a scenario, loading the input data,
 computing the scenario and storing the results) the
-:py:func:`~deflex.main.model_scenario` function can be used.
+:py:func:`~deflex.model_scenario` function can be used.
 
 To collect all scenarios from a given directory the function
-:py:func:`~deflex.main.search_input_scenarios` can be used. The function will
+:py:func:`~deflex.search_input_scenarios` can be used. The function will
 search for ``.xlsx`` files or paths that end on ``_csv`` and cannot
 distinguish between a valid scenario and any ``.xlsx`` file or paths that
 accidentally contain ``_csv``.
 
 No matter how you collect a list of a scenario input data files the
-:py:func:`~deflex.main.batch_model_scenario` function makes it easier to run
+:py:func:`~deflex.batch_model_scenario` function makes it easier to run
 each scenario and get back the relevant information about the run. It is
 possible to ignore exceptions so that the script will go on with the following
 scenarios if one scenario fails.
 
 If you have enough memory and cpu capacity on your computer/server you can
 optimise your scenarios in parallel. Use the
-:py:func:`~deflex.main.model_multi_scenarios` function for this task. You can
+:py:func:`~deflex.model_multi_scenarios` function for this task. You can
 pass a list of scenario files to this function. A cpu fraction will limit the
 number of processes as a fraction of the maximal available number of cpu cores.
 Keep in mind that for large models the memory will be the limit not the cpu
@@ -149,3 +174,34 @@ possible to catch a memory error. A log-file will log all failing and
 successful runs.
 
 .. include:: input_data.rst
+
+.. include:: results.rst
+
+Plots
+-----
+
+Deflex does not include plotting function as plotting is mostly a very
+individual part and there are already a lot of useful packages available.
+Nevertheless, deflex provides maps for the default region sets and some example
+on how to create spatial plots. The maps can be access using the following
+functions.
+
+ * :py:func:`~deflex.deflex_geo` -- Get the default maps of deflex
+ * :py:func:`~deflex.divide_off_and_onshore` -- distinguish offshore and
+   onshore regions in a given map
+
+
+General tools
+-------------
+
+Solph and deflex use logging messages to give a feedback from the running
+program, so deflex provides an easy function to activate the logger on the
+INFO level:
+
+ * :py:func:`~deflex.use_logging`
+
+Some functions does not return a table but a set of table. To store these set
+of tables in a xlsx-map or a collection of csv-files the following function
+can be used.
+
+ * :py:func:`~deflex.dict2file`

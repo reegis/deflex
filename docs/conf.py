@@ -82,6 +82,24 @@ numpydoc_show_class_members = False
 #
 autoclass_content = "both"
 nitpicky = True
+nitpick_ignore = [
+    ("py:class", "list of pandas.DataFrame"),
+    ("py:class", "pandas.DataFrame"),
+    ("py:class", "namedtuple"),
+    ("py:class", "oemof.solph.EnergySystem"),
+    ("py:class", "oemof.solph.Model"),
+    ("py:class", "list of lists"),
+    ("py:class", "pandas.Series"),
+    ("py:class", "GeoDataFrame"),
+    ("py:class", "iterable"),
+    ("py:class", "deflex.Scenario"),
+    ("py:class", "string"),
+    ("py:class", "dict"),
+    ("py:class", "oemof.network.Bus"),
+    ("py:class", "self"),
+    ("py:class", "class"),
+    ("py:class", "numeric"),
+]
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]

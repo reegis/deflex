@@ -84,13 +84,30 @@ fontsize = 18
 f, ax = plt.subplots(2, 1, sharex=True, figsize=(15, 6))
 plt.rcParams.update({"font.size": fontsize})
 
-logger.define_logging()
+# define time interval for the plot with a 12 hour offset
+interval = ("5.8.", "26.8.")
+year = str(2014)
+start_year = datetime.datetime(2014, 8, 1)
+start = datetime.datetime.strptime(interval[0] + year, "%d.%m.%Y")
+start += datetime.timedelta(hours=12)
+start = (start - start_year).days * 24
+end = datetime.datetime.strptime(interval[1] + year, "%d.%m.%Y")
+end += datetime.timedelta(hours=12)
+end = (end - start_year).days * 24
 
 if not os.path.isfile(files["dump"]) or FORCE_COMPUTING:
     dflx.scripts.model_scenario(files["input"], "xlsx", files["dump"])
 
 # restore the results from file
 my_results = dflx.restore_results(files["dump"])
+
+# fetch all in- and outflows of the electricity buses (fix datetime index)
+ebus = dflx.get_combined_bus_balance(my_results, cat="electricity")
+ebus.set_index(
+    pd.to_datetime(ebus.index.values) + pd.Timedelta(hours=5088), inplace=True
+)
+
+# ***** Calculate and plot emissions ****************************************
 
 # fetch commodity parameter
 commodity = dflx.fetch_attributes_of_commodity_sources(my_results)
@@ -111,8 +128,12 @@ total_emissions = (
     .sum(axis=1)
 )
 
-# calculate total electricity production of all power plants
-total_electricity_converter = pp["out"].sum(axis=1)
+# calculate average emissions
+average_emissions = (
+    total_emissions
+    / ebus["out"]["electricity demand"][("electricity", "all", "DE01")]
+)
+average_emissions.name = "average"
 
 # fetch emissions of most expensive power plant (fix datetime index)
 key_values = dflx.calculate_key_values(my_results)
@@ -121,18 +142,20 @@ key_values.set_index(
     inplace=True,
 )
 
-# fetch all in- and outflows of the electricity buses (fix datetime index)
-ebus = dflx.get_combined_bus_balance(my_results, cat="electricity")
-ebus.set_index(
-    pd.to_datetime(ebus.index.values) + pd.Timedelta(hours=5088), inplace=True
+# plot the emissions
+key_values = pd.concat([key_values, average_emissions], axis=1)
+key_values["most expensive"] = key_values[
+    "emission of marginal cost power plant"
+]
+ax[0] = (
+    key_values[["most expensive", "average"]]
+    .reset_index(drop=True)
+    .loc[start:end]
+    .div(1000)
+    .plot(ax=ax[0], legend=True, fontsize=fontsize)
 )
 
-# calculate average emissions
-average_emissions = (
-    total_emissions
-    / ebus["out"]["electricity demand"][("electricity", "all", "DE01")]
-)
-average_emissions.name = "average"
+# ***** Calculate and plot energy in- and outflows of power plants **********
 
 # reshape the bus balance
 ebus = ebus.groupby(level=[0, 1, 3], axis=1).sum()
@@ -140,17 +163,6 @@ ebus.drop(["line", "shortage", "excess"], axis=1, level=1, inplace=True)
 ebus.columns = ebus.columns.droplevel(1)
 ebus.rename(columns=electricity_groups, inplace=True)
 ebus = ebus.groupby(level=[0, 1], axis=1).sum()
-
-# define time interval for the plot
-interval = ("5.8.", "26.8.")
-year = str(2014)
-start_year = datetime.datetime(2014, 8, 1)
-start = datetime.datetime.strptime(interval[0] + year, "%d.%m.%Y")
-start += datetime.timedelta(hours=12)
-start = (start - start_year).days * 24
-end = datetime.datetime.strptime(interval[1] + year, "%d.%m.%Y")
-end += datetime.timedelta(hours=12)
-end = (end - start_year).days * 24
 
 # define order of the in- and outflows.
 inorder = [
@@ -165,17 +177,6 @@ inorder = [
     "storage",
 ]
 outorder = ["demand", "storage"]
-
-# plot the emissions
-key_values = pd.concat([key_values, average_emissions], axis=1)
-key_values["most expensive"] = key_values["emission"]
-ax[0] = (
-    key_values[["most expensive", "average"]]
-    .reset_index(drop=True)
-    .loc[start:end]
-    .div(1000)
-    .plot(ax=ax[0], legend=True, fontsize=fontsize)
-)
 
 # plot the stacked i/o plot
 ioplot = oemof_visio.plot.io_plot(

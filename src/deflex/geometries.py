@@ -30,6 +30,7 @@ def deflex_geo(rmap):
 
     Note that some fields might be None for some region sets.
 
+    Parameters
     ----------
     rmap : str
         Name of the deflex map. Possible values are: de01, de02, de17, de21,

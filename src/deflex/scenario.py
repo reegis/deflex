@@ -59,12 +59,26 @@ class Scenario:
         pandas.Series. The keys are the data names (string) and the values are
         the data tables.
     results : dict
-        The results are stored in a dictionary with tuples as keys and the
-        results as values (nested dictionary with pandas.DataFrame). The tuples
-        contain the node object in the following form:
-        (from_node, to_node) for flows and (node, None) for components. See the
-        `solph documentation
-        <https://oemof-solph.readthedocs.io/en/latest/usage.html#handling-results>`_
+        There are different sub-sections of the results. The dictionary has
+        got the following keys:
+
+         * main -- Results of all variables
+           (result dictionary from oemof.solph)
+         * param -- Input parameter
+         * meta -- Meta information and tags of the scenario
+         * problem -- Information about the linear problem such as
+           `lower bound`, `upper bound` etc.
+         * solver -- Solver results
+         * solution -- Information about the found solution and the objective
+           value
+
+        The model results are stored in the `main` section. It contains
+        another dictionary with tuples as keys and the
+        results of the variables as values (nested dictionary with
+        pandas.DataFrame). The tuples contain the node object in the following
+        form: (from_node, to_node) for flows and (node, None) for components.
+        See the `solph documentation
+        <https://oemof-solph.readthedocs.io/en/latest/usage.html>`_
         for more details.
     meta : dict
         Meta information that can be used to search for in stored scenarios.
@@ -335,13 +349,15 @@ class Scenario:
         ['Problem', 'Solver', 'Solution', 'Main', 'Param', 'Meta']
         """
         self.table2es()
-        self.solve(self.create_model(), solver=solver, **kwargs)
+        self.solve(
+            self.create_model(), solver=solver, with_duals=with_duals, **kwargs
+        )
 
     def add_nodes_to_es(self, nodes):
         """
         Add nodes to an existing solph.EnergySystem. If the EnergySystem does
         not exist an Error is raised. This method is included in the
-        :py:meth:`~deflex.scenario.Scenario.compute()` method and is only
+        :py:meth:`~deflex.DeflexScenario.compute()` method and is only
         needed for advanced usage.
 
         Parameters
@@ -361,11 +377,11 @@ class Scenario:
         """
         Create a populated solph.EnergySystem from the input data.
 
-        The EnergySystem object will be stored in the
-        :py:attr:`~deflex.scenario.DeflexScenario.es` attribute.
+        The EnergySystem object will be stored in the ``es`` attribute of the
+        :py:class:`~deflex.DeflexScenario`.
 
         This method is included in the
-        :py:meth:`~deflex.scenario.Scenario.compute()`
+        :py:meth:`~deflex.DeflexScenario.compute()`
         method and is only needed for advanced usage.
 
         Examples
@@ -389,13 +405,14 @@ class Scenario:
 
     def create_model(self):
         """
-        This method is included in the
-        :py:meth:`~deflex.scenario.Scenario.compute()` method and is only
+        Create a solph model from an EnergySystem object.
+
+        This method is included in the :py:meth:`compute()` method and is only
         needed for advanced usage.
 
         Returns
         -------
-        solph.Model
+        oemof.solph.Model
 
         Examples
         --------
@@ -411,27 +428,6 @@ class Scenario:
         model = solph.Model(self.es)
         logging.info("...Done.")
         return model
-
-    def compute_debug(self):
-        """
-        The plan is to make it easy to debug an energy system.
-
-        1. Create an EnergySystem with just 5 time steps
-        2. Reduce the input data (all series) to 5 time steps
-        3. Plot the graph (try/except)
-        4. Write an LP file (try/except)
-        5. Solve and dump the results (try/except)
-
-        model = solph.Model(self.es)
-
-        filename = os.path.join(solph.helpers.extend_basic_path("lp_files"),
-        "reegis.lp")
-
-        logging.info("Store lp-file in %s.", filename)
-
-        model.write(filename, io_options={"symbolic_solver_labels": True})
-
-        """
 
     def dump(self, filename):
         """
@@ -478,7 +474,7 @@ class Scenario:
     def solve(self, model, solver="cbc", with_duals=True, **solver_kwargs):
         """
         Solve the solph.Model. This method is included in the
-        :py:meth:`~deflex.scenario.Scenario.compute()` method and is only
+        :py:meth:`~deflex.DeflexScenario.compute()` method and is only
         needed for advanced usage.
 
         Parameters
@@ -578,7 +574,7 @@ class DeflexScenario(Scenario):
         Meta information of the DeflexScenario (optional).
     input_data : dict
         A dictionary of tables in the deflex scenario style (optional).
-    es : oemof.solph.EnergySystem class
+    es : oemof.solph.EnergySystem
         An Energy system (optional).
     results : dict
         A valid Deflex results dictionary (optional).

@@ -259,7 +259,8 @@ def iea_method(eta_e, eta_th):
 
     The allocation factor :math:`\alpha_{el}` of the electricity output is
     calculated as follows:
-      .. math::
+
+    .. math::
         \alpha_{el}=\frac{\eta_{el}}{\eta_{el}+\eta_{th}}
 
     :math:`\alpha_{el}` : Allocation factor of the electricity flow
@@ -300,7 +301,8 @@ def efficiency_method(eta_e, eta_th):
 
     The allocation factor :math:`\alpha_{el}` of the electricity output is
     calculated as follows:
-      .. math::
+
+    .. math::
         \alpha_{el}=\frac{\eta_{th}}{\eta_{el}+\eta_{th}}
 
     :math:`\alpha_{el}` : Allocation factor of the electricity flow
@@ -341,7 +343,8 @@ def finnish_method(eta_e, eta_th, eta_e_ref, eta_th_ref):
 
     The allocation factor :math:`\alpha_{el}` of the electricity output is
     calculated as follows:
-      .. math::
+
+    .. math::
         \alpha_{el} = \frac{\eta_{el,ref}}{\eta_{el}} \cdot \left(
         \frac{\eta_{el}}{\eta_{el,ref}}+ \frac{\eta_{th}}{ \eta_{th,ref}}
         \right)
@@ -397,9 +400,10 @@ def exergy_method(eta_e, eta_th, eta_c):
     Exergy Method or Carnot Method- a method to allocate the fuel
     input of chp plants to the two output flows: heat and electricity
 
-      The allocation factor :math:`\alpha_{el}` of the electricity output is
+    The allocation factor :math:`\alpha_{el}` of the electricity output is
     calculated as follows:
-      .. math::
+
+    .. math::
         \alpha_{el}=\frac{\eta_{el}}{\eta_{el}+\eta_{c}\cdot\eta_{th}}
 
     :math:`\alpha_{el}` : Allocation factor of the electricity flow

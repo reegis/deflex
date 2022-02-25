@@ -13,7 +13,6 @@ Scenario class
    :toctree: reference/
    :recursive:
 
-    deflex.Scenario
     deflex.DeflexScenario
 
 Read/Write a scenario
@@ -25,6 +24,8 @@ Read/Write a scenario
 
     deflex.DeflexScenario.read_xlsx
     deflex.DeflexScenario.read_csv
+    deflex.create_scenario
+    deflex.search_input_scenarios
     deflex.DeflexScenario.to_xlsx
     deflex.DeflexScenario.to_csv
     deflex.DeflexScenario.dump
@@ -51,12 +52,14 @@ Advanced scenario methods
     deflex.DeflexScenario.create_model
     deflex.DeflexScenario.create_nodes
     deflex.DeflexScenario.solve
+    deflex.DeflexScenario.initialise_energy_system
+    deflex.DeflexScenario.add_nodes_to_es
 
 Scripts
 +++++++
 
 Python scripts
--------------
+--------------
 
 .. autosummary::
    :toctree: reference/
@@ -74,10 +77,23 @@ Console scripts
    :recursive:
 
     deflex.console_scripts.main
+    deflex.console_scripts.result
 
 
 Postprocessing
 ++++++++++++++
+
+Restore dumped scenarios
+------------------------
+
+.. autosummary::
+   :toctree: reference/
+   :recursive:
+
+    deflex.search_dumped_scenarios
+    deflex.restore_scenario
+    deflex.restore_results
+
 
 Analyse and draw graph
 ----------------------
@@ -134,7 +150,6 @@ Advanced results processing
    :recursive:
 
     deflex.group_buses
-    deflex.get_resource_parameters
     deflex.fetch_converter_parameters
     deflex.fetch_attributes_of_commodity_sources
     deflex.get_combined_bus_balance
