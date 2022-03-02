@@ -26,11 +26,6 @@ from oemof.tools import logger
 
 import deflex as dflx
 
-EXAMPLES_URL = (
-    "https://files.de-1.osf.io/v1/resources/9krgp/providers/osfstorage"
-    "/61def8c4bc925b00fed4b1d7?action=download&direct&version=1"
-)
-
 BASIC_PATH = os.path.join(os.path.expanduser("~"), "deflex", "figures")
 INPUT_FILE = "deflex_2014_de02_august_test.xlsx"
 FORCE_COMPUTING = False  # Use True to compute the model (small model, fast)

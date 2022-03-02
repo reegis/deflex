@@ -104,9 +104,6 @@ electricity_bus = [
 ][0]
 mcp["duals"] = dual[electricity_bus]
 
-mcp.tz_localize(None).to_excel("/home/uwe/mcp_neu.xlsx")
-mcp = pd.read_excel("/home/uwe/mcp_neu.xlsx", parse_dates=True, index_col=0)
-
 f, ax = plt.subplots(3, 1, sharey=True, figsize=(15, 5))
 
 year = str(mcp.index[0].year)
@@ -115,9 +112,11 @@ iv = [("8.1.", "25.1."), ("8.4.", "25.4."), ("8.7.", "25.7.")]
 # Create subplots for each date interval
 n = 0
 for interval in iv:
-    start = datetime.strptime(interval[0] + year, "%d.%m.%Y")
+    start = pytz.utc.localize(
+        datetime.strptime(interval[0] + year, "%d.%m.%Y")
+    )
     start += timedelta(hours=12)
-    end = datetime.strptime(interval[1] + year, "%d.%m.%Y")
+    end = pytz.utc.localize(datetime.strptime(interval[1] + year, "%d.%m.%Y"))
     end += timedelta(hours=12)
     mcp[start:end].plot(ax=ax[n], legend=False, x_compat=True)
     ax[n].set_xlim(start, end)
