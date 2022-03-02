@@ -11,7 +11,6 @@ Scenario class
 
 .. autosummary::
    :toctree: reference/
-   :recursive:
 
     deflex.DeflexScenario
 
@@ -20,7 +19,6 @@ Read/Write a scenario
 
 .. autosummary::
    :toctree: reference/
-   :recursive:
 
     deflex.DeflexScenario.read_xlsx
     deflex.DeflexScenario.read_csv
@@ -36,7 +34,6 @@ Compute scenario
 
 .. autosummary::
    :toctree: reference/
-   :recursive:
 
     deflex.DeflexScenario.compute
 
@@ -45,7 +42,6 @@ Advanced scenario methods
 
 .. autosummary::
    :toctree: reference/
-   :recursive:
 
     deflex.DeflexScenario.check_input_data
     deflex.DeflexScenario.table2es
@@ -63,7 +59,6 @@ Python scripts
 
 .. autosummary::
    :toctree: reference/
-   :recursive:
 
     deflex.model_scenario
     deflex.batch_model_scenario
@@ -74,7 +69,6 @@ Console scripts
 
 .. autosummary::
    :toctree: reference/
-   :recursive:
 
     deflex.console_scripts.main
     deflex.console_scripts.result
@@ -88,7 +82,6 @@ Restore dumped scenarios
 
 .. autosummary::
    :toctree: reference/
-   :recursive:
 
     deflex.search_dumped_scenarios
     deflex.restore_scenario
@@ -100,7 +93,6 @@ Analyse and draw graph
 
 .. autosummary::
    :toctree: reference/
-   :recursive:
 
     deflex.postprocessing.graph.Edge
     deflex.DeflexGraph
@@ -116,7 +108,6 @@ Analyse cycles
 
 .. autosummary::
    :toctree: reference/
-   :recursive:
 
     deflex.Cycles
     deflex.Cycles.cycles
@@ -131,7 +122,6 @@ Basic results processing
 
 .. autosummary::
    :toctree: reference/
-   :recursive:
 
     deflex.get_all_results
     deflex.nodes2table
@@ -147,7 +137,6 @@ Advanced results processing
 
 .. autosummary::
    :toctree: reference/
-   :recursive:
 
     deflex.group_buses
     deflex.fetch_converter_parameters
@@ -161,7 +150,6 @@ Tools for Electricity models
 
 .. autosummary::
    :toctree: reference/
-   :recursive:
 
     deflex.merit_order_from_scenario
     deflex.merit_order_from_results
@@ -172,7 +160,6 @@ Geometry examples for plotting
 
 .. autosummary::
    :toctree: reference/
-   :recursive:
 
     deflex.deflex_geo
     deflex.divide_off_and_onshore
@@ -182,7 +169,6 @@ General tools
 
 .. autosummary::
    :toctree: reference/
-   :recursive:
 
     deflex.dict2file
     deflex.use_logging
@@ -192,7 +178,6 @@ CHP allocation tools
 
 .. autosummary::
    :toctree: reference/
-   :recursive:
 
     deflex.allocate_fuel_deflex
     deflex.allocate_fuel
