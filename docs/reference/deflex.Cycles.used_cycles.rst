@@ -3,4 +3,4 @@
 
 .. currentmodule:: deflex
 
-.. autoproperty:: Cycles.used_cycles
+.. autoattribute:: Cycles.used_cycles

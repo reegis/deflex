@@ -3,4 +3,4 @@
 
 .. currentmodule:: deflex
 
-.. autoproperty:: Cycles.suspicious_cycles
+.. autoattribute:: Cycles.suspicious_cycles
