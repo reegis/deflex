@@ -15,6 +15,8 @@ import os
 import pandas as pd
 import requests
 
+from deflex import config as cfg
+
 
 def download(fn, url, force=False):
     """
@@ -70,10 +72,9 @@ def dict2file(tables, path, filetype="xlsx", drop_empty_columns=False):
 
 
 def _clean_table(table, drop_empty_columns):
-    table.sort_index(axis=1, inplace=True)
     if drop_empty_columns:
         table = table.loc[:, (table.sum(axis=0) != 0)]
-    return table
+    return table.sort_index(axis=1)
 
 
 def _dict2spreadsheet(tables, path, drop_empty_columns=False):
@@ -84,6 +85,7 @@ def _dict2spreadsheet(tables, path, drop_empty_columns=False):
             table = _clean_table(table, drop_empty_columns)
         table.to_excel(writer, name)
     writer.save()
+    writer.close()
 
 
 def _dict2csv(tables, path, drop_empty_columns=False):
@@ -94,3 +96,86 @@ def _dict2csv(tables, path, drop_empty_columns=False):
             table = _clean_table(table, drop_empty_columns)
         fn = os.path.join(path, name + ".csv")
         table.to_csv(fn)
+
+
+def file2dict(path, filetype=None, table_index_header=None):
+    if table_index_header is None:
+        table_index_header = cfg.get_dict_list("table_index_header")
+    if filetype is None:
+        if os.path.isdir(path):
+            filetype = "csv"
+        else:
+            filetype = os.path.basename(path).split(".")[-1]
+    if filetype == "csv":
+        dct = _csv2dict(path, table_index_header)
+    elif filetype == "xlsx":
+        dct = _xlsx2dict(path, table_index_header)
+    else:
+        raise NotImplementedError(f"Cannot open {filetype}-file.")
+    return dct
+
+
+def _xlsx2dict(filename, table_index_header=None):
+    """
+    Load scenario data from an xlsx file. The full path has to be passed.
+
+    Examples
+    --------
+    >>> import deflex as dflx
+    >>> fn = dflx.fetch_test_files("de02_no-heat.xlsx")
+    >>> sc = dflx.DeflexScenario()
+    >>> len(sc.input_data)
+    0
+    >>> sc = sc.read_xlsx(fn)
+    >>> len(sc.input_data)
+    11
+    """
+    xlsx = pd.ExcelFile(filename)
+    dct = {}
+    for sheet in xlsx.sheet_names:
+        index_header = table_index_header["result_" + sheet]
+        dct[sheet] = xlsx.parse(
+            sheet,
+            index_col=list(range(int(index_header[0]))),
+            header=list(range(int(index_header[1]))),
+        )
+        dct[sheet] = _squeeze_df(index_header, dct[sheet])
+    return dct
+
+
+def _csv2dict(path, table_index_header=None):
+    """
+    Load scenario from a csv-collection. The path of the directory has
+    to be passed.
+
+    Examples
+    --------
+    >>> import deflex as dflx
+    >>> fn = dflx.fetch_test_files("de02_no-heat_csv")
+    >>> sc = dflx.DeflexScenario()
+    >>> len(sc.input_data)
+    0
+    >>> sc = sc.read_csv(fn)
+    >>> len(sc.input_data)
+    11
+    """
+    dct = {}
+    for file in os.listdir(path):
+        if file[-4:] == ".csv":
+            name = file[:-4]
+            index_header = table_index_header["result_" + name]
+            filename = os.path.join(path, file)
+            dct[name] = pd.read_csv(
+                filename,
+                index_col=list(range(int(index_header[0]))),
+                header=list(range(int(index_header[1]))),
+            )
+            dct[name] = _squeeze_df(index_header, dct[name])
+    return dct
+
+
+def _squeeze_df(index_header, df):
+    if len(index_header) > 2 and index_header[2] == "s":
+        return df.squeeze("columns")
+    else:
+        return df

@@ -8,8 +8,12 @@ from deflex.postprocessing.analyses import (  # noqa: F401; noqa: F401
     fetch_converter_parameters,
     get_combined_bus_balance,
     get_converter_balance,
+    get_shortage_table,
+    get_excess_table,
+    get_all_converter,
 )
 from deflex.postprocessing.basic import (  # noqa: F401
+    fetch_deflex_result_tables,
     fetch_dual_results,
     get_all_results,
     get_time_index,
@@ -53,5 +57,5 @@ from deflex.tools.chp import (  # noqa: F401
     finnish_method,
     iea_method,
 )
-from deflex.tools.files import dict2file, download  # noqa: F401
+from deflex.tools.files import dict2file, download, file2dict  # noqa: F401
 from deflex.tools.logger import use_logging  # noqa: F401

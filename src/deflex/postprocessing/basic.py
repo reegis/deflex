@@ -15,10 +15,16 @@ __all__ = [
     "solver_results2series",
     "meta_results2series",
     "get_time_index",
+    "fetch_deflex_result_tables",
 ]
+import os
 
 import pandas as pd
 from oemof import solph
+
+from deflex import config as cfg
+from deflex.tools.files import file2dict
+from deflex.scenario_tools.scenario_io import restore_results
 
 
 def get_time_index(results):
@@ -375,3 +381,25 @@ def get_all_results(results):
     tables["solver"] = solver_results2series(results)
     tables["meta"] = meta_results2series(results)
     return tables
+
+
+def fetch_deflex_result_tables(path, filetype=None):
+    if filetype is None:
+        if os.path.isdir(path):
+            filetype = "csv"
+        else:
+            filetype = os.path.basename(path).split(".")[-1]
+    if filetype == "dflx":
+        result = restore_results(path)
+        tables = get_all_results(result)
+        table_index_header = cfg.get_dict_list("table_index_header")
+        for name in tables.keys():
+            index_header = table_index_header["result_" + name]
+            if len(index_header) > 2 and index_header[2] == "s":
+                if isinstance(tables[name], pd.DataFrame):
+                    tables[name] = tables[name].squeeze("columns")
+            else:
+                pass
+        return tables
+    else:
+        return file2dict(path, filetype)

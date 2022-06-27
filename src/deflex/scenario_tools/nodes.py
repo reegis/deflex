@@ -11,6 +11,8 @@ import logging
 import warnings
 from collections import namedtuple
 
+from deflex import config as cfg
+
 import pandas as pd
 from oemof import solph
 
@@ -799,5 +801,11 @@ def add_shortage_excess(nodes):
         shortage_label = Label("shortage", key.cat, key.subtag, key.region)
         nodes[shortage_label] = solph.Source(
             label=shortage_label,
-            outputs={nodes[key]: solph.Flow(variable_costs=9999)},
+            outputs={
+                nodes[key]: solph.Flow(
+                    variable_costs=cfg.get(
+                        "default values", "variable costs shortage"
+                    )
+                )
+            },
         )

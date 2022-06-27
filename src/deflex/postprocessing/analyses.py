@@ -418,11 +418,14 @@ def fetch_converter_parameters(results, transformer):
 
         if len(fuel_parameter) > 0:
             df.loc[t, "variable costs, fuel"] = float(
-                fuel_parameter.get("variable_costs", 0)
+                fuel_parameter.get("variable_costs", float("nan"))
             )
             df.loc[t, "emission, fuel"] = float(
-                fuel_parameter.get("emission", 0)
+                fuel_parameter.get("emission", float("nan"))
             )
+        else:
+            df.loc[t, "variable costs, fuel"] = float("nan")
+            df.loc[t, "emission, fuel"] = float("nan")
 
         # Define fuel sector
         fuel = inflow[0].label.subtag
@@ -629,6 +632,46 @@ def _fetch_electricity_flows(results):
     )
 
 
+def get_all_converter(results, ignore_chp=False):
+    """
+
+    Parameters
+    ----------
+    results : dict
+        Deflex results dictionary.
+    ignore_chp : bool
+        Set False to include the chp-plants (default: True).
+
+    Returns
+    -------
+    All converter of the energy systems without transmission lines : list
+
+    Examples
+    --------
+    >>> import deflex as dflx
+    >>> fn = dflx.fetch_test_files("de03_fictive.dflx")
+    >>> my_results = dflx.restore_results(fn)
+    >>> c = sorted(get_all_converter(my_results, True))
+    >>> dflx.label2str(c[45].label)
+    'power-plant_lignite_032_lignite_DE01'
+
+    """
+    transformer = list(
+        set(
+            [
+                k[0]
+                for k in results["main"].keys()
+                if isinstance(k[0], solph.Transformer)
+                and k[0].label.cat != "line"
+            ]
+        )
+    )
+
+    if ignore_chp is True:
+        transformer = [t for t in transformer if t.label.cat != "chp plant"]
+    return transformer
+
+
 def calculate_key_values(results, ignore_chp=True):
     """
     Get time series of typical key values.
@@ -688,21 +731,10 @@ def calculate_key_values(results, ignore_chp=True):
     """
     # Select all converters (class Transformer excluding lines)
     flows = _fetch_electricity_flows(results)
-    transformer = list(
-        set(
-            [
-                k[0]
-                for k in results["main"].keys()
-                if isinstance(k[0], solph.Transformer)
-                and k[0].label.cat != "line"
-            ]
-        )
-    )
 
-    if ignore_chp is True:
-        transformer = [t for t in transformer if t.label.cat != "chp plant"]
+    converter = get_all_converter(results, ignore_chp=ignore_chp)
 
-    converter_parameters = fetch_converter_parameters(results, transformer)
+    converter_parameters = fetch_converter_parameters(results, converter)
     flow_status = flows.div(flows).fillna(0)
 
     converter_parameters = _calculate_marginal_costs(converter_parameters)
@@ -892,6 +924,82 @@ def get_converter_balance(
                 ("out", label.cat, label.tag, label.subtag, label.region)
             ] = results["Main"][o]["sequences"]["flow"]
     return pd.DataFrame(dc).sort_index(axis=1)
+
+
+def get_shortage_table(results, remove_empty_columns=False):
+    """
+
+    Parameters
+    ----------
+    results : dict
+        Deflex results dictionary.
+    remove_empty_columns : bool
+        Remove all columns from the DataFrame, which have a sum of zero.
+
+    Returns
+    -------
+    pandas.DataFrame
+
+    Examples
+    --------
+    >>> import deflex as dflx
+    >>> fn = dflx.fetch_test_files("de03_fictive.dflx")
+    >>> my_results = dflx.restore_results(fn)
+    >>> get_shortage_table(my_results).sum().sum()
+    0.0
+    >>> len(get_shortage_table(my_results, remove_empty_columns=True))
+    0
+
+    """
+    df = pd.DataFrame(
+        {
+            tuple(k[0].label): v["sequences"]["flow"]
+            for k, v in results["main"].items()
+            if k[0].label.cat == "shortage"
+        }
+    )
+    if remove_empty_columns is True:
+        df = df.loc[:, (df.sum(axis=0) > 0)]
+
+    return df
+
+
+def get_excess_table(results, remove_empty_columns=False):
+    """
+
+    Parameters
+    ----------
+    results : dict
+        Deflex results dictionary.
+    remove_empty_columns : bool
+        Remove all columns from the DataFrame, which have a sum of zero.
+
+    Returns
+    -------
+    pandas.DataFrame
+
+    Examples
+    --------
+    >>> import deflex as dflx
+    >>> fn = dflx.fetch_test_files("de03_fictive.dflx")
+    >>> my_results = dflx.restore_results(fn)
+    >>> get_excess_table(my_results).sum().sum()
+    0.0
+    >>> len(get_excess_table(my_results, remove_empty_columns=True))
+    0
+    """
+    df = pd.DataFrame(
+        {
+            tuple(k[1].label): v["sequences"]["flow"]
+            for k, v in results["main"].items()
+            if k[1] is not None and k[1].label.cat == "excess"
+        }
+    )
+
+    if remove_empty_columns is True:
+        df = df.loc[:, (df.sum(axis=0) > 0)]
+
+    return df
 
 
 if __name__ == "__main__":
